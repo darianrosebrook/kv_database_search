@@ -10,7 +10,7 @@
 import {
   validateAllComponentTokens,
   generateComponentReport,
-} from "../utils/accessibility/componentValidator.js";
+} from "../utils/accessibility/componentValidator.ts";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";

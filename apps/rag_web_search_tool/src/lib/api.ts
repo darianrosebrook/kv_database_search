@@ -1,5 +1,5 @@
 // API service for connecting to the RAG backend
-const API_BASE_URL = "http://localhost:3883";
+const API_BASE_URL = "http://localhost:3001";
 
 export interface SearchResult {
   id: string;
@@ -238,6 +238,7 @@ class ApiService {
         searchTime: number;
         filters?: any;
       };
+      model?: string;
     } = {}
   ): Promise<{
     response: string;
@@ -249,6 +250,7 @@ class ApiService {
       filters?: any;
     }>;
     timestamp: string;
+    model?: string;
   }> {
     try {
       const response = await fetch(`${this.baseUrl}/chat`, {
@@ -258,6 +260,7 @@ class ApiService {
         },
         body: JSON.stringify({
           message,
+          model: options.model,
           context: options.context || [],
           searchResults: options.searchResults || [],
           originalQuery: options.originalQuery,
@@ -352,6 +355,41 @@ class ApiService {
       console.error("Stats API error:", error);
       throw new Error(
         `Failed to get stats: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  async getModels(): Promise<{
+    models: Array<{
+      name: string;
+      size: number;
+      modified_at: string;
+      details?: {
+        format?: string;
+        family?: string;
+        parameter_size?: string;
+        quantization_level?: string;
+      };
+    }>;
+    error?: string;
+  }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/models`);
+
+      if (!response.ok) {
+        throw new Error(
+          `Models request failed: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Models API error:", error);
+      throw new Error(
+        `Failed to get models: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );

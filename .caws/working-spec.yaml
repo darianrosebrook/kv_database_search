@@ -1,82 +1,51 @@
-id: OBSIDIAN-RAG-001
-title: "Multi-Modal Obsidian Knowledge Base RAG System"
+id: FEAT-001
+title: "Unified Multi-Modal Ingestion with Embedded Image Following"
 risk_tier: 2
 scope:
   in:
-    - "Semantic search across Obsidian vault content"
-    - "Vector embeddings for knowledge discovery"
-    - "Knowledge graph relationships via wikilinks"
-    - "Multi-modal content processing (PDF, DOCX, XLSX, images, audio)"
-    - "OCR text extraction from images"
-    - "Speech-to-text transcription from audio files"
-    - "Office document parsing (Word, Excel, PowerPoint)"
-    - "Unified search across all content types"
-    - "Content type-aware chunking and embedding"
-    - "Enhanced search results with metadata"
+    - "Consolidate ingest-obsidian.ts and ingest-multi-modal.ts into single unified script"
+    - "Extract embedded images from markdown files during ingestion"
+    - "Process referenced images with OCR for text extraction"
+    - "Link image content back to source markdown files"
+    - "Support for GIF, PNG, JPEG, and other image formats"
   out:
-    - "Real-time chat interface"
-    - "Advanced graph analytics"
-    - "Plugin ecosystem integration"
-    - "Legacy file format support"
-    - "Binary document processing"
+    - "Separate text-only ingestion scripts"
+    - "Manual image processing workflows"
 invariants:
-  - "Search results must maintain content integrity across all formats"
-  - "Embeddings generated locally (privacy-first)"
-  - "Database queries must be performant (<500ms)"
-  - "Content processing respects Obsidian folder structure"
-  - "Multi-modal metadata preserved and searchable"
-  - "OCR accuracy maintained above 70% confidence"
-  - "Speech transcription quality above 60% confidence"
-  - "Office document parsing handles 95% of common formats"
+  - "All existing functionality preserved - no breaking changes"
+  - "Image processing happens automatically without user intervention"
+  - "Text content from images is searchable and linked to source"
+  - "Performance impact on existing ingestion is minimal"
+  - "Error handling doesn't break main ingestion pipeline"
 acceptance:
   - id: A1
-    given: "Valid Obsidian vault with markdown files"
-    when: "Ingestion pipeline runs"
-    then: "Content is chunked and embedded without data loss"
+    given: "markdown file with embedded images"
+    when: "running unified ingestion script"
+    then: "images are automatically discovered, processed, and linked to source"
   - id: A2
-    given: "Search query entered"
-    when: "Semantic search executed"
-    then: "Relevant results returned with confidence scores"
+    given: "existing markdown-only vault"
+    when: "upgrading to unified ingestion"
+    then: "all existing functionality works unchanged"
   - id: A3
-    given: "Wikilinks present in content"
-    when: "Knowledge graph built"
-    then: "Related concepts discoverable through relationships"
+    given: "mixed content vault with images and documents"
+    when: "ingestion with image following enabled"
+    then: "text from images is extracted and searchable"
   - id: A4
-    given: "PDF document in vault"
-    when: "Ingestion processes file"
-    then: "Text content extracted and made searchable"
-  - id: A5
-    given: "Image file with text"
-    when: "OCR processing runs"
-    then: "Text extracted with confidence score >70%"
-  - id: A6
-    given: "Audio recording in vault"
-    when: "Speech-to-text processing runs"
-    then: "Transcription generated and indexed"
-  - id: A7
-    given: "Office document (DOCX/XLSX)"
-    when: "Document parsing runs"
-    then: "Content extracted and made searchable"
-  - id: A8
-    given: "Multi-modal search query"
-    when: "Unified search executed"
-    then: "Results from all content types returned with metadata"
+    given: "vault with missing or invalid image references"
+    when: "ingestion process"
+    then: "graceful error handling, main ingestion continues"
 non_functional:
-  a11y: ["CLI interface accessible", "Web interface WCAG AA compliant", "Screen reader compatible", "Keyboard navigation supported"]
-  perf:
-    api_p95_ms: 500
-    ingestion_rate: 10
-    ocr_processing_ms: 2000
-    speech_processing_per_second: 2
-  security: ["No external API calls for content", "Local embedding generation", "File processing sandboxed", "No sensitive data in logs"]
+  a11y: ["CLI output accessible", "error messages clear and descriptive"]
+  perf: { api_p95_ms: 500 }
+  security: ["no external image downloads", "vault paths validated"]
 contracts:
   - type: openapi
-    path: "contracts/api.yaml"
-  - type: openapi
-    path: "contracts/obsidian-data-contracts.yaml"
+    path: "apps/contracts/api.yaml"
 observability:
-  logs: ["Ingestion progress", "Search query performance", "Content processing metrics", "Error conditions", "Multi-modal processing stats"]
-  metrics: ["Search latency", "Ingestion throughput", "Query success rate", "Content type distribution", "Processing success rates", "OCR confidence scores", "Speech transcription accuracy"]
-  traces: ["Ingestion pipeline", "Search execution", "Database queries", "Content processing workflows", "Multi-modal extraction"]
-migrations: ["Initial database schema creation", "Multi-modal metadata schema", "Content type indexing"]
-rollback: ["Drop database tables", "Clear embeddings cache", "Remove multi-modal metadata"]
+  logs: ["image_processing_started", "image_processing_completed", "image_link_extraction_result"]
+  metrics: ["images_processed", "images_with_text", "ocr_confidence_scores"]
+  traces: ["markdown_ingestion_with_images", "image_path_resolution", "ocr_processing"]
+migrations:
+  - "add image_links and image_content to obsidian document schema"
+  - "add image metadata to chunk metadata"
+rollback: ["feature flag to disable image following", "revert schema changes"]

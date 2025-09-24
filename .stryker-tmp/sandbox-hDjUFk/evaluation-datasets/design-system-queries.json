@@ -1,0 +1,168 @@
+{
+  "name": "zettelkasten-knowledge-queries",
+  "description": "Real-world queries for personal knowledge management and zettelkasten evaluation",
+  "queries": [
+    {
+      "id": "learning-strategies",
+      "query": "What are the most effective learning strategies for technical topics?",
+      "expectedResults": [],
+      "intent": "research",
+      "difficulty": "medium",
+      "category": "learning"
+    },
+    {
+      "id": "productivity-systems",
+      "query": "How do I build a sustainable productivity system for knowledge work?",
+      "expectedResults": [],
+      "intent": "methodology",
+      "difficulty": "medium",
+      "category": "productivity"
+    },
+    {
+      "id": "reading-techniques",
+      "query": "What are effective techniques for reading and retaining technical books?",
+      "expectedResults": [],
+      "intent": "research",
+      "difficulty": "easy",
+      "category": "learning"
+    },
+    {
+      "id": "knowledge-organization",
+      "query": "How should I organize my digital notes for long-term retrieval?",
+      "expectedResults": [],
+      "intent": "methodology",
+      "difficulty": "medium",
+      "category": "organization"
+    },
+    {
+      "id": "decision-making",
+      "query": "What frameworks help with making better technical decisions?",
+      "expectedResults": [],
+      "intent": "framework",
+      "difficulty": "hard",
+      "category": "decision-making"
+    },
+    {
+      "id": "writing-practice",
+      "query": "How do I improve my technical writing and communication skills?",
+      "expectedResults": [],
+      "intent": "skill-building",
+      "difficulty": "medium",
+      "category": "communication"
+    },
+    {
+      "id": "research-methods",
+      "query": "What are effective methods for conducting technical research?",
+      "expectedResults": [],
+      "intent": "methodology",
+      "difficulty": "medium",
+      "category": "research"
+    },
+    {
+      "id": "memory-techniques",
+      "query": "How can I improve my memory for learning programming concepts?",
+      "expectedResults": [],
+      "intent": "skill-building",
+      "difficulty": "medium",
+      "category": "learning"
+    },
+    {
+      "id": "project-management",
+      "query": "What are the best practices for managing personal projects?",
+      "expectedResults": [],
+      "intent": "methodology",
+      "difficulty": "medium",
+      "category": "productivity"
+    },
+    {
+      "id": "mental-models",
+      "query": "What mental models are useful for software development?",
+      "expectedResults": [],
+      "intent": "framework",
+      "difficulty": "hard",
+      "category": "thinking"
+    },
+    {
+      "id": "debugging-strategies",
+      "query": "What are effective debugging strategies for complex systems?",
+      "expectedResults": [],
+      "intent": "skill-building",
+      "difficulty": "medium",
+      "category": "problem-solving"
+    },
+    {
+      "id": "code-review",
+      "query": "How do I give and receive effective code reviews?",
+      "expectedResults": [],
+      "intent": "skill-building",
+      "difficulty": "medium",
+      "category": "collaboration"
+    },
+    {
+      "id": "system-design",
+      "query": "What principles should guide system design decisions?",
+      "expectedResults": [],
+      "intent": "framework",
+      "difficulty": "hard",
+      "category": "architecture"
+    },
+    {
+      "id": "time-management",
+      "query": "How do I manage my time effectively as a knowledge worker?",
+      "expectedResults": [],
+      "intent": "methodology",
+      "difficulty": "easy",
+      "category": "productivity"
+    },
+    {
+      "id": "creative-problem-solving",
+      "query": "What techniques help with creative problem solving in software?",
+      "expectedResults": [],
+      "intent": "skill-building",
+      "difficulty": "medium",
+      "category": "problem-solving"
+    },
+    {
+      "id": "learning-paths",
+      "query": "How do I design effective learning paths for new technologies?",
+      "expectedResults": [],
+      "intent": "methodology",
+      "difficulty": "medium",
+      "category": "learning"
+    },
+    {
+      "id": "documentation-practices",
+      "query": "What are best practices for documenting software systems?",
+      "expectedResults": [],
+      "intent": "skill-building",
+      "difficulty": "medium",
+      "category": "communication"
+    },
+    {
+      "id": "team-communication",
+      "query": "How do I improve communication in distributed teams?",
+      "expectedResults": [],
+      "intent": "skill-building",
+      "difficulty": "medium",
+      "category": "collaboration"
+    },
+    {
+      "id": "architecture-patterns",
+      "query": "What software architecture patterns should I know?",
+      "expectedResults": [],
+      "intent": "framework",
+      "difficulty": "hard",
+      "category": "architecture"
+    },
+    {
+      "id": "testing-philosophy",
+      "query": "What is the philosophy behind effective testing strategies?",
+      "expectedResults": [],
+      "intent": "framework",
+      "difficulty": "medium",
+      "category": "testing"
+    }
+  ]
+}
+
+

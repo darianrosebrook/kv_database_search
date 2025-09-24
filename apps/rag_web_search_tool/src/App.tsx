@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { SearchInput } from "../ui/components/SearchInput";
 import { ChatInterface } from "../ui/components/ChatInterface";
 import { ResultsPanel } from "./components/ResultsPanel";
+import { ModelSelector } from "../ui/components/ModelSelector";
+import { ChatHistory } from "../ui/components/ChatHistory";
 import {
   apiService,
   SearchResult as ApiSearchResult,
@@ -35,6 +37,16 @@ interface Message {
   timestamp: Date;
 }
 
+interface ChatSession {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: string;
+  updatedAt: string;
+  model?: string;
+  messageCount: number;
+}
+
 export default function App() {
   const [query, setQuery] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
@@ -58,6 +70,11 @@ export default function App() {
     }>
   >([]);
   const [searchStartTime, setSearchStartTime] = useState<number>(0);
+  const [selectedModel, setSelectedModel] = useState<string>("llama3.1");
+  const [showChatHistory, setShowChatHistory] = useState(false);
+  const [currentSession, setCurrentSession] = useState<ChatSession | null>(
+    null
+  );
 
   // Calculate composite confidence score from multiple factors
   const calculateCompositeScore = (result: any): number => {
@@ -282,6 +299,7 @@ export default function App() {
           options?.autoSearch ||
           (!options?.contextResults?.length && results.length === 0),
         context: chatContext,
+        model: selectedModel,
       });
 
       const aiResponse: Message = {
@@ -436,6 +454,39 @@ export default function App() {
     }, 100);
   };
 
+  const handleLoadChatSession = (session: ChatSession) => {
+    // Convert API session format to internal Message format
+    const loadedMessages: Message[] = session.messages.map((msg, index) => ({
+      id: `${session.id}-${index}`,
+      type:
+        msg.role === "user"
+          ? "user"
+          : msg.role === "assistant"
+          ? "assistant"
+          : "error",
+      content: msg.content,
+      timestamp: new Date(msg.timestamp),
+    }));
+
+    setMessages(loadedMessages);
+    setCurrentSession(session);
+    setHasSearched(true); // Show the chat interface
+    setQuery(""); // Clear search query when loading a chat
+  };
+
+  const handleNewChat = () => {
+    // Clear current session and messages
+    setMessages([]);
+    setCurrentSession(null);
+    setHasSearched(false);
+    setQuery("");
+    setResults([]);
+    setContextResults([]);
+    setChatContext([]);
+    setSuggestedActions([]);
+    setShowChatHistory(false);
+  };
+
   // Show test mode if enabled
   if (showTestMode) {
     return (
@@ -468,6 +519,23 @@ export default function App() {
         </button>
       </div>
 
+      {/* Model selector */}
+      <div className="absolute top-4 left-4 z-20">
+        <ModelSelector
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+        />
+      </div>
+
+      {/* Chat history sidebar */}
+      <ChatHistory
+        isOpen={showChatHistory}
+        onToggle={() => setShowChatHistory(!showChatHistory)}
+        onLoadSession={handleLoadChatSession}
+        onNewChat={handleNewChat}
+        currentSessionId={currentSession?.id}
+      />
+
       <AnimatePresence mode="wait">
         {!hasSearched ? (
           <motion.div
@@ -484,11 +552,13 @@ export default function App() {
                 transition={{ duration: 0.5 }}
                 className="text-center mb-8"
               >
-                <h1 className="mb-4">Design System Documentation Search</h1>
+                <h1 className="mb-4">
+                  Obsidian RAG - Knowledge Base Search & Discovery
+                </h1>
                 <p className="text-muted-foreground max-w-2xl mx-auto">
-                  AI-powered search through your design system documentation
-                  with relevance scoring, source citations, and intelligent
-                  rationale.
+                  AI-powered semantic search through your Obsidian vault with
+                  vector embeddings, knowledge graph relationships, and
+                  intelligent reasoning across your personal knowledge base.
                 </p>
               </motion.div>
 
@@ -513,13 +583,39 @@ export default function App() {
           >
             <div className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-10">
               <div className="p-4">
-                <SearchInput
-                  isInitial={false}
-                  query={query}
-                  onQueryChange={setQuery}
-                  onSubmit={handleSearch}
-                  isLoading={isLoading}
-                />
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <SearchInput
+                      isInitial={false}
+                      query={query}
+                      onQueryChange={setQuery}
+                      onSubmit={handleSearch}
+                      isLoading={isLoading}
+                    />
+                  </div>
+                  <div className="ml-4">
+                    <button
+                      onClick={() => setShowChatHistory(true)}
+                      className="px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors flex items-center gap-2"
+                      title="Chat History"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      History
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -535,6 +631,8 @@ export default function App() {
                   onRemoveContext={handleRemoveContext}
                   suggestedActions={suggestedActions}
                   onSuggestedAction={handleSuggestedAction}
+                  selectedModel={selectedModel}
+                  currentSession={currentSession}
                 />
               </div>
 

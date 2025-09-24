@@ -12,9 +12,9 @@
  * This complements it with system-level globals used by components.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,16 +26,16 @@ interface JSONObject {
 type JSONArray = JSONValue[];
 
 interface ResolveOptions {
-  theme: 'light' | 'dark';
+  theme: "light" | "dark";
 }
 
-const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
-const TOKENS_PATH = path.join(PROJECT_ROOT, 'components', 'designTokens.json');
-const OUTPUT_PATH = path.join(PROJECT_ROOT, 'app', 'designTokens.scss');
+const PROJECT_ROOT = path.resolve(__dirname, "..", "..");
+const TOKENS_PATH = path.join(PROJECT_ROOT, "components", "designTokens.json");
+const OUTPUT_PATH = path.join(PROJECT_ROOT, "styles", "designTokens.scss");
 
 // Converts a dot path into a CSS custom property name
 function tokenPathToCSSVar(pathStr: string): string {
-  return `--${pathStr.replace(/\./g, '-')}`;
+  return `--${pathStr.replace(/\./g, "-")}`;
 }
 
 // Resolve a token node considering $value, $extensions with design.paths.{theme} and viewport scaling
@@ -54,42 +54,42 @@ function resolveNode(
   let raw: unknown = node;
   if (
     raw &&
-    typeof raw === 'object' &&
-    '$value' in (raw as Record<string, unknown>)
+    typeof raw === "object" &&
+    "$value" in (raw as Record<string, unknown>)
   ) {
     raw = (raw as Record<string, unknown>).$value;
   }
 
   // Apply $extensions based on theme
-  if (typeof node === 'object' && node) {
-    const ext = (node as Record<string, unknown>)['$extensions'] as
+  if (typeof node === "object" && node) {
+    const ext = (node as Record<string, unknown>)["$extensions"] as
       | Record<string, unknown>
       | undefined;
     const themeKey = `design.paths.${opts.theme}`;
-    if (ext && typeof ext === 'object' && themeKey in ext) {
+    if (ext && typeof ext === "object" && themeKey in ext) {
       const themed = ext[themeKey];
-      if (typeof themed === 'string') {
+      if (typeof themed === "string") {
         raw = themed;
       }
     }
 
     // Check for viewport scaling extensions (design.paths.scale.heading)
-    if (ext && typeof ext === 'object' && 'design.paths.scale.heading' in ext) {
-      const scaleConfig = ext['design.paths.scale.heading'] as Record<
+    if (ext && typeof ext === "object" && "design.paths.scale.heading" in ext) {
+      const scaleConfig = ext["design.paths.scale.heading"] as Record<
         string,
         unknown
       >;
-      if (scaleConfig && typeof scaleConfig === 'object') {
+      if (scaleConfig && typeof scaleConfig === "object") {
         const vw = scaleConfig.vw as Record<string, unknown>;
         const vh = scaleConfig.vh as Record<string, unknown>;
 
-        if (vw && vh && '$value' in vw && '$value' in vh) {
+        if (vw && vh && "$value" in vw && "$value" in vh) {
           const vwValue = vw.$value as string;
           const vhValue = vh.$value as string;
 
           // Convert the base value to a CSS variable reference if it's a token reference
           let baseValue = raw;
-          if (typeof baseValue === 'string') {
+          if (typeof baseValue === "string") {
             const refPattern = /\{([^}]+)\}/g;
             baseValue = baseValue.replace(
               refPattern,
@@ -105,7 +105,7 @@ function resolveNode(
   }
 
   // Strings can be references like {semantic.color.background.primary}
-  if (typeof raw === 'string') {
+  if (typeof raw === "string") {
     const refPattern = /\{([^}]+)\}/g;
     // If the value contains any references, rewrite them to proper token references
     return raw.replace(
@@ -115,7 +115,7 @@ function resolveNode(
   }
 
   // Primitive values
-  if (typeof raw === 'number' || typeof raw === 'boolean') {
+  if (typeof raw === "number" || typeof raw === "boolean") {
     return String(raw);
   }
 
@@ -132,16 +132,16 @@ function buildCssVarMap(
 ) {
   for (const [key, val] of Object.entries(tokens)) {
     const nextPath = [...currentPath, key];
-    const pathStr = nextPath.join('.');
-    if (val && typeof val === 'object' && !Array.isArray(val)) {
-      const hasValue = '$value' in (val as Record<string, unknown>);
+    const pathStr = nextPath.join(".");
+    if (val && typeof val === "object" && !Array.isArray(val)) {
+      const hasValue = "$value" in (val as Record<string, unknown>);
       const hasChildren = Object.keys(val as Record<string, unknown>).some(
         (k) =>
-          k !== '$value' &&
-          k !== '$type' &&
-          k !== '$description' &&
-          k !== '$extensions' &&
-          k !== '$alias'
+          k !== "$value" &&
+          k !== "$type" &&
+          k !== "$description" &&
+          k !== "$extensions" &&
+          k !== "$alias"
       );
       if (hasValue || !hasChildren) {
         const cssVar = tokenPathToCSSVar(pathStr);
@@ -160,27 +160,30 @@ function formatBlock(selector: string, map: Record<string, string>): string {
   const lines = Object.entries(map)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([name, value]) => `  ${name}: ${value};`)
-    .join('\n');
+    .join("\n");
   return `${selector} {\n${lines}\n}`;
 }
 
 function generate(): void {
-  const raw = fs.readFileSync(TOKENS_PATH, 'utf8');
+  const raw = fs.readFileSync(TOKENS_PATH, "utf8");
   const tokensObj = JSON.parse(raw) as Record<string, unknown>;
 
   // Build maps
   const lightMap: Record<string, string> = {};
   const darkMap: Record<string, string> = {};
 
-  buildCssVarMap(tokensObj, [], { theme: 'light' }, lightMap);
-  buildCssVarMap(tokensObj, [], { theme: 'dark' }, darkMap);
+  buildCssVarMap(tokensObj, [], { theme: "light" }, lightMap);
+  buildCssVarMap(tokensObj, [], { theme: "dark" }, darkMap);
 
   // Compose output SCSS
   const banner = `/* AUTO-GENERATED: Do not edit directly.\n * Source: components/designTokens.json\n */`;
-  const rootBlock = formatBlock(':root', lightMap);
-  const lightBlock = formatBlock('.light', lightMap);
-  const darkBlock = formatBlock('.dark', darkMap);
-  const prefersBlock = `@media (prefers-color-scheme: dark) {\n${formatBlock('  :root', darkMap)}\n${formatBlock('  .light', lightMap)}\n}`;
+  const rootBlock = formatBlock(":root", lightMap);
+  const lightBlock = formatBlock(".light", lightMap);
+  const darkBlock = formatBlock(".dark", darkMap);
+  const prefersBlock = `@media (prefers-color-scheme: dark) {\n${formatBlock(
+    "  :root",
+    darkMap
+  )}\n${formatBlock("  .light", lightMap)}\n}`;
 
   const content = [
     banner,
@@ -188,10 +191,10 @@ function generate(): void {
     lightBlock,
     darkBlock,
     prefersBlock,
-    '',
-  ].join('\n\n');
+    "",
+  ].join("\n\n");
 
-  fs.writeFileSync(OUTPUT_PATH, content, 'utf8');
+  fs.writeFileSync(OUTPUT_PATH, content, "utf8");
   // eslint-disable-next-line no-console
   console.log(`[tokens] Wrote ${path.relative(PROJECT_ROOT, OUTPUT_PATH)}`);
 }

@@ -2,36 +2,36 @@
 // Generate component-scoped CSS custom properties from component token JSON files
 // Usage: node utils/designTokens/generateCSSTokens.mjs
 
-import fs from 'fs';
-import path from 'path';
-import url from 'url';
+import fs from "fs";
+import path from "path";
+import url from "url";
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const projectRoot = path.resolve(__dirname, '..', '..');
+const projectRoot = path.resolve(__dirname, "..", "..");
 
-const COMPONENTS_DIR = path.join(projectRoot, 'ui');
-const SYSTEM_TOKENS_PATH = path.join(COMPONENTS_DIR, 'designTokens.json');
+const COMPONENTS_DIR = path.join(projectRoot, "ui");
+const SYSTEM_TOKENS_PATH = path.join(COMPONENTS_DIR, "designTokens.json");
 
 /**
  * Convert a token reference string like "{semantic.color.background.primary}"
  * into a CSS variable reference using the same naming convention as the global generator
  */
 function refToCssVar(value) {
-  if (typeof value !== 'string') return String(value);
+  if (typeof value !== "string") return String(value);
   const refMatch = value.match(/^\{([^}]+)\}$/);
   if (!refMatch) return value; // literal value (number/dimension/string)
   const tokenPath = refMatch[1];
 
   // Use the same CSS variable naming convention as the global generator
   const cssVarName =
-    '--' +
+    "--" +
     tokenPath
-      .replace(/\./g, '-') // Convert dots to hyphens first
-      .replace(/[A-Z]/g, (m) => '-' + m.toLowerCase()) // Convert camelCase
-      .replace(/[\s_]/g, '-') // Convert spaces and underscores
-      .replace(/[^a-z0-9-]/g, '') // Remove any remaining invalid characters
-      .replace(/-+/g, '-'); // Collapse multiple hyphens into one
+      .replace(/\./g, "-") // Convert dots to hyphens first
+      .replace(/[A-Z]/g, (m) => "-" + m.toLowerCase()) // Convert camelCase
+      .replace(/[\s_]/g, "-") // Convert spaces and underscores
+      .replace(/[^a-z0-9-]/g, "") // Remove any remaining invalid characters
+      .replace(/-+/g, "-"); // Collapse multiple hyphens into one
 
   return `var(${cssVarName})`;
 }
@@ -47,7 +47,7 @@ function flattenTokens(obj, prefixSegments) {
   for (const [key, val] of Object.entries(obj)) {
     const nextPath = [...prefixSegments, key];
 
-    if (val && typeof val === 'object' && !Array.isArray(val)) {
+    if (val && typeof val === "object" && !Array.isArray(val)) {
       // This is a group - recurse and collect its tokens
       const result = flattenTokens(val, nextPath);
 
@@ -70,7 +70,7 @@ function flattenTokens(obj, prefixSegments) {
       }
     } else {
       // Leaf token
-      const tokenName = nextPath.join('-');
+      const tokenName = nextPath.join("-");
       flat[tokenName] = val;
     }
   }
@@ -85,6 +85,16 @@ function buildScssForComponent({ cssVarPrefix, tokenData }) {
   const { groups, flat } = tokenData;
   const lines = [];
 
+  // Helper function to add tokens with dark mode support
+  function addTokenWithDarkMode(name, raw, indent = "  ") {
+    const cssVar = `--${cssVarPrefix}-${name}`;
+    const lightValue = refToCssVar(raw);
+
+    // For now, we'll use the same value for both light and dark mode
+    // In a more sophisticated system, we'd resolve different values for dark mode
+    lines.push(`${indent}${cssVar}: ${lightValue};`);
+  }
+
   // If we have groups, organize by groups with documentation
   if (Object.keys(groups).length > 0) {
     Object.entries(groups).forEach(([groupName, groupData]) => {
@@ -94,25 +104,69 @@ function buildScssForComponent({ cssVarPrefix, tokenData }) {
 
       // Add tokens for this group
       Object.entries(groupData.tokens).forEach(([name, raw]) => {
-        lines.push(`  --${cssVarPrefix}-${name}: ${refToCssVar(raw)};`);
+        addTokenWithDarkMode(name, raw);
       });
 
       // Add spacing between groups
-      lines.push('');
+      lines.push("");
     });
 
     // Remove the last empty line
-    if (lines[lines.length - 1] === '') {
+    if (lines[lines.length - 1] === "") {
       lines.pop();
     }
   } else {
     // Fallback to flat structure if no groups detected
     Object.entries(flat).forEach(([name, raw]) => {
-      lines.push(`  --${cssVarPrefix}-${name}: ${refToCssVar(raw)};`);
+      addTokenWithDarkMode(name, raw);
     });
   }
 
-  return `@mixin vars {\n${lines.join('\n')}\n}`;
+  // Add dark mode media query if we have color tokens
+  const hasColorTokens =
+    Object.keys(groups).some(
+      (groupName) =>
+        groupName === "color" ||
+        groupName === "background" ||
+        groupName === "border"
+    ) ||
+    Object.keys(flat).some(
+      (key) =>
+        key.includes("color") ||
+        key.includes("background") ||
+        key.includes("foreground") ||
+        key.includes("border")
+    );
+
+  if (hasColorTokens && Object.keys(groups).length > 0) {
+    lines.push("");
+    lines.push("  /* === Dark Mode Support === */");
+    lines.push("  @media (prefers-color-scheme: dark) {");
+
+    // Add dark mode variants for color-related tokens
+    Object.entries(groups).forEach(([groupName, groupData]) => {
+      if (groupName === "color") {
+        Object.entries(groupData.tokens).forEach(([name, raw]) => {
+          // For dark mode, use the same values for now
+          // In a more sophisticated system, we'd resolve different values
+          const cssVar = `--${cssVarPrefix}-${name}`;
+          const lightValue = refToCssVar(raw);
+          lines.push(`    ${cssVar}: ${lightValue};`);
+        });
+      } else if (groupName === "background" || groupName === "border") {
+        // Also include background and border groups for dark mode
+        Object.entries(groupData.tokens).forEach(([name, raw]) => {
+          const cssVar = `--${cssVarPrefix}-${name}`;
+          const lightValue = refToCssVar(raw);
+          lines.push(`    ${cssVar}: ${lightValue};`);
+        });
+      }
+    });
+
+    lines.push("  }");
+  }
+
+  return `@mixin vars {\n${lines.join("\n")}\n}`;
 }
 
 /**
@@ -131,7 +185,7 @@ function findTokenJsonFiles(dir) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       results.push(...findTokenJsonFiles(full));
-    } else if (entry.isFile() && entry.name.endsWith('.tokens.json')) {
+    } else if (entry.isFile() && entry.name.endsWith(".tokens.json")) {
       results.push(full);
     }
   }
@@ -142,13 +196,13 @@ function run() {
   // Validate system tokens exist (not strictly required for ref mode)
   if (!fs.existsSync(SYSTEM_TOKENS_PATH)) {
     console.warn(
-      '[tokens] Warning: ui/designTokens/designTokens.json not found. Proceeding with reference output.'
+      "[tokens] Warning: ui/designTokens/designTokens.json not found. Proceeding with reference output."
     );
   }
 
   const tokenFiles = findTokenJsonFiles(COMPONENTS_DIR);
   if (tokenFiles.length === 0) {
-    console.log('[tokens] No component token files found.');
+    console.log("[tokens] No component token files found.");
     return;
   }
 
@@ -157,14 +211,17 @@ function run() {
     try {
       const folder = path.dirname(filePath);
       const folderName = path.basename(folder);
-      const raw = fs.readFileSync(filePath, 'utf8');
+      const raw = fs.readFileSync(filePath, "utf8");
       const json = JSON.parse(raw);
       const prefix = json.prefix;
       const tokens = json.tokens || {};
 
-      if (!prefix || !tokens || typeof tokens !== 'object') {
+      if (!prefix || !tokens || typeof tokens !== "object") {
         console.warn(
-          `[tokens] Skipping ${path.relative(projectRoot, filePath)} — missing prefix or tokens.`
+          `[tokens] Skipping ${path.relative(
+            projectRoot,
+            filePath
+          )} — missing prefix or tokens.`
         );
         continue;
       }
@@ -179,8 +236,11 @@ function run() {
         folder,
         `${capitalize(prefix)}.tokens.generated.scss`
       );
-      const banner = `/* AUTO-GENERATED: Do not edit directly.\n * Source: ${path.relative(projectRoot, filePath)}\n */\n`;
-      fs.writeFileSync(outPath, banner + scss + '\n', 'utf8');
+      const banner = `/* AUTO-GENERATED: Do not edit directly.\n * Source: ${path.relative(
+        projectRoot,
+        filePath
+      )}\n */\n`;
+      fs.writeFileSync(outPath, banner + scss + "\n", "utf8");
       generatedCount += 1;
       console.log(`[tokens] Generated ${path.relative(projectRoot, outPath)}`);
     } catch (err) {

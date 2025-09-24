@@ -22,7 +22,7 @@ interface SearchResult {
   highlights: string[];
   confidenceScore: number;
   source: {
-    type: "documentation" | "component" | "guideline";
+    type: "note" | "article" | "book" | "conversation" | "moc";
     path: string;
     url: string;
   };
@@ -147,12 +147,16 @@ export function DocumentDetailView({
 
   const getSourceIcon = (type: string) => {
     switch (type) {
-      case "component":
-        return "🧩";
-      case "guideline":
-        return "📋";
+      case "moc":
+        return "🗺️";
+      case "article":
+        return "📝";
+      case "book":
+        return "📚";
+      case "conversation":
+        return "💬";
       default:
-        return "📖";
+        return "📄";
     }
   };
 
@@ -352,7 +356,3 @@ export function DocumentDetailView({
     </motion.div>
   );
 }
-
-
-
-

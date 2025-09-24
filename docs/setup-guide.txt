@@ -1,0 +1,79 @@
+🚀 OBSIDIAN RAG SETUP GUIDE
+============================
+
+Your server startup failed because the database user doesn't exist.
+Here's how to fix it:
+
+STEP 1: Set up PostgreSQL Database
+----------------------------------
+
+Option A: Use existing PostgreSQL user
+1. Find your PostgreSQL username:
+   - Mac: Usually your system username
+   - Windows/Linux: Usually 'postgres'
+
+2. Update DATABASE_URL in .env file:
+   DATABASE_URL=postgresql://YOUR_USERNAME:YOUR_PASSWORD@localhost:5432/obsidian_rag
+
+Option B: Create a dedicated user (recommended)
+1. Connect to PostgreSQL:
+   psql -h localhost -U postgres
+
+2. Create database user:
+   CREATE USER obsidian_rag_user WITH PASSWORD 'your_secure_password';
+
+3. Create database:
+   CREATE DATABASE obsidian_rag OWNER obsidian_rag_user;
+
+4. Grant privileges:
+   GRANT ALL PRIVILEGES ON DATABASE obsidian_rag TO obsidian_rag_user;
+
+5. Update .env file:
+   DATABASE_URL=postgresql://obsidian_rag_user:your_secure_password@localhost:5432/obsidian_rag
+
+STEP 2: Test the setup
+----------------------
+Run the setup script:
+npm run setup
+
+This will:
+✅ Test database connection
+✅ Test embedding service (Ollama)
+✅ Validate Obsidian vault path
+✅ Provide next steps
+
+STEP 3: Start the server
+------------------------
+Once setup passes:
+npm run server
+
+Or for development with auto-reload:
+npm run dev
+
+QUICK FIX:
+----------
+If you have PostgreSQL running with default settings:
+1. Edit your .env file
+2. Change: DATABASE_URL=postgresql://username:password@localhost:5432/obsidian_rag
+3. To: DATABASE_URL=postgresql://postgres:postgres@localhost:5432/obsidian_rag
+
+Then run: npm run setup
+
+TROUBLESHOOTING:
+----------------
+❌ "role does not exist"
+   → Database user doesn't exist, create it or use existing user
+
+❌ "database does not exist"
+   → Run: CREATE DATABASE obsidian_rag
+
+❌ "connection refused"
+   → Make sure PostgreSQL is running
+   → Mac: brew services start postgresql
+
+❌ "Ollama connection failed"
+   → Install Ollama: https://ollama.com
+   → Start: ollama serve
+   → Pull model: ollama pull embeddinggemma
+
+Need help? Run: npm run setup

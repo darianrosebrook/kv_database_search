@@ -3,20 +3,20 @@
 // - Reads ui/designTokens/designTokens.json
 // - Emits app/designTokens.scss with :root, .light, .dark, and prefers-color-scheme: dark blocks
 
-import fs from 'fs';
-import path from 'path';
-import url from 'url';
+import fs from "fs";
+import path from "path";
+import url from "url";
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
+const PROJECT_ROOT = path.resolve(__dirname, "..", "..");
 const TOKENS_PATH = path.join(
   PROJECT_ROOT,
-  'ui',
-  'designTokens',
-  'designTokens.json'
+  "ui",
+  "designTokens",
+  "designTokens.json"
 );
-const OUTPUT_PATH = path.join(PROJECT_ROOT, 'app', 'designTokens.scss');
+const OUTPUT_PATH = path.join(PROJECT_ROOT, "styles", "designTokens.scss");
 
 // Global sets for reference validation
 const definedVars = new Set();
@@ -24,16 +24,19 @@ const referencedVars = new Set();
 
 function readTokens() {
   try {
-    const raw = fs.readFileSync(TOKENS_PATH, 'utf8');
+    const raw = fs.readFileSync(TOKENS_PATH, "utf8");
     return JSON.parse(raw);
   } catch (error) {
-    if (error.code === 'ENOENT') {
+    if (error.code === "ENOENT") {
       console.error(
         `[tokens] Missing ${path.relative(PROJECT_ROOT, TOKENS_PATH)}`
       );
     } else if (error instanceof SyntaxError) {
       console.error(
-        `[tokens] JSON parse error in ${path.relative(PROJECT_ROOT, TOKENS_PATH)}:`
+        `[tokens] JSON parse error in ${path.relative(
+          PROJECT_ROOT,
+          TOKENS_PATH
+        )}:`
       );
       console.error(`  ${error.message}`);
     } else {
@@ -48,39 +51,39 @@ function readTokens() {
 
 function tokenPathToCSSVar(pathStr) {
   const kebab = String(pathStr)
-    .replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())
-    .replace(/\./g, '-');
+    .replace(/[A-Z]/g, (m) => "-" + m.toLowerCase())
+    .replace(/\./g, "-");
   return `--${kebab}`;
 }
 
 function resolveNode(node, pathStr, theme, typeHint) {
   let raw = node;
-  let provenance = 'default';
+  let provenance = "default";
 
-  if (raw && typeof raw === 'object' && '$value' in raw) {
+  if (raw && typeof raw === "object" && "$value" in raw) {
     raw = raw.$value;
   }
 
-  if (node && typeof node === 'object' && '$extensions' in node) {
+  if (node && typeof node === "object" && "$extensions" in node) {
     const ext = node.$extensions || {};
 
     // Apply theme-based extensions first
     const key = `design.paths.${theme}`;
     if (
       ext &&
-      typeof ext === 'object' &&
+      typeof ext === "object" &&
       key in ext &&
-      typeof ext[key] === 'string'
+      typeof ext[key] === "string"
     ) {
       raw = ext[key];
       provenance = `$extensions.${key}`;
     }
 
     // Generic calc override
-    if (ext && typeof ext === 'object' && 'design.calc' in ext) {
-      let expr = ext['design.calc'];
-      if (typeof expr === 'string') {
-        provenance = '$extensions.design.calc';
+    if (ext && typeof ext === "object" && "design.calc" in ext) {
+      let expr = ext["design.calc"];
+      if (typeof expr === "string") {
+        provenance = "$extensions.design.calc";
         return {
           value: expr.replace(
             /\{([A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)+)\}/g,
@@ -96,19 +99,19 @@ function resolveNode(node, pathStr, theme, typeHint) {
     }
 
     // Backward-compat: heading-specific scale
-    if (ext && typeof ext === 'object' && 'design.paths.scale.heading' in ext) {
-      const scaleConfig = ext['design.paths.scale.heading'];
-      if (scaleConfig && typeof scaleConfig === 'object') {
+    if (ext && typeof ext === "object" && "design.paths.scale.heading" in ext) {
+      const scaleConfig = ext["design.paths.scale.heading"];
+      if (scaleConfig && typeof scaleConfig === "object") {
         const vw = scaleConfig.vw;
         const vh = scaleConfig.vh;
 
-        if (vw && vh && '$value' in vw && '$value' in vh) {
+        if (vw && vh && "$value" in vw && "$value" in vh) {
           const vwValue = vw.$value;
           const vhValue = vh.$value;
 
           // Convert the base value to a CSS variable reference if it's a token reference
           let baseValue = raw;
-          if (typeof baseValue === 'string') {
+          if (typeof baseValue === "string") {
             baseValue = baseValue.replace(/\{([^}]+)\}/g, (_, refPath) => {
               const v = tokenPathToCSSVar(refPath);
               referencedVars.add(v);
@@ -116,7 +119,7 @@ function resolveNode(node, pathStr, theme, typeHint) {
             });
           }
 
-          provenance = '$extensions.design.paths.scale.heading';
+          provenance = "$extensions.design.paths.scale.heading";
           // Create calc() expression with viewport scaling
           return {
             value: `calc(${baseValue} + ${vwValue} + ${vhValue})`,
@@ -132,7 +135,7 @@ function resolveNode(node, pathStr, theme, typeHint) {
     const delimiter = getArrayDelimiter(typeHint);
     const value = raw
       .map((item) => {
-        if (typeof item === 'string') {
+        if (typeof item === "string") {
           return item.replace(
             /\{([A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)+)\}/g,
             (_, refPath) => {
@@ -148,7 +151,7 @@ function resolveNode(node, pathStr, theme, typeHint) {
     return { value, provenance };
   }
 
-  if (typeof raw === 'string') {
+  if (typeof raw === "string") {
     // Only replace {token.paths.like.this} (no spaces, at least one dot)
     const value = raw.replace(
       /\{([A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)+)\}/g,
@@ -161,7 +164,7 @@ function resolveNode(node, pathStr, theme, typeHint) {
     return { value, provenance };
   }
 
-  if (typeof raw === 'number' || typeof raw === 'boolean') {
+  if (typeof raw === "number" || typeof raw === "boolean") {
     return { value: String(raw), provenance };
   }
 
@@ -170,39 +173,39 @@ function resolveNode(node, pathStr, theme, typeHint) {
 
 function getArrayDelimiter(typeHint) {
   switch (typeHint) {
-    case 'shadow':
-    case 'fontFamily':
-    case 'transition':
-      return ', ';
+    case "shadow":
+    case "fontFamily":
+    case "transition":
+      return ", ";
     default:
-      return ', ';
+      return ", ";
   }
 }
 
 function collectMaps(tokens, currentPath, inheritedType, maps) {
   for (const [key, val] of Object.entries(tokens)) {
-    if (key.startsWith('$')) continue;
+    if (key.startsWith("$")) continue;
     const nextPath = [...currentPath, key];
-    const pathStr = nextPath.join('.');
+    const pathStr = nextPath.join(".");
 
-    if (val && typeof val === 'object' && !Array.isArray(val)) {
+    if (val && typeof val === "object" && !Array.isArray(val)) {
       const nodeType =
-        typeof val.$type === 'string' ? val.$type : inheritedType;
-      const hasValue = Object.prototype.hasOwnProperty.call(val, '$value');
+        typeof val.$type === "string" ? val.$type : inheritedType;
+      const hasValue = Object.prototype.hasOwnProperty.call(val, "$value");
       const hasChildren = Object.keys(val).some(
         (k) =>
-          k !== '$value' &&
-          k !== '$type' &&
-          k !== '$description' &&
-          k !== '$extensions' &&
-          k !== '$alias'
+          k !== "$value" &&
+          k !== "$type" &&
+          k !== "$description" &&
+          k !== "$extensions" &&
+          k !== "$alias"
       );
 
       if (hasValue || !hasChildren) {
         const cssVar = tokenPathToCSSVar(pathStr);
         // Root always uses light/default resolution
-        const lightResult = resolveNode(val, pathStr, 'light', nodeType);
-        const darkResult = resolveNode(val, pathStr, 'dark', nodeType);
+        const lightResult = resolveNode(val, pathStr, "light", nodeType);
+        const darkResult = resolveNode(val, pathStr, "dark", nodeType);
 
         maps.root[cssVar] = {
           value: lightResult.value,
@@ -218,11 +221,11 @@ function collectMaps(tokens, currentPath, inheritedType, maps) {
           const ext = val.$extensions || {};
           const hasLightPath = Object.prototype.hasOwnProperty.call(
             ext,
-            'design.paths.light'
+            "design.paths.light"
           );
           const hasDarkPath = Object.prototype.hasOwnProperty.call(
             ext,
-            'design.paths.dark'
+            "design.paths.dark"
           );
 
           if (hasLightPath || hasDarkPath) {
@@ -259,7 +262,7 @@ function collectMaps(tokens, currentPath, inheritedType, maps) {
     } else {
       // Handle primitive values
       const cssVar = tokenPathToCSSVar(pathStr);
-      const lightResult = resolveNode(val, pathStr, 'light', inheritedType);
+      const lightResult = resolveNode(val, pathStr, "light", inheritedType);
       maps.root[cssVar] = {
         value: lightResult.value,
         provenance: lightResult.provenance,
@@ -295,16 +298,16 @@ function lintTypeVsUnit(pathStr, value, nodeType) {
 function formatLine(name, valueObj, includeProvenance = false) {
   const { value, provenance } = valueObj;
   const comment =
-    includeProvenance && provenance !== 'default'
+    includeProvenance && provenance !== "default"
       ? ` /* via ${provenance} */`
-      : '';
+      : "";
   return `  ${name}: ${value};${comment}`;
 }
 
 // sort tokens by path order ranking alphabetically per path level
 function sortByPathAlphabetically(a, b) {
-  const pathA = a.split('.');
-  const pathB = b.split('.');
+  const pathA = a.split(".");
+  const pathB = b.split(".");
 
   for (let i = 0; i < pathA.length; i++) {
     if (pathA[i] !== pathB[i]) {
@@ -318,14 +321,14 @@ function formatBlock(selector, map, includeProvenance = false) {
   const lines = Object.entries(map)
     .sort(([a], [b]) => sortByPathAlphabetically(a, b))
     .map(([name, valueObj]) => formatLine(name, valueObj, includeProvenance))
-    .join('\n');
+    .join("\n");
   return `${selector} {\n${lines}\n}`;
 }
 
 function validateReferences() {
   const missing = [...referencedVars].filter((v) => !definedVars.has(v));
   if (missing.length) {
-    console.error('[tokens] Missing CSS custom properties for:');
+    console.error("[tokens] Missing CSS custom properties for:");
     missing.sort().forEach((v) => console.error(`  ${v}`));
     process.exit(1);
   }
@@ -353,14 +356,17 @@ function run() {
   validateReferences();
 
   const banner = `/* AUTO-GENERATED: Do not edit directly.\n * Source: components/designTokens.json\n */`;
-  const rootBlock = formatBlock(':root', maps.root);
-  const lightBlock = formatBlock('.light', maps.lightColors);
-  const darkBlock = formatBlock('.dark', maps.darkColors);
+  const rootBlock = formatBlock(":root", maps.root);
+  const lightBlock = formatBlock(".light", maps.lightColors);
+  const darkBlock = formatBlock(".dark", maps.darkColors);
 
   // Reorder: prefers-color-scheme before theme classes for better precedence
   const prefersBlock = maps.hasDarkOverride
-    ? `@media (prefers-color-scheme: dark) {\n${formatBlock('  :root', maps.darkColors)}\n${formatBlock('  .light', maps.lightColors)}\n}`
-    : '';
+    ? `@media (prefers-color-scheme: dark) {\n${formatBlock(
+        "  :root",
+        maps.darkColors
+      )}\n${formatBlock("  .light", maps.lightColors)}\n}`
+    : "";
 
   const content = [
     banner,
@@ -368,10 +374,10 @@ function run() {
     prefersBlock,
     lightBlock,
     darkBlock,
-    '',
-  ].join('\n\n');
+    "",
+  ].join("\n\n");
 
-  fs.writeFileSync(OUTPUT_PATH, content, 'utf8');
+  fs.writeFileSync(OUTPUT_PATH, content, "utf8");
   console.log(`[tokens] Wrote ${path.relative(PROJECT_ROOT, OUTPUT_PATH)}`);
 
   // Summary stats

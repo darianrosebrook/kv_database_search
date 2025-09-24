@@ -9,7 +9,7 @@
 - **Scope:** [Brief summary of in/out boundaries]
 
 ### 🔗 Contracts
-- **OpenAPI Changes:** [contracts/api.yaml v1.x → v1.y]
+- **OpenAPI Changes:** [apps/contracts/api.yaml v1.x → v1.y]
 - **Consumer Tests:** ✅ [X] passed
 - **Provider Tests:** ✅ [X] passed
 - **Contract Drift:** ✅ No breaking changes

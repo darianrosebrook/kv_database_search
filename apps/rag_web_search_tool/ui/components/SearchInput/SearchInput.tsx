@@ -19,7 +19,7 @@ export function SearchInput({
   onQueryChange,
   onSubmit,
   isLoading,
-  placeholder = "Search design system documentation...",
+  placeholder = "Search your Obsidian knowledge base...",
   className = "",
 }: SearchInputProps) {
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,7 +41,7 @@ export function SearchInput({
       animate={isInitial ? { scale: 1 } : { scale: 1 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       role="search"
-      aria-label="Search design system documentation"
+      aria-label="Search your Obsidian knowledge base"
     >
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.inputWrapper}>
@@ -74,8 +74,8 @@ export function SearchInput({
           className={styles.description}
         >
           <p>
-            Search through design system documentation with AI-powered relevance
-            scoring
+            Search through your Obsidian knowledge base with AI-powered semantic
+            search scoring
           </p>
         </motion.div>
       )}

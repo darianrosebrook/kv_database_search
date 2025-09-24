@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    ports:
+      - "8888:8080"
+    volumes:
+      - ./searxng:/etc/searxng
+    environment:
+      - SEARXNG_BASE_URL=https://your-domain.com/
+      - SEARXNG_SECRET=your-secret-key-here
+    restart: unless-stopped
+    networks:
+      - searxng
+
+networks:
+  searxng:
+    external: false

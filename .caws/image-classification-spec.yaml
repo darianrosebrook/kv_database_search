@@ -1,0 +1,51 @@
+id: FEAT-002
+title: "Image Classification and Scene Description for Multi-Modal Content"
+risk_tier: 2
+scope:
+  in:
+    - "Add image classification processor for scene understanding"
+    - "Extract key frames from videos for classification"
+    - "Generate descriptive captions for visual content"
+    - "Combine OCR text extraction with scene descriptions"
+    - "Enhance search with visual content understanding"
+  out:
+    - "Text-only image processing"
+    - "No scene context for visual search"
+invariants:
+  - "OCR functionality remains unchanged and enhanced"
+  - "Image classification is additive, not replacing existing features"
+  - "Performance impact is configurable and optional"
+  - "Scene descriptions are searchable alongside text content"
+  - "Video processing includes frame extraction for classification"
+acceptance:
+  - id: A1
+    given: "image with recognizable scene (meeting, diagram, etc.)"
+    when: "processing with classification enabled"
+    then: "scene description is generated and searchable"
+  - id: A2
+    given: "video without audio"
+    when: "extracting key frames and classifying"
+    then: "visual content is made searchable through scene descriptions"
+  - id: A3
+    given: "image with both text and scene"
+    when: "processing with OCR + classification"
+    then: "both text extraction and scene description are available"
+  - id: A4
+    given: "mixed content vault with images and videos"
+    when: "searching for scene types"
+    then: "results include visual content with scene understanding"
+non_functional:
+  a11y: ["scene descriptions accessible", "alternative text for visual content"]
+  perf: { api_p95_ms: 3000 }
+  security: ["no external API calls without consent", "local processing preferred"]
+contracts:
+  - type: openapi
+    path: "apps/contracts/image-classification.yaml"
+observability:
+  logs: ["image_classification_started", "scene_description_generated", "classification_confidence_score"]
+  metrics: ["images_classified", "scene_confidence_scores", "classification_processing_time"]
+  traces: ["image_scene_analysis", "keyframe_extraction", "description_generation"]
+migrations:
+  - "add scene_description and visual_features to image metadata"
+  - "add keyframe_metadata to video processing results"
+rollback: ["feature flag to disable classification", "revert metadata schema changes"]

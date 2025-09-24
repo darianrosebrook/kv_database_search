@@ -1,0 +1,51 @@
+id: FEAT-001
+title: "Unified Multi-Modal Ingestion with Embedded Image Following"
+risk_tier: 2
+scope:
+  in:
+    - "Consolidate ingest-obsidian.ts and ingest-multi-modal.ts into single unified script"
+    - "Extract embedded images from markdown files during ingestion"
+    - "Process referenced images with OCR for text extraction"
+    - "Link image content back to source markdown files"
+    - "Support for GIF, PNG, JPEG, and other image formats"
+  out:
+    - "Separate text-only ingestion scripts"
+    - "Manual image processing workflows"
+invariants:
+  - "All existing functionality preserved - no breaking changes"
+  - "Image processing happens automatically without user intervention"
+  - "Text content from images is searchable and linked to source"
+  - "Performance impact on existing ingestion is minimal"
+  - "Error handling doesn't break main ingestion pipeline"
+acceptance:
+  - id: A1
+    given: "markdown file with embedded images"
+    when: "running unified ingestion script"
+    then: "images are automatically discovered, processed, and linked to source"
+  - id: A2
+    given: "existing markdown-only vault"
+    when: "upgrading to unified ingestion"
+    then: "all existing functionality works unchanged"
+  - id: A3
+    given: "mixed content vault with images and documents"
+    when: "ingestion with image following enabled"
+    then: "text from images is extracted and searchable"
+  - id: A4
+    given: "vault with missing or invalid image references"
+    when: "ingestion process"
+    then: "graceful error handling, main ingestion continues"
+non_functional:
+  a11y: ["CLI output accessible", "error messages clear and descriptive"]
+  perf: { api_p95_ms: 500 }
+  security: ["no external image downloads", "vault paths validated"]
+contracts:
+  - type: openapi
+    path: "contracts/api.yaml"
+observability:
+  logs: ["image_processing_started", "image_processing_completed", "image_link_extraction_result"]
+  metrics: ["images_processed", "images_with_text", "ocr_confidence_scores"]
+  traces: ["markdown_ingestion_with_images", "image_path_resolution", "ocr_processing"]
+migrations:
+  - "add image_links and image_content to obsidian document schema"
+  - "add image metadata to chunk metadata"
+rollback: ["feature flag to disable image following", "revert schema changes"]

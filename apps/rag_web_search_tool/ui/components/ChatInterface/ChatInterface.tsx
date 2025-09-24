@@ -42,6 +42,16 @@ interface SearchResult {
   lastUpdated: string;
 }
 
+interface ChatSession {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: string;
+  updatedAt: string;
+  model?: string;
+  messageCount: number;
+}
+
 interface ChatInterfaceProps {
   initialQuery: string;
   messages: Message[];
@@ -70,6 +80,8 @@ interface ChatInterfaceProps {
     query?: string;
     filters?: any;
   }) => void;
+  selectedModel?: string;
+  currentSession?: ChatSession | null;
 }
 
 export function ChatInterface({
@@ -82,6 +94,8 @@ export function ChatInterface({
   onRemoveContext,
   suggestedActions = [],
   onSuggestedAction,
+  selectedModel,
+  currentSession,
 }: ChatInterfaceProps) {
   const [currentMessage, setCurrentMessage] = useState("");
 
@@ -117,8 +131,18 @@ export function ChatInterface({
       aria-label="Chat interface"
     >
       <div className={styles.header}>
-        <h3 className={styles.title}>Search Context</h3>
-        <p className={styles.subtitle}>Ask questions about the results</p>
+        <div className={styles.headerMain}>
+          <h3 className={styles.title}>
+            {currentSession ? currentSession.title : "Search Context"}
+          </h3>
+          <p className={styles.subtitle}>Ask questions about the results</p>
+        </div>
+        {selectedModel && (
+          <div className={styles.modelInfo}>
+            <span className={styles.modelLabel}>Model:</span>
+            <span className={styles.modelName}>{selectedModel}</span>
+          </div>
+        )}
 
         {/* Context chips */}
         {contextResults.length > 0 && (
@@ -156,7 +180,7 @@ export function ChatInterface({
                 </h4>
                 <p className={styles.description}>
                   {resultsCount && resultsCount > 0
-                    ? `I found ${resultsCount} relevant documentation sections. Ask me questions about them or click on results to add them to context.`
+                    ? `I found ${resultsCount} relevant notes from your vault. Ask me questions about them or click on results to add them to context.`
                     : "Ask about components, paste code, or describe what you need to get started."}
                 </p>
               </div>

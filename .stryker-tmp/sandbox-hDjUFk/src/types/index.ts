@@ -1,0 +1,485 @@
+// @ts-nocheck
+// =============================================================================
+// CORE DATA STRUCTURES
+// =============================================================================
+
+// Re-export all Obsidian-specific types from models
+export type { ObsidianDocument, Wikilink, Backlink, ObsidianEmbeddingContext, ObsidianSearchQuery, ObsidianSearchOptions, ObsidianVaultAnalytics, ObsidianValidationResult, ObsidianIngestionConfig, SearchAPIRequest, SearchAPIResponse, IngestionAPIRequest, IngestionAPIResponse, AnalyticsAPIResponse, HealthAPIResponse, ObsidianContentType, ObsidianFrontmatterSchema, ValidationError, ValidationWarning } from "../lib/obsidian-models";
+
+// =============================================================================
+// MULTI-MODAL CONTENT TYPES
+// =============================================================================
+
+// Content type definitions
+export enum ContentType {
+  // Text-based
+  MARKDOWN = "markdown",
+  PLAIN_TEXT = "plain_text",
+  RICH_TEXT = "rich_text",
+  // Documents
+  PDF = "pdf",
+  OFFICE_DOC = "office_document",
+  OFFICE_SHEET = "office_spreadsheet",
+  OFFICE_PRESENTATION = "office_presentation",
+  // Images
+  RASTER_IMAGE = "raster_image",
+  VECTOR_IMAGE = "vector_image",
+  DOCUMENT_IMAGE = "document_image",
+  // Audio
+  AUDIO = "audio",
+  SPEECH = "speech",
+  // Video
+  VIDEO = "video",
+  // Structured Data
+  JSON = "json",
+  XML = "xml",
+  CSV = "csv",
+  // Binary/Other
+  BINARY = "binary",
+  UNKNOWN = "unknown",
+}
+
+// Universal metadata schema
+export interface UniversalMetadata {
+  file: FileMetadata;
+  content: ContentMetadata;
+  processing: ProcessingMetadata;
+  quality: QualityMetadata;
+  relationships: RelationshipMetadata;
+}
+export interface FileMetadata {
+  id: string;
+  path: string;
+  name: string;
+  extension: string;
+  mimeType: string;
+  size: number;
+  createdAt: Date;
+  modifiedAt: Date;
+  checksum: string;
+}
+export interface ContentMetadata {
+  type: ContentType;
+  language?: string;
+  encoding?: string;
+  dimensions?: Dimensions;
+  duration?: number;
+  pageCount?: number;
+  wordCount?: number;
+  characterCount?: number;
+
+  // Enhanced image classification metadata
+  imageClassification?: {
+    ocrAvailable: boolean;
+    ocrConfidence: number;
+    sceneDescriptionAvailable: boolean;
+    sceneConfidence: number;
+    objectsDetected: number;
+    visualFeaturesAnalyzed: boolean;
+    processingTime: number;
+    modelUsed: string;
+    keyFrames?: Array<{
+      timestamp: number;
+      description: string;
+      confidence: number;
+    }>;
+  };
+
+  // Scene description metadata
+  sceneDescription?: {
+    description: string;
+    confidence: number;
+    objects: string[];
+    sceneType: string;
+    visualFeatures: {
+      colors: string[];
+      composition: string;
+      lighting: string;
+      style: string;
+    };
+    relationships: string[];
+    generatedAt: Date;
+  };
+
+  // Video processing metadata
+  videoMetadata?: {
+    duration: number;
+    frameRate: number;
+    resolution: string;
+    keyframesExtracted: number;
+    audioAvailable: boolean;
+    subtitlesAvailable: boolean;
+  };
+}
+export interface Dimensions {
+  width: number;
+  height: number;
+}
+export interface ProcessingMetadata {
+  processedAt: Date;
+  processor: string;
+  version: string;
+  parameters: Record<string, any>;
+  processingTime: number;
+  success: boolean;
+  errors?: string[];
+}
+export interface QualityMetadata {
+  overallScore: number;
+  confidence: number;
+  completeness: number;
+  accuracy: number;
+  issues: QualityIssue[];
+}
+export interface QualityIssue {
+  type: "completeness" | "accuracy" | "consistency" | "timeliness";
+  field: string;
+  severity: "low" | "medium" | "high";
+  description: string;
+}
+export interface RelationshipMetadata {
+  parentFile?: string;
+  relatedFiles: string[];
+  tags: string[];
+  categories: string[];
+  topics: string[];
+}
+
+// Content type detection result
+export interface ContentTypeResult {
+  mimeType: string;
+  contentType: ContentType;
+  confidence: number;
+  features: ContentFeatures;
+}
+export interface ContentFeatures {
+  hasText: boolean;
+  hasImages: boolean;
+  hasAudio: boolean;
+  hasVideo: boolean;
+  isStructured: boolean;
+  encoding: string;
+  language: string;
+}
+
+// Ingestion types
+export interface MultiModalIngestionConfig {
+  batchSize?: number;
+  rateLimitMs?: number;
+  skipExisting?: boolean;
+  includePatterns?: string[];
+  excludePatterns?: string[];
+  enableOCR?: boolean;
+  enableSpeechToText?: boolean;
+  maxFileSize?: number;
+}
+export interface MultiModalIngestionResult {
+  totalFiles: number;
+  processedFiles: number;
+  skippedFiles: number;
+  failedFiles: number;
+  totalChunks: number;
+  processedChunks: number;
+  errors: string[];
+  contentTypeStats: Record<ContentType, number>;
+}
+
+// Import and export ObsidianSearchResult from models
+import type { ObsidianSearchResult as ObsidianSearchResultType } from "../lib/obsidian-models";
+export type ObsidianSearchResult = ObsidianSearchResultType;
+export interface DocumentChunk {
+  id: string;
+  text: string;
+  meta: DocumentMetadata;
+  embedding?: number[];
+}
+export interface DocumentMetadata {
+  uri: string;
+  section: string;
+  breadcrumbs: string[];
+  contentType: string;
+  sourceType: string;
+  sourceDocumentId: string;
+  lang: string;
+  acl: string;
+  updatedAt: Date;
+  createdAt?: Date;
+  chunkIndex?: number;
+  chunkCount?: number;
+  // Enhanced Obsidian-specific metadata
+  obsidianFile?: {
+    fileName: string;
+    filePath: string;
+    frontmatter: Record<string, any>;
+    wikilinks: string[];
+    tags: string[];
+    checksum: string;
+    stats: {
+      wordCount: number;
+      characterCount: number;
+      lineCount: number;
+    };
+  };
+  // Multi-modal file metadata
+  multiModalFile?: {
+    fileId: string;
+    contentType: ContentType;
+    mimeType: string;
+    checksum: string;
+    quality: QualityMetadata;
+    processing: ProcessingMetadata;
+  };
+}
+export interface SearchResult {
+  id: string;
+  text: string;
+  meta: DocumentMetadata;
+  cosineSimilarity: number;
+  rank: number;
+}
+export interface EmbeddingConfig {
+  model: string;
+  dimension: number;
+}
+
+// Legacy type for backward compatibility
+export interface ObsidianFile {
+  filePath: string;
+  fileName: string;
+  content: string;
+  frontmatter: Record<string, any>;
+  wikilinks: string[];
+  tags: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// =============================================================================
+// API RESPONSE TYPES
+// =============================================================================
+
+export interface ObsidianSearchResponse {
+  query: string;
+  results: ObsidianSearchResult[];
+  totalFound: number;
+  latencyMs: number;
+  facets?: {
+    contentTypes?: Array<{
+      type: string;
+      count: number;
+    }>;
+    tags?: Array<{
+      tag: string;
+      count: number;
+    }>;
+    folders?: Array<{
+      folder: string;
+      count: number;
+    }>;
+    temporal?: Array<{
+      period: string;
+      count: number;
+    }>;
+    fileTypes?: Array<{
+      type: string;
+      count: number;
+    }>;
+  };
+  graphInsights?: {
+    queryConcepts: string[];
+    relatedConcepts: string[];
+    knowledgeClusters: Array<{
+      name: string;
+      files: string[];
+      centrality: number;
+    }>;
+  };
+}
+
+// =============================================================================
+// API REQUEST/RESPONSE TYPES
+// =============================================================================
+
+export interface HealthResponse {
+  status: "healthy" | "degraded" | "unhealthy";
+  timestamp: string;
+  version: string;
+  services: {
+    database: boolean;
+    embeddings: boolean;
+    search: boolean;
+    ingestion: boolean;
+  };
+  database?: {
+    totalChunks: number;
+    lastUpdate: string | null;
+  };
+  embeddings?: {
+    model: string;
+    dimension: number;
+    available: boolean;
+  };
+}
+export interface SearchRequest {
+  query: string;
+  limit?: number;
+  searchMode?: "semantic" | "keyword" | "comprehensive";
+  includeRelated?: boolean;
+  maxRelated?: number;
+  fileTypes?: string[];
+  tags?: string[];
+  folders?: string[];
+  minSimilarity?: number;
+  dateRange?: {
+    start?: string;
+    end?: string;
+  };
+}
+export interface SearchResponse {
+  query: string;
+  results: ObsidianSearchResult[];
+  totalFound: number;
+  facets?: {
+    contentTypes?: Array<{
+      type: string;
+      count: number;
+    }>;
+    tags?: Array<{
+      tag: string;
+      count: number;
+    }>;
+    folders?: Array<{
+      folder: string;
+      count: number;
+    }>;
+    temporal?: Array<{
+      period: string;
+      count: number;
+    }>;
+    fileTypes?: Array<{
+      type: string;
+      count: number;
+    }>;
+  };
+  graphInsights?: {
+    queryConcepts: string[];
+    relatedConcepts: string[];
+    knowledgeClusters: Array<{
+      name: string;
+      files: string[];
+      centrality: number;
+    }>;
+  };
+  error?: string;
+}
+export interface IngestRequest {
+  path?: string;
+  forceRefresh?: boolean;
+  fileTypes?: string[];
+  tags?: string[];
+  folders?: string[];
+}
+export interface IngestResponse {
+  success: boolean;
+  message: string;
+  processedFiles: number;
+  totalChunks: number;
+  errors: string[];
+  performance?: {
+    totalTime: number;
+    filesPerSecond: number;
+    chunksPerSecond: number;
+  };
+}
+export interface GraphResponse {
+  nodes: Array<{
+    id: string;
+    label: string;
+    type: string;
+    count: number;
+  }>;
+  edges: Array<{
+    source: string;
+    target: string;
+    type: string;
+    weight: number;
+  }>;
+  clusters: Array<{
+    id: string;
+    name: string;
+    nodes: string[];
+    centrality: number;
+  }>;
+  metadata?: {
+    totalNodes: number;
+    totalEdges: number;
+    generatedAt: string;
+  };
+  error?: string;
+}
+export interface StatsResponse {
+  totalChunks: number;
+  byContentType: Record<string, number>;
+  byFolder: Record<string, number>;
+  lastUpdate: string | null;
+  performance?: {
+    totalQueries: number;
+    slowQueries: number;
+    p95Latency: number;
+    averageLatency: number;
+    minLatency: number;
+    maxLatency: number;
+  };
+  error?: string;
+}
+
+// Chat session types for database storage
+export interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+  timestamp: string;
+  model?: string;
+  metadata?: {
+    searchResults?: any[];
+    context?: any[];
+    suggestedActions?: any[];
+  };
+}
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  model: string;
+  createdAt: string;
+  updatedAt: string;
+  userId?: string; // For multi-user support
+  tags?: string[];
+  isPublic?: boolean;
+  embedding?: number[]; // For semantic search of chat sessions
+  topics?: string[];
+  webResults?: any[];
+  contextDocuments?: any[];
+  chatSessions?: ChatSession[];
+  queryConcepts?: string[];
+  relatedConcepts?: string[];
+  knowledgeClusters?: Array<{
+    name: string;
+    files: string[];
+    centrality: number;
+  }>;
+  summary?: string; // AI-generated summary of the conversation
+  messageCount: number;
+  totalTokens?: number;
+}
+export interface ChatSessionSearchResult {
+  id: string;
+  title: string;
+  summary: string;
+  model: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+  topics?: string[];
+  relevanceScore?: number;
+  preview?: string; // Preview of the conversation
+}

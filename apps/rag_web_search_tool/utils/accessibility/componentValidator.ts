@@ -10,7 +10,7 @@ import {
   type ValidationResult,
   WCAG_LEVELS,
   type WCAGLevel,
-} from "./tokenValidator";
+} from "./tokenValidator.mjs";
 import fs from "fs";
 import path from "path";
 import { glob } from "glob";

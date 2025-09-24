@@ -82,7 +82,7 @@ export function ResultsPanel({
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           <div>
-            <h3 className="font-medium">Searching documentation...</h3>
+            <h3 className="font-medium">Searching your vault...</h3>
             <p className="text-muted-foreground text-sm">
               Analyzing relevance and ranking results
             </p>

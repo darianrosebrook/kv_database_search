@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "testRunner": "vitest",
+  "reporters": ["html", "clear-text", "progress", "json"],
+  "coverageAnalysis": "perTest", 
+  "mutate": [
+    "src/lib/database.ts",
+    "src/lib/embeddings.ts",
+    "src/lib/multi-modal.ts",
+    "src/lib/processors/base-processor.ts"
+  ],
+  "thresholds": {
+    "high": 80,
+    "low": 30,
+    "break": null
+  },
+  "maxConcurrentTestRunners": 1,
+  "timeoutMS": 15000,
+  "timeoutFactor": 1.5,
+  "tempDirName": "stryker-tmp",
+  "vitest": {
+    "configFile": "config/vitest.config.ts",
+    "configOverrides": {
+      "test": {
+        "include": ["tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+        "exclude": ["tests/integration/**/*", "tests/contract/**/*", "tests/e2e/**/*", "tests/axe/**/*"]
+      }
+    }
+  }
+}
