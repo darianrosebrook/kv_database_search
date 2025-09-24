@@ -1,0 +1,168 @@
+{
+  "name": "design-system-queries",
+  "description": "Real-world queries for design system evaluation",
+  "queries": [
+    {
+      "id": "button-component",
+      "query": "How do I implement a primary button component?",
+      "expectedResults": [],
+      "intent": "component",
+      "difficulty": "easy",
+      "category": "component"
+    },
+    {
+      "id": "color-tokens",
+      "query": "What are the available color tokens in the design system?",
+      "expectedResults": [],
+      "intent": "reference",
+      "difficulty": "easy",
+      "category": "reference"
+    },
+    {
+      "id": "responsive-breakpoints",
+      "query": "How do I use responsive breakpoints for different screen sizes?",
+      "expectedResults": [],
+      "intent": "component",
+      "difficulty": "medium",
+      "category": "component"
+    },
+    {
+      "id": "accessibility-guidelines",
+      "query": "What are the accessibility guidelines for form inputs?",
+      "expectedResults": [],
+      "intent": "reference",
+      "difficulty": "medium",
+      "category": "reference"
+    },
+    {
+      "id": "modal-implementation",
+      "query": "How do I create a modal dialog with proper focus management?",
+      "expectedResults": [],
+      "intent": "component",
+      "difficulty": "hard",
+      "category": "component"
+    },
+    {
+      "id": "typography-scale",
+      "query": "What is the typography scale and how should I use it?",
+      "expectedResults": [],
+      "intent": "reference",
+      "difficulty": "easy",
+      "category": "reference"
+    },
+    {
+      "id": "data-visualization",
+      "query": "How do I create charts and graphs that follow design system patterns?",
+      "expectedResults": [],
+      "intent": "component",
+      "difficulty": "hard",
+      "category": "component"
+    },
+    {
+      "id": "contributing-process",
+      "query": "What is the process for contributing new components to the design system?",
+      "expectedResults": [],
+      "intent": "process",
+      "difficulty": "medium",
+      "category": "process"
+    },
+    {
+      "id": "icon-usage",
+      "query": "How should I use icons in the design system and what are the available options?",
+      "expectedResults": [],
+      "intent": "component",
+      "difficulty": "medium",
+      "category": "component"
+    },
+    {
+      "id": "spacing-system",
+      "query": "Explain the spacing system and spacing tokens",
+      "expectedResults": [],
+      "intent": "concept",
+      "difficulty": "easy",
+      "category": "concept"
+    },
+    {
+      "id": "form-validation",
+      "query": "How do I implement form validation with proper error states?",
+      "expectedResults": [],
+      "intent": "component",
+      "difficulty": "medium",
+      "category": "component"
+    },
+    {
+      "id": "dark-mode",
+      "query": "How do I implement dark mode in my application?",
+      "expectedResults": [],
+      "intent": "component",
+      "difficulty": "hard",
+      "category": "component"
+    },
+    {
+      "id": "animation-principles",
+      "query": "What are the animation principles and motion guidelines?",
+      "expectedResults": [],
+      "intent": "concept",
+      "difficulty": "medium",
+      "category": "concept"
+    },
+    {
+      "id": "testing-strategy",
+      "query": "What is the testing strategy for design system components?",
+      "expectedResults": [],
+      "intent": "process",
+      "difficulty": "medium",
+      "category": "process"
+    },
+    {
+      "id": "documentation-standards",
+      "query": "What are the documentation standards for components?",
+      "expectedResults": [],
+      "intent": "reference",
+      "difficulty": "easy",
+      "category": "reference"
+    },
+    {
+      "id": "performance-optimization",
+      "query": "How do I optimize the performance of design system components?",
+      "expectedResults": [],
+      "intent": "process",
+      "difficulty": "hard",
+      "category": "process"
+    },
+    {
+      "id": "internationalization",
+      "query": "How do I handle internationalization and localization in components?",
+      "expectedResults": [],
+      "intent": "component",
+      "difficulty": "hard",
+      "category": "component"
+    },
+    {
+      "id": "design-tokens-api",
+      "query": "How do I access design tokens programmatically?",
+      "expectedResults": [],
+      "intent": "reference",
+      "difficulty": "medium",
+      "category": "reference"
+    },
+    {
+      "id": "component-composition",
+      "query": "How do I compose complex components from simpler ones?",
+      "expectedResults": [],
+      "intent": "concept",
+      "difficulty": "medium",
+      "category": "concept"
+    },
+    {
+      "id": "browser-support",
+      "query": "What browsers and versions does the design system support?",
+      "expectedResults": [],
+      "intent": "reference",
+      "difficulty": "easy",
+      "category": "reference"
+    }
+  ]
+}
+
+

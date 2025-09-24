@@ -1,0 +1,27 @@
+{
+  "agent": "obsidian-rag-dev",
+  "model": "unknown",
+  "prompts": [],
+  "commit": "unknown",
+  "timestamp": "2025-09-24T02:24:03.120Z",
+  "artifacts": [
+    "tests/search.test.ts",
+    "package.json",
+    "tsconfig.json",
+    "vitest.config.ts",
+    ".caws/working-spec.yaml",
+    "stryker.conf.json"
+  ],
+  "results": {
+    "coverage_branch": 0,
+    "mutation_score": 0,
+    "tests_passed": 0,
+    "contracts": {
+      "consumer": true,
+      "provider": true
+    },
+    "a11y": "unknown",
+    "perf": {}
+  },
+  "approvals": []
+}

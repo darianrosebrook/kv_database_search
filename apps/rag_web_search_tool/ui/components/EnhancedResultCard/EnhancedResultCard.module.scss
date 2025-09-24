@@ -1,0 +1,371 @@
+@import '../../../app/designTokens.scss';
+@import './EnhancedResultCard.tokens.generated.scss';
+
+:root {
+  @include vars;
+}
+
+.enhancedResultCard {
+  transition: var(--enhancedResultCard-container-transition);
+  cursor: var(--enhancedResultCard-container-cursor);
+  overflow: var(--enhancedResultCard-container-overflow);
+
+  .card {
+    background: var(--enhancedResultCard-card-background);
+    border: 1px solid var(--enhancedResultCard-card-border);
+    border-radius: var(--enhancedResultCard-card-borderRadius);
+    box-shadow: var(--enhancedResultCard-card-shadow);
+    transition: var(--enhancedResultCard-card-transition);
+
+    &:hover {
+      box-shadow: var(--enhancedResultCard-cardHover-shadow);
+      border-color: var(--enhancedResultCard-cardHover-borderColor);
+    }
+
+    &.selected {
+      border-color: var(--enhancedResultCard-cardSelected-borderColor);
+      box-shadow: var(--enhancedResultCard-cardSelected-shadow);
+      outline: var(--enhancedResultCard-cardSelected-ring);
+      outline-offset: 2px;
+    }
+  }
+
+  .header {
+    padding-bottom: var(--enhancedResultCard-header-paddingBottom);
+
+    .headerContent {
+      display: flex;
+      align-items: center;
+      gap: var(--enhancedResultCard-headerContent-gap);
+
+      .sourceIcon {
+        font-size: var(--enhancedResultCard-sourceIcon-fontSize);
+        flex-shrink: var(--enhancedResultCard-sourceIcon-flexShrink);
+      }
+
+      .title {
+        font-weight: var(--enhancedResultCard-title-fontWeight);
+        font-size: var(--enhancedResultCard-title-fontSize);
+        line-height: var(--enhancedResultCard-title-lineHeight);
+        color: var(--enhancedResultCard-title-color);
+        flex: 1;
+        min-width: 0;
+      }
+
+      .badge {
+        margin-left: var(--enhancedResultCard-badge-marginLeft);
+        flex-shrink: var(--enhancedResultCard-badge-flexShrink);
+        font-size: var(--enhancedResultCard-badge-fontSize);
+      }
+    }
+  }
+
+  .metadata {
+    display: flex;
+    align-items: center;
+    gap: var(--enhancedResultCard-metadata-gap);
+    font-size: var(--enhancedResultCard-metadata-fontSize);
+    color: var(--enhancedResultCard-metadata-color);
+    margin-bottom: var(--enhancedResultCard-metadata-marginBottom);
+
+    .confidenceScore {
+      display: flex;
+      align-items: center;
+      gap: var(--enhancedResultCard-confidenceScore-gap);
+
+      .confidenceIcon {
+        width: var(--enhancedResultCard-confidenceIcon-width);
+        height: var(--enhancedResultCard-confidenceIcon-height);
+      }
+
+      &.high {
+        color: var(--enhancedResultCard-confidenceHigh-color);
+      }
+
+      &.medium {
+        color: var(--enhancedResultCard-confidenceMedium-color);
+      }
+
+      &.low {
+        color: var(--enhancedResultCard-confidenceLow-color);
+      }
+    }
+
+    .badgeGroup {
+      display: flex;
+      gap: var(--enhancedResultCard-badgeGroup-gap);
+    }
+
+    .pathText {
+      font-size: var(--enhancedResultCard-pathText-fontSize);
+      color: var(--enhancedResultCard-pathText-color);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .actionButton {
+      opacity: var(--enhancedResultCard-actionButton-opacity);
+      transition: var(--enhancedResultCard-actionButton-transition);
+
+      &.visible {
+        opacity: var(--enhancedResultCard-actionButtonVisible-opacity);
+      }
+    }
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--enhancedResultCard-content-gap);
+
+    .contentPreview {
+      display: flex;
+      flex-direction: column;
+      gap: var(--enhancedResultCard-contentPreview-gap);
+
+      .previewBox {
+        font-size: var(--enhancedResultCard-previewBox-fontSize);
+        line-height: var(--enhancedResultCard-previewBox-lineHeight);
+        background: var(--enhancedResultCard-previewBox-background);
+        padding: var(--enhancedResultCard-previewBox-padding);
+        border-radius: var(--enhancedResultCard-previewBox-borderRadius);
+        border-left: var(--enhancedResultCard-previewBox-borderLeft);
+        position: var(--enhancedResultCard-previewBox-position);
+
+        .highlight {
+          background: var(--enhancedResultCard-highlight-background);
+          padding: var(--enhancedResultCard-highlight-padding);
+          border-radius: var(--enhancedResultCard-highlight-borderRadius);
+        }
+
+        .copyButton {
+          position: var(--enhancedResultCard-copyButton-position);
+          top: var(--enhancedResultCard-copyButton-top);
+          right: var(--enhancedResultCard-copyButton-right);
+          opacity: var(--enhancedResultCard-copyButton-opacity);
+          transition: var(--enhancedResultCard-copyButton-transition);
+          height: var(--enhancedResultCard-copyButton-height);
+          width: var(--enhancedResultCard-copyButton-width);
+          padding: var(--enhancedResultCard-copyButton-padding);
+
+          &.visible {
+            opacity: var(--enhancedResultCard-copyButtonVisible-opacity);
+          }
+        }
+
+        .copiedIndicator {
+          position: var(--enhancedResultCard-copiedIndicator-position);
+          top: var(--enhancedResultCard-copiedIndicator-top);
+          right: var(--enhancedResultCard-copiedIndicator-right);
+          font-size: var(--enhancedResultCard-copiedIndicator-fontSize);
+          color: var(--enhancedResultCard-copiedIndicator-color);
+        }
+
+        &:hover .copyButton {
+          opacity: var(--enhancedResultCard-copyButtonVisible-opacity);
+        }
+      }
+
+      .expandButton {
+        margin-top: var(--enhancedResultCard-expandButton-marginTop);
+        font-size: var(--enhancedResultCard-expandButton-fontSize);
+        height: var(--enhancedResultCard-expandButton-height);
+      }
+    }
+
+    .separator {
+      background: var(--enhancedResultCard-separator-background);
+      height: var(--enhancedResultCard-separator-height);
+      width: var(--enhancedResultCard-separator-width);
+    }
+
+    .explanation {
+      display: flex;
+      flex-direction: column;
+      gap: var(--enhancedResultCard-explanation-gap);
+
+      .explanationHeader {
+        display: flex;
+        align-items: center;
+        gap: var(--enhancedResultCard-explanationHeader-gap);
+
+        .explanationIcon {
+          width: var(--enhancedResultCard-explanationIcon-width);
+          height: var(--enhancedResultCard-explanationIcon-height);
+          color: var(--enhancedResultCard-explanationIcon-color);
+        }
+
+        .explanationTitle {
+          font-size: var(--enhancedResultCard-explanationTitle-fontSize);
+          font-weight: var(--enhancedResultCard-explanationTitle-fontWeight);
+        }
+      }
+
+      .explanationContent {
+        display: flex;
+        flex-direction: column;
+        gap: var(--enhancedResultCard-explanationContent-gap);
+
+        .explanationText {
+          font-size: var(--enhancedResultCard-explanationText-fontSize);
+          color: var(--enhancedResultCard-explanationText-color);
+          line-height: var(--enhancedResultCard-explanationText-lineHeight);
+        }
+
+        .insights {
+          display: flex;
+          flex-direction: column;
+          gap: var(--enhancedResultCard-insights-gap);
+
+          .insightsHeader {
+            display: flex;
+            align-items: center;
+            gap: var(--enhancedResultCard-insightsHeader-gap);
+
+            .insightsIcon {
+              width: var(--enhancedResultCard-insightsIcon-width);
+              height: var(--enhancedResultCard-insightsIcon-height);
+              color: var(--enhancedResultCard-insightsIcon-color);
+            }
+
+            .insightsTitle {
+              font-size: var(--enhancedResultCard-insightsTitle-fontSize);
+              font-weight: var(--enhancedResultCard-insightsTitle-fontWeight);
+            }
+          }
+
+          .insightsList {
+            display: flex;
+            flex-direction: column;
+            gap: var(--enhancedResultCard-insightsList-gap);
+
+            .insightItem {
+              display: flex;
+              font-size: var(--enhancedResultCard-insightItem-fontSize);
+              color: var(--enhancedResultCard-insightItem-color);
+              gap: var(--enhancedResultCard-insightItem-gap);
+
+              .insightBullet {
+                color: var(--enhancedResultCard-insightBullet-color);
+                margin-top: var(--enhancedResultCard-insightBullet-marginTop);
+              }
+            }
+          }
+        }
+
+        .actions {
+          display: flex;
+          flex-direction: column;
+          gap: var(--enhancedResultCard-actions-gap);
+
+          .actionsHeader {
+            display: flex;
+            align-items: center;
+            gap: var(--enhancedResultCard-actionsHeader-gap);
+
+            .actionsIcon {
+              width: var(--enhancedResultCard-actionsIcon-width);
+              height: var(--enhancedResultCard-actionsIcon-height);
+              color: var(--enhancedResultCard-actionsIcon-color);
+            }
+
+            .actionsTitle {
+              font-size: var(--enhancedResultCard-actionsTitle-fontSize);
+              font-weight: var(--enhancedResultCard-actionsTitle-fontWeight);
+            }
+          }
+
+          .actionsGrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--enhancedResultCard-actionsGrid-gap);
+
+            .actionButton {
+              justify-content: var(--enhancedResultCard-actionButton-justifyContent);
+              font-size: var(--enhancedResultCard-actionButton-fontSize);
+              height: var(--enhancedResultCard-actionButton-height);
+              text-align: var(--enhancedResultCard-actionButton-textAlign);
+
+              .actionIcon {
+                width: var(--enhancedResultCard-actionIcon-width);
+                height: var(--enhancedResultCard-actionIcon-height);
+                margin-right: var(--enhancedResultCard-actionIcon-marginRight);
+                flex-shrink: var(--enhancedResultCard-actionIcon-flexShrink);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .footer {
+    padding-top: var(--enhancedResultCard-footer-paddingTop);
+    border-top: var(--enhancedResultCard-footer-borderTop);
+
+    .footerContent {
+      display: flex;
+      align-items: center;
+      justify-content: var(--enhancedResultCard-footerContent-justifyContent);
+
+      .tagGroup {
+        display: flex;
+        gap: var(--enhancedResultCard-tagGroup-gap);
+        flex: 1;
+        min-width: 0;
+
+        .tag {
+          font-size: var(--enhancedResultCard-tag-fontSize);
+        }
+
+        .tagOverflow {
+          font-size: var(--enhancedResultCard-tagOverflow-fontSize);
+        }
+      }
+
+      .footerMeta {
+        display: flex;
+        align-items: center;
+        gap: var(--enhancedResultCard-footerMeta-gap);
+
+        .lastUpdated {
+          font-size: var(--enhancedResultCard-lastUpdated-fontSize);
+          color: var(--enhancedResultCard-lastUpdated-color);
+        }
+
+        .viewButton {
+          height: var(--enhancedResultCard-viewButton-height);
+          padding-left: var(--enhancedResultCard-viewButton-paddingX);
+          padding-right: var(--enhancedResultCard-viewButton-paddingX);
+          font-size: var(--enhancedResultCard-viewButton-fontSize);
+
+          .viewButtonIcon {
+            width: var(--enhancedResultCard-viewButtonIcon-width);
+            height: var(--enhancedResultCard-viewButtonIcon-height);
+            margin-right: var(--enhancedResultCard-viewButtonIcon-marginRight);
+          }
+        }
+      }
+    }
+  }
+
+  .skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: var(--enhancedResultCard-skeleton-gap);
+
+    .skeletonLine {
+      height: var(--enhancedResultCard-skeletonLine-height);
+      background: var(--enhancedResultCard-skeletonLine-background);
+      border-radius: var(--enhancedResultCard-skeletonLine-borderRadius);
+    }
+  }
+
+  // Group hover states
+  &:hover {
+    .actionButton {
+      opacity: var(--enhancedResultCard-actionButtonVisible-opacity);
+    }
+  }
+}

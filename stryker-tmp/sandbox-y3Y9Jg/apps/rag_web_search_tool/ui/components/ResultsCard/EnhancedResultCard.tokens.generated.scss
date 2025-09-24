@@ -1,0 +1,251 @@
+/* AUTO-GENERATED: Do not edit directly.
+ * Source: ui/components/ResultsCard/ResultCard.tokens.json
+ */
+@mixin vars {
+  /* === Container Tokens === */
+  --enhancedResultCard-container-transition: all 0.3s ease;
+  --enhancedResultCard-container-cursor: pointer;
+  --enhancedResultCard-container-overflow: hidden;
+
+  /* === Card Tokens === */
+  --enhancedResultCard-card-background: var(--semantic-color-background-elevated);
+  --enhancedResultCard-card-border: var(--semantic-color-border-subtle);
+  --enhancedResultCard-card-borderRadius: var(--semantic-shape-radius-medium);
+  --enhancedResultCard-card-shadow: var(--semantic-elevation-surface-raised);
+  --enhancedResultCard-card-transition: all 0.3s ease;
+
+  /* === CardHover Tokens === */
+  --enhancedResultCard-cardHover-shadow: var(--semantic-elevation-surface-floating);
+  --enhancedResultCard-cardHover-borderColor: var(--semantic-color-border-primary);
+
+  /* === CardSelected Tokens === */
+  --enhancedResultCard-cardSelected-borderColor: var(--semantic-color-border-focus);
+  --enhancedResultCard-cardSelected-shadow: var(--semantic-elevation-surface-floating);
+  --enhancedResultCard-cardSelected-ring: 2px solid {semantic.color.border.focus};
+  --enhancedResultCard-cardSelected-ringOpacity: 0.2;
+
+  /* === Header Tokens === */
+  --enhancedResultCard-header-paddingBottom: var(--core-spacing-size-06);
+
+  /* === HeaderContent Tokens === */
+  --enhancedResultCard-headerContent-gap: var(--core-spacing-size-05);
+
+  /* === SourceIcon Tokens === */
+  --enhancedResultCard-sourceIcon-fontSize: var(--semantic-typography-heading-05);
+  --enhancedResultCard-sourceIcon-flexShrink: 0;
+
+  /* === Title Tokens === */
+  --enhancedResultCard-title-fontWeight: var(--semantic-typography-font-weight-medium);
+  --enhancedResultCard-title-fontSize: var(--semantic-typography-body-default-font-size);
+  --enhancedResultCard-title-lineHeight: var(--semantic-typography-line-height-tight);
+  --enhancedResultCard-title-color: var(--semantic-color-foreground-primary);
+
+  /* === Badge Tokens === */
+  --enhancedResultCard-badge-marginLeft: auto;
+  --enhancedResultCard-badge-flexShrink: 0;
+  --enhancedResultCard-badge-fontSize: var(--semantic-typography-caption-03);
+
+  /* === Metadata Tokens === */
+  --enhancedResultCard-metadata-gap: var(--core-spacing-size-05);
+  --enhancedResultCard-metadata-fontSize: var(--semantic-typography-body-small-font-size);
+  --enhancedResultCard-metadata-color: var(--semantic-color-foreground-secondary);
+  --enhancedResultCard-metadata-marginBottom: var(--core-spacing-size-03);
+
+  /* === ConfidenceScore Tokens === */
+  --enhancedResultCard-confidenceScore-gap: var(--core-spacing-size-02);
+
+  /* === ConfidenceIcon Tokens === */
+  --enhancedResultCard-confidenceIcon-width: var(--core-spacing-size-05);
+  --enhancedResultCard-confidenceIcon-height: var(--core-spacing-size-05);
+
+  /* === ConfidenceHigh Tokens === */
+  --enhancedResultCard-confidenceHigh-color: var(--semantic-color-status-success);
+
+  /* === ConfidenceMedium Tokens === */
+  --enhancedResultCard-confidenceMedium-color: var(--semantic-color-status-warning);
+
+  /* === ConfidenceLow Tokens === */
+  --enhancedResultCard-confidenceLow-color: var(--semantic-color-status-danger);
+
+  /* === BadgeGroup Tokens === */
+  --enhancedResultCard-badgeGroup-gap: var(--core-spacing-size-02);
+
+  /* === PathText Tokens === */
+  --enhancedResultCard-pathText-fontSize: var(--semantic-typography-caption-03);
+  --enhancedResultCard-pathText-color: var(--semantic-color-foreground-secondary);
+  --enhancedResultCard-pathText-truncate: true;
+
+  /* === ActionButton Tokens === */
+  --enhancedResultCard-actionButton-justifyContent: flex-start;
+  --enhancedResultCard-actionButton-fontSize: var(--semantic-typography-caption-03);
+  --enhancedResultCard-actionButton-height: var(--core-spacing-size-08);
+  --enhancedResultCard-actionButton-textAlign: left;
+
+  /* === ActionButtonVisible Tokens === */
+  --enhancedResultCard-actionButtonVisible-opacity: 1;
+
+  /* === Content Tokens === */
+  --enhancedResultCard-content-gap: var(--core-spacing-size-06);
+
+  /* === ContentPreview Tokens === */
+  --enhancedResultCard-contentPreview-gap: var(--core-spacing-size-05);
+
+  /* === PreviewBox Tokens === */
+  --enhancedResultCard-previewBox-fontSize: var(--semantic-typography-body-small-font-size);
+  --enhancedResultCard-previewBox-lineHeight: var(--semantic-typography-line-height-body);
+  --enhancedResultCard-previewBox-background: var(--semantic-color-background-secondary);
+  --enhancedResultCard-previewBox-padding: var(--core-spacing-size-05);
+  --enhancedResultCard-previewBox-borderRadius: var(--semantic-shape-radius-medium);
+  --enhancedResultCard-previewBox-borderLeft: 4px solid {semantic.color.border.accent};
+  --enhancedResultCard-previewBox-position: relative;
+
+  /* === Highlight Tokens === */
+  --enhancedResultCard-highlight-background: var(--semantic-color-background-highlight);
+  --enhancedResultCard-highlight-padding: var(--core-spacing-size-01);
+  --enhancedResultCard-highlight-borderRadius: var(--semantic-shape-radius-small);
+
+  /* === ExpandButton Tokens === */
+  --enhancedResultCard-expandButton-marginTop: var(--core-spacing-size-03);
+  --enhancedResultCard-expandButton-fontSize: var(--semantic-typography-caption-03);
+  --enhancedResultCard-expandButton-height: var(--core-spacing-size-07);
+
+  /* === CopyButton Tokens === */
+  --enhancedResultCard-copyButton-position: absolute;
+  --enhancedResultCard-copyButton-top: var(--core-spacing-size-03);
+  --enhancedResultCard-copyButton-right: var(--core-spacing-size-03);
+  --enhancedResultCard-copyButton-opacity: 0;
+  --enhancedResultCard-copyButton-transition: opacity 0.2s ease;
+  --enhancedResultCard-copyButton-height: var(--core-spacing-size-07);
+  --enhancedResultCard-copyButton-width: var(--core-spacing-size-07);
+  --enhancedResultCard-copyButton-padding: 0;
+
+  /* === CopyButtonVisible Tokens === */
+  --enhancedResultCard-copyButtonVisible-opacity: 1;
+
+  /* === CopiedIndicator Tokens === */
+  --enhancedResultCard-copiedIndicator-position: absolute;
+  --enhancedResultCard-copiedIndicator-top: var(--core-spacing-size-03);
+  --enhancedResultCard-copiedIndicator-right: var(--core-spacing-size-10);
+  --enhancedResultCard-copiedIndicator-fontSize: var(--semantic-typography-caption-03);
+  --enhancedResultCard-copiedIndicator-color: var(--semantic-color-status-success);
+
+  /* === Separator Tokens === */
+  --enhancedResultCard-separator-background: var(--semantic-color-border-subtle);
+  --enhancedResultCard-separator-height: 1px;
+  --enhancedResultCard-separator-width: 100%;
+
+  /* === Explanation Tokens === */
+  --enhancedResultCard-explanation-gap: var(--core-spacing-size-05);
+
+  /* === ExplanationHeader Tokens === */
+  --enhancedResultCard-explanationHeader-gap: var(--core-spacing-size-03);
+
+  /* === ExplanationIcon Tokens === */
+  --enhancedResultCard-explanationIcon-width: var(--core-spacing-size-06);
+  --enhancedResultCard-explanationIcon-height: var(--core-spacing-size-06);
+  --enhancedResultCard-explanationIcon-color: var(--semantic-color-status-info);
+
+  /* === ExplanationTitle Tokens === */
+  --enhancedResultCard-explanationTitle-fontSize: var(--semantic-typography-body-small-font-size);
+  --enhancedResultCard-explanationTitle-fontWeight: var(--semantic-typography-font-weight-medium);
+
+  /* === ExplanationContent Tokens === */
+  --enhancedResultCard-explanationContent-gap: var(--core-spacing-size-05);
+
+  /* === ExplanationText Tokens === */
+  --enhancedResultCard-explanationText-fontSize: var(--semantic-typography-body-small-font-size);
+  --enhancedResultCard-explanationText-color: var(--semantic-color-foreground-secondary);
+  --enhancedResultCard-explanationText-lineHeight: var(--semantic-typography-line-height-body);
+
+  /* === Insights Tokens === */
+  --enhancedResultCard-insights-gap: var(--core-spacing-size-03);
+
+  /* === InsightsHeader Tokens === */
+  --enhancedResultCard-insightsHeader-gap: var(--core-spacing-size-02);
+
+  /* === InsightsIcon Tokens === */
+  --enhancedResultCard-insightsIcon-width: var(--core-spacing-size-05);
+  --enhancedResultCard-insightsIcon-height: var(--core-spacing-size-05);
+  --enhancedResultCard-insightsIcon-color: var(--semantic-color-status-warning);
+
+  /* === InsightsTitle Tokens === */
+  --enhancedResultCard-insightsTitle-fontSize: var(--semantic-typography-caption-03);
+  --enhancedResultCard-insightsTitle-fontWeight: var(--semantic-typography-font-weight-medium);
+
+  /* === InsightsList Tokens === */
+  --enhancedResultCard-insightsList-gap: var(--core-spacing-size-02);
+
+  /* === InsightItem Tokens === */
+  --enhancedResultCard-insightItem-fontSize: var(--semantic-typography-caption-03);
+  --enhancedResultCard-insightItem-color: var(--semantic-color-foreground-secondary);
+  --enhancedResultCard-insightItem-gap: var(--core-spacing-size-03);
+
+  /* === InsightBullet Tokens === */
+  --enhancedResultCard-insightBullet-color: var(--semantic-color-status-warning);
+  --enhancedResultCard-insightBullet-marginTop: var(--core-spacing-size-01);
+
+  /* === Actions Tokens === */
+  --enhancedResultCard-actions-gap: var(--core-spacing-size-05);
+
+  /* === ActionsHeader Tokens === */
+  --enhancedResultCard-actionsHeader-gap: var(--core-spacing-size-03);
+
+  /* === ActionsIcon Tokens === */
+  --enhancedResultCard-actionsIcon-width: var(--core-spacing-size-06);
+  --enhancedResultCard-actionsIcon-height: var(--core-spacing-size-06);
+  --enhancedResultCard-actionsIcon-color: var(--semantic-color-status-success);
+
+  /* === ActionsTitle Tokens === */
+  --enhancedResultCard-actionsTitle-fontSize: var(--semantic-typography-body-small-font-size);
+  --enhancedResultCard-actionsTitle-fontWeight: var(--semantic-typography-font-weight-medium);
+
+  /* === ActionsGrid Tokens === */
+  --enhancedResultCard-actionsGrid-gap: var(--core-spacing-size-03);
+
+  /* === ActionIcon Tokens === */
+  --enhancedResultCard-actionIcon-width: var(--core-spacing-size-05);
+  --enhancedResultCard-actionIcon-height: var(--core-spacing-size-05);
+  --enhancedResultCard-actionIcon-marginRight: var(--core-spacing-size-03);
+  --enhancedResultCard-actionIcon-flexShrink: 0;
+
+  /* === Footer Tokens === */
+  --enhancedResultCard-footer-paddingTop: var(--core-spacing-size-03);
+  --enhancedResultCard-footer-borderTop: 1px solid {semantic.color.border.subtle};
+
+  /* === FooterContent Tokens === */
+  --enhancedResultCard-footerContent-justifyContent: space-between;
+
+  /* === TagGroup Tokens === */
+  --enhancedResultCard-tagGroup-gap: var(--core-spacing-size-02);
+
+  /* === Tag Tokens === */
+  --enhancedResultCard-tag-fontSize: var(--semantic-typography-caption-03);
+
+  /* === TagOverflow Tokens === */
+  --enhancedResultCard-tagOverflow-fontSize: var(--semantic-typography-caption-03);
+
+  /* === FooterMeta Tokens === */
+  --enhancedResultCard-footerMeta-gap: var(--core-spacing-size-03);
+
+  /* === LastUpdated Tokens === */
+  --enhancedResultCard-lastUpdated-fontSize: var(--semantic-typography-caption-03);
+  --enhancedResultCard-lastUpdated-color: var(--semantic-color-foreground-secondary);
+
+  /* === ViewButton Tokens === */
+  --enhancedResultCard-viewButton-height: var(--core-spacing-size-07);
+  --enhancedResultCard-viewButton-paddingX: var(--core-spacing-size-03);
+  --enhancedResultCard-viewButton-fontSize: var(--semantic-typography-caption-03);
+
+  /* === ViewButtonIcon Tokens === */
+  --enhancedResultCard-viewButtonIcon-width: var(--core-spacing-size-05);
+  --enhancedResultCard-viewButtonIcon-height: var(--core-spacing-size-05);
+  --enhancedResultCard-viewButtonIcon-marginRight: var(--core-spacing-size-02);
+
+  /* === Skeleton Tokens === */
+  --enhancedResultCard-skeleton-gap: var(--core-spacing-size-03);
+
+  /* === SkeletonLine Tokens === */
+  --enhancedResultCard-skeletonLine-height: var(--core-spacing-size-06);
+  --enhancedResultCard-skeletonLine-background: var(--semantic-color-background-secondary);
+  --enhancedResultCard-skeletonLine-borderRadius: var(--semantic-shape-radius-small);
+}

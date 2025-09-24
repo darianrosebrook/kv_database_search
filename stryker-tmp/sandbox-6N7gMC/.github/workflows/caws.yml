@@ -1,0 +1,295 @@
+name: CAWS Quality Gates
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main, develop]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      risk: ${{ steps.risk.outputs.tier }}
+      should_run_all: ${{ steps.risk.outputs.should_run_all }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse Working Spec
+        id: risk
+        run: |
+          # Check if working spec exists
+          if [ -f ".caws/working-spec.yaml" ]; then
+            # Extract risk tier (default to 2 if parsing fails)
+            TIER=$(yq -r '.risk_tier // 2' .caws/working-spec.yaml)
+            echo "tier=$TIER" >> $GITHUB_OUTPUT
+            echo "should_run_all=true" >> $GITHUB_OUTPUT
+          else
+            echo "tier=2" >> $GITHUB_OUTPUT
+            echo "should_run_all=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate Working Spec
+        if: steps.risk.outputs.should_run_all == 'true'
+        run: |
+          if [ -f ".caws/working-spec.yaml" ]; then
+            node tools/caws/validate.js working-spec .caws/working-spec.yaml
+          fi
+
+  static:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type checking
+        run: npm run typecheck
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Security audit
+        run: npm run dep:audit
+
+      - name: Dependency check
+        run: npm run dep:check
+
+      - name: Secret scan (trufflehog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  unit:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Enforce Branch Coverage
+        run: npm run gates:coverage -- ${{ needs.setup.outputs.risk }}
+
+      - name: Archive test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: unit-test-results
+          path: coverage/
+          retention-days: 30
+
+  mutation:
+    needs: [setup, unit]
+    runs-on: ubuntu-latest
+    if: needs.setup.outputs.risk != '3'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run mutation tests
+        run: npm run test:mutation
+
+      - name: Enforce Mutation Score
+        run: npm run gates:mutation -- ${{ needs.setup.outputs.risk }}
+
+      - name: Archive mutation reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: mutation-test-results
+          path: reports/mutation/
+          retention-days: 30
+
+  contracts:
+    needs: setup
+    runs-on: ubuntu-latest
+    if: needs.setup.outputs.should_run_all == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run contract tests
+        run: npm run test:contract
+
+      - name: Validate contracts against tier
+        run: npm run gates:contracts -- ${{ needs.setup.outputs.risk }}
+
+  integration:
+    needs: [setup]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U postgres -d testdb"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgresql://postgres:testpass@localhost:5432/testdb
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+  e2e_a11y:
+    needs: [integration]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E smoke tests
+        run: npm run test:e2e
+
+      - name: Run accessibility tests
+        run: npm run test:axe
+
+      - name: Upload E2E screenshots on failure
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: e2e-screenshots
+          path: test-results/
+          retention-days: 30
+
+  perf:
+    needs: [integration]
+    runs-on: ubuntu-latest
+    if: needs.setup.outputs.risk != '3'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run performance benchmarks
+        run: npm run perf:budgets
+
+      - name: Archive performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results
+          path: perf-results/
+          retention-days: 30
+
+  provenance_trust:
+    needs: [static, unit, mutation, contracts, integration, e2e_a11y, perf]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download test artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: unit-test-results
+          path: coverage/
+
+      - name: Generate Provenance Manifest
+        run: npm run caws:provenance
+
+      - name: Validate Provenance Manifest
+        run: npm run caws:validate provenance .agent/provenance.json
+
+      - name: Calculate Trust Score
+        run: npm run gates:trust
+
+      - name: Archive provenance
+        uses: actions/upload-artifact@v3
+        with:
+          name: provenance-manifest
+          path: .agent/provenance.json
+          retention-days: 90
+
+  # Manual review gate for Tier 1
+  manual_review_gate:
+    needs: [provenance_trust]
+    runs-on: ubuntu-latest
+    if: needs.setup.outputs.risk == '1'
+    environment: production
+    steps:
+      - name: Wait for Manual Review
+        run: |
+          echo "Tier 1 changes require manual review before merge"
+          echo "Please review the PR and approve if quality gates are met"
+
+      - name: Manual Approval Required
+        run: |
+          echo "This step will wait for manual approval in the GitHub UI"
+          echo "Navigate to the PR → Environments → production → Approve deployment"
+
+  # Final merge gate
+  merge_gate:
+    needs: [provenance_trust, manual_review_gate]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: All Gates Passed
+        if: needs.provenance_trust.result == 'success' && (needs.manual_review_gate.result == 'success' || needs.setup.outputs.risk != '1')
+        run: |
+          echo "🎉 All CAWS quality gates passed!"
+          echo "PR is ready for merge"
+
+      - name: Gates Failed
+        if: needs.provenance_trust.result == 'failure' || needs.manual_review_gate.result == 'failure'
+        run: |
+          echo "❌ Quality gates failed"
+          echo "Please address the issues before merging"
+          exit 1

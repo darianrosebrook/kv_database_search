@@ -1,0 +1,82 @@
+id: OBSIDIAN-RAG-001
+title: "Multi-Modal Obsidian Knowledge Base RAG System"
+risk_tier: 2
+scope:
+  in:
+    - "Semantic search across Obsidian vault content"
+    - "Vector embeddings for knowledge discovery"
+    - "Knowledge graph relationships via wikilinks"
+    - "Multi-modal content processing (PDF, DOCX, XLSX, images, audio)"
+    - "OCR text extraction from images"
+    - "Speech-to-text transcription from audio files"
+    - "Office document parsing (Word, Excel, PowerPoint)"
+    - "Unified search across all content types"
+    - "Content type-aware chunking and embedding"
+    - "Enhanced search results with metadata"
+  out:
+    - "Real-time chat interface"
+    - "Advanced graph analytics"
+    - "Plugin ecosystem integration"
+    - "Legacy file format support"
+    - "Binary document processing"
+invariants:
+  - "Search results must maintain content integrity across all formats"
+  - "Embeddings generated locally (privacy-first)"
+  - "Database queries must be performant (<500ms)"
+  - "Content processing respects Obsidian folder structure"
+  - "Multi-modal metadata preserved and searchable"
+  - "OCR accuracy maintained above 70% confidence"
+  - "Speech transcription quality above 60% confidence"
+  - "Office document parsing handles 95% of common formats"
+acceptance:
+  - id: A1
+    given: "Valid Obsidian vault with markdown files"
+    when: "Ingestion pipeline runs"
+    then: "Content is chunked and embedded without data loss"
+  - id: A2
+    given: "Search query entered"
+    when: "Semantic search executed"
+    then: "Relevant results returned with confidence scores"
+  - id: A3
+    given: "Wikilinks present in content"
+    when: "Knowledge graph built"
+    then: "Related concepts discoverable through relationships"
+  - id: A4
+    given: "PDF document in vault"
+    when: "Ingestion processes file"
+    then: "Text content extracted and made searchable"
+  - id: A5
+    given: "Image file with text"
+    when: "OCR processing runs"
+    then: "Text extracted with confidence score >70%"
+  - id: A6
+    given: "Audio recording in vault"
+    when: "Speech-to-text processing runs"
+    then: "Transcription generated and indexed"
+  - id: A7
+    given: "Office document (DOCX/XLSX)"
+    when: "Document parsing runs"
+    then: "Content extracted and made searchable"
+  - id: A8
+    given: "Multi-modal search query"
+    when: "Unified search executed"
+    then: "Results from all content types returned with metadata"
+non_functional:
+  a11y: ["CLI interface accessible", "Web interface WCAG AA compliant", "Screen reader compatible", "Keyboard navigation supported"]
+  perf:
+    api_p95_ms: 500
+    ingestion_rate: 10
+    ocr_processing_ms: 2000
+    speech_processing_per_second: 2
+  security: ["No external API calls for content", "Local embedding generation", "File processing sandboxed", "No sensitive data in logs"]
+contracts:
+  - type: openapi
+    path: "contracts/api.yaml"
+  - type: openapi
+    path: "contracts/obsidian-data-contracts.yaml"
+observability:
+  logs: ["Ingestion progress", "Search query performance", "Content processing metrics", "Error conditions", "Multi-modal processing stats"]
+  metrics: ["Search latency", "Ingestion throughput", "Query success rate", "Content type distribution", "Processing success rates", "OCR confidence scores", "Speech transcription accuracy"]
+  traces: ["Ingestion pipeline", "Search execution", "Database queries", "Content processing workflows", "Multi-modal extraction"]
+migrations: ["Initial database schema creation", "Multi-modal metadata schema", "Content type indexing"]
+rollback: ["Drop database tables", "Clear embeddings cache", "Remove multi-modal metadata"]

@@ -1,0 +1,118 @@
+{
+  "name": "EnhancedResultCard",
+  "layer": "compound",
+  "anatomy": [
+    "container",
+    "card",
+    "header",
+    "headerContent",
+    "sourceIcon",
+    "title",
+    "badge",
+    "metadata",
+    "confidenceScore",
+    "confidenceIcon",
+    "badgeGroup",
+    "pathText",
+    "actionButton",
+    "content",
+    "contentPreview",
+    "previewBox",
+    "highlight",
+    "expandButton",
+    "copyButton",
+    "copiedIndicator",
+    "separator",
+    "explanation",
+    "explanationHeader",
+    "explanationIcon",
+    "explanationTitle",
+    "explanationContent",
+    "explanationText",
+    "insights",
+    "insightsHeader",
+    "insightsIcon",
+    "insightsTitle",
+    "insightsList",
+    "insightItem",
+    "insightBullet",
+    "actions",
+    "actionsHeader",
+    "actionsIcon",
+    "actionsTitle",
+    "actionsGrid",
+    "actionIcon",
+    "footer",
+    "footerContent",
+    "tagGroup",
+    "tag",
+    "tagOverflow",
+    "footerMeta",
+    "lastUpdated",
+    "viewButton",
+    "viewButtonIcon",
+    "skeleton",
+    "skeletonLine"
+  ],
+  "variants": {
+    "confidence": ["high", "medium", "low"],
+    "state": ["default", "selected", "loading"],
+    "expanded": ["true", "false"]
+  },
+  "states": [
+    "default",
+    "hover",
+    "selected",
+    "loading",
+    "expanded",
+    "copying",
+    "copied"
+  ],
+  "slots": {
+    "header": {
+      "required": true,
+      "description": "Card header with title, source icon, and metadata"
+    },
+    "content": {
+      "required": true,
+      "description": "Main content area with preview and explanation"
+    },
+    "footer": {
+      "required": false,
+      "description": "Footer with tags and actions"
+    }
+  },
+  "a11y": {
+    "role": "article",
+    "labeling": ["aria-label", "aria-labelledby"],
+    "keyboard": [
+      "Enter - select/expand card",
+      "Space - select/expand card",
+      "Tab - navigate to actions"
+    ],
+    "focus": {
+      "visible": true,
+      "within": true
+    },
+    "screen_reader": {
+      "announcements": [
+        "Card selection state",
+        "Confidence score",
+        "Copy success feedback"
+      ]
+    }
+  },
+  "interactions": {
+    "click": "Select card and show details",
+    "hover": "Show action buttons and copy button",
+    "keyboard": "Navigate and activate with Enter/Space"
+  },
+  "responsive": {
+    "breakpoints": ["mobile", "tablet", "desktop"],
+    "behaviors": [
+      "Stack actions vertically on mobile",
+      "Hide secondary metadata on small screens",
+      "Adjust padding and spacing"
+    ]
+  }
+}

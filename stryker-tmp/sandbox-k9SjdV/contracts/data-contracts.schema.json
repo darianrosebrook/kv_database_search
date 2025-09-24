@@ -1,0 +1,373 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://obsidian-rag.com/schemas/data-contracts",
+  "title": "Obsidian RAG Data Contracts",
+  "description": "Comprehensive schema definitions for Obsidian vault data structures and API contracts",
+  "type": "object",
+
+  "definitions": {
+    "ObsidianDocument": {
+      "type": "object",
+      "required": ["id", "path", "name", "content", "metadata"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier (relative path from vault root)",
+          "examples": ["Design Systems/Atomic Design.md"]
+        },
+        "path": {
+          "type": "string",
+          "description": "File system path relative to vault root",
+          "examples": ["Design Systems/Atomic Design.md"]
+        },
+        "name": {
+          "type": "string",
+          "description": "Filename without extension",
+          "examples": ["Atomic Design"]
+        },
+        "extension": {
+          "type": "string",
+          "enum": ["md", "canvas"],
+          "default": "md",
+          "description": "File extension"
+        },
+        "content": {
+          "type": "string",
+          "description": "Raw file content"
+        },
+        "frontmatter": {
+          "type": "object",
+          "description": "Parsed YAML frontmatter",
+          "additionalProperties": true,
+          "examples": [
+            {
+              "title": "Atomic Design",
+              "created": "2024-01-01",
+              "tags": ["design", "system"],
+              "category": "Methodology"
+            }
+          ]
+        },
+        "stats": {
+          "type": "object",
+          "required": ["wordCount", "characterCount", "lineCount"],
+          "properties": {
+            "wordCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of words in document"
+            },
+            "characterCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of characters in document"
+            },
+            "lineCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of lines in document"
+            },
+            "headingCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of headings in document"
+            },
+            "linkCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of links in document"
+            },
+            "tagCount": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of tags in document"
+            }
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "required": ["wikilinks", "tags", "backlinks"],
+          "properties": {
+            "wikilinks": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Wikilink" },
+              "description": "Outgoing wikilinks"
+            },
+            "tags": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Tags used in document"
+            },
+            "backlinks": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Backlink" },
+              "description": "Documents that reference this document"
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "required": ["created", "modified", "checksum"],
+          "properties": {
+            "created": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Document creation timestamp"
+            },
+            "modified": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Document last modification timestamp"
+            },
+            "checksum": {
+              "type": "string",
+              "description": "Content checksum for change detection"
+            },
+            "lastIndexed": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Last indexing timestamp"
+            },
+            "processingErrors": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Processing errors encountered"
+            }
+          }
+        }
+      }
+    },
+
+    "Wikilink": {
+      "type": "object",
+      "required": ["target", "type", "position"],
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Target document path",
+          "examples": ["Design Systems/Components"]
+        },
+        "display": {
+          "type": "string",
+          "description": "Display text (if different from target)",
+          "examples": ["Component Library"]
+        },
+        "type": {
+          "type": "string",
+          "enum": ["document", "heading", "block"],
+          "description": "Link type"
+        },
+        "position": {
+          "type": "object",
+          "required": ["line", "column", "offset"],
+          "properties": {
+            "line": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Line number (0-indexed)"
+            },
+            "column": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Column number (0-indexed)"
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Character offset in document"
+            }
+          }
+        },
+        "context": {
+          "type": "string",
+          "description": "Context around the link"
+        }
+      }
+    },
+
+    "Backlink": {
+      "type": "object",
+      "required": ["source", "context", "position"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Source document that references this document"
+        },
+        "context": {
+          "type": "string",
+          "description": "Context of the reference"
+        },
+        "position": {
+          "type": "object",
+          "required": ["line", "column", "offset"],
+          "properties": {
+            "line": { "type": "integer", "minimum": 0 },
+            "column": { "type": "integer", "minimum": 0 },
+            "offset": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+
+    "DocumentChunk": {
+      "type": "object",
+      "required": ["id", "text", "meta"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique chunk identifier"
+        },
+        "text": {
+          "type": "string",
+          "description": "Chunk text content"
+        },
+        "meta": {
+          "type": "object",
+          "required": ["section", "contentType"],
+          "properties": {
+            "section": {
+              "type": "string",
+              "description": "Section or heading this chunk belongs to"
+            },
+            "contentType": {
+              "type": "string",
+              "enum": ["note", "moc", "article", "conversation", "template", "book-note"],
+              "description": "Content type classification"
+            },
+            "breadcrumbs": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Hierarchical path to this chunk"
+            }
+          }
+        },
+        "embedding": {
+          "type": "array",
+          "items": { "type": "number" },
+          "description": "Vector embedding for semantic search"
+        }
+      }
+    },
+
+    "SearchResult": {
+      "type": "object",
+      "required": ["id", "text", "meta", "cosineSimilarity", "rank"],
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "meta": {
+          "type": "object",
+          "required": ["section", "contentType"],
+          "properties": {
+            "section": { "type": "string" },
+            "contentType": { "type": "string" },
+            "breadcrumbs": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "cosineSimilarity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "rank": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+
+    "ObsidianSearchResult": {
+      "allOf": [
+        { "$ref": "#/$defs/SearchResult" },
+        {
+          "properties": {
+            "obsidianMeta": {
+              "type": "object",
+              "properties": {
+                "fileName": { "type": "string" },
+                "filePath": { "type": "string" },
+                "tags": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "wikilinks": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "frontmatter": { "type": "object" },
+                "relatedFiles": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "backlinks": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            },
+            "highlights": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "relatedChunks": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/SearchResult" }
+            },
+            "graphContext": {
+              "type": "object",
+              "properties": {
+                "connectedConcepts": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "pathsToQuery": { "type": "integer", "minimum": 0 },
+                "centralityScore": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "ContentType": {
+      "type": "string",
+      "enum": ["note", "moc", "article", "conversation", "template", "book-note", "canvas", "dataview"],
+      "description": "Supported Obsidian content types"
+    },
+
+    "FrontmatterSchema": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "created": { "oneOf": [{ "type": "string" }, { "type": "string", "format": "date-time" }] },
+        "updated": { "oneOf": [{ "type": "string" }, { "type": "string", "format": "date-time" }] },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "aliases": { "type": "array", "items": { "type": "string" } },
+        "category": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "published", "archived"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "project": { "type": "string" },
+        "related": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true,
+      "description": "Standard Obsidian frontmatter fields"
+    }
+  },
+
+  "properties": {
+    "document": { "$ref": "#/$defs/ObsidianDocument" },
+    "chunk": { "$ref": "#/$defs/DocumentChunk" },
+    "searchResult": { "$ref": "#/$defs/ObsidianSearchResult" }
+  },
+
+  "additionalProperties": false,
+
+  "$comment": "This schema defines the core data contracts for the Obsidian RAG system. All data structures must conform to these definitions to ensure interoperability and type safety."
+}

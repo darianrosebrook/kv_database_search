@@ -1,0 +1,191 @@
+@use './Button.tokens.generated.scss' as buttonTokens;
+
+.button {
+  @include buttonTokens.vars;
+
+  // Selective reset - only reset what we need to control
+  display: inline-flex;
+  gap: var(--button-size-gap-default);
+  justify-content: center;
+  align-items: center;
+
+  // Box Model
+  width: fit-content;
+  min-width: var(--button-size-min-medium);
+  min-height: var(--button-size-min-medium);
+  margin: 0;
+  padding: var(--button-size-padding-small) var(--button-size-padding-small);
+
+  // Visual
+  background: none;
+  background-color: var(--button-color-background-default);
+  border: none;
+  border-radius: var(--button-size-radius);
+  color: var(--button-color-foreground-default);
+
+  // Typography
+  font: inherit;
+  font-weight: var(--button-text-weight, 500);
+  font-size: var(--button-text-size-medium);
+  line-height: var(--button-text-lineHeight-collapse);
+  text-decoration: none;
+  transition:
+    transform var(--button-motion-duration-fast)
+      var(--button-motion-easing-standard),
+    background-color var(--button-motion-duration-fast)
+      var(--button-motion-easing-standard),
+    border-color var(--button-motion-duration-fast)
+      var(--button-motion-easing-standard),
+    color var(--button-motion-duration-fast)
+      var(--button-motion-easing-standard);
+
+  // Interaction
+  cursor: pointer;
+
+  &:active {
+    transform: scale(var(--button-motion-scale-pressed));
+  }
+
+  &.isLoading {
+    pointer-events: none;
+  }
+
+  .spinner {
+    display: none;
+    width: var(--button-size-spinner-width);
+    height: var(--button-size-spinner-height);
+    border: var(--button-size-spinner-borderWidth) solid
+      var(--button-color-spinner-border);
+    border-top-color: var(--button-color-spinner-borderAccent);
+    border-radius: var(--button-size-spinner-borderRadius);
+    animation: button-spinner-rotate var(--button-motion-duration-spinner)
+      linear infinite;
+  }
+
+  .loadingText {
+    opacity: 0.8;
+  }
+
+  &:disabled {
+    background-color: var(--button-color-background-disabled);
+    color: var(--button-color-foreground-disabled);
+    cursor: not-allowed;
+  }
+
+  &:hover {
+    background-color: var(--button-color-background-hover);
+    text-decoration: none;
+  }
+
+  &:focus {
+    border-radius: var(--button-size-radius);
+    outline: none;
+  }
+
+  &:matches(:focus-visible, :focus) {
+    outline: var(--button-focus-outlineWidth) solid
+      var(--button-focus-outlineColor);
+    outline-offset: var(--button-focus-outlineOffset);
+  }
+
+  // Remove adjacent sibling selector - let parent containers handle spacing
+  // Use gap, flexbox, or CSS Grid in parent components instead
+
+  &.small {
+    gap: var(--button-size-gap-small, 0.5rem);
+    min-width: var(--button-size-min-small);
+    min-height: var(--button-size-min-small);
+    padding: var(--button-size-padding-small, var(--button-size-gap-small));
+    font-size: var(--button-text-size-small);
+  }
+
+  &.medium {
+    gap: var(--button-size-gap-default);
+    min-width: var(--button-size-min-medium);
+    min-height: var(--button-size-min-medium);
+    padding: var(--button-size-padding-small) var(--button-size-padding-large);
+    font-size: var(--button-text-size-medium);
+  }
+
+  &.large {
+    gap: var(--button-size-gap-large, 0.75rem);
+    min-width: var(--button-size-min-large);
+    min-height: var(--button-size-min-large);
+    padding: var(--button-size-padding-large, var(--button-size-gap-large));
+    font-size: var(--button-text-size-large);
+  }
+
+  &.primary {
+    background-color: var(--button-color-background-primary);
+    border: var(--button-size-border) solid var(--button-color-border-primary);
+    color: var(--button-color-foreground-primary);
+
+    &:hover {
+      background-color: var(--button-color-background-primaryHover);
+      border-color: var(--button-color-border-primaryHover);
+      color: var(--button-color-foreground-primaryHover);
+    }
+
+    &:active {
+      background-color: var(--button-color-background-primaryActive);
+      border-color: var(--button-color-border-primaryActive);
+      color: var(--button-color-foreground-primaryActive);
+    }
+  }
+
+  &.secondary {
+    background-color: var(--button-color-background-secondary);
+    border: var(--button-size-border) solid var(--button-color-border-secondary);
+    color: var(--button-color-foreground-secondary);
+
+    &:hover {
+      background-color: var(--button-color-background-secondaryHover);
+      border-color: var(--button-color-border-secondaryHover);
+      color: var(--button-color-foreground-secondaryHover);
+    }
+
+    &:active {
+      background-color: var(--button-color-background-secondaryActive);
+      border-color: var(--button-color-border-secondaryActive);
+      color: var(--button-color-foreground-secondaryActive);
+    }
+  }
+
+  &.tertiary {
+    background-color: var(--button-color-background-tertiary);
+    border: var(--button-size-border) solid var(--button-color-border-tertiary);
+    color: var(--button-color-foreground-tertiary);
+
+    &:hover {
+      background-color: var(--button-color-background-tertiaryHover);
+      border-color: var(--button-color-border-tertiaryHover);
+      color: var(--button-color-foreground-tertiaryHover);
+    }
+
+    &:active {
+      background-color: var(--button-color-background-tertiaryActive);
+      border-color: var(--button-color-border-tertiaryActive);
+      color: var(--button-color-foreground-tertiaryActive);
+    }
+  }
+}
+
+@keyframes button-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+
+    &:active {
+      transform: none;
+    }
+  }
+
+  .spinner {
+    animation: none;
+  }
+}

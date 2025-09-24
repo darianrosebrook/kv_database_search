@@ -1,0 +1,74 @@
+{
+  "$schema": "../../../ui/designTokens/designTokens.schema.json",
+  "prefix": "searchInput",
+  "tokens": {
+    "container": {
+      "width": "100%"
+    },
+    "containerInitial": {
+      "maxWidth": "512px"
+    },
+    "containerCompact": {
+      "maxWidth": "384px"
+    },
+    "form": {
+      "position": "relative"
+    },
+    "inputWrapper": {
+      "position": "relative",
+      "display": "flex",
+      "alignItems": "center",
+      "background": "{semantic.color.background.elevated}",
+      "border": "{semantic.color.border.subtle}",
+      "borderRadius": "{semantic.shape.radius.large}",
+      "shadow": "{semantic.elevation.surface.raised}",
+      "transition": "all 0.2s ease"
+    },
+    "inputWrapperFocused": {
+      "shadow": "{semantic.elevation.surface.floating}",
+      "borderColor": "{semantic.color.border.focus}"
+    },
+    "searchIcon": {
+      "position": "absolute",
+      "left": "{core.spacing.size.06}",
+      "width": "{core.spacing.size.06}",
+      "height": "{core.spacing.size.06}",
+      "color": "{semantic.color.foreground.secondary}",
+      "pointerEvents": "none"
+    },
+    "input": {
+      "flex": "1",
+      "paddingLeft": "{core.spacing.size.09}",
+      "paddingRight": "96px",
+      "paddingY": "{core.spacing.size.07}",
+      "background": "transparent",
+      "border": "0",
+      "borderRadius": "{semantic.shape.radius.large}",
+      "fontSize": "{semantic.typography.body.default.fontSize}",
+      "color": "{semantic.color.foreground.primary}"
+    },
+    "inputFocus": {
+      "outline": "none",
+      "ring": "0"
+    },
+    "submitButton": {
+      "position": "absolute",
+      "right": "{core.spacing.size.03}",
+      "height": "{core.spacing.size.08}",
+      "paddingX": "{core.spacing.size.05}",
+      "borderRadius": "{semantic.shape.radius.medium}",
+      "background": "{semantic.color.background.brand}",
+      "color": "{semantic.color.foreground.onBrand}"
+    },
+    "submitButtonHover": {
+      "background": "{semantic.interaction.background.hover}"
+    },
+    "description": {
+      "marginTop": "{core.spacing.size.06}",
+      "textAlign": "center",
+      "fontSize": "{semantic.typography.body.small.fontSize}",
+      "color": "{semantic.color.foreground.secondary}",
+      "lineHeight": "{semantic.typography.lineHeight.body}"
+    }
+  }
+}

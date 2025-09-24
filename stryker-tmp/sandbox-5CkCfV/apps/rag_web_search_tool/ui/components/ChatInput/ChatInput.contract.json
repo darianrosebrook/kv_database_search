@@ -1,0 +1,92 @@
+{
+  "name": "ChatInput",
+  "layer": "compound",
+  "anatomy": [
+    "container",
+    "pastedContentPreview",
+    "pastedContentHeader",
+    "pastedContentIcon",
+    "pastedContentLabel",
+    "pastedContentBadge",
+    "pastedContentCloseButton",
+    "pastedContentCode",
+    "form",
+    "inputContainer",
+    "textarea",
+    "submitButton",
+    "submitIcon",
+    "quickActions",
+    "quickActionButton",
+    "quickActionIcon",
+    "suggestions",
+    "suggestionsTitle",
+    "suggestionsGrid",
+    "suggestionButton"
+  ],
+  "variants": {
+    "queryType": ["component", "pattern", "token", "general"],
+    "state": ["default", "focused", "loading", "disabled"]
+  },
+  "states": [
+    "default",
+    "focused",
+    "loading",
+    "disabled",
+    "hasPastedContent",
+    "hasMessage",
+    "showingSuggestions"
+  ],
+  "slots": {
+    "pastedContentPreview": {
+      "required": false,
+      "description": "Preview of pasted code/content with type detection"
+    },
+    "inputContainer": {
+      "required": true,
+      "description": "Main input area with textarea and submit button"
+    },
+    "quickActions": {
+      "required": false,
+      "description": "Quick action buttons for pasted content"
+    },
+    "suggestions": {
+      "required": false,
+      "description": "Query suggestions when input is empty"
+    }
+  },
+  "a11y": {
+    "role": "form",
+    "labeling": ["aria-label", "aria-labelledby"],
+    "keyboard": [
+      "Enter - submit message",
+      "Shift+Enter - new line",
+      "Tab - navigate to submit button",
+      "Escape - clear pasted content"
+    ],
+    "focus": {
+      "visible": true,
+      "within": true
+    },
+    "screen_reader": {
+      "announcements": [
+        "Content type detection",
+        "Submit button state",
+        "Loading state"
+      ]
+    }
+  },
+  "interactions": {
+    "paste": "Detect content type and show preview",
+    "submit": "Send message with optional context",
+    "quickAction": "Insert predefined query and submit",
+    "suggestion": "Insert suggestion into input"
+  },
+  "responsive": {
+    "breakpoints": ["mobile", "tablet", "desktop"],
+    "behaviors": [
+      "Stack quick actions vertically on mobile",
+      "Adjust textarea height on small screens",
+      "Single column suggestions on mobile"
+    ]
+  }
+}
