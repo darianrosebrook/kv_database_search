@@ -15,9 +15,9 @@ vi.mock("../../src/lib/multi-modal-ingest.js", () => ({
   MultiModalIngestionPipeline: vi.fn(),
 }));
 
-import { ObsidianDatabase } from "../../src/lib/database.js";
-import { ObsidianEmbeddingService } from "../../src/lib/embeddings.js";
-import { MultiModalIngestionPipeline } from "../../src/lib/multi-modal-ingest.js";
+import { ObsidianDatabase } from "../../src/lib/database.ts";
+import { ObsidianEmbeddingService } from "../../src/lib/embeddings.ts";
+import { MultiModalIngestionPipeline } from "../../src/lib/multi-modal-ingest.ts";
 
 describe("Multi-Modal Ingestion CLI", () => {
   let mockDatabase: any;

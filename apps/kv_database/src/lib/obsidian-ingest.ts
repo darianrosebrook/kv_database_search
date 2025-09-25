@@ -142,6 +142,72 @@ export class ObsidianIngestionPipeline {
     }
   }
 
+  /**
+   * Ingest specific files
+   */
+  async ingestFiles(
+    filePaths: string[],
+    options: {
+      skipExisting?: boolean;
+      batchSize?: number;
+    } = {}
+  ): Promise<{
+    totalFiles: number;
+    processedFiles: number;
+    totalChunks: number;
+    processedChunks: number;
+    skippedChunks: number;
+    errors: string[];
+  }> {
+    const { skipExisting = false, batchSize = 10 } = options;
+
+    console.log(`🚀 Starting file ingestion for ${filePaths.length} files`);
+
+    try {
+      let processedFiles = 0;
+      let totalChunks = 0;
+      let processedChunks = 0;
+      let skippedChunks = 0;
+      const errors: string[] = [];
+
+      // Process files in batches
+      for (let i = 0; i < filePaths.length; i += batchSize) {
+        const batch = filePaths.slice(i, i + batchSize);
+
+        try {
+          const batchResults = await this.processBatch(batch, skipExisting, {});
+
+          processedFiles += batchResults.processedFiles;
+          totalChunks += batchResults.totalChunks;
+          processedChunks += batchResults.processedChunks;
+          skippedChunks += batchResults.skippedChunks;
+          errors.push(...batchResults.errors);
+        } catch (error) {
+          const errorMsg = `Batch ${
+            Math.floor(i / batchSize) + 1
+          } failed: ${error}`;
+          console.error(`❌ ${errorMsg}`);
+          errors.push(errorMsg);
+        }
+      }
+
+      const result = {
+        totalFiles: filePaths.length,
+        processedFiles,
+        totalChunks,
+        processedChunks,
+        skippedChunks,
+        errors,
+      };
+
+      console.log(`✅ File ingestion complete:`, result);
+      return result;
+    } catch (error) {
+      console.error(`❌ File ingestion failed: ${error}`);
+      throw new Error(`File ingestion pipeline failed: ${error}`);
+    }
+  }
+
   private async discoverMarkdownFiles(
     includePatterns: string[],
     excludePatterns: string[]

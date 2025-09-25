@@ -137,6 +137,7 @@ export interface PerformanceBudget {
 
 export interface TierPolicy {
   min_branch: number;
+  min_coverage: number;
   min_mutation: number;
   requires_contracts: boolean;
   requires_manual_review?: boolean;
@@ -179,12 +180,44 @@ export interface GateCheckOptions {
 }
 
 export interface CawsConfig {
+  version?: string;
+  environment?: string;
   tiers: Record<string, TierPolicy>;
   defaultTier: string;
   workingSpecPath: string;
   provenancePath: string;
   cawsDirectory: string;
+  paths?: Record<string, string>;
+  gates?: Record<string, any>;
+  tools?: Record<string, any>;
+  logging?: Record<string, any>;
+  features?: Record<string, any>;
 }
+
+export const CawsConfigSchema = {
+  type: "object",
+  properties: {
+    version: { type: "string" },
+    environment: { type: "string" },
+    tiers: { type: "object" },
+    defaultTier: { type: "string" },
+    workingSpecPath: { type: "string" },
+    provenancePath: { type: "string" },
+    cawsDirectory: { type: "string" },
+    paths: { type: "object" },
+    gates: { type: "object" },
+    tools: { type: "object" },
+    logging: { type: "object" },
+    features: { type: "object" },
+  },
+  required: [
+    "tiers",
+    "defaultTier",
+    "workingSpecPath",
+    "provenancePath",
+    "cawsDirectory",
+  ],
+};
 
 // =============================================================================
 // MIGRATION TYPES

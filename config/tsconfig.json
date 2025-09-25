@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "allowJs": true,
@@ -14,7 +14,9 @@
     "rootDir": ".",
     "resolveJsonModule": true,
     "lib": ["ES2022"],
-    "types": ["node"]
+    "types": ["node"],
+    "downlevelIteration": true,
+    "allowImportingTsExtensions": true
   },
   "include": ["apps/kv_database/src/**/*", "apps/tools/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "apps/rag_web_search_tool/**/*"]

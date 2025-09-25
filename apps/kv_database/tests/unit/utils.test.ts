@@ -10,7 +10,7 @@ import {
   cleanMarkdown,
   generateBreadcrumbs,
   determineContentType,
-} from "../../src/lib/utils.js";
+} from "../../src/lib/utils.ts";
 
 describe("normalize", () => {
   it("should normalize basic text", () => {

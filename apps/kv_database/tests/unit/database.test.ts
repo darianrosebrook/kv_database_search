@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { ObsidianDatabase } from "../../src/lib/database.js";
+import { ObsidianDatabase } from "../../src/lib/database.ts";
 
 describe("ObsidianDatabase", () => {
   let db: ObsidianDatabase;

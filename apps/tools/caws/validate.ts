@@ -2,7 +2,7 @@
 
 import path from "path";
 import { fileURLToPath } from "url";
-import { CawsValidator } from "./shared/validator.js";
+import { CawsValidator } from "./shared/validator.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

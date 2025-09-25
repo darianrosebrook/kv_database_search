@@ -42,13 +42,13 @@ async function main() {
   try {
     // Initialize database
     console.log("🔧 Initializing database connection...");
-    const database = new ObsidianDatabase(DATABASE_URL, EMBEDDING_DIMENSION);
+    const database = new ObsidianDatabase(DATABASE_URL);
     await database.initialize();
     console.log("✅ Database connected successfully");
 
     // Initialize embedding service
     console.log("🔧 Initializing embedding service...");
-    const embeddingService = new ObsidianEmbeddingService(EMBEDDING_MODEL);
+    const embeddingService = new ObsidianEmbeddingService({ model: EMBEDDING_MODEL });
     await embeddingService.initialize();
     console.log("✅ Embedding service initialized");
 

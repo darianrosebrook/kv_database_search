@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { ObsidianDatabase } from "../../src/lib/database.js";
-import { ObsidianEmbeddingService } from "../../src/lib/embeddings.js";
-import { MultiModalIngestionPipeline } from "../../src/lib/multi-modal-ingest.js";
-import { ContentType } from "../../src/lib/multi-modal.js";
+import { ObsidianDatabase } from "../../src/lib/database.ts";
+import { ObsidianEmbeddingService } from "../../src/lib/embeddings.ts";
+import { MultiModalIngestionPipeline } from "../../src/lib/multi-modal-ingest.ts";
+import { ContentType } from "../../src/lib/multi-modal.ts";
 import * as fs from "fs";
 import * as path from "path";
 import { createHash } from "crypto";

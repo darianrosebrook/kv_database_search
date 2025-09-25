@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
 
-import path from "path";
+import * as path from "path";
 import { fileURLToPath } from "url";
-import { CawsConfigManager } from "./shared/config-manager.js";
+import { CawsConfigManager } from "./shared/config-manager.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

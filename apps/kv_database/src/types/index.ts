@@ -409,6 +409,9 @@ export interface ObsidianSearchResponse {
       files: string[];
       centrality: number;
     }>;
+    webResults?: number;
+    contextDocuments?: number;
+    chatSessions?: number;
   };
 }
 
@@ -472,6 +475,9 @@ export interface SearchResponse {
       files: string[];
       centrality: number;
     }>;
+    webResults?: number;
+    contextDocuments?: number;
+    chatSessions?: number;
   };
   error?: string;
 }
@@ -488,6 +494,7 @@ export interface IngestResponse {
   success: boolean;
   message: string;
   processedFiles: number;
+  totalFiles: number;
   totalChunks: number;
   errors: string[];
   performance?: {

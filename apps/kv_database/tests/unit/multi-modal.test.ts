@@ -5,7 +5,7 @@ import {
   ContentType,
   ContentTypeResult,
   UniversalMetadata,
-} from "../../src/lib/multi-modal.js";
+} from "../../src/lib/multi-modal.ts";
 import * as fs from "fs";
 
 // Mock fs module

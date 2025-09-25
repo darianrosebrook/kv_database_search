@@ -4,7 +4,7 @@
  */
 
 import * as path from "path";
-import { CawsBaseTool, ToolResult } from "./base-tool.js";
+import { CawsBaseTool, ToolResult } from "./base-tool.ts";
 import {
   GateResult,
   GateCheckOptions,
@@ -12,7 +12,7 @@ import {
   MutationData,
   ContractTestResults,
   TierPolicy,
-} from "./types.js";
+} from "./types.ts";
 
 export class CawsGateChecker extends CawsBaseTool {
   private tierPolicies: Record<number, TierPolicy> = {
@@ -193,7 +193,8 @@ export class CawsGateChecker extends CawsBaseTool {
         };
       }
 
-      const results = this.readJsonFile<ContractTestResults>(contractResultsPath);
+      const results =
+        this.readJsonFile<ContractTestResults>(contractResultsPath);
       if (!results) {
         return {
           passed: false,
@@ -203,7 +204,8 @@ export class CawsGateChecker extends CawsBaseTool {
         };
       }
 
-      const passed = results.numPassed === results.numTotal && results.numTotal > 0;
+      const passed =
+        results.numPassed === results.numTotal && results.numTotal > 0;
 
       return {
         passed,
@@ -231,11 +233,12 @@ export class CawsGateChecker extends CawsBaseTool {
   async calculateTrustScore(options: GateCheckOptions): Promise<GateResult> {
     try {
       // Run all gate checks
-      const [coverageResult, mutationResult, contractResult] = await Promise.all([
-        this.checkCoverage(options),
-        this.checkMutation(options),
-        this.checkContracts(options),
-      ]);
+      const [coverageResult, mutationResult, contractResult] =
+        await Promise.all([
+          this.checkCoverage(options),
+          this.checkMutation(options),
+          this.checkContracts(options),
+        ]);
 
       // Load provenance if available
       let provenance = null;

@@ -6,7 +6,7 @@ import {
   Backlink,
   OBSIDIAN_CONTENT_TYPES,
   ObsidianContentType,
-} from "../../src/lib/obsidian-models.js";
+} from "../../src/lib/obsidian-models.ts";
 
 // Mock crypto module
 vi.mock("crypto", () => ({

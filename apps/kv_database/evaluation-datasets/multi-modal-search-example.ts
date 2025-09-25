@@ -5,11 +5,11 @@
  * capabilities into your application for enhanced content understanding.
  */
 
-import { SearchService } from "../src/lib/search.js";
-import { Database } from "../src/lib/database.js";
-import { EmbeddingService } from "../src/lib/embeddings.js";
-import { KnowledgeGraphService } from "../src/lib/knowledge-graph.js";
-import { ContentType, ProgrammingLanguage } from "../src/lib/multi-modal.js";
+import { SearchService } from "../src/lib/search.ts";
+import { Database } from "../src/lib/database.ts";
+import { EmbeddingService } from "../src/lib/embeddings.ts";
+import { KnowledgeGraphService } from "../src/lib/knowledge-graph.ts";
+import { ContentType, ProgrammingLanguage } from "../src/lib/multi-modal.ts";
 
 async function multiModalSearchExample() {
   console.log("🎨 Multi-Modal Search Integration Example\n");

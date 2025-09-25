@@ -11,6 +11,7 @@
  */
 
 import chokidar from "chokidar";
+import type { FSWatcher } from "chokidar";
 import * as fs from "fs";
 import * as path from "path";
 import { EventEmitter } from "events";
@@ -64,7 +65,7 @@ export interface FileWatcherStats {
  * File system watcher for Obsidian vault synchronization
  */
 export class ObsidianFileWatcher extends EventEmitter {
-  private watcher: chokidar.FSWatcher | null = null;
+  private watcher: FSWatcher | null = null;
   private options: Required<FileWatcherOptions>;
   private isWatching = false;
   private pendingChanges: FileChangeEvent[] = [];
@@ -141,17 +142,19 @@ export class ObsidianFileWatcher extends EventEmitter {
 
     // Set up event handlers
     this.watcher
-      .on("add", (path, stats) => this.handleFileEvent("add", path, stats))
-      .on("change", (path, stats) =>
+      .on("add", async (path, stats) =>
+        this.handleFileEvent("add", path, stats)
+      )
+      .on("change", async (path, stats) =>
         this.handleFileEvent("change", path, stats)
       )
-      .on("unlink", (path) => this.handleFileEvent("unlink", path))
-      .on("addDir", (path, stats) =>
+      .on("unlink", async (path) => this.handleFileEvent("unlink", path))
+      .on("addDir", async (path, stats) =>
         this.handleFileEvent("addDir", path, stats)
       )
-      .on("unlinkDir", (path) => this.handleFileEvent("unlinkDir", path))
+      .on("unlinkDir", async (path) => this.handleFileEvent("unlinkDir", path))
       .on("ready", () => this.handleWatcherReady())
-      .on("error", (error) => this.handleWatcherError(error))
+      .on("error", (error: unknown) => this.handleWatcherError(error instanceof Error ? error : new Error(String(error))))
       .on("raw", (event, path, details) =>
         this.handleRawEvent(event, path, details)
       );
@@ -162,11 +165,11 @@ export class ObsidianFileWatcher extends EventEmitter {
   /**
    * Handle individual file events
    */
-  private handleFileEvent(
+  private async handleFileEvent(
     type: FileChangeEvent["type"],
     filePath: string,
     stats?: fs.Stats
-  ): void {
+  ): Promise<void> {
     if (!this.isWatching) return;
 
     // Skip temporary files
@@ -558,7 +561,7 @@ export class ObsidianFileWatcher extends EventEmitter {
   private async getFileHash(filePath: string): Promise<string> {
     try {
       const content = await fs.promises.readFile(filePath);
-      return createHash("md5").update(content).digest("hex");
+      return createHash("md5").update(content.toString()).digest("hex");
     } catch {
       return "";
     }
@@ -753,7 +756,7 @@ export class ObsidianFileWatcher extends EventEmitter {
     try {
       // In a real implementation, this would query the database
       // For now, we'll use a simple file-based approach
-      const hash = createHash("md5").update(filePath).digest("hex");
+      const hash = createHash("md5").update(filePath.toString()).digest("hex");
       const trackingFile = path.join(
         this.options.vaultPath,
         ".obsidian-rag",
@@ -787,7 +790,7 @@ export class ObsidianFileWatcher extends EventEmitter {
       );
       await fs.promises.mkdir(trackingDir, { recursive: true });
 
-      const hash = createHash("md5").update(filePath).digest("hex");
+      const hash = createHash("md5").update(filePath.toString()).digest("hex");
       const trackingFile = path.join(trackingDir, `${hash}.json`);
 
       const data = {
@@ -829,7 +832,7 @@ export class ObsidianFileWatcher extends EventEmitter {
    */
   private async removeFileTracking(filePath: string): Promise<void> {
     try {
-      const hash = createHash("md5").update(filePath).digest("hex");
+      const hash = createHash("md5").update(filePath.toString()).digest("hex");
       const trackingFile = path.join(
         this.options.vaultPath,
         ".obsidian-rag",

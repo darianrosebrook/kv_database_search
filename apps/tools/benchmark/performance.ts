@@ -3,9 +3,9 @@
 import { performance } from "perf_hooks";
 import fs from "fs";
 import path from "path";
-import { ObsidianDatabase } from "../../src/lib/database.js";
-import { ObsidianEmbeddingService } from "../../src/lib/embeddings.js";
-import { ObsidianIngestionService } from "../../src/lib/obsidian-ingest.js";
+import { ObsidianDatabase } from "../../src/lib/database.ts";
+import { ObsidianEmbeddingService } from "../../src/lib/embeddings.ts";
+import { ObsidianIngestionService } from "../../src/lib/obsidian-ingest.ts";
 
 interface BenchmarkResult {
   name: string;

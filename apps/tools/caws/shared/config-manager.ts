@@ -7,8 +7,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import yaml from "js-yaml";
-import { CawsConfig, CawsConfigSchema } from "./types.js";
-import { CawsBaseTool, ToolResult } from "./base-tool.js";
+import { CawsConfig, CawsConfigSchema } from "./types.ts";
+import { CawsBaseTool, ToolResult } from "./base-tool.ts";
 
 export class CawsConfigManager extends CawsBaseTool {
   private config: CawsConfig | null = null;
@@ -119,6 +119,30 @@ export class CawsConfigManager extends CawsBaseTool {
         obsidian_support: true,
         parallel_processing: true,
       },
+      tiers: {
+        1: {
+          min_branch: 0.9,
+          min_coverage: 0.9,
+          min_mutation: 0.8,
+          requires_contracts: true,
+        },
+        2: {
+          min_branch: 0.8,
+          min_coverage: 0.8,
+          min_mutation: 0.7,
+          requires_contracts: true,
+        },
+        3: {
+          min_branch: 0.7,
+          min_coverage: 0.7,
+          min_mutation: 0.6,
+          requires_contracts: false,
+        },
+      },
+      defaultTier: "2",
+      workingSpecPath: path.join(this.getCawsDirectory(), "working-spec.yaml"),
+      provenancePath: path.join(this.getCawsDirectory(), "provenance.json"),
+      cawsDirectory: this.getCawsDirectory(),
     };
   }
 

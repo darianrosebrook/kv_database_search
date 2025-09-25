@@ -3,7 +3,7 @@ import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
-import { ObsidianDatabase } from "../../src/lib/database.js";
+import { ObsidianDatabase } from "../../src/lib/database.ts";
 
 describe("ObsidianDatabase Integration", () => {
   let postgresContainer: StartedPostgreSqlContainer;

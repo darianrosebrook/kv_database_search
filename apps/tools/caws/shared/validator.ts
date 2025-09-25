@@ -8,8 +8,8 @@ import * as path from "path";
 import Ajv from "ajv";
 import { fileURLToPath } from "url";
 import yaml from "js-yaml";
-import { ValidationResult } from "./types.js";
-import { CawsBaseTool } from "./base-tool.js";
+import { ValidationResult } from "./types.ts";
+import { CawsBaseTool } from "./base-tool.ts";
 
 export class CawsValidator extends CawsBaseTool {
   private ajv: Ajv;

@@ -1,9 +1,9 @@
 #!/usr/bin/env tsx
 
-import { SearchService } from "../src/lib/search.js";
-import { Database } from "../src/lib/database.js";
-import { EmbeddingService } from "../src/lib/embeddings.js";
-import { KnowledgeGraphService } from "../src/lib/knowledge-graph.js";
+import { SearchService } from "../src/lib/search.ts";
+import { Database } from "../src/lib/database.ts";
+import { EmbeddingService } from "../src/lib/embeddings.ts";
+import { KnowledgeGraphService } from "../src/lib/knowledge-graph.ts";
 
 async function debugGraphRAG() {
   console.log("🔗 Debugging Graph RAG System...\n");

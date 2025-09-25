@@ -423,7 +423,7 @@ export class EnhancedEntityExtractor {
     }
 
     // Create clusters for each type
-    for (const [type, typeEntities] of typeGroups.entries()) {
+    for (const [type, typeEntities] of Array.from(typeGroups.entries())) {
       const clusterId = `cluster_${type}`;
       const clusterName = `${type.charAt(0).toUpperCase() + type.slice(1)}s`;
 

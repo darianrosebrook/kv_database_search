@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import {
   MultiModalIngestionPipeline,
   MultiModalIngestionConfig,
-} from "../../src/lib/multi-modal-ingest.js";
-import { ContentType } from "../../src/lib/multi-modal.js";
+} from "../../src/lib/multi-modal-ingest.ts";
+import { ContentType } from "../../src/lib/multi-modal.ts";
 import * as fs from "fs";
 import * as path from "path";
 

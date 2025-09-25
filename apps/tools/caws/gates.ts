@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
-import { CawsGateChecker } from "./shared/gate-checker.js";
-import { GateResult } from "./shared/types.js";
+import { CawsGateChecker } from "./shared/gate-checker.ts";
+import { GateResult } from "./shared/types.ts";
 
 export async function checkCoverage(
   tier: number,

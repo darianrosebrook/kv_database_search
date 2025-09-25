@@ -1,10 +1,10 @@
 #!/usr/bin/env tsx
 
-import { SearchService } from "../src/lib/search.js";
-import { Database } from "../src/lib/database.js";
-import { EmbeddingService } from "../src/lib/embeddings.js";
-import { KnowledgeGraphService } from "../src/lib/knowledge-graph.js";
-import { MultiModalRetriever, ContentType } from "../src/lib/multi-modal.js";
+import { SearchService } from "../src/lib/search.ts";
+import { Database } from "../src/lib/database.ts";
+import { EmbeddingService } from "../src/lib/embeddings.ts";
+import { KnowledgeGraphService } from "../src/lib/knowledge-graph.ts";
+import { MultiModalRetriever, ContentType } from "../src/lib/multi-modal.ts";
 
 async function debugMultiModal() {
   console.log("🔍 Debugging Multi-Modal System...\n");

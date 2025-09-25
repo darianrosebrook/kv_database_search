@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   ObsidianEmbeddingService,
   EmbeddingModel,
-} from "../../src/lib/embeddings.js";
-import { EmbeddingConfig } from "../../src/types/index.js";
+} from "../../src/lib/embeddings.ts";
+import { EmbeddingConfig } from "../../src/types/index.ts";
 
 // Mock ollama
 vi.mock("ollama", () => ({
