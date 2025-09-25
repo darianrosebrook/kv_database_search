@@ -3,15 +3,46 @@
 ## Architecture Overview
 
 ### Integration with Current System
-```
-Current Search Pipeline:
-Query → Vector Search → Results
 
-Enhanced Pipeline:
-Query → Query Classifier → {
-  Vector Search (for semantic queries)
-  Graph Query (for relationship queries)
-} → Result Fusion → Enhanced Results
+#### Current Search Pipeline
+```mermaid
+graph LR
+    A[Query] --> B[Vector Search]
+    B --> C[Results]
+    
+    style A color:#333333
+    style A fill:#e1f5fe
+    style B color:#333333
+    style B fill:#fff3e0
+    style C color:#333333
+    style C fill:#f1f8e9
+```
+
+#### Enhanced Pipeline
+```mermaid
+graph TD
+    A[Query] --> B[Query Classifier]
+    B --> C{Query Type}
+    C -->|Semantic| D[Vector Search]
+    C -->|Relationship| E[Graph Query]
+    D --> F[Result Fusion]
+    E --> F
+    F --> G[Enhanced Results]
+    
+    style A color:#333333
+    style A fill:#e1f5fe
+    style B color:#333333
+    style B fill:#f3e5f5
+    style C color:#333333
+    style C fill:#e8f5e8
+    style D color:#333333
+    style D fill:#fff3e0
+    style E color:#333333
+    style E fill:#ffebee
+    style F color:#333333
+    style F fill:#f1f8e9
+    style G color:#333333
+    style G fill:#e8f5e8
 ```
 
 ### Component Architecture

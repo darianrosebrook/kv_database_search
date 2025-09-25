@@ -3,24 +3,47 @@
 ## Architecture Overview
 
 ### Current Pipeline
-```
-Obsidian Vault → Markdown Parser → Chunking → Embedding → pgvector Storage
+```mermaid
+graph LR
+    A[Obsidian Vault] --> B[Markdown Parser]
+    B --> C[Chunking]
+    C --> D[Embedding]
+    D --> E[pgvector Storage]
+    
+    style A color:#333333
+    style A fill:#e1f5fe
+    style B color:#333333
+    style B fill:#f3e5f5
+    style C color:#333333
+    style C fill:#e8f5e8
+    style D color:#333333
+    style D fill:#fff3e0
+    style E color:#333333
+    style E fill:#ffebee
 ```
 
 ### Enhanced Pipeline
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│  Multiple       │    │   Unified        │    │   Source-       │
-│  Data Sources   │───▶│   Ingestion      │───▶│   Aware         │
-│                 │    │   Pipeline       │    │   Processing    │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                                          │
-                                                          ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Data Quality  │    │   Cross-Source   │    │   Enhanced      │
-│   Validation    │───▶│   Entity         │───▶│   Vector DB     │
-│                 │    │   Resolution     │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
+```mermaid
+graph TD
+    A[Multiple<br/>Data Sources] --> B[Unified<br/>Ingestion<br/>Pipeline]
+    B --> C[Source-Aware<br/>Processing]
+    
+    C --> D[Data Quality<br/>Validation]
+    D --> E[Cross-Source<br/>Entity<br/>Resolution]
+    E --> F[Enhanced<br/>Vector DB]
+    
+    style A color:#333333
+    style A fill:#e3f2fd
+    style B color:#333333
+    style B fill:#f3e5f5
+    style C color:#333333
+    style C fill:#e8f5e8
+    style D color:#333333
+    style D fill:#fff3e0
+    style E color:#333333
+    style E fill:#ffebee
+    style F color:#333333
+    style F fill:#f1f8e9
 ```
 
 ## Data Source Adapters

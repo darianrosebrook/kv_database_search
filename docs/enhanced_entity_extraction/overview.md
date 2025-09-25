@@ -48,9 +48,36 @@ Improve knowledge graph construction beyond basic tag clustering by implementing
 ## Technical Approach
 
 ### Architecture Integration
+
+#### Current Flow
+```mermaid
+graph LR
+    A[Content] --> B[Tags]
+    B --> C[Basic Relationships]
+    style A color:#333333
+    style A fill:#e1f5fe
+    style B color:#333333
+    style B fill:#f3e5f5
+    style C color:#333333
+    style C fill:#f1f8e9
 ```
-Current Flow: Content → Tags → Basic Relationships
-Enhanced Flow: Content → NLP Processing → Rich Entities → Advanced Relationships
+
+#### Enhanced Flow
+```mermaid
+graph LR
+    A[Content] --> B[NLP Processing]
+    B --> C[Rich Entities]
+    C --> D[Advanced Relationships]
+    style A color:#333333
+    style A fill:#e1f5fe
+    style B color:#333333
+    style B fill:#f3e5f5
+    style C color:#333333
+    style C fill:#e8f5e8
+    style D color:#333333
+    style D fill:#f1f8e9
+
+    
 ```
 
 ### Implementation Strategy

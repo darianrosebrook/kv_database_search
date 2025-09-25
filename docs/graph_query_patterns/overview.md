@@ -49,8 +49,23 @@ Add natural language to graph query translation capabilities to enhance relation
 ## Technical Approach
 
 ### Query Processing Pipeline
-```
-Natural Language Query → Intent Classification → Graph Query Translation → Execution → Result Enhancement
+```mermaid
+graph LR
+    A[Natural Language<br/>Query] --> B[Intent<br/>Classification]
+    B --> C[Graph Query<br/>Translation]
+    C --> D[Execution]
+    D --> E[Result<br/>Enhancement]
+    
+    style A color:#333333
+    style A fill:#e1f5fe
+    style B color:#333333
+    style B fill:#f3e5f5
+    style C color:#333333
+    style C fill:#e8f5e8
+    style D color:#333333
+    style D fill:#fff3e0
+    style E color:#333333
+    style E fill:#f1f8e9
 ```
 
 ### Integration Strategy

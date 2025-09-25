@@ -55,8 +55,26 @@ Extend the system to extract searchable content and metadata from diverse file t
 ## Technical Approach
 
 ### Content Processing Pipeline
-```
-File Detection → Format-Specific Extraction → Content Normalization → Metadata Enrichment → Quality Validation → Storage
+```mermaid
+graph LR
+    A[File Detection] --> B[Format-Specific<br/>Extraction]
+    B --> C[Content<br/>Normalization]
+    C --> D[Metadata<br/>Enrichment]
+    D --> E[Quality<br/>Validation]
+    E --> F[Storage]
+    
+    style A color:#333333
+    style A fill:#e1f5fe
+    style B color:#333333
+    style B fill:#f3e5f5
+    style C color:#333333
+    style C fill:#e8f5e8
+    style D color:#333333
+    style D fill:#fff3e0
+    style E color:#333333
+    style E fill:#ffebee
+    style F color:#333333
+    style F fill:#f1f8e9
 ```
 
 ### Integration Strategy
