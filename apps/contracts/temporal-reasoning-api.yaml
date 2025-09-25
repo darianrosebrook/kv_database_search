@@ -1,0 +1,923 @@
+openapi: 3.0.3
+info:
+  title: Temporal Reasoning API
+  description: |
+    Advanced temporal reasoning and causality detection system for time-aware knowledge graph analysis.
+    
+    This API provides sophisticated temporal analysis capabilities including causality detection,
+    trend forecasting, change point identification, and temporal relationship evolution tracking.
+  version: 1.0.0
+  contact:
+    name: Knowledge Graph Team
+    email: knowledge-graph@company.com
+
+servers:
+  - url: https://api.knowledge-graph.company.com/v1
+    description: Production server
+  - url: https://staging-api.knowledge-graph.company.com/v1
+    description: Staging server
+
+paths:
+  /temporal/causality/analyze:
+    post:
+      summary: Analyze causality between entities
+      description: |
+        Detect causal relationships between entities using temporal analysis and statistical methods.
+        Distinguishes between correlation and causation with confidence scoring.
+      operationId: analyzeCausality
+      tags:
+        - Causality Detection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CausalityAnalysisRequest'
+            examples:
+              basic_causality:
+                summary: Basic causality analysis
+                value:
+                  entity_pairs:
+                    - source_entity: "COVID-19 pandemic"
+                      target_entity: "remote work adoption"
+                  time_window:
+                    start: "2020-01-01T00:00:00Z"
+                    end: "2022-12-31T23:59:59Z"
+                  analysis_options:
+                    confidence_threshold: 0.75
+                    statistical_significance: 0.05
+      responses:
+        '200':
+          description: Successfully analyzed causality
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CausalityAnalysisResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /temporal/trends/analyze:
+    post:
+      summary: Analyze temporal trends and forecast
+      description: |
+        Analyze temporal trends in entity relationships and provide forecasting
+        for future relationship evolution.
+      operationId: analyzeTrends
+      tags:
+        - Trend Analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrendAnalysisRequest'
+      responses:
+        '200':
+          description: Successfully analyzed trends
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendAnalysisResponse'
+
+  /temporal/changes/detect:
+    post:
+      summary: Detect change points in temporal data
+      description: |
+        Identify significant change points in temporal relationship data
+        using statistical change detection algorithms.
+      operationId: detectChangePoints
+      tags:
+        - Change Detection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeDetectionRequest'
+      responses:
+        '200':
+          description: Successfully detected change points
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeDetectionResponse'
+
+  /temporal/relationships/{relationshipId}/evolution:
+    get:
+      summary: Get relationship evolution over time
+      description: |
+        Retrieve the temporal evolution of a specific relationship including
+        strength changes, context evolution, and key transition points.
+      operationId: getRelationshipEvolution
+      tags:
+        - Relationship Evolution
+      parameters:
+        - name: relationshipId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the relationship
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+          description: Time range for evolution analysis (ISO 8601 interval)
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: ["hour", "day", "week", "month", "year"]
+            default: "day"
+          description: Temporal granularity for analysis
+      responses:
+        '200':
+          description: Successfully retrieved relationship evolution
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipEvolutionResponse'
+
+  /temporal/forecast:
+    post:
+      summary: Forecast future relationship developments
+      description: |
+        Generate forecasts for future relationship developments based on
+        historical temporal patterns and trend analysis.
+      operationId: forecastRelationships
+      tags:
+        - Forecasting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForecastRequest'
+      responses:
+        '200':
+          description: Successfully generated forecast
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForecastResponse'
+
+  /temporal/search:
+    post:
+      summary: Perform temporal-aware search
+      description: |
+        Execute search queries with temporal context and time-aware filtering.
+        Supports temporal operators and time-range constraints.
+      operationId: temporalSearch
+      tags:
+        - Temporal Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemporalSearchRequest'
+      responses:
+        '200':
+          description: Successfully executed temporal search
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemporalSearchResponse'
+
+components:
+  schemas:
+    CausalityAnalysisRequest:
+      type: object
+      required:
+        - entity_pairs
+        - time_window
+      properties:
+        entity_pairs:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityPair'
+          minItems: 1
+          maxItems: 100
+        time_window:
+          $ref: '#/components/schemas/TimeWindow'
+        analysis_options:
+          $ref: '#/components/schemas/CausalityAnalysisOptions'
+
+    EntityPair:
+      type: object
+      required:
+        - source_entity
+        - target_entity
+      properties:
+        source_entity:
+          type: string
+          description: Source entity identifier or name
+        target_entity:
+          type: string
+          description: Target entity identifier or name
+
+    TimeWindow:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Start of time window (ISO 8601)
+        end:
+          type: string
+          format: date-time
+          description: End of time window (ISO 8601)
+
+    CausalityAnalysisOptions:
+      type: object
+      properties:
+        confidence_threshold:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.75
+          description: Minimum confidence for causality detection
+        statistical_significance:
+          type: number
+          minimum: 0.001
+          maximum: 0.1
+          default: 0.05
+          description: Statistical significance threshold (p-value)
+        max_lag_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          default: 30
+          description: Maximum temporal lag to consider (days)
+        method:
+          type: string
+          enum: ["granger", "ccm", "pc_algorithm", "var"]
+          default: "granger"
+          description: Causality detection method
+
+    CausalityAnalysisResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CausalityResult'
+        analysis_metadata:
+          $ref: '#/components/schemas/AnalysisMetadata'
+
+    CausalityResult:
+      type: object
+      properties:
+        source_entity:
+          type: string
+        target_entity:
+          type: string
+        causality_type:
+          type: string
+          enum: ["causal", "correlational", "independent", "unknown"]
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        statistical_significance:
+          type: number
+          description: P-value of statistical test
+        temporal_lag:
+          type: integer
+          description: Temporal lag in days
+        evidence:
+          $ref: '#/components/schemas/CausalEvidence'
+        direction:
+          type: string
+          enum: ["unidirectional", "bidirectional", "none"]
+
+    CausalEvidence:
+      type: object
+      properties:
+        granger_test_statistic:
+          type: number
+          description: Granger causality test statistic
+        correlation_coefficient:
+          type: number
+          minimum: -1.0
+          maximum: 1.0
+        temporal_precedence:
+          type: boolean
+          description: Whether cause precedes effect temporally
+        supporting_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemporalEvent'
+        strength_evolution:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemporalDataPoint'
+
+    TemporalEvent:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        event_type:
+          type: string
+        description:
+          type: string
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+
+    TemporalDataPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+
+    TrendAnalysisRequest:
+      type: object
+      required:
+        - entities
+        - time_window
+      properties:
+        entities:
+          type: array
+          items:
+            type: string
+          description: Entity identifiers to analyze
+        relationships:
+          type: array
+          items:
+            type: string
+          description: Specific relationship types to analyze
+        time_window:
+          $ref: '#/components/schemas/TimeWindow'
+        analysis_options:
+          $ref: '#/components/schemas/TrendAnalysisOptions'
+
+    TrendAnalysisOptions:
+      type: object
+      properties:
+        granularity:
+          type: string
+          enum: ["hour", "day", "week", "month", "year"]
+          default: "day"
+        smoothing:
+          type: string
+          enum: ["none", "moving_average", "exponential", "polynomial"]
+          default: "moving_average"
+        forecast_horizon_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          default: 30
+
+    TrendAnalysisResponse:
+      type: object
+      properties:
+        trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrendResult'
+        analysis_metadata:
+          $ref: '#/components/schemas/AnalysisMetadata'
+
+    TrendResult:
+      type: object
+      properties:
+        entity:
+          type: string
+        relationship_type:
+          type: string
+        trend_direction:
+          type: string
+          enum: ["increasing", "decreasing", "stable", "cyclical", "volatile"]
+        trend_strength:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        change_rate:
+          type: number
+          description: Rate of change per time unit
+        seasonality:
+          $ref: '#/components/schemas/SeasonalityInfo'
+        forecast:
+          $ref: '#/components/schemas/ForecastInfo'
+        confidence_intervals:
+          $ref: '#/components/schemas/ConfidenceIntervals'
+
+    SeasonalityInfo:
+      type: object
+      properties:
+        has_seasonality:
+          type: boolean
+        period_days:
+          type: integer
+        amplitude:
+          type: number
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+
+    ForecastInfo:
+      type: object
+      properties:
+        predictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemporalDataPoint'
+        accuracy_metrics:
+          $ref: '#/components/schemas/AccuracyMetrics'
+
+    AccuracyMetrics:
+      type: object
+      properties:
+        mae:
+          type: number
+          description: Mean Absolute Error
+        rmse:
+          type: number
+          description: Root Mean Square Error
+        mape:
+          type: number
+          description: Mean Absolute Percentage Error
+
+    ConfidenceIntervals:
+      type: object
+      properties:
+        lower_bound:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemporalDataPoint'
+        upper_bound:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemporalDataPoint'
+        confidence_level:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.95
+
+    ChangeDetectionRequest:
+      type: object
+      required:
+        - time_series_data
+      properties:
+        time_series_data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemporalDataPoint'
+        detection_options:
+          $ref: '#/components/schemas/ChangeDetectionOptions'
+
+    ChangeDetectionOptions:
+      type: object
+      properties:
+        algorithm:
+          type: string
+          enum: ["cusum", "pelt", "binary_segmentation", "window"]
+          default: "pelt"
+        sensitivity:
+          type: number
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+        min_segment_length:
+          type: integer
+          minimum: 2
+          default: 10
+
+    ChangeDetectionResponse:
+      type: object
+      properties:
+        change_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChangePoint'
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSegment'
+        analysis_metadata:
+          $ref: '#/components/schemas/AnalysisMetadata'
+
+    ChangePoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        change_magnitude:
+          type: number
+        change_type:
+          type: string
+          enum: ["level_shift", "trend_change", "variance_change", "structural_break"]
+        statistical_significance:
+          type: number
+
+    TimeSegment:
+      type: object
+      properties:
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        characteristics:
+          type: object
+          properties:
+            mean:
+              type: number
+            variance:
+              type: number
+            trend:
+              type: number
+        data_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemporalDataPoint'
+
+    RelationshipEvolutionResponse:
+      type: object
+      properties:
+        relationship_id:
+          type: string
+        evolution_timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvolutionPoint'
+        key_transitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransitionPoint'
+        summary_statistics:
+          $ref: '#/components/schemas/EvolutionSummary'
+
+    EvolutionPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        strength:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        context:
+          type: string
+        supporting_evidence:
+          type: array
+          items:
+            type: string
+
+    TransitionPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        transition_type:
+          type: string
+          enum: ["strengthening", "weakening", "emergence", "dissolution"]
+        significance:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        description:
+          type: string
+
+    EvolutionSummary:
+      type: object
+      properties:
+        overall_trend:
+          type: string
+          enum: ["strengthening", "weakening", "stable", "volatile"]
+        average_strength:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        volatility:
+          type: number
+          minimum: 0.0
+        duration_days:
+          type: integer
+
+    ForecastRequest:
+      type: object
+      required:
+        - entities
+        - forecast_horizon
+      properties:
+        entities:
+          type: array
+          items:
+            type: string
+        relationships:
+          type: array
+          items:
+            type: string
+        forecast_horizon:
+          type: integer
+          minimum: 1
+          maximum: 365
+          description: Forecast horizon in days
+        forecast_options:
+          $ref: '#/components/schemas/ForecastOptions'
+
+    ForecastOptions:
+      type: object
+      properties:
+        model_type:
+          type: string
+          enum: ["arima", "lstm", "prophet", "linear_regression"]
+          default: "prophet"
+        confidence_level:
+          type: number
+          minimum: 0.5
+          maximum: 0.99
+          default: 0.95
+        include_seasonality:
+          type: boolean
+          default: true
+
+    ForecastResponse:
+      type: object
+      properties:
+        forecasts:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityForecast'
+        model_performance:
+          $ref: '#/components/schemas/ModelPerformance'
+
+    EntityForecast:
+      type: object
+      properties:
+        entity:
+          type: string
+        relationship_type:
+          type: string
+        predictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForecastPoint'
+        confidence_intervals:
+          $ref: '#/components/schemas/ConfidenceIntervals'
+
+    ForecastPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        predicted_value:
+          type: number
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+
+    ModelPerformance:
+      type: object
+      properties:
+        cross_validation_score:
+          type: number
+        feature_importance:
+          type: object
+          additionalProperties:
+            type: number
+        model_parameters:
+          type: object
+          additionalProperties: true
+
+    TemporalSearchRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: Search query with temporal context
+        temporal_filters:
+          $ref: '#/components/schemas/TemporalFilters'
+        search_options:
+          $ref: '#/components/schemas/TemporalSearchOptions'
+
+    TemporalFilters:
+      type: object
+      properties:
+        time_range:
+          $ref: '#/components/schemas/TimeWindow'
+        temporal_operators:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemporalOperator'
+        causality_filter:
+          type: string
+          enum: ["causal_only", "correlational_only", "all"]
+          default: "all"
+
+    TemporalOperator:
+      type: object
+      properties:
+        operator:
+          type: string
+          enum: ["before", "after", "during", "overlaps", "evolves_to"]
+        reference_time:
+          type: string
+          format: date-time
+        tolerance_days:
+          type: integer
+          default: 0
+
+    TemporalSearchOptions:
+      type: object
+      properties:
+        include_evolution:
+          type: boolean
+          default: false
+        include_forecasts:
+          type: boolean
+          default: false
+        max_results:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 50
+
+    TemporalSearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemporalSearchResult'
+        temporal_insights:
+          $ref: '#/components/schemas/TemporalInsights'
+        query_metadata:
+          $ref: '#/components/schemas/QueryMetadata'
+
+    TemporalSearchResult:
+      type: object
+      properties:
+        entity:
+          type: string
+        relevance_score:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        temporal_context:
+          $ref: '#/components/schemas/TemporalContext'
+        evolution_summary:
+          $ref: '#/components/schemas/EvolutionSummary'
+        related_entities:
+          type: array
+          items:
+            type: string
+
+    TemporalContext:
+      type: object
+      properties:
+        time_period:
+          $ref: '#/components/schemas/TimeWindow'
+        key_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemporalEvent'
+        trend_direction:
+          type: string
+          enum: ["increasing", "decreasing", "stable", "volatile"]
+
+    TemporalInsights:
+      type: object
+      properties:
+        dominant_trends:
+          type: array
+          items:
+            type: string
+        emerging_patterns:
+          type: array
+          items:
+            type: string
+        causal_chains:
+          type: array
+          items:
+            $ref: '#/components/schemas/CausalChain'
+
+    CausalChain:
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            type: string
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        temporal_span:
+          $ref: '#/components/schemas/TimeWindow'
+
+    QueryMetadata:
+      type: object
+      properties:
+        processing_time_ms:
+          type: integer
+        temporal_complexity:
+          type: string
+          enum: ["simple", "moderate", "complex"]
+        entities_analyzed:
+          type: integer
+        time_periods_covered:
+          type: integer
+
+    AnalysisMetadata:
+      type: object
+      properties:
+        processing_time_ms:
+          type: integer
+        algorithm_version:
+          type: string
+        data_quality_score:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        temporal_coverage:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+            data_points:
+              type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          additionalProperties: true
+        request_id:
+          type: string
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Causality Detection
+    description: Causal relationship analysis and detection
+  - name: Trend Analysis
+    description: Temporal trend analysis and pattern recognition
+  - name: Change Detection
+    description: Statistical change point detection
+  - name: Relationship Evolution
+    description: Temporal relationship evolution tracking
+  - name: Forecasting
+    description: Predictive analytics and forecasting
+  - name: Temporal Search
+    description: Time-aware search and querying

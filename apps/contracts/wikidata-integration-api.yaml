@@ -1,0 +1,937 @@
+openapi: 3.0.3
+info:
+  title: Wikidata Integration API
+  description: API for Wikidata entity management, search, and linking within the knowledge graph system
+  version: 1.0.0
+  contact:
+    name: Knowledge Graph Team
+    email: team@example.com
+
+servers:
+  - url: http://localhost:3001/api
+    description: Development server
+  - url: https://api.example.com
+    description: Production server
+
+paths:
+  /wikidata/entities/{id}:
+    get:
+      summary: Retrieve a Wikidata entity by ID
+      description: Get detailed information about a specific Wikidata entity including labels, descriptions, claims, and relationships
+      operationId: getWikidataEntity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Wikidata entity ID (e.g., Q2, P31)
+          schema:
+            type: string
+            pattern: '^[QP]\d+$'
+            example: Q2
+        - name: languages
+          in: query
+          description: Comma-separated list of language codes to include
+          schema:
+            type: string
+            example: "en,es,fr"
+        - name: include_claims
+          in: query
+          description: Whether to include entity claims/relationships
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Wikidata entity retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WikidataEntity'
+        '404':
+          description: Entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Invalid entity ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /wikidata/search:
+    get:
+      summary: Search Wikidata entities
+      description: Search for Wikidata entities using text queries with support for multilingual search and semantic similarity
+      operationId: searchWikidataEntities
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query text
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 500
+            example: "Earth planet"
+        - name: limit
+          in: query
+          description: Maximum number of results to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of results to skip for pagination
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: languages
+          in: query
+          description: Preferred languages for search and results
+          schema:
+            type: string
+            example: "en,es"
+        - name: entity_types
+          in: query
+          description: Filter by entity types
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [item, property]
+            example: ["item"]
+        - name: include_descriptions
+          in: query
+          description: Include entity descriptions in results
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResults'
+        '400':
+          description: Invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /wikidata/entities/{id}/claims:
+    get:
+      summary: Get entity claims/relationships
+      description: Retrieve all claims (relationships) for a specific Wikidata entity
+      operationId: getEntityClaims
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Wikidata entity ID
+          schema:
+            type: string
+            pattern: '^[QP]\d+$'
+        - name: property
+          in: query
+          description: Filter claims by specific property ID
+          schema:
+            type: string
+            pattern: '^P\d+$'
+            example: P31
+        - name: rank
+          in: query
+          description: Filter claims by rank
+          schema:
+            type: string
+            enum: [preferred, normal, deprecated]
+      responses:
+        '200':
+          description: Entity claims retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WikidataClaim'
+        '404':
+          description: Entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /wikidata/links:
+    post:
+      summary: Create entity link
+      description: Create a link between a local entity and a Wikidata entity
+      operationId: createEntityLink
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEntityLinkRequest'
+      responses:
+        '201':
+          description: Entity link created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityLink'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Link already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: Get entity links
+      description: Retrieve links between local entities and Wikidata entities
+      operationId: getEntityLinks
+      parameters:
+        - name: local_entity_id
+          in: query
+          description: Filter by local entity ID
+          schema:
+            type: string
+            format: uuid
+        - name: wikidata_entity_id
+          in: query
+          description: Filter by Wikidata entity ID
+          schema:
+            type: string
+            pattern: '^[QP]\d+$'
+        - name: min_confidence
+          in: query
+          description: Minimum confidence score threshold
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+            example: 0.8
+        - name: linking_method
+          in: query
+          description: Filter by linking method
+          schema:
+            type: string
+            enum: [exact_label_match, fuzzy_match, semantic_similarity, manual]
+      responses:
+        '200':
+          description: Entity links retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EntityLink'
+
+  /wikidata/links/{id}:
+    get:
+      summary: Get specific entity link
+      description: Retrieve details of a specific entity link
+      operationId: getEntityLink
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Entity link ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Entity link retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityLink'
+        '404':
+          description: Entity link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update entity link
+      description: Update an existing entity link (e.g., confidence score, verification status)
+      operationId: updateEntityLink
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Entity link ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEntityLinkRequest'
+      responses:
+        '200':
+          description: Entity link updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityLink'
+        '404':
+          description: Entity link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete entity link
+      description: Remove a link between a local entity and Wikidata entity
+      operationId: deleteEntityLink
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Entity link ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Entity link deleted successfully
+        '404':
+          description: Entity link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /wikidata/ingestion/status:
+    get:
+      summary: Get ingestion status
+      description: Retrieve the current status of Wikidata dump ingestion process
+      operationId: getIngestionStatus
+      responses:
+        '200':
+          description: Ingestion status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestionStatus'
+
+  /wikidata/ingestion/start:
+    post:
+      summary: Start ingestion process
+      description: Initiate Wikidata dump ingestion process
+      operationId: startIngestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartIngestionRequest'
+      responses:
+        '202':
+          description: Ingestion process started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestionJob'
+        '409':
+          description: Ingestion already in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /wikidata/stats:
+    get:
+      summary: Get Wikidata statistics
+      description: Retrieve statistics about stored Wikidata entities and performance metrics
+      operationId: getWikidataStats
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WikidataStats'
+
+components:
+  schemas:
+    WikidataEntity:
+      type: object
+      required:
+        - id
+        - type
+        - labels
+        - descriptions
+      properties:
+        id:
+          type: string
+          pattern: '^[QP]\d+$'
+          description: Wikidata entity identifier
+          example: Q2
+        type:
+          type: string
+          enum: [item, property]
+          description: Type of Wikidata entity
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/MultilingualText'
+          description: Entity labels in multiple languages
+        descriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MultilingualText'
+          description: Entity descriptions in multiple languages
+        aliases:
+          type: array
+          items:
+            $ref: '#/components/schemas/MultilingualText'
+          description: Alternative names for the entity
+        claims:
+          type: array
+          items:
+            $ref: '#/components/schemas/WikidataClaim'
+          description: Entity claims/relationships
+        sitelinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/WikidataSitelink'
+          description: Links to Wikipedia and other Wikimedia sites
+        searchableText:
+          type: string
+          description: Processed text for search indexing
+        relevanceScore:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Relevance score for search results
+        processedAt:
+          type: string
+          format: date-time
+          description: When the entity was last processed
+
+    MultilingualText:
+      type: object
+      required:
+        - language
+        - value
+      properties:
+        language:
+          type: string
+          minLength: 2
+          maxLength: 10
+          description: Language code (ISO 639-1 or similar)
+          example: en
+        value:
+          type: string
+          minLength: 1
+          description: Text value in the specified language
+          example: Earth
+
+    WikidataClaim:
+      type: object
+      required:
+        - property
+        - value
+        - rank
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the claim
+        property:
+          type: string
+          pattern: '^P\d+$'
+          description: Wikidata property ID
+          example: P31
+        value:
+          $ref: '#/components/schemas/WikidataValue'
+        rank:
+          type: string
+          enum: [preferred, normal, deprecated]
+          description: Rank of the claim
+        qualifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/WikidataQualifier'
+          description: Additional qualifiers for the claim
+        references:
+          type: array
+          items:
+            $ref: '#/components/schemas/WikidataReference'
+          description: References supporting the claim
+
+    WikidataValue:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum: [wikibase-entityid, string, time, quantity, globecoordinate, monolingualtext]
+          description: Type of the value
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - $ref: '#/components/schemas/WikidataEntityId'
+            - $ref: '#/components/schemas/WikidataTime'
+            - $ref: '#/components/schemas/WikidataCoordinate'
+          description: The actual value, format depends on type
+
+    WikidataEntityId:
+      type: object
+      required:
+        - entity-type
+        - id
+      properties:
+        entity-type:
+          type: string
+          enum: [item, property]
+        id:
+          type: string
+          pattern: '^[QP]\d+$'
+          example: Q634
+
+    WikidataTime:
+      type: object
+      required:
+        - time
+        - precision
+      properties:
+        time:
+          type: string
+          description: ISO 8601 formatted time
+          example: "+2023-01-01T00:00:00Z"
+        precision:
+          type: integer
+          minimum: 0
+          maximum: 14
+          description: Precision of the time value
+
+    WikidataCoordinate:
+      type: object
+      required:
+        - latitude
+        - longitude
+        - precision
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        precision:
+          type: number
+          minimum: 0
+        globe:
+          type: string
+          description: Globe URI
+          example: "http://www.wikidata.org/entity/Q2"
+
+    WikidataQualifier:
+      type: object
+      required:
+        - property
+        - value
+      properties:
+        property:
+          type: string
+          pattern: '^P\d+$'
+        value:
+          $ref: '#/components/schemas/WikidataValue'
+
+    WikidataReference:
+      type: object
+      properties:
+        snaks:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/WikidataQualifier'
+
+    WikidataSitelink:
+      type: object
+      required:
+        - site
+        - title
+      properties:
+        site:
+          type: string
+          description: Site identifier (e.g., enwiki, eswiki)
+          example: enwiki
+        title:
+          type: string
+          description: Page title on the linked site
+          example: Earth
+        badges:
+          type: array
+          items:
+            type: string
+          description: Quality badges for the linked page
+
+    SearchResults:
+      type: object
+      required:
+        - results
+        - total
+        - limit
+        - offset
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WikidataEntity'
+          description: Array of matching entities
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of matching entities
+        limit:
+          type: integer
+          minimum: 1
+          description: Maximum results per page
+        offset:
+          type: integer
+          minimum: 0
+          description: Number of results skipped
+        query:
+          type: string
+          description: Original search query
+        searchTime:
+          type: number
+          description: Search execution time in milliseconds
+        facets:
+          $ref: '#/components/schemas/SearchFacets'
+
+    SearchFacets:
+      type: object
+      properties:
+        languages:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count of results by language
+        entityTypes:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count of results by entity type
+
+    EntityLink:
+      type: object
+      required:
+        - id
+        - localEntityId
+        - wikidataEntityId
+        - confidenceScore
+        - linkingMethod
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the link
+        localEntityId:
+          type: string
+          format: uuid
+          description: ID of the local entity
+        wikidataEntityId:
+          type: string
+          pattern: '^[QP]\d+$'
+          description: ID of the Wikidata entity
+        confidenceScore:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence score of the link
+          example: 0.95
+        linkingMethod:
+          type: string
+          enum: [exact_label_match, fuzzy_match, semantic_similarity, manual]
+          description: Method used to create the link
+        verifiedAt:
+          type: string
+          format: date-time
+          description: When the link was manually verified
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          description: When the link was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the link was last updated
+
+    CreateEntityLinkRequest:
+      type: object
+      required:
+        - localEntityId
+        - wikidataEntityId
+        - confidenceScore
+        - linkingMethod
+      properties:
+        localEntityId:
+          type: string
+          format: uuid
+          description: ID of the local entity to link
+        wikidataEntityId:
+          type: string
+          pattern: '^[QP]\d+$'
+          description: ID of the Wikidata entity to link
+        confidenceScore:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence score of the link
+        linkingMethod:
+          type: string
+          enum: [exact_label_match, fuzzy_match, semantic_similarity, manual]
+          description: Method used to create the link
+
+    UpdateEntityLinkRequest:
+      type: object
+      properties:
+        confidenceScore:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Updated confidence score
+        verifiedAt:
+          type: string
+          format: date-time
+          description: Mark link as manually verified
+          nullable: true
+
+    IngestionStatus:
+      type: object
+      required:
+        - status
+        - progress
+      properties:
+        status:
+          type: string
+          enum: [idle, running, completed, failed, paused]
+          description: Current ingestion status
+        progress:
+          type: object
+          required:
+            - totalEntities
+            - processedEntities
+            - errorCount
+          properties:
+            totalEntities:
+              type: integer
+              minimum: 0
+              description: Total entities to process
+            processedEntities:
+              type: integer
+              minimum: 0
+              description: Entities successfully processed
+            errorCount:
+              type: integer
+              minimum: 0
+              description: Number of processing errors
+            currentBatch:
+              type: integer
+              minimum: 0
+              description: Current batch being processed
+            estimatedTimeRemaining:
+              type: integer
+              minimum: 0
+              description: Estimated seconds remaining
+        startedAt:
+          type: string
+          format: date-time
+          description: When ingestion started
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          description: When ingestion completed
+          nullable: true
+        errorMessage:
+          type: string
+          description: Error message if ingestion failed
+          nullable: true
+
+    StartIngestionRequest:
+      type: object
+      required:
+        - dumpPath
+      properties:
+        dumpPath:
+          type: string
+          description: Path to the Wikidata dump file
+          example: "/data/wikidata-latest-all.json"
+        batchSize:
+          type: integer
+          minimum: 100
+          maximum: 10000
+          default: 1000
+          description: Number of entities to process per batch
+        skipExisting:
+          type: boolean
+          default: true
+          description: Whether to skip entities that already exist
+        languages:
+          type: array
+          items:
+            type: string
+          description: Languages to prioritize during processing
+          example: ["en", "es", "fr"]
+
+    IngestionJob:
+      type: object
+      required:
+        - jobId
+        - status
+        - createdAt
+      properties:
+        jobId:
+          type: string
+          format: uuid
+          description: Unique identifier for the ingestion job
+        status:
+          type: string
+          enum: [queued, running, completed, failed]
+          description: Current job status
+        createdAt:
+          type: string
+          format: date-time
+          description: When the job was created
+        parameters:
+          $ref: '#/components/schemas/StartIngestionRequest'
+
+    WikidataStats:
+      type: object
+      required:
+        - totalEntities
+        - totalLabels
+        - totalClaims
+        - totalLinks
+      properties:
+        totalEntities:
+          type: integer
+          minimum: 0
+          description: Total number of Wikidata entities stored
+        totalLabels:
+          type: integer
+          minimum: 0
+          description: Total number of multilingual labels
+        totalClaims:
+          type: integer
+          minimum: 0
+          description: Total number of entity claims
+        totalLinks:
+          type: integer
+          minimum: 0
+          description: Total number of entity links created
+        languageDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count of entities by language
+        entityTypeDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count of entities by type
+        averageProcessingTime:
+          type: number
+          description: Average entity processing time in milliseconds
+        lastIngestionDate:
+          type: string
+          format: date-time
+          description: When the last ingestion was completed
+          nullable: true
+        storageSize:
+          type: object
+          properties:
+            entities:
+              type: integer
+              description: Storage size for entities in bytes
+            labels:
+              type: integer
+              description: Storage size for labels in bytes
+            claims:
+              type: integer
+              description: Storage size for claims in bytes
+            total:
+              type: integer
+              description: Total storage size in bytes
+
+    Error:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Machine-readable error code
+          example: ENTITY_NOT_FOUND
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred
+        requestId:
+          type: string
+          description: Unique request identifier for debugging
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Entities
+    description: Wikidata entity operations
+  - name: Search
+    description: Entity search and discovery
+  - name: Links
+    description: Entity linking management
+  - name: Ingestion
+    description: Data ingestion and processing
+  - name: Statistics
+    description: System statistics and metrics

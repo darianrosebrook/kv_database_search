@@ -4,7 +4,17 @@ const GRAPH_RAG_API_BASE_URL = "http://localhost:3001/api/graph-rag";
 export interface GraphRagEntity {
   id: string;
   name: string;
-  type: "PERSON" | "ORGANIZATION" | "CONCEPT" | "DOCUMENT" | "EVENT" | "LOCATION" | "TECHNOLOGY" | "PROCESS" | "METRIC" | "PRODUCT";
+  type:
+    | "PERSON"
+    | "ORGANIZATION"
+    | "CONCEPT"
+    | "DOCUMENT"
+    | "EVENT"
+    | "LOCATION"
+    | "TECHNOLOGY"
+    | "PROCESS"
+    | "METRIC"
+    | "PRODUCT";
   confidence: number;
   aliases?: string[];
   properties?: Record<string, any>;
@@ -13,7 +23,17 @@ export interface GraphRagEntity {
 
 export interface GraphRagRelationship {
   id: string;
-  type: "MENTIONS" | "CONTAINS" | "RELATES_TO" | "DEPENDS_ON" | "CAUSES" | "PART_OF" | "SIMILAR_TO" | "OPPOSITE_OF" | "TEMPORAL_BEFORE" | "TEMPORAL_AFTER";
+  type:
+    | "MENTIONS"
+    | "CONTAINS"
+    | "RELATES_TO"
+    | "DEPENDS_ON"
+    | "CAUSES"
+    | "PART_OF"
+    | "SIMILAR_TO"
+    | "OPPOSITE_OF"
+    | "TEMPORAL_BEFORE"
+    | "TEMPORAL_AFTER";
   sourceEntityId: string;
   targetEntityId: string;
   confidence: number;
@@ -298,12 +318,14 @@ class GraphRagApiService {
   /**
    * Get entities by type or search
    */
-  async getEntities(options: {
-    type?: string;
-    search?: string;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<{
+  async getEntities(
+    options: {
+      type?: string;
+      search?: string;
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<{
     entities: GraphRagEntity[];
     total: number;
     page: number;
@@ -332,13 +354,15 @@ class GraphRagApiService {
   /**
    * Get relationships by type or entities
    */
-  async getRelationships(options: {
-    type?: string;
-    sourceNodeId?: string;
-    targetNodeId?: string;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<{
+  async getRelationships(
+    options: {
+      type?: string;
+      sourceNodeId?: string;
+      targetNodeId?: string;
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<{
     relationships: GraphRagRelationship[];
     total: number;
     page: number;
@@ -347,8 +371,10 @@ class GraphRagApiService {
     try {
       const params = new URLSearchParams();
       if (options.type) params.append("type", options.type);
-      if (options.sourceNodeId) params.append("sourceNodeId", options.sourceNodeId);
-      if (options.targetNodeId) params.append("targetNodeId", options.targetNodeId);
+      if (options.sourceNodeId)
+        params.append("sourceNodeId", options.sourceNodeId);
+      if (options.targetNodeId)
+        params.append("targetNodeId", options.targetNodeId);
       if (options.limit) params.append("limit", options.limit.toString());
       if (options.offset) params.append("offset", options.offset.toString());
 
@@ -386,13 +412,15 @@ class GraphRagApiService {
   /**
    * Get provenance records
    */
-  async getProvenance(options: {
-    sessionId?: string;
-    userId?: string;
-    operationType?: string;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<{
+  async getProvenance(
+    options: {
+      sessionId?: string;
+      userId?: string;
+      operationType?: string;
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<{
     records: ProvenanceRecord[];
     total: number;
     page: number;
@@ -402,7 +430,8 @@ class GraphRagApiService {
       const params = new URLSearchParams();
       if (options.sessionId) params.append("sessionId", options.sessionId);
       if (options.userId) params.append("userId", options.userId);
-      if (options.operationType) params.append("operationType", options.operationType);
+      if (options.operationType)
+        params.append("operationType", options.operationType);
       if (options.limit) params.append("limit", options.limit.toString());
       if (options.offset) params.append("offset", options.offset.toString());
 
@@ -432,13 +461,18 @@ class GraphRagApiService {
     try {
       const params = new URLSearchParams();
       params.append("nodeId", entityId);
-      if (options.threshold) params.append("threshold", options.threshold.toString());
+      if (options.threshold)
+        params.append("threshold", options.threshold.toString());
       if (options.limit) params.append("limit", options.limit.toString());
 
-      const response = await fetch(`${this.baseUrl}/entities/similar?${params}`);
+      const response = await fetch(
+        `${this.baseUrl}/entities/similar?${params}`
+      );
 
       if (!response.ok) {
-        throw new Error(`Failed to find similar entities: ${response.statusText}`);
+        throw new Error(
+          `Failed to find similar entities: ${response.statusText}`
+        );
       }
 
       const result = await response.json();
@@ -463,7 +497,9 @@ class GraphRagApiService {
       params.append("endNodeId", endEntityId);
       params.append("maxDepth", maxDepth.toString());
 
-      const response = await fetch(`${this.baseUrl}/entities/shortest-path?${params}`);
+      const response = await fetch(
+        `${this.baseUrl}/entities/shortest-path?${params}`
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to find shortest path: ${response.statusText}`);

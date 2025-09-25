@@ -1,0 +1,1367 @@
+openapi: 3.0.3
+info:
+  title: Federated Search API
+  description: |
+    Cross-system knowledge integration and federated search capabilities for enterprise-scale
+    knowledge discovery across heterogeneous data sources.
+    
+    This API enables unified search across multiple systems, intelligent result aggregation,
+    conflict resolution, and real-time federation with comprehensive provenance tracking.
+  version: 1.0.0
+  contact:
+    name: Knowledge Graph Team
+    email: knowledge-graph@company.com
+
+servers:
+  - url: https://api.knowledge-graph.company.com/v1
+    description: Production server
+  - url: https://staging-api.knowledge-graph.company.com/v1
+    description: Staging server
+
+paths:
+  /federated/systems:
+    get:
+      summary: List available federated systems
+      description: |
+        Retrieve information about all registered federated systems including
+        their capabilities, health status, and configuration.
+      operationId: listFederatedSystems
+      tags:
+        - System Management
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: ["active", "inactive", "error"]
+          description: Filter systems by status
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: Filter systems by type
+      responses:
+        '200':
+          description: Successfully retrieved federated systems
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FederatedSystemsResponse'
+
+    post:
+      summary: Register a new federated system
+      description: |
+        Register a new system for federation including connection details,
+        capabilities, and schema mapping configuration.
+      operationId: registerFederatedSystem
+      tags:
+        - System Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemRegistrationRequest'
+      responses:
+        '201':
+          description: Successfully registered federated system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemRegistrationResponse'
+
+  /federated/systems/{systemId}:
+    get:
+      summary: Get federated system details
+      description: Get detailed information about a specific federated system
+      operationId: getFederatedSystem
+      tags:
+        - System Management
+      parameters:
+        - name: systemId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the federated system
+      responses:
+        '200':
+          description: Successfully retrieved system details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FederatedSystemDetails'
+
+    put:
+      summary: Update federated system configuration
+      description: Update configuration for an existing federated system
+      operationId: updateFederatedSystem
+      tags:
+        - System Management
+      parameters:
+        - name: systemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemUpdateRequest'
+      responses:
+        '200':
+          description: Successfully updated system configuration
+
+    delete:
+      summary: Unregister federated system
+      description: Remove a system from federation
+      operationId: unregisterFederatedSystem
+      tags:
+        - System Management
+      parameters:
+        - name: systemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successfully unregistered system
+
+  /federated/search:
+    post:
+      summary: Execute federated search
+      description: |
+        Execute a search query across multiple federated systems with intelligent
+        routing, result aggregation, and conflict resolution.
+      operationId: federatedSearch
+      tags:
+        - Federated Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FederatedSearchRequest'
+            examples:
+              cross_system_search:
+                summary: Cross-system search
+                value:
+                  query: "AI ethics in healthcare"
+                  target_systems: ["elasticsearch-research", "neo4j-medical", "mongodb-regulations"]
+                  search_options:
+                    aggregation_strategy: "intelligent_merge"
+                    conflict_resolution: "confidence_weighted"
+                    max_results_per_system: 50
+                    timeout_ms: 5000
+              domain_specific_search:
+                summary: Domain-specific federated search
+                value:
+                  query: "machine learning model deployment"
+                  filters:
+                    content_types: ["technical_documentation", "code_repository"]
+                    domains: ["technology", "engineering"]
+                  search_options:
+                    include_provenance: true
+                    deduplicate_results: true
+      responses:
+        '200':
+          description: Successfully executed federated search
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FederatedSearchResponse'
+        '400':
+          description: Invalid search request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '408':
+          description: Search timeout exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeoutResponse'
+
+  /federated/entities/resolve:
+    post:
+      summary: Resolve cross-system entities
+      description: |
+        Identify and resolve the same entities across different federated systems
+        with confidence scoring and disambiguation.
+      operationId: resolveEntities
+      tags:
+        - Entity Resolution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityResolutionRequest'
+      responses:
+        '200':
+          description: Successfully resolved entities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityResolutionResponse'
+
+  /federated/sync:
+    post:
+      summary: Trigger federated synchronization
+      description: |
+        Trigger synchronization of data across federated systems with
+        conflict detection and resolution.
+      operationId: triggerSync
+      tags:
+        - Data Synchronization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncRequest'
+      responses:
+        '202':
+          description: Synchronization initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncResponse'
+
+  /federated/sync/{syncId}/status:
+    get:
+      summary: Get synchronization status
+      description: Get the status of a federated synchronization operation
+      operationId: getSyncStatus
+      tags:
+        - Data Synchronization
+      parameters:
+        - name: syncId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the sync operation
+      responses:
+        '200':
+          description: Successfully retrieved sync status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncStatusResponse'
+
+  /federated/conflicts:
+    get:
+      summary: List data conflicts
+      description: |
+        Retrieve information about data conflicts detected across
+        federated systems and their resolution status.
+      operationId: listConflicts
+      tags:
+        - Conflict Management
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: ["unresolved", "resolved", "ignored"]
+          description: Filter conflicts by resolution status
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: ["low", "medium", "high", "critical"]
+          description: Filter conflicts by severity
+      responses:
+        '200':
+          description: Successfully retrieved conflicts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictsResponse'
+
+  /federated/conflicts/{conflictId}/resolve:
+    post:
+      summary: Resolve data conflict
+      description: Manually resolve a specific data conflict with chosen resolution strategy
+      operationId: resolveConflict
+      tags:
+        - Conflict Management
+      parameters:
+        - name: conflictId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConflictResolutionRequest'
+      responses:
+        '200':
+          description: Successfully resolved conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictResolutionResponse'
+
+components:
+  schemas:
+    FederatedSystemsResponse:
+      type: object
+      properties:
+        systems:
+          type: array
+          items:
+            $ref: '#/components/schemas/FederatedSystemInfo'
+        total_count:
+          type: integer
+        active_count:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+
+    FederatedSystemInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique system identifier
+        name:
+          type: string
+          description: Human-readable system name
+        type:
+          $ref: '#/components/schemas/SystemType'
+        status:
+          $ref: '#/components/schemas/SystemStatus'
+        capabilities:
+          $ref: '#/components/schemas/SystemCapabilities'
+        health:
+          $ref: '#/components/schemas/HealthStatus'
+        last_sync:
+          type: string
+          format: date-time
+        data_freshness:
+          type: integer
+          description: Data freshness in seconds
+
+    SystemType:
+      type: string
+      enum:
+        - "elasticsearch"
+        - "neo4j"
+        - "mongodb"
+        - "postgresql"
+        - "mysql"
+        - "redis"
+        - "rest_api"
+        - "graphql_api"
+        - "file_system"
+        - "cloud_storage"
+
+    SystemStatus:
+      type: string
+      enum: ["active", "inactive", "maintenance", "error", "degraded"]
+
+    SystemCapabilities:
+      type: object
+      properties:
+        search_types:
+          type: array
+          items:
+            type: string
+            enum: ["full_text", "semantic", "graph", "structured", "time_series"]
+        query_languages:
+          type: array
+          items:
+            type: string
+            enum: ["sql", "cypher", "elasticsearch_dsl", "graphql", "mongodb_query"]
+        data_types:
+          type: array
+          items:
+            type: string
+        max_results:
+          type: integer
+        supports_aggregation:
+          type: boolean
+        supports_real_time:
+          type: boolean
+        authentication_methods:
+          type: array
+          items:
+            type: string
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "degraded", "unhealthy", "unknown"]
+        response_time_ms:
+          type: integer
+        error_rate:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        last_check:
+          type: string
+          format: date-time
+        uptime_percentage:
+          type: number
+          minimum: 0.0
+          maximum: 100.0
+
+    SystemRegistrationRequest:
+      type: object
+      required:
+        - name
+        - type
+        - connection_config
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        type:
+          $ref: '#/components/schemas/SystemType'
+        description:
+          type: string
+          maxLength: 500
+        connection_config:
+          $ref: '#/components/schemas/ConnectionConfig'
+        schema_mapping:
+          $ref: '#/components/schemas/SchemaMapping'
+        sync_config:
+          $ref: '#/components/schemas/SyncConfig'
+        access_control:
+          $ref: '#/components/schemas/AccessControl'
+
+    ConnectionConfig:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          format: uri
+        authentication:
+          $ref: '#/components/schemas/AuthenticationConfig'
+        timeout_ms:
+          type: integer
+          minimum: 1000
+          maximum: 30000
+          default: 5000
+        retry_config:
+          $ref: '#/components/schemas/RetryConfig'
+        ssl_config:
+          $ref: '#/components/schemas/SSLConfig'
+
+    AuthenticationConfig:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["none", "api_key", "bearer_token", "basic_auth", "oauth2", "certificate"]
+        credentials:
+          type: object
+          additionalProperties: true
+          description: Authentication credentials (encrypted)
+
+    RetryConfig:
+      type: object
+      properties:
+        max_attempts:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 3
+        backoff_strategy:
+          type: string
+          enum: ["linear", "exponential", "fixed"]
+          default: "exponential"
+        initial_delay_ms:
+          type: integer
+          default: 1000
+
+    SSLConfig:
+      type: object
+      properties:
+        verify_certificates:
+          type: boolean
+          default: true
+        certificate_path:
+          type: string
+        key_path:
+          type: string
+
+    SchemaMapping:
+      type: object
+      properties:
+        entity_mappings:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EntityMapping'
+        field_mappings:
+          type: object
+          additionalProperties:
+            type: string
+        type_conversions:
+          type: object
+          additionalProperties:
+            type: string
+
+    EntityMapping:
+      type: object
+      properties:
+        source_type:
+          type: string
+        target_type:
+          type: string
+        field_mappings:
+          type: object
+          additionalProperties:
+            type: string
+        transformation_rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransformationRule'
+
+    TransformationRule:
+      type: object
+      properties:
+        field:
+          type: string
+        operation:
+          type: string
+          enum: ["normalize", "extract", "combine", "format", "validate"]
+        parameters:
+          type: object
+          additionalProperties: true
+
+    SyncConfig:
+      type: object
+      properties:
+        sync_frequency:
+          type: string
+          enum: ["real_time", "hourly", "daily", "weekly", "manual"]
+          default: "daily"
+        incremental_sync:
+          type: boolean
+          default: true
+        conflict_resolution_strategy:
+          type: string
+          enum: ["latest_wins", "source_priority", "manual_review", "confidence_weighted"]
+          default: "confidence_weighted"
+        batch_size:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          default: 1000
+
+    AccessControl:
+      type: object
+      properties:
+        read_permissions:
+          type: array
+          items:
+            type: string
+        write_permissions:
+          type: array
+          items:
+            type: string
+        admin_permissions:
+          type: array
+          items:
+            type: string
+        data_classification:
+          type: string
+          enum: ["public", "internal", "confidential", "restricted"]
+
+    SystemRegistrationResponse:
+      type: object
+      properties:
+        system_id:
+          type: string
+        status:
+          type: string
+          enum: ["registered", "pending_validation", "error"]
+        validation_results:
+          $ref: '#/components/schemas/ValidationResults'
+
+    ValidationResults:
+      type: object
+      properties:
+        connection_test:
+          type: boolean
+        schema_validation:
+          type: boolean
+        permission_check:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+
+    FederatedSystemDetails:
+      allOf:
+        - $ref: '#/components/schemas/FederatedSystemInfo'
+        - type: object
+          properties:
+            connection_config:
+              $ref: '#/components/schemas/ConnectionConfig'
+            schema_mapping:
+              $ref: '#/components/schemas/SchemaMapping'
+            sync_config:
+              $ref: '#/components/schemas/SyncConfig'
+            performance_metrics:
+              $ref: '#/components/schemas/PerformanceMetrics'
+            recent_activity:
+              type: array
+              items:
+                $ref: '#/components/schemas/ActivityLog'
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        average_response_time_ms:
+          type: number
+        queries_per_minute:
+          type: number
+        error_rate_percentage:
+          type: number
+        data_volume_mb:
+          type: number
+        last_24h_queries:
+          type: integer
+
+    ActivityLog:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        activity_type:
+          type: string
+          enum: ["query", "sync", "error", "config_change"]
+        description:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    SystemUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        connection_config:
+          $ref: '#/components/schemas/ConnectionConfig'
+        schema_mapping:
+          $ref: '#/components/schemas/SchemaMapping'
+        sync_config:
+          $ref: '#/components/schemas/SyncConfig'
+        access_control:
+          $ref: '#/components/schemas/AccessControl'
+
+    FederatedSearchRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Search query text
+        target_systems:
+          type: array
+          items:
+            type: string
+          description: Specific systems to search (empty = all active systems)
+        filters:
+          $ref: '#/components/schemas/SearchFilters'
+        search_options:
+          $ref: '#/components/schemas/FederatedSearchOptions'
+
+    SearchFilters:
+      type: object
+      properties:
+        content_types:
+          type: array
+          items:
+            type: string
+        domains:
+          type: array
+          items:
+            type: string
+        date_range:
+          $ref: '#/components/schemas/DateRange'
+        entity_types:
+          type: array
+          items:
+            type: string
+        confidence_threshold:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+
+    DateRange:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+
+    FederatedSearchOptions:
+      type: object
+      properties:
+        aggregation_strategy:
+          type: string
+          enum: ["simple_merge", "intelligent_merge", "ranked_fusion", "weighted_combination"]
+          default: "intelligent_merge"
+        conflict_resolution:
+          type: string
+          enum: ["confidence_weighted", "source_priority", "latest_wins", "manual_review"]
+          default: "confidence_weighted"
+        max_results_per_system:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 50
+        max_total_results:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        timeout_ms:
+          type: integer
+          minimum: 1000
+          maximum: 30000
+          default: 10000
+        include_provenance:
+          type: boolean
+          default: true
+        deduplicate_results:
+          type: boolean
+          default: true
+        parallel_execution:
+          type: boolean
+          default: true
+
+    FederatedSearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FederatedSearchResult'
+        aggregation_metadata:
+          $ref: '#/components/schemas/AggregationMetadata'
+        system_responses:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemResponse'
+        conflicts_detected:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConflictInfo'
+        performance:
+          $ref: '#/components/schemas/SearchPerformance'
+
+    FederatedSearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unified result identifier
+        title:
+          type: string
+        content:
+          type: string
+        relevance_score:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        source_systems:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceSystemInfo'
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityReference'
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipReference'
+        provenance:
+          $ref: '#/components/schemas/ProvenanceInfo'
+        metadata:
+          type: object
+          additionalProperties: true
+
+    SourceSystemInfo:
+      type: object
+      properties:
+        system_id:
+          type: string
+        system_name:
+          type: string
+        original_id:
+          type: string
+        relevance_score:
+          type: number
+        last_updated:
+          type: string
+          format: date-time
+
+    EntityReference:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        confidence:
+          type: number
+        source_systems:
+          type: array
+          items:
+            type: string
+
+    RelationshipReference:
+      type: object
+      properties:
+        source_entity:
+          type: string
+        target_entity:
+          type: string
+        relationship_type:
+          type: string
+        confidence:
+          type: number
+
+    ProvenanceInfo:
+      type: object
+      properties:
+        original_sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/OriginalSource'
+        processing_chain:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcessingStep'
+        quality_indicators:
+          $ref: '#/components/schemas/QualityIndicators'
+
+    OriginalSource:
+      type: object
+      properties:
+        system_id:
+          type: string
+        document_id:
+          type: string
+        url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+        author:
+          type: string
+
+    ProcessingStep:
+      type: object
+      properties:
+        step_name:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        parameters:
+          type: object
+          additionalProperties: true
+
+    QualityIndicators:
+      type: object
+      properties:
+        data_freshness:
+          type: number
+          description: Freshness score (0-1)
+        source_reliability:
+          type: number
+          description: Source reliability score (0-1)
+        content_completeness:
+          type: number
+          description: Completeness score (0-1)
+        cross_validation:
+          type: boolean
+          description: Whether result is cross-validated
+
+    AggregationMetadata:
+      type: object
+      properties:
+        strategy_used:
+          type: string
+        total_sources:
+          type: integer
+        successful_sources:
+          type: integer
+        failed_sources:
+          type: integer
+        deduplication_stats:
+          $ref: '#/components/schemas/DeduplicationStats'
+        conflict_resolution_stats:
+          $ref: '#/components/schemas/ConflictResolutionStats'
+
+    DeduplicationStats:
+      type: object
+      properties:
+        original_count:
+          type: integer
+        deduplicated_count:
+          type: integer
+        duplicate_groups:
+          type: integer
+        similarity_threshold:
+          type: number
+
+    ConflictResolutionStats:
+      type: object
+      properties:
+        conflicts_detected:
+          type: integer
+        conflicts_resolved:
+          type: integer
+        resolution_methods:
+          type: object
+          additionalProperties:
+            type: integer
+
+    SystemResponse:
+      type: object
+      properties:
+        system_id:
+          type: string
+        status:
+          type: string
+          enum: ["success", "partial", "failure", "timeout"]
+        results_count:
+          type: integer
+        response_time_ms:
+          type: integer
+        error_message:
+          type: string
+        warnings:
+          type: array
+          items:
+            type: string
+
+    ConflictInfo:
+      type: object
+      properties:
+        conflict_id:
+          type: string
+        conflict_type:
+          type: string
+          enum: ["duplicate_entity", "contradictory_data", "schema_mismatch", "temporal_conflict"]
+        severity:
+          type: string
+          enum: ["low", "medium", "high", "critical"]
+        affected_entities:
+          type: array
+          items:
+            type: string
+        conflicting_systems:
+          type: array
+          items:
+            type: string
+        resolution_suggestion:
+          type: string
+
+    SearchPerformance:
+      type: object
+      properties:
+        total_time_ms:
+          type: integer
+        query_distribution_time_ms:
+          type: integer
+        max_system_response_time_ms:
+          type: integer
+        aggregation_time_ms:
+          type: integer
+        systems_queried:
+          type: integer
+        cache_hit_rate:
+          type: number
+
+    EntityResolutionRequest:
+      type: object
+      required:
+        - entities
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrossSystemEntity'
+        resolution_options:
+          $ref: '#/components/schemas/ResolutionOptions'
+
+    CrossSystemEntity:
+      type: object
+      properties:
+        system_id:
+          type: string
+        entity_id:
+          type: string
+        entity_data:
+          type: object
+          additionalProperties: true
+
+    ResolutionOptions:
+      type: object
+      properties:
+        similarity_threshold:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.8
+        matching_algorithms:
+          type: array
+          items:
+            type: string
+            enum: ["exact_match", "fuzzy_match", "semantic_similarity", "graph_based"]
+        confidence_threshold:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.7
+
+    EntityResolutionResponse:
+      type: object
+      properties:
+        resolved_entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResolvedEntity'
+        unresolved_entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnresolvedEntity'
+        resolution_statistics:
+          $ref: '#/components/schemas/ResolutionStatistics'
+
+    ResolvedEntity:
+      type: object
+      properties:
+        canonical_id:
+          type: string
+        canonical_name:
+          type: string
+        source_entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrossSystemEntity'
+        confidence:
+          type: number
+        resolution_method:
+          type: string
+        merged_attributes:
+          type: object
+          additionalProperties: true
+
+    UnresolvedEntity:
+      type: object
+      properties:
+        entity:
+          $ref: '#/components/schemas/CrossSystemEntity'
+        reason:
+          type: string
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResolutionSuggestion'
+
+    ResolutionSuggestion:
+      type: object
+      properties:
+        candidate_entity:
+          $ref: '#/components/schemas/CrossSystemEntity'
+        similarity_score:
+          type: number
+        matching_attributes:
+          type: array
+          items:
+            type: string
+
+    ResolutionStatistics:
+      type: object
+      properties:
+        total_entities:
+          type: integer
+        resolved_count:
+          type: integer
+        unresolved_count:
+          type: integer
+        resolution_rate:
+          type: number
+        average_confidence:
+          type: number
+
+    SyncRequest:
+      type: object
+      properties:
+        target_systems:
+          type: array
+          items:
+            type: string
+          description: Systems to synchronize (empty = all systems)
+        sync_type:
+          type: string
+          enum: ["full", "incremental", "selective"]
+          default: "incremental"
+        options:
+          $ref: '#/components/schemas/SyncOptions'
+
+    SyncOptions:
+      type: object
+      properties:
+        conflict_resolution:
+          type: string
+          enum: ["automatic", "manual_review", "skip_conflicts"]
+          default: "automatic"
+        batch_size:
+          type: integer
+          default: 1000
+        parallel_processing:
+          type: boolean
+          default: true
+        validate_data:
+          type: boolean
+          default: true
+
+    SyncResponse:
+      type: object
+      properties:
+        sync_id:
+          type: string
+        status:
+          type: string
+          enum: ["initiated", "in_progress", "completed", "failed"]
+        estimated_duration_minutes:
+          type: integer
+        systems_involved:
+          type: array
+          items:
+            type: string
+
+    SyncStatusResponse:
+      type: object
+      properties:
+        sync_id:
+          type: string
+        status:
+          type: string
+          enum: ["initiated", "in_progress", "completed", "failed", "cancelled"]
+        progress_percentage:
+          type: number
+          minimum: 0.0
+          maximum: 100.0
+        systems_status:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemSyncStatus'
+        conflicts_detected:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+        estimated_completion:
+          type: string
+          format: date-time
+
+    SystemSyncStatus:
+      type: object
+      properties:
+        system_id:
+          type: string
+        status:
+          type: string
+        records_processed:
+          type: integer
+        records_total:
+          type: integer
+        errors:
+          type: integer
+
+    ConflictsResponse:
+      type: object
+      properties:
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataConflict'
+        total_count:
+          type: integer
+        unresolved_count:
+          type: integer
+
+    DataConflict:
+      type: object
+      properties:
+        conflict_id:
+          type: string
+        type:
+          type: string
+        severity:
+          type: string
+        entity_id:
+          type: string
+        conflicting_values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConflictingValue'
+        detected_at:
+          type: string
+          format: date-time
+        resolution_status:
+          type: string
+          enum: ["unresolved", "resolved", "ignored"]
+
+    ConflictingValue:
+      type: object
+      properties:
+        system_id:
+          type: string
+        value:
+          type: object
+          additionalProperties: true
+        confidence:
+          type: number
+        last_updated:
+          type: string
+          format: date-time
+
+    ConflictResolutionRequest:
+      type: object
+      required:
+        - resolution_strategy
+      properties:
+        resolution_strategy:
+          type: string
+          enum: ["use_system_value", "merge_values", "manual_value", "ignore_conflict"]
+        selected_system:
+          type: string
+          description: Required if resolution_strategy is "use_system_value"
+        manual_value:
+          type: object
+          additionalProperties: true
+          description: Required if resolution_strategy is "manual_value"
+        merge_rules:
+          type: object
+          additionalProperties: true
+          description: Required if resolution_strategy is "merge_values"
+
+    ConflictResolutionResponse:
+      type: object
+      properties:
+        conflict_id:
+          type: string
+        resolution_status:
+          type: string
+          enum: ["resolved", "failed", "pending"]
+        resolved_value:
+          type: object
+          additionalProperties: true
+        applied_at:
+          type: string
+          format: date-time
+
+    TimeoutResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          default: "search_timeout"
+        message:
+          type: string
+        partial_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FederatedSearchResult'
+        successful_systems:
+          type: array
+          items:
+            type: string
+        failed_systems:
+          type: array
+          items:
+            type: string
+        timeout_duration_ms:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        request_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: System Management
+    description: Federated system registration and management
+  - name: Federated Search
+    description: Cross-system search and result aggregation
+  - name: Entity Resolution
+    description: Cross-system entity identification and resolution
+  - name: Data Synchronization
+    description: Cross-system data synchronization
+  - name: Conflict Management
+    description: Data conflict detection and resolution

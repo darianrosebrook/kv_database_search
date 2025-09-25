@@ -1,0 +1,98 @@
+id: ML-ENT-001
+title: "ML-Enhanced Entity Linking with Continuous Learning"
+risk_tier: 2
+scope:
+  in:
+    - "Deep learning NER models (BERT/RoBERTa-based)"
+    - "Neural entity linking with knowledge base integration"
+    - "Contextual relationship classification"
+    - "Continuous learning from user feedback"
+    - "Multi-language entity recognition (100+ languages)"
+    - "Domain adaptation for specialized vocabularies"
+    - "Confidence-weighted entity disambiguation"
+    - "Real-time model inference with <200ms latency"
+  out:
+    - "Complete rewrite of existing entity extraction"
+    - "Breaking changes to current API contracts"
+    - "Training data collection infrastructure"
+    - "Model hosting and deployment infrastructure"
+invariants:
+  - "Entity extraction accuracy ≥ 90% (vs current ~80%)"
+  - "Relationship classification precision ≥ 85%"
+  - "Processing latency ≤ 200ms per document chunk"
+  - "Model inference memory usage ≤ 2GB"
+  - "Backward compatibility with existing entity schema"
+  - "User feedback integration maintains data privacy"
+  - "Model updates do not degrade performance below baseline"
+acceptance:
+  - id: A1
+    given: "text content with named entities and relationships"
+    when: "ML entity extractor processes the content"
+    then: "achieves ≥90% precision and ≥85% recall vs human annotation"
+  - id: A2
+    given: "ambiguous entity mentions (e.g., 'Apple' as fruit vs company)"
+    when: "contextual disambiguation is applied"
+    then: "correctly resolves entity type with ≥85% accuracy"
+  - id: A3
+    given: "user provides feedback on entity extraction results"
+    when: "feedback is processed by continuous learning system"
+    then: "model accuracy improves measurably within 100 feedback samples"
+  - id: A4
+    given: "multilingual content in supported languages"
+    when: "cross-lingual entity linking is performed"
+    then: "maintains ≥80% accuracy across language boundaries"
+  - id: A5
+    given: "domain-specific content (medical, legal, technical)"
+    when: "domain adaptation is applied"
+    then: "achieves ≥85% accuracy for domain entities within 1000 examples"
+  - id: A6
+    given: "real-time processing requirements"
+    when: "batch of 100 document chunks is processed"
+    then: "completes within 20 seconds (200ms average per chunk)"
+non_functional:
+  a11y:
+    - "Entity extraction results accessible via screen readers"
+    - "Confidence scores announced for accessibility tools"
+    - "Keyboard navigation for entity review interfaces"
+  perf:
+    api_p95_ms: 200
+    batch_processing_throughput: 300 # chunks per minute
+    memory_usage_mb: 2048
+    model_load_time_ms: 5000
+  security:
+    - "User feedback data anonymized and encrypted"
+    - "Model weights protected from extraction"
+    - "No PII in training data or model artifacts"
+    - "Secure model serving with authentication"
+contracts:
+  - type: openapi
+    path: "apps/contracts/ml-entity-linking-api.yaml"
+  - type: graphql
+    path: "apps/contracts/knowledge-graph-schema.graphql#/MLEntityExtraction"
+observability:
+  logs:
+    - "ml.entity.extraction.started with model_version, content_type"
+    - "ml.entity.extraction.completed with entity_count, confidence_scores"
+    - "ml.entity.disambiguation.applied with ambiguity_score, resolution"
+    - "ml.feedback.received with feedback_type, accuracy_impact"
+  metrics:
+    - "ml_entity_extraction_accuracy_gauge"
+    - "ml_entity_extraction_latency_histogram"
+    - "ml_relationship_classification_precision_gauge"
+    - "ml_user_feedback_count_counter"
+    - "ml_model_inference_memory_usage_gauge"
+  traces:
+    - "MLEntityExtraction span with model_version, language, domain"
+    - "EntityDisambiguation span with candidates_count, confidence_scores"
+    - "ContinualLearning span with feedback_batch_size, accuracy_delta"
+migrations:
+  - "Add ml_models table for model versioning and metadata"
+  - "Add ml_training_data table for feedback storage"
+  - "Add ml_entity_predictions table for prediction tracking"
+  - "Extend knowledge_graph_entities with ml_confidence and ml_model_version"
+  - "Create indexes for ML-specific queries and performance optimization"
+rollback:
+  - "Feature flag ML_ENTITY_LINKING_ENABLED=false"
+  - "Graceful fallback to rule-based entity extraction"
+  - "Model rollback to previous version via model registry"
+  - "Data migration rollback scripts for schema changes"

@@ -1,0 +1,709 @@
+openapi: 3.0.3
+info:
+  title: Dictionary Service API
+  description: |
+    Dictionary service API for lexical data integration with the knowledge graph.
+    Provides entity canonicalization, synonym expansion, and semantic relationship detection
+    using WordNet, Wiktionary, OpenThesaurus, and FreeDict data sources.
+  version: 1.0.0
+  contact:
+    name: Knowledge Graph Team
+    email: kg-team@company.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Development server
+  - url: https://api.company.com/dictionary/v1
+    description: Production server
+
+paths:
+  /dictionary/lookup:
+    post:
+      summary: Look up dictionary information for terms
+      description: |
+        Retrieve dictionary information including definitions, synonyms, 
+        and semantic relationships for given terms from configured dictionary sources.
+      operationId: lookupTerms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DictionaryLookupRequest'
+            examples:
+              single_term:
+                summary: Single term lookup
+                value:
+                  terms: ["technology"]
+                  sources: ["wordnet", "wiktionary"]
+                  include_relationships: true
+              multiple_terms:
+                summary: Multiple terms with context
+                value:
+                  terms: ["apple", "technology", "innovation"]
+                  sources: ["wordnet", "openthesaurus"]
+                  context: "Apple Inc. develops innovative technology products"
+                  include_relationships: true
+                  max_synonyms: 5
+      responses:
+        '200':
+          description: Dictionary lookup results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictionaryLookupResponse'
+              examples:
+                successful_lookup:
+                  summary: Successful multi-term lookup
+                  value:
+                    results:
+                      - term: "technology"
+                        canonical_form: "technology"
+                        confidence: 0.95
+                        sources:
+                          - source: "wordnet"
+                            synset_id: "technology.n.01"
+                            definition: "the application of scientific knowledge for practical purposes"
+                            part_of_speech: "noun"
+                            synonyms: ["engineering", "applied_science"]
+                            relationships:
+                              - type: "hypernym"
+                                target: "application"
+                                confidence: 0.87
+                        disambiguation_context: "technical domain"
+                      - term: "apple"
+                        canonical_form: "Apple Inc."
+                        confidence: 0.92
+                        sources:
+                          - source: "wiktionary"
+                            definition: "American multinational technology company"
+                            synonyms: ["Apple Computer"]
+                        disambiguation_context: "organization context from 'Apple Inc.'"
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /dictionary/canonicalize:
+    post:
+      summary: Canonicalize entity names using dictionary data
+      description: |
+        Convert entity names to their canonical forms using dictionary sources.
+        Useful for entity deduplication and normalization.
+      operationId: canonicalizeEntities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CanonicalizationRequest'
+      responses:
+        '200':
+          description: Canonicalization results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanonicalizationResponse'
+
+  /dictionary/expand:
+    post:
+      summary: Expand search terms with synonyms
+      description: |
+        Expand search terms with synonyms and related terms from dictionary sources
+        to improve search recall and coverage.
+      operationId: expandSearchTerms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpansionRequest'
+      responses:
+        '200':
+          description: Term expansion results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpansionResponse'
+
+  /dictionary/relationships:
+    get:
+      summary: Get semantic relationships for terms
+      description: |
+        Retrieve semantic relationships (hypernymy, meronymy, synonymy, etc.)
+        for given terms from WordNet and other lexical databases.
+      operationId: getSemanticRelationships
+      parameters:
+        - name: terms
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          example: ["technology", "innovation"]
+        - name: relationship_types
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RelationshipType'
+          style: form
+          explode: true
+        - name: max_depth
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 3
+            default: 2
+          description: Maximum relationship traversal depth
+      responses:
+        '200':
+          description: Semantic relationships
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipsResponse'
+
+  /dictionary/sources:
+    get:
+      summary: Get available dictionary sources
+      description: |
+        Retrieve information about available dictionary sources including
+        versions, languages, and capabilities.
+      operationId: getDictionarySources
+      responses:
+        '200':
+          description: Available dictionary sources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictionarySourcesResponse'
+
+  /dictionary/health:
+    get:
+      summary: Dictionary service health check
+      description: Check the health and availability of dictionary services
+      operationId: checkHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    DictionaryLookupRequest:
+      type: object
+      required:
+        - terms
+        - sources
+      properties:
+        terms:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 50
+          description: Terms to look up in dictionary sources
+          example: ["technology", "innovation"]
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/DictionarySource'
+          minItems: 1
+          description: Dictionary sources to query
+        context:
+          type: string
+          maxLength: 1000
+          description: Optional context for disambiguation
+          example: "Apple Inc. develops innovative technology products"
+        include_relationships:
+          type: boolean
+          default: false
+          description: Include semantic relationships in results
+        max_synonyms:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 10
+          description: Maximum number of synonyms to return per term
+        language:
+          type: string
+          pattern: '^[a-z]{2}$'
+          default: "en"
+          description: Language code for dictionary lookup
+
+    DictionaryLookupResponse:
+      type: object
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DictionaryResult'
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+
+    DictionaryResult:
+      type: object
+      required:
+        - term
+        - canonical_form
+        - confidence
+        - sources
+      properties:
+        term:
+          type: string
+          description: Original term that was looked up
+        canonical_form:
+          type: string
+          description: Canonical form of the term
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence score for the canonicalization
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceResult'
+          minItems: 1
+        disambiguation_context:
+          type: string
+          description: Context used for disambiguation
+        alternatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlternativeResult'
+          description: Alternative interpretations with lower confidence
+
+    SourceResult:
+      type: object
+      required:
+        - source
+        - definition
+      properties:
+        source:
+          $ref: '#/components/schemas/DictionarySource'
+        synset_id:
+          type: string
+          description: Synset identifier (for WordNet)
+        definition:
+          type: string
+          description: Primary definition from this source
+        part_of_speech:
+          $ref: '#/components/schemas/PartOfSpeech'
+        synonyms:
+          type: array
+          items:
+            type: string
+          description: Synonyms from this source
+        antonyms:
+          type: array
+          items:
+            type: string
+          description: Antonyms from this source
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/SemanticRelationship'
+        examples:
+          type: array
+          items:
+            type: string
+          description: Usage examples
+        etymology:
+          type: string
+          description: Word etymology (from Wiktionary)
+        pronunciation:
+          type: string
+          description: Pronunciation guide
+
+    AlternativeResult:
+      type: object
+      required:
+        - canonical_form
+        - confidence
+        - context
+      properties:
+        canonical_form:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        context:
+          type: string
+          description: Context that would make this interpretation preferred
+
+    SemanticRelationship:
+      type: object
+      required:
+        - type
+        - target
+        - confidence
+      properties:
+        type:
+          $ref: '#/components/schemas/RelationshipType'
+        target:
+          type: string
+          description: Target term of the relationship
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        source_synset:
+          type: string
+          description: Source synset identifier
+        target_synset:
+          type: string
+          description: Target synset identifier
+
+    CanonicalizationRequest:
+      type: object
+      required:
+        - entities
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityToCanonicalizeRequest'
+          minItems: 1
+          maxItems: 100
+
+    EntityToCanonicalizeRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 500
+        type:
+          $ref: '#/components/schemas/EntityType'
+        context:
+          type: string
+          maxLength: 1000
+        aliases:
+          type: array
+          items:
+            type: string
+
+    CanonicalizationResponse:
+      type: object
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CanonicalizationResult'
+
+    CanonicalizationResult:
+      type: object
+      required:
+        - original_name
+        - canonical_name
+        - confidence
+      properties:
+        original_name:
+          type: string
+        canonical_name:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        source:
+          $ref: '#/components/schemas/DictionarySource'
+        reasoning:
+          type: string
+          description: Explanation for the canonicalization decision
+
+    ExpansionRequest:
+      type: object
+      required:
+        - query_terms
+      properties:
+        query_terms:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 20
+        expansion_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpansionType'
+          default: ["synonyms", "hypernyms"]
+        max_expansions_per_term:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+
+    ExpansionResponse:
+      type: object
+      required:
+        - expansions
+      properties:
+        expansions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TermExpansion'
+
+    TermExpansion:
+      type: object
+      required:
+        - original_term
+        - expanded_terms
+      properties:
+        original_term:
+          type: string
+        expanded_terms:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpandedTerm'
+
+    ExpandedTerm:
+      type: object
+      required:
+        - term
+        - expansion_type
+        - relevance_score
+      properties:
+        term:
+          type: string
+        expansion_type:
+          $ref: '#/components/schemas/ExpansionType'
+        relevance_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        source:
+          $ref: '#/components/schemas/DictionarySource'
+
+    RelationshipsResponse:
+      type: object
+      required:
+        - relationships
+      properties:
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/SemanticRelationship'
+
+    DictionarySourcesResponse:
+      type: object
+      required:
+        - sources
+      properties:
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/DictionarySourceInfo'
+
+    DictionarySourceInfo:
+      type: object
+      required:
+        - name
+        - version
+        - language
+        - status
+      properties:
+        name:
+          $ref: '#/components/schemas/DictionarySource'
+        version:
+          type: string
+        language:
+          type: string
+        status:
+          type: string
+          enum: ["available", "updating", "unavailable"]
+        capabilities:
+          type: array
+          items:
+            type: string
+            enum: ["definitions", "synonyms", "relationships", "etymology", "pronunciation"]
+        last_updated:
+          type: string
+          format: date-time
+        entry_count:
+          type: integer
+          minimum: 0
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "degraded", "unhealthy"]
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: ["up", "down", "degraded"]
+              response_time_ms:
+                type: number
+              last_check:
+                type: string
+                format: date-time
+
+    ResponseMetadata:
+      type: object
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        processing_time_ms:
+          type: number
+        sources_queried:
+          type: array
+          items:
+            $ref: '#/components/schemas/DictionarySource'
+        cache_hit:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+        request_id:
+          type: string
+          format: uuid
+
+    # Enums
+    DictionarySource:
+      type: string
+      enum:
+        - "wordnet"
+        - "wiktionary"
+        - "openthesaurus"
+        - "freedict"
+
+    EntityType:
+      type: string
+      enum:
+        - "PERSON"
+        - "ORGANIZATION"
+        - "LOCATION"
+        - "CONCEPT"
+        - "TECHNOLOGY"
+        - "PRODUCT"
+        - "EVENT"
+        - "DATE"
+        - "MONEY"
+        - "OTHER"
+
+    PartOfSpeech:
+      type: string
+      enum:
+        - "noun"
+        - "verb"
+        - "adjective"
+        - "adverb"
+        - "pronoun"
+        - "preposition"
+        - "conjunction"
+        - "interjection"
+
+    RelationshipType:
+      type: string
+      enum:
+        - "hypernym"
+        - "hyponym"
+        - "meronym"
+        - "holonym"
+        - "synonym"
+        - "antonym"
+        - "similar_to"
+        - "also"
+        - "entails"
+        - "causes"
+
+    ExpansionType:
+      type: string
+      enum:
+        - "synonyms"
+        - "hypernyms"
+        - "hyponyms"
+        - "related_terms"
+        - "similar_terms"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Dictionary Lookup
+    description: Core dictionary lookup operations
+  - name: Entity Processing
+    description: Entity canonicalization and enhancement
+  - name: Search Enhancement
+    description: Query expansion and search improvement
+  - name: System
+    description: System health and configuration

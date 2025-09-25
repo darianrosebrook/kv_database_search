@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  GraphRagEntity, 
+import {
+  GraphRagEntity,
   GraphRagRelationship,
-  ReasoningResult 
+  ReasoningResult,
 } from "../lib/graph-rag-api";
 
 interface GraphRagMessage {
@@ -22,7 +22,13 @@ interface GraphRagMessage {
 }
 
 interface GraphRagSuggestedAction {
-  type: "refine_search" | "new_search" | "filter" | "explore" | "reason" | "find_similar";
+  type:
+    | "refine_search"
+    | "new_search"
+    | "filter"
+    | "explore"
+    | "reason"
+    | "find_similar";
   label: string;
   query?: string;
   entityIds?: string[];
@@ -41,7 +47,13 @@ interface GraphRagChatInterfaceProps {
     options?: {
       contextResults?: any[];
       pastedContent?: string;
-      queryType?: "component" | "pattern" | "token" | "general" | "reasoning" | "exploration";
+      queryType?:
+        | "component"
+        | "pattern"
+        | "token"
+        | "general"
+        | "reasoning"
+        | "exploration";
       autoSearch?: boolean;
       enableReasoning?: boolean;
       entityIds?: string[];
@@ -78,7 +90,9 @@ export function GraphRagChatInterface({
 }: GraphRagChatInterfaceProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [queryType, setQueryType] = useState<"general" | "reasoning" | "exploration">("general");
+  const [queryType, setQueryType] = useState<
+    "general" | "reasoning" | "exploration"
+  >("general");
   const [enableReasoning, setEnableReasoning] = useState(true);
   const [pastedContent, setPastedContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -132,7 +146,10 @@ export function GraphRagChatInterface({
       METRIC: "bg-pink-100 text-pink-800 border-pink-200",
       PRODUCT: "bg-emerald-100 text-emerald-800 border-emerald-200",
     };
-    return colors[type as keyof typeof colors] || "bg-gray-100 text-gray-800 border-gray-200";
+    return (
+      colors[type as keyof typeof colors] ||
+      "bg-gray-100 text-gray-800 border-gray-200"
+    );
   };
 
   const getMessageTypeIcon = (type: string) => {
@@ -178,9 +195,13 @@ export function GraphRagChatInterface({
       {contextResults.length > 0 && (
         <div className="border-b border-border p-3">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-foreground">Context ({contextResults.length})</h3>
+            <h3 className="text-sm font-medium text-foreground">
+              Context ({contextResults.length})
+            </h3>
             <button
-              onClick={() => contextResults.forEach(r => onRemoveContext(r.id))}
+              onClick={() =>
+                contextResults.forEach((r) => onRemoveContext(r.id))
+              }
               className="text-xs text-muted-foreground hover:text-foreground"
             >
               Clear all
@@ -210,26 +231,39 @@ export function GraphRagChatInterface({
         {messages.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-4">🧠</div>
-            <h3 className="font-medium text-foreground mb-2">Start a Graph RAG Conversation</h3>
+            <h3 className="font-medium text-foreground mb-2">
+              Start a Graph RAG Conversation
+            </h3>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Ask questions about your knowledge base. I can search semantically, identify entities, 
-              explore relationships, and perform multi-hop reasoning across your content.
+              Ask questions about your knowledge base. I can search
+              semantically, identify entities, explore relationships, and
+              perform multi-hop reasoning across your content.
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               <button
-                onClick={() => setInputMessage("What are the main concepts in my knowledge base?")}
+                onClick={() =>
+                  setInputMessage(
+                    "What are the main concepts in my knowledge base?"
+                  )
+                }
                 className="text-xs bg-muted text-muted-foreground px-3 py-2 rounded hover:bg-muted/80"
               >
                 Explore concepts
               </button>
               <button
-                onClick={() => setInputMessage("Find relationships between entities")}
+                onClick={() =>
+                  setInputMessage("Find relationships between entities")
+                }
                 className="text-xs bg-muted text-muted-foreground px-3 py-2 rounded hover:bg-muted/80"
               >
                 Find relationships
               </button>
               <button
-                onClick={() => setInputMessage("Show me recent documents and their connections")}
+                onClick={() =>
+                  setInputMessage(
+                    "Show me recent documents and their connections"
+                  )
+                }
                 className="text-xs bg-muted text-muted-foreground px-3 py-2 rounded hover:bg-muted/80"
               >
                 Recent connections
@@ -260,7 +294,9 @@ export function GraphRagChatInterface({
                 >
                   {/* Message Header */}
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm">{getMessageTypeIcon(message.type)}</span>
+                    <span className="text-sm">
+                      {getMessageTypeIcon(message.type)}
+                    </span>
                     <span className="text-xs opacity-70">
                       {message.timestamp.toLocaleTimeString()}
                     </span>
@@ -277,7 +313,9 @@ export function GraphRagChatInterface({
                   </div>
 
                   {/* Message Content */}
-                  <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                  <div className="text-sm whitespace-pre-wrap">
+                    {message.content}
+                  </div>
 
                   {/* Entities */}
                   {message.entities && message.entities.length > 0 && (
@@ -293,7 +331,9 @@ export function GraphRagChatInterface({
                             className={`text-xs px-2 py-1 rounded border transition-colors hover:shadow-sm ${getEntityTypeColor(
                               entity.type
                             )}`}
-                            title={`${entity.name} (${entity.type}, confidence: ${entity.confidence.toFixed(2)})`}
+                            title={`${entity.name} (${
+                              entity.type
+                            }, confidence: ${entity.confidence.toFixed(2)})`}
                           >
                             {entity.name}
                           </button>
@@ -313,15 +353,19 @@ export function GraphRagChatInterface({
                       <p className="text-xs opacity-70 mb-2">Reasoning:</p>
                       <div className="text-xs space-y-1">
                         <div>
-                          <span className="font-medium">Paths:</span> {message.reasoning.paths.length}
+                          <span className="font-medium">Paths:</span>{" "}
+                          {message.reasoning.paths.length}
                         </div>
                         <div>
-                          <span className="font-medium">Confidence:</span> {message.reasoning.confidence.toFixed(3)}
+                          <span className="font-medium">Confidence:</span>{" "}
+                          {message.reasoning.confidence.toFixed(3)}
                         </div>
                         {message.reasoning.bestPath && (
                           <div>
                             <span className="font-medium">Best Path:</span>{" "}
-                            {message.reasoning.bestPath.entities.map(e => e.name).join(" → ")}
+                            {message.reasoning.bestPath.entities
+                              .map((e) => e.name)
+                              .join(" → ")}
                           </div>
                         )}
                       </div>
@@ -331,13 +375,18 @@ export function GraphRagChatInterface({
                   {/* Provenance */}
                   {message.provenance && (
                     <div className="mt-3 pt-3 border-t border-black/10">
-                      <p className="text-xs opacity-70 mb-2">Quality Metrics:</p>
+                      <p className="text-xs opacity-70 mb-2">
+                        Quality Metrics:
+                      </p>
                       <div className="grid grid-cols-2 gap-1 text-xs">
-                        {Object.entries(message.provenance.qualityMetrics).map(([key, value]) => (
-                          <div key={key}>
-                            <span className="font-medium">{key}:</span> {value.toFixed(2)}
-                          </div>
-                        ))}
+                        {Object.entries(message.provenance.qualityMetrics).map(
+                          ([key, value]) => (
+                            <div key={key}>
+                              <span className="font-medium">{key}:</span>{" "}
+                              {value.toFixed(2)}
+                            </div>
+                          )
+                        )}
                       </div>
                     </div>
                   )}
@@ -367,7 +416,9 @@ export function GraphRagChatInterface({
       {/* Suggested Actions */}
       {suggestedActions.length > 0 && (
         <div className="border-t border-border p-3">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Suggested actions:</p>
+          <p className="text-xs font-medium text-muted-foreground mb-2">
+            Suggested actions:
+          </p>
           <div className="flex flex-wrap gap-2">
             {suggestedActions.map((action, index) => (
               <button
@@ -398,19 +449,21 @@ export function GraphRagChatInterface({
                   Query Type:
                 </label>
                 <div className="flex gap-2">
-                  {(["general", "reasoning", "exploration"] as const).map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => setQueryType(type)}
-                      className={`text-xs px-3 py-1 rounded transition-colors ${
-                        queryType === type
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      }`}
-                    >
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </button>
-                  ))}
+                  {(["general", "reasoning", "exploration"] as const).map(
+                    (type) => (
+                      <button
+                        key={type}
+                        onClick={() => setQueryType(type)}
+                        className={`text-xs px-3 py-1 rounded transition-colors ${
+                          queryType === type
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </button>
+                    )
+                  )}
                 </div>
               </div>
 
@@ -423,7 +476,10 @@ export function GraphRagChatInterface({
                   onChange={(e) => setEnableReasoning(e.target.checked)}
                   className="rounded"
                 />
-                <label htmlFor="enableReasoning" className="text-xs text-muted-foreground">
+                <label
+                  htmlFor="enableReasoning"
+                  className="text-xs text-muted-foreground"
+                >
                   Enable multi-hop reasoning
                 </label>
               </div>

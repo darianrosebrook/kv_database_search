@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  GraphRagSearchResult, 
-  GraphRagEntity, 
+import {
+  GraphRagSearchResult,
+  GraphRagEntity,
   GraphRagRelationship,
   ReasoningResult,
-  ReasoningPath 
+  ReasoningPath,
 } from "../lib/graph-rag-api";
 
 interface GraphRagResultsPanelProps {
@@ -39,34 +39,43 @@ export function GraphRagResultsPanel({
   onReasonAbout,
   query,
 }: GraphRagResultsPanelProps) {
-  const [activeTab, setActiveTab] = useState<"results" | "entities" | "reasoning">("results");
+  const [activeTab, setActiveTab] = useState<
+    "results" | "entities" | "reasoning"
+  >("results");
   const [expandedResult, setExpandedResult] = useState<string | null>(null);
   const [showProvenance, setShowProvenance] = useState<string | null>(null);
 
   // Extract all unique entities from results
   const allEntities = React.useMemo(() => {
     const entityMap = new Map<string, GraphRagEntity>();
-    results.forEach(result => {
-      result.entities.forEach(entity => {
-        if (!entityMap.has(entity.id) || entityMap.get(entity.id)!.confidence < entity.confidence) {
+    results.forEach((result) => {
+      result.entities.forEach((entity) => {
+        if (
+          !entityMap.has(entity.id) ||
+          entityMap.get(entity.id)!.confidence < entity.confidence
+        ) {
           entityMap.set(entity.id, entity);
         }
       });
     });
-    return Array.from(entityMap.values()).sort((a, b) => b.confidence - a.confidence);
+    return Array.from(entityMap.values()).sort(
+      (a, b) => b.confidence - a.confidence
+    );
   }, [results]);
 
   // Extract all unique relationships from results
   const allRelationships = React.useMemo(() => {
     const relationshipMap = new Map<string, GraphRagRelationship>();
-    results.forEach(result => {
-      result.relationships.forEach(relationship => {
+    results.forEach((result) => {
+      result.relationships.forEach((relationship) => {
         if (!relationshipMap.has(relationship.id)) {
           relationshipMap.set(relationship.id, relationship);
         }
       });
     });
-    return Array.from(relationshipMap.values()).sort((a, b) => b.confidence - a.confidence);
+    return Array.from(relationshipMap.values()).sort(
+      (a, b) => b.confidence - a.confidence
+    );
   }, [results]);
 
   const getEntityTypeColor = (type: string) => {
@@ -82,7 +91,10 @@ export function GraphRagResultsPanel({
       METRIC: "bg-pink-100 text-pink-800 border-pink-200",
       PRODUCT: "bg-emerald-100 text-emerald-800 border-emerald-200",
     };
-    return colors[type as keyof typeof colors] || "bg-gray-100 text-gray-800 border-gray-200";
+    return (
+      colors[type as keyof typeof colors] ||
+      "bg-gray-100 text-gray-800 border-gray-200"
+    );
   };
 
   const getRelationshipTypeColor = (type: string) => {
@@ -145,7 +157,8 @@ export function GraphRagResultsPanel({
                 : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
             }`}
           >
-            Reasoning {reasoningResults ? `(${reasoningResults.paths.length})` : "(0)"}
+            Reasoning{" "}
+            {reasoningResults ? `(${reasoningResults.paths.length})` : "(0)"}
           </button>
         </nav>
       </div>
@@ -221,7 +234,9 @@ export function GraphRagResultsPanel({
                               className={`text-xs px-2 py-1 rounded border transition-colors hover:shadow-sm ${getEntityTypeColor(
                                 entity.type
                               )}`}
-                              title={`${entity.name} (${entity.type}, confidence: ${entity.confidence.toFixed(2)})`}
+                              title={`${entity.name} (${
+                                entity.type
+                              }, confidence: ${entity.confidence.toFixed(2)})`}
                             >
                               {entity.name}
                             </button>
@@ -242,21 +257,27 @@ export function GraphRagResultsPanel({
                           Relationships ({result.relationships.length}):
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {result.relationships.slice(0, 3).map((relationship) => (
-                            <button
-                              key={relationship.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onExploreRelationship(relationship);
-                              }}
-                              className={`text-xs px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors ${getRelationshipTypeColor(
-                                relationship.type
-                              )}`}
-                              title={`${relationship.type} (confidence: ${relationship.confidence.toFixed(2)})`}
-                            >
-                              {relationship.type}
-                            </button>
-                          ))}
+                          {result.relationships
+                            .slice(0, 3)
+                            .map((relationship) => (
+                              <button
+                                key={relationship.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onExploreRelationship(relationship);
+                                }}
+                                className={`text-xs px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors ${getRelationshipTypeColor(
+                                  relationship.type
+                                )}`}
+                                title={`${
+                                  relationship.type
+                                } (confidence: ${relationship.confidence.toFixed(
+                                  2
+                                )})`}
+                              >
+                                {relationship.type}
+                              </button>
+                            ))}
                           {result.relationships.length > 3 && (
                             <span className="text-xs text-muted-foreground px-2 py-1">
                               +{result.relationships.length - 3} more
@@ -301,7 +322,9 @@ export function GraphRagResultsPanel({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setShowProvenance(showProvenance === result.id ? null : result.id);
+                            setShowProvenance(
+                              showProvenance === result.id ? null : result.id
+                            );
                           }}
                           className="text-xs bg-muted text-muted-foreground px-3 py-1 rounded hover:bg-muted/80 transition-colors"
                         >
@@ -318,19 +341,25 @@ export function GraphRagResultsPanel({
                         exit={{ opacity: 0, height: 0 }}
                         className="mt-3 p-3 bg-muted rounded border"
                       >
-                        <h4 className="text-xs font-medium mb-2">Search Provenance</h4>
+                        <h4 className="text-xs font-medium mb-2">
+                          Search Provenance
+                        </h4>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>
-                            <span className="font-medium">Strategy:</span> {result.provenance.searchStrategy}
+                            <span className="font-medium">Strategy:</span>{" "}
+                            {result.provenance.searchStrategy}
                           </div>
                           <div>
-                            <span className="font-medium">Vector Time:</span> {result.provenance.vectorSearchTime.toFixed(1)}ms
+                            <span className="font-medium">Vector Time:</span>{" "}
+                            {result.provenance.vectorSearchTime.toFixed(1)}ms
                           </div>
                           <div>
-                            <span className="font-medium">Graph Time:</span> {result.provenance.graphTraversalTime.toFixed(1)}ms
+                            <span className="font-medium">Graph Time:</span>{" "}
+                            {result.provenance.graphTraversalTime.toFixed(1)}ms
                           </div>
                           <div>
-                            <span className="font-medium">Total Time:</span> {result.provenance.totalExecutionTime.toFixed(1)}ms
+                            <span className="font-medium">Total Time:</span>{" "}
+                            {result.provenance.totalExecutionTime.toFixed(1)}ms
                           </div>
                         </div>
                       </motion.div>
@@ -365,9 +394,15 @@ export function GraphRagResultsPanel({
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="font-medium text-foreground">{entity.name}</h3>
+                        <h3 className="font-medium text-foreground">
+                          {entity.name}
+                        </h3>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-xs px-2 py-1 rounded border ${getEntityTypeColor(entity.type)}`}>
+                          <span
+                            className={`text-xs px-2 py-1 rounded border ${getEntityTypeColor(
+                              entity.type
+                            )}`}
+                          >
                             {entity.type}
                           </span>
                           <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">
@@ -379,25 +414,33 @@ export function GraphRagResultsPanel({
 
                     {entity.aliases && entity.aliases.length > 0 && (
                       <div className="mb-2">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Aliases:</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">
+                          Aliases:
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {entity.aliases.join(", ")}
                         </p>
                       </div>
                     )}
 
-                    {entity.properties && Object.keys(entity.properties).length > 0 && (
-                      <div className="mb-2">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Properties:</p>
-                        <div className="text-xs text-muted-foreground">
-                          {Object.entries(entity.properties).slice(0, 3).map(([key, value]) => (
-                            <div key={key}>
-                              <span className="font-medium">{key}:</span> {String(value)}
-                            </div>
-                          ))}
+                    {entity.properties &&
+                      Object.keys(entity.properties).length > 0 && (
+                        <div className="mb-2">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            Properties:
+                          </p>
+                          <div className="text-xs text-muted-foreground">
+                            {Object.entries(entity.properties)
+                              .slice(0, 3)
+                              .map(([key, value]) => (
+                                <div key={key}>
+                                  <span className="font-medium">{key}:</span>{" "}
+                                  {String(value)}
+                                </div>
+                              ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     <div className="flex items-center gap-2 pt-2 border-t border-border">
                       <button
@@ -412,7 +455,9 @@ export function GraphRagResultsPanel({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onRefineSearch(`${entity.name} ${entity.type.toLowerCase()}`);
+                          onRefineSearch(
+                            `${entity.name} ${entity.type.toLowerCase()}`
+                          );
                         }}
                         className="text-xs bg-secondary text-secondary-foreground px-3 py-1 rounded hover:bg-secondary/90 transition-colors"
                       >
@@ -435,7 +480,9 @@ export function GraphRagResultsPanel({
             >
               {!reasoningResults || reasoningResults.paths.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">No reasoning paths found</p>
+                  <p className="text-muted-foreground">
+                    No reasoning paths found
+                  </p>
                   <p className="text-sm text-muted-foreground mt-2">
                     Select entities to explore their relationships
                   </p>
@@ -455,16 +502,20 @@ export function GraphRagResultsPanel({
                     <h3 className="font-medium mb-2">Reasoning Summary</h3>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="font-medium">Paths Found:</span> {reasoningResults.paths.length}
+                        <span className="font-medium">Paths Found:</span>{" "}
+                        {reasoningResults.paths.length}
                       </div>
                       <div>
-                        <span className="font-medium">Average Depth:</span> {reasoningResults.metrics.averageDepth.toFixed(1)}
+                        <span className="font-medium">Average Depth:</span>{" "}
+                        {reasoningResults.metrics.averageDepth.toFixed(1)}
                       </div>
                       <div>
-                        <span className="font-medium">Confidence:</span> {reasoningResults.confidence.toFixed(3)}
+                        <span className="font-medium">Confidence:</span>{" "}
+                        {reasoningResults.confidence.toFixed(3)}
                       </div>
                       <div>
-                        <span className="font-medium">Processing Time:</span> {reasoningResults.metrics.processingTime.toFixed(1)}ms
+                        <span className="font-medium">Processing Time:</span>{" "}
+                        {reasoningResults.metrics.processingTime.toFixed(1)}ms
                       </div>
                     </div>
                     {reasoningResults.explanation && (
@@ -477,8 +528,10 @@ export function GraphRagResultsPanel({
                   {/* Best Path */}
                   {reasoningResults.bestPath && (
                     <div className="border-2 border-primary rounded-lg p-4 mb-4">
-                      <h3 className="font-medium text-primary mb-2">Best Reasoning Path</h3>
-                      <ReasoningPathComponent 
+                      <h3 className="font-medium text-primary mb-2">
+                        Best Reasoning Path
+                      </h3>
+                      <ReasoningPathComponent
                         path={reasoningResults.bestPath}
                         onExploreEntity={onExploreEntity}
                         onExploreRelationship={onExploreRelationship}
@@ -491,9 +544,10 @@ export function GraphRagResultsPanel({
                     {reasoningResults.paths.map((path, index) => (
                       <div key={path.id} className="border rounded-lg p-4">
                         <h4 className="font-medium mb-2">
-                          Path {index + 1} (Confidence: {path.confidence.toFixed(3)}, Depth: {path.depth})
+                          Path {index + 1} (Confidence:{" "}
+                          {path.confidence.toFixed(3)}, Depth: {path.depth})
                         </h4>
-                        <ReasoningPathComponent 
+                        <ReasoningPathComponent
                           path={path}
                           onExploreEntity={onExploreEntity}
                           onExploreRelationship={onExploreRelationship}
@@ -534,14 +588,19 @@ function ReasoningPathComponent({
       METRIC: "bg-pink-100 text-pink-800 border-pink-200",
       PRODUCT: "bg-emerald-100 text-emerald-800 border-emerald-200",
     };
-    return colors[type as keyof typeof colors] || "bg-gray-100 text-gray-800 border-gray-200";
+    return (
+      colors[type as keyof typeof colors] ||
+      "bg-gray-100 text-gray-800 border-gray-200"
+    );
   };
 
   return (
     <div>
       {/* Entity Chain */}
       <div className="mb-3">
-        <p className="text-xs font-medium text-muted-foreground mb-2">Entity Chain:</p>
+        <p className="text-xs font-medium text-muted-foreground mb-2">
+          Entity Chain:
+        </p>
         <div className="flex items-center gap-2 flex-wrap">
           {path.entities.map((entity, index) => (
             <React.Fragment key={entity.id}>
@@ -550,7 +609,9 @@ function ReasoningPathComponent({
                 className={`text-xs px-2 py-1 rounded border transition-colors hover:shadow-sm ${getEntityTypeColor(
                   entity.type
                 )}`}
-                title={`${entity.name} (${entity.type}, confidence: ${entity.confidence.toFixed(2)})`}
+                title={`${entity.name} (${
+                  entity.type
+                }, confidence: ${entity.confidence.toFixed(2)})`}
               >
                 {entity.name}
               </button>
@@ -565,14 +626,18 @@ function ReasoningPathComponent({
       {/* Relationship Chain */}
       {path.relationships.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Relationships:</p>
+          <p className="text-xs font-medium text-muted-foreground mb-2">
+            Relationships:
+          </p>
           <div className="flex items-center gap-2 flex-wrap">
             {path.relationships.map((relationship, index) => (
               <React.Fragment key={relationship.id}>
                 <button
                   onClick={() => onExploreRelationship(relationship)}
                   className="text-xs px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors text-foreground"
-                  title={`${relationship.type} (confidence: ${relationship.confidence.toFixed(2)})`}
+                  title={`${
+                    relationship.type
+                  } (confidence: ${relationship.confidence.toFixed(2)})`}
                 >
                   {relationship.type}
                 </button>
@@ -588,7 +653,9 @@ function ReasoningPathComponent({
       {/* Explanation */}
       {path.explanation && (
         <div className="mb-3">
-          <p className="text-xs font-medium text-muted-foreground mb-1">Explanation:</p>
+          <p className="text-xs font-medium text-muted-foreground mb-1">
+            Explanation:
+          </p>
           <p className="text-sm text-foreground">{path.explanation}</p>
         </div>
       )}
@@ -596,11 +663,14 @@ function ReasoningPathComponent({
       {/* Evidence */}
       {path.evidence.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Evidence:</p>
+          <p className="text-xs font-medium text-muted-foreground mb-2">
+            Evidence:
+          </p>
           <div className="space-y-1">
             {path.evidence.slice(0, 2).map((evidence, index) => (
               <div key={evidence.id} className="text-xs bg-muted p-2 rounded">
-                <span className="font-medium">{evidence.type}:</span> {evidence.content}
+                <span className="font-medium">{evidence.type}:</span>{" "}
+                {evidence.content}
                 <span className="text-muted-foreground ml-2">
                   (confidence: {evidence.confidence.toFixed(2)})
                 </span>

@@ -1,0 +1,668 @@
+openapi: 3.0.3
+info:
+  title: ML-Enhanced Entity Linking API
+  description: |
+    Advanced machine learning-powered entity extraction and linking system with continuous learning capabilities.
+    
+    This API provides sophisticated entity recognition, contextual disambiguation, and relationship classification
+    using deep learning models with real-time inference and user feedback integration.
+  version: 1.0.0
+  contact:
+    name: Knowledge Graph Team
+    email: knowledge-graph@company.com
+
+servers:
+  - url: https://api.knowledge-graph.company.com/v1
+    description: Production server
+  - url: https://staging-api.knowledge-graph.company.com/v1
+    description: Staging server
+
+paths:
+  /ml/entities/extract:
+    post:
+      summary: Extract entities using ML models
+      description: |
+        Extract named entities from text using advanced ML models with contextual understanding
+        and confidence scoring. Supports multiple languages and domain adaptation.
+      operationId: extractEntities
+      tags:
+        - ML Entity Extraction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityExtractionRequest'
+            examples:
+              basic_extraction:
+                summary: Basic entity extraction
+                value:
+                  text: "Apple Inc. was founded by Steve Jobs in Cupertino, California."
+                  options:
+                    confidence_threshold: 0.8
+                    enable_disambiguation: true
+                    language: "en"
+              domain_specific:
+                summary: Domain-specific extraction
+                value:
+                  text: "The patient was diagnosed with acute myocardial infarction and prescribed metoprolol."
+                  options:
+                    confidence_threshold: 0.9
+                    domain: "medical"
+                    enable_disambiguation: true
+      responses:
+        '200':
+          description: Successfully extracted entities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityExtractionResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ml/entities/link:
+    post:
+      summary: Link entities to knowledge base
+      description: |
+        Link extracted entities to external knowledge bases with contextual disambiguation
+        and confidence scoring. Supports multiple knowledge bases and cross-lingual linking.
+      operationId: linkEntities
+      tags:
+        - ML Entity Linking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityLinkingRequest'
+      responses:
+        '200':
+          description: Successfully linked entities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityLinkingResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ml/relationships/classify:
+    post:
+      summary: Classify relationships between entities
+      description: |
+        Classify semantic relationships between entities using ML models with
+        contextual understanding and confidence scoring.
+      operationId: classifyRelationships
+      tags:
+        - ML Relationship Classification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RelationshipClassificationRequest'
+      responses:
+        '200':
+          description: Successfully classified relationships
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipClassificationResponse'
+
+  /ml/feedback:
+    post:
+      summary: Submit user feedback for continuous learning
+      description: |
+        Submit user feedback on entity extraction and linking results to improve
+        model performance through continuous learning.
+      operationId: submitFeedback
+      tags:
+        - Continuous Learning
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+      responses:
+        '202':
+          description: Feedback accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+
+  /ml/models:
+    get:
+      summary: Get available ML models
+      description: Get information about available ML models and their capabilities
+      operationId: getModels
+      tags:
+        - Model Management
+      responses:
+        '200':
+          description: Successfully retrieved model information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelsResponse'
+
+  /ml/models/{modelId}/metrics:
+    get:
+      summary: Get model performance metrics
+      description: Get performance metrics for a specific ML model
+      operationId: getModelMetrics
+      tags:
+        - Model Management
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the ML model
+      responses:
+        '200':
+          description: Successfully retrieved model metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelMetricsResponse'
+
+components:
+  schemas:
+    EntityExtractionRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Text content to extract entities from
+          minLength: 1
+          maxLength: 100000
+        options:
+          $ref: '#/components/schemas/ExtractionOptions'
+
+    ExtractionOptions:
+      type: object
+      properties:
+        confidence_threshold:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.7
+          description: Minimum confidence score for entity extraction
+        enable_disambiguation:
+          type: boolean
+          default: true
+          description: Enable contextual entity disambiguation
+        language:
+          type: string
+          default: "en"
+          description: Language code for text processing
+        domain:
+          type: string
+          enum: ["general", "medical", "legal", "technical", "financial"]
+          default: "general"
+          description: Domain-specific model to use
+        max_entities:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+          description: Maximum number of entities to extract
+
+    EntityExtractionResponse:
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/MLEntity'
+        processing_time_ms:
+          type: integer
+          description: Processing time in milliseconds
+        model_version:
+          type: string
+          description: Version of the ML model used
+        confidence_distribution:
+          $ref: '#/components/schemas/ConfidenceDistribution'
+
+    MLEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique entity identifier
+        text:
+          type: string
+          description: Original text mention
+        canonical_name:
+          type: string
+          description: Canonical/normalized entity name
+        type:
+          $ref: '#/components/schemas/EntityType'
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: Confidence score for entity extraction
+        position:
+          $ref: '#/components/schemas/TextPosition'
+        context:
+          type: string
+          description: Surrounding text context
+        disambiguation:
+          $ref: '#/components/schemas/DisambiguationResult'
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional entity metadata
+
+    EntityType:
+      type: string
+      enum:
+        - "person"
+        - "organization"
+        - "location"
+        - "concept"
+        - "event"
+        - "product"
+        - "technology"
+        - "medical_condition"
+        - "medication"
+        - "legal_entity"
+        - "financial_instrument"
+
+    TextPosition:
+      type: object
+      properties:
+        start:
+          type: integer
+          minimum: 0
+          description: Start character position
+        end:
+          type: integer
+          minimum: 0
+          description: End character position
+
+    DisambiguationResult:
+      type: object
+      properties:
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityCandidate'
+        selected_candidate:
+          $ref: '#/components/schemas/EntityCandidate'
+        disambiguation_confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+
+    EntityCandidate:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Knowledge base entity ID
+        name:
+          type: string
+          description: Entity name in knowledge base
+        description:
+          type: string
+          description: Entity description
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        knowledge_base:
+          type: string
+          description: Source knowledge base (e.g., "wikidata", "dbpedia")
+        url:
+          type: string
+          format: uri
+          description: URL to entity in knowledge base
+
+    EntityLinkingRequest:
+      type: object
+      required:
+        - entities
+        - context
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/MLEntity'
+        context:
+          type: string
+          description: Full text context for disambiguation
+        knowledge_bases:
+          type: array
+          items:
+            type: string
+          default: ["wikidata", "dbpedia"]
+          description: Knowledge bases to link against
+
+    EntityLinkingResponse:
+      type: object
+      properties:
+        linked_entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkedEntity'
+        processing_time_ms:
+          type: integer
+
+    LinkedEntity:
+      allOf:
+        - $ref: '#/components/schemas/MLEntity'
+        - type: object
+          properties:
+            knowledge_base_links:
+              type: array
+              items:
+                $ref: '#/components/schemas/KnowledgeBaseLink'
+
+    KnowledgeBaseLink:
+      type: object
+      properties:
+        knowledge_base:
+          type: string
+        entity_id:
+          type: string
+        entity_uri:
+          type: string
+          format: uri
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        properties:
+          type: object
+          additionalProperties: true
+
+    RelationshipClassificationRequest:
+      type: object
+      required:
+        - entity_pairs
+        - context
+      properties:
+        entity_pairs:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityPair'
+        context:
+          type: string
+          description: Full text context for relationship classification
+
+    EntityPair:
+      type: object
+      properties:
+        source_entity:
+          $ref: '#/components/schemas/MLEntity'
+        target_entity:
+          $ref: '#/components/schemas/MLEntity'
+
+    RelationshipClassificationResponse:
+      type: object
+      properties:
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassifiedRelationship'
+        processing_time_ms:
+          type: integer
+
+    ClassifiedRelationship:
+      type: object
+      properties:
+        source_entity_id:
+          type: string
+        target_entity_id:
+          type: string
+        relationship_type:
+          $ref: '#/components/schemas/RelationshipType'
+        confidence:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        evidence:
+          type: array
+          items:
+            type: string
+          description: Text evidence supporting the relationship
+        context_window:
+          type: string
+          description: Relevant context for the relationship
+
+    RelationshipType:
+      type: string
+      enum:
+        - "causes"
+        - "enables"
+        - "part_of"
+        - "instance_of"
+        - "located_in"
+        - "works_for"
+        - "founded_by"
+        - "similar_to"
+        - "contradicts"
+        - "temporal_before"
+        - "temporal_after"
+        - "related_to"
+
+    FeedbackRequest:
+      type: object
+      required:
+        - feedback_type
+        - content
+      properties:
+        feedback_type:
+          type: string
+          enum: ["entity_correction", "relationship_correction", "quality_rating"]
+        content:
+          $ref: '#/components/schemas/FeedbackContent'
+        user_id:
+          type: string
+          description: Optional user identifier for personalization
+        session_id:
+          type: string
+          description: Session identifier for tracking
+
+    FeedbackContent:
+      oneOf:
+        - $ref: '#/components/schemas/EntityFeedback'
+        - $ref: '#/components/schemas/RelationshipFeedback'
+        - $ref: '#/components/schemas/QualityFeedback'
+
+    EntityFeedback:
+      type: object
+      properties:
+        original_entity:
+          $ref: '#/components/schemas/MLEntity'
+        corrected_entity:
+          $ref: '#/components/schemas/MLEntity'
+        correction_type:
+          type: string
+          enum: ["type_correction", "name_correction", "confidence_adjustment"]
+
+    RelationshipFeedback:
+      type: object
+      properties:
+        entity_pair:
+          $ref: '#/components/schemas/EntityPair'
+        correct_relationship_type:
+          $ref: '#/components/schemas/RelationshipType'
+        feedback_reason:
+          type: string
+
+    QualityFeedback:
+      type: object
+      properties:
+        extraction_quality:
+          type: integer
+          minimum: 1
+          maximum: 5
+        linking_quality:
+          type: integer
+          minimum: 1
+          maximum: 5
+        overall_satisfaction:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comments:
+          type: string
+
+    FeedbackResponse:
+      type: object
+      properties:
+        feedback_id:
+          type: string
+          description: Unique identifier for the feedback
+        status:
+          type: string
+          enum: ["accepted", "processing", "applied"]
+        estimated_impact:
+          type: string
+          description: Estimated impact on model performance
+
+    ModelsResponse:
+      type: object
+      properties:
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelInfo'
+
+    ModelInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        type:
+          type: string
+          enum: ["ner", "entity_linking", "relationship_classification"]
+        capabilities:
+          type: array
+          items:
+            type: string
+        languages:
+          type: array
+          items:
+            type: string
+        domains:
+          type: array
+          items:
+            type: string
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+
+    ModelMetricsResponse:
+      type: object
+      properties:
+        model_id:
+          type: string
+        metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        last_updated:
+          type: string
+          format: date-time
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        accuracy:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        precision:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        recall:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        f1_score:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        processing_speed:
+          type: number
+          description: Entities processed per second
+
+    ConfidenceDistribution:
+      type: object
+      properties:
+        high_confidence:
+          type: integer
+          description: Count of entities with confidence >= 0.9
+        medium_confidence:
+          type: integer
+          description: Count of entities with confidence 0.7-0.9
+        low_confidence:
+          type: integer
+          description: Count of entities with confidence < 0.7
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+        request_id:
+          type: string
+          description: Unique request identifier for debugging
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: ML Entity Extraction
+    description: Machine learning-powered entity extraction operations
+  - name: ML Entity Linking
+    description: Entity linking to knowledge bases
+  - name: ML Relationship Classification
+    description: Semantic relationship classification
+  - name: Continuous Learning
+    description: User feedback and model improvement
+  - name: Model Management
+    description: ML model information and metrics

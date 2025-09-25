@@ -1,9 +1,20 @@
 // Enhanced chat service with Graph RAG integration
-import { graphRagApiService, type GraphRagSearchResult, type GraphRagEntity, type ReasoningResult } from "./graph-rag-api";
+import {
+  graphRagApiService,
+  type GraphRagSearchResult,
+  type GraphRagEntity,
+  type ReasoningResult,
+} from "./graph-rag-api";
 
 export interface GraphRagChatOptions {
   pastedContent?: string;
-  queryType?: "component" | "pattern" | "token" | "general" | "reasoning" | "exploration";
+  queryType?:
+    | "component"
+    | "pattern"
+    | "token"
+    | "general"
+    | "reasoning"
+    | "exploration";
   autoSearch?: boolean;
   context?: Array<{ role: string; content: string }>;
   model?: string;
@@ -21,7 +32,13 @@ export interface GraphRagChatResponse {
   reasoningResults?: ReasoningResult;
   entities?: GraphRagEntity[];
   suggestedActions?: Array<{
-    type: "refine_search" | "new_search" | "filter" | "explore" | "reason" | "find_similar";
+    type:
+      | "refine_search"
+      | "new_search"
+      | "filter"
+      | "explore"
+      | "reason"
+      | "find_similar";
     label: string;
     query?: string;
     entityIds?: string[];
@@ -47,7 +64,9 @@ export interface GraphRagChatResponse {
 
 export class GraphRagChatService {
   private static readonly CHAT_API_URL = "http://localhost:11434/api/chat";
-  private static readonly sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+  private static readonly sessionId = `session_${Date.now()}_${Math.random()
+    .toString(36)
+    .substring(7)}`;
 
   /**
    * Enhanced chat with Graph RAG integration
@@ -59,7 +78,7 @@ export class GraphRagChatService {
     try {
       // Analyze the message to determine if we need Graph RAG capabilities
       const messageAnalysis = this.analyzeMessage(message);
-      
+
       let searchResults: GraphRagSearchResult[] = [];
       let reasoningResults: ReasoningResult | undefined;
       let entities: GraphRagEntity[] = [];
@@ -68,7 +87,7 @@ export class GraphRagChatService {
       // Perform Graph RAG search if needed
       if (options.autoSearch || messageAnalysis.needsSearch) {
         console.log("🔍 Performing Graph RAG search...");
-        
+
         const searchResponse = await graphRagApiService.search(message, {
           maxResults: 10,
           includeExplanation: true,
@@ -79,14 +98,16 @@ export class GraphRagChatService {
         });
 
         searchResults = searchResponse.results;
-        entities = searchResults.flatMap(r => r.entities);
+        entities = searchResults.flatMap((r) => r.entities);
 
         explanation = {
-          searchStrategy: searchResponse.explanation?.searchStrategy || "hybrid",
+          searchStrategy:
+            searchResponse.explanation?.searchStrategy || "hybrid",
           reasoningApplied: false,
           entitiesIdentified: entities.length,
           relationshipsTraversed: searchResponse.metrics.relationshipsTraversed,
-          confidenceScore: searchResponse.explanation?.qualityMetrics.accuracy || 0.8,
+          confidenceScore:
+            searchResponse.explanation?.qualityMetrics.accuracy || 0.8,
         };
       }
 
@@ -94,11 +115,11 @@ export class GraphRagChatService {
       if (options.enableReasoning || messageAnalysis.needsReasoning) {
         if (entities.length >= 2) {
           console.log("🧠 Performing multi-hop reasoning...");
-          
+
           const topEntities = entities
             .sort((a, b) => b.confidence - a.confidence)
             .slice(0, 3)
-            .map(e => e.id);
+            .map((e) => e.id);
 
           reasoningResults = await graphRagApiService.reason(
             topEntities,
@@ -149,10 +170,9 @@ export class GraphRagChatService {
         suggestedActions,
         explanation,
       };
-
     } catch (error) {
       console.error("Graph RAG chat error:", error);
-      
+
       // Fallback to basic response
       return {
         response: `I apologize, but I encountered an error while processing your request: ${
@@ -182,35 +202,82 @@ export class GraphRagChatService {
     suggestedFilters?: any;
   } {
     const lowerMessage = message.toLowerCase();
-    
+
     // Keywords that suggest different approaches
-    const searchKeywords = ["find", "search", "show", "what is", "explain", "describe"];
-    const reasoningKeywords = ["how", "why", "relationship", "connect", "compare", "cause", "effect", "related"];
-    const exploratoryKeywords = ["explore", "discover", "overview", "understand", "learn about"];
-    const comparativeKeywords = ["compare", "difference", "versus", "vs", "similar", "different"];
-    const causalKeywords = ["cause", "effect", "because", "reason", "why", "lead to", "result"];
+    const searchKeywords = [
+      "find",
+      "search",
+      "show",
+      "what is",
+      "explain",
+      "describe",
+    ];
+    const reasoningKeywords = [
+      "how",
+      "why",
+      "relationship",
+      "connect",
+      "compare",
+      "cause",
+      "effect",
+      "related",
+    ];
+    const exploratoryKeywords = [
+      "explore",
+      "discover",
+      "overview",
+      "understand",
+      "learn about",
+    ];
+    const comparativeKeywords = [
+      "compare",
+      "difference",
+      "versus",
+      "vs",
+      "similar",
+      "different",
+    ];
+    const causalKeywords = [
+      "cause",
+      "effect",
+      "because",
+      "reason",
+      "why",
+      "lead to",
+      "result",
+    ];
 
-    const needsSearch = searchKeywords.some(keyword => lowerMessage.includes(keyword)) || 
-                       !lowerMessage.includes("?"); // Statements often need search
+    const needsSearch =
+      searchKeywords.some((keyword) => lowerMessage.includes(keyword)) ||
+      !lowerMessage.includes("?"); // Statements often need search
 
-    const needsReasoning = reasoningKeywords.some(keyword => lowerMessage.includes(keyword)) ||
-                          lowerMessage.includes("?"); // Questions often benefit from reasoning
+    const needsReasoning =
+      reasoningKeywords.some((keyword) => lowerMessage.includes(keyword)) ||
+      lowerMessage.includes("?"); // Questions often benefit from reasoning
 
     // Determine reasoning type
-    let reasoningType: "exploratory" | "targeted" | "comparative" | "causal" = "exploratory";
-    if (comparativeKeywords.some(keyword => lowerMessage.includes(keyword))) {
+    let reasoningType: "exploratory" | "targeted" | "comparative" | "causal" =
+      "exploratory";
+    if (comparativeKeywords.some((keyword) => lowerMessage.includes(keyword))) {
       reasoningType = "comparative";
-    } else if (causalKeywords.some(keyword => lowerMessage.includes(keyword))) {
+    } else if (
+      causalKeywords.some((keyword) => lowerMessage.includes(keyword))
+    ) {
       reasoningType = "causal";
-    } else if (reasoningKeywords.some(keyword => lowerMessage.includes(keyword))) {
+    } else if (
+      reasoningKeywords.some((keyword) => lowerMessage.includes(keyword))
+    ) {
       reasoningType = "targeted";
     }
 
     // Determine search strategy
-    let searchStrategy: "vector_only" | "graph_only" | "hybrid" | "adaptive" = "hybrid";
+    let searchStrategy: "vector_only" | "graph_only" | "hybrid" | "adaptive" =
+      "hybrid";
     if (lowerMessage.includes("semantic") || lowerMessage.includes("similar")) {
       searchStrategy = "vector_only";
-    } else if (reasoningKeywords.some(keyword => lowerMessage.includes(keyword))) {
+    } else if (
+      reasoningKeywords.some((keyword) => lowerMessage.includes(keyword))
+    ) {
       searchStrategy = "graph_only";
     } else {
       searchStrategy = "adaptive";
@@ -247,54 +314,78 @@ export class GraphRagChatService {
 3. Perform multi-hop reasoning across knowledge graphs
 4. Provide explanations with provenance and confidence scores
 
-When answering questions, use the provided search results and reasoning paths to give comprehensive, accurate responses. Always cite your sources and explain your reasoning process.`
+When answering questions, use the provided search results and reasoning paths to give comprehensive, accurate responses. Always cite your sources and explain your reasoning process.`,
       });
     }
 
     // Add search results context
     if (searchResults.length > 0) {
-      const searchContext = searchResults.map((result, index) => {
-        const entityInfo = result.entities.length > 0 
-          ? `\nEntities: ${result.entities.map(e => `${e.name} (${e.type}, confidence: ${e.confidence.toFixed(2)})`).join(", ")}`
-          : "";
-        
-        const relationshipInfo = result.relationships.length > 0
-          ? `\nRelationships: ${result.relationships.map(r => `${r.type} (confidence: ${r.confidence.toFixed(2)})`).join(", ")}`
-          : "";
+      const searchContext = searchResults
+        .map((result, index) => {
+          const entityInfo =
+            result.entities.length > 0
+              ? `\nEntities: ${result.entities
+                  .map(
+                    (e) =>
+                      `${e.name} (${e.type}, confidence: ${e.confidence.toFixed(
+                        2
+                      )})`
+                  )
+                  .join(", ")}`
+              : "";
 
-        return `[Result ${index + 1}] (Score: ${result.score.toFixed(3)}, Similarity: ${result.similarity.toFixed(3)})
+          const relationshipInfo =
+            result.relationships.length > 0
+              ? `\nRelationships: ${result.relationships
+                  .map(
+                    (r) => `${r.type} (confidence: ${r.confidence.toFixed(2)})`
+                  )
+                  .join(", ")}`
+              : "";
+
+          return `[Result ${index + 1}] (Score: ${result.score.toFixed(
+            3
+          )}, Similarity: ${result.similarity.toFixed(3)})
 Source: ${result.metadata.sourceFile}
 Content: ${result.text}${entityInfo}${relationshipInfo}`;
-      }).join("\n\n");
+        })
+        .join("\n\n");
 
       context.push({
         role: "system",
-        content: `Search Results for "${message}":\n\n${searchContext}`
+        content: `Search Results for "${message}":\n\n${searchContext}`,
       });
     }
 
     // Add reasoning results context
     if (reasoningResults && reasoningResults.paths.length > 0) {
-      const reasoningContext = reasoningResults.paths.slice(0, 3).map((path, index) => {
-        const entityChain = path.entities.map(e => e.name).join(" → ");
-        const relationshipChain = path.relationships.map(r => r.type).join(" → ");
-        
-        return `[Reasoning Path ${index + 1}] (Confidence: ${path.confidence.toFixed(3)}, Depth: ${path.depth})
+      const reasoningContext = reasoningResults.paths
+        .slice(0, 3)
+        .map((path, index) => {
+          const entityChain = path.entities.map((e) => e.name).join(" → ");
+          const relationshipChain = path.relationships
+            .map((r) => r.type)
+            .join(" → ");
+
+          return `[Reasoning Path ${
+            index + 1
+          }] (Confidence: ${path.confidence.toFixed(3)}, Depth: ${path.depth})
 Entity Chain: ${entityChain}
 Relationship Chain: ${relationshipChain}
 Explanation: ${path.explanation}`;
-      }).join("\n\n");
+        })
+        .join("\n\n");
 
       context.push({
         role: "system",
-        content: `Reasoning Results:\n\n${reasoningContext}\n\nBest Path Explanation: ${reasoningResults.explanation}`
+        content: `Reasoning Results:\n\n${reasoningContext}\n\nBest Path Explanation: ${reasoningResults.explanation}`,
       });
     }
 
     // Add the user message
     context.push({
       role: "user",
-      content: message
+      content: message,
     });
 
     return context;
@@ -332,12 +423,15 @@ Explanation: ${path.explanation}`;
 
       const data = await response.json();
       return {
-        content: data.message?.content || "I apologize, but I couldn't generate a response. Please try again.",
+        content:
+          data.message?.content ||
+          "I apologize, but I couldn't generate a response. Please try again.",
       };
     } catch (error) {
       console.error("LLM generation error:", error);
       return {
-        content: "I apologize, but I'm having trouble connecting to the language model. Please try again later.",
+        content:
+          "I apologize, but I'm having trouble connecting to the language model. Please try again later.",
       };
     }
   }
@@ -374,10 +468,13 @@ Explanation: ${path.explanation}`;
           type: "reason",
           label: "Find relationships",
           reasoning: {
-            question: `How are ${entities.slice(0, 2).map(e => e.name).join(" and ")} related?`,
+            question: `How are ${entities
+              .slice(0, 2)
+              .map((e) => e.name)
+              .join(" and ")} related?`,
             type: "exploratory",
           },
-          entityIds: entities.slice(0, 2).map(e => e.id),
+          entityIds: entities.slice(0, 2).map((e) => e.id),
         });
       }
 
@@ -404,7 +501,8 @@ Explanation: ${path.explanation}`;
     if (reasoningResults && reasoningResults.paths.length > 0) {
       const bestPath = reasoningResults.bestPath;
       if (bestPath && bestPath.entities.length > 2) {
-        const middleEntity = bestPath.entities[Math.floor(bestPath.entities.length / 2)];
+        const middleEntity =
+          bestPath.entities[Math.floor(bestPath.entities.length / 2)];
         actions.push({
           type: "explore",
           label: `Learn about ${middleEntity.name}`,

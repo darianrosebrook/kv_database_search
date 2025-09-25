@@ -12,12 +12,12 @@ import {
   SearchResult as ApiSearchResult,
   SearchResponse,
 } from "./lib/api";
-import { 
+import {
   graphRagApiService,
   type GraphRagSearchResult,
   type GraphRagEntity,
   type GraphRagRelationship,
-  type ReasoningResult 
+  type ReasoningResult,
 } from "./lib/graph-rag-api";
 import { EnhancedChatService } from "./lib/enhanced-chat";
 import { GraphRagChatService } from "./lib/graph-rag-chat";
@@ -73,7 +73,13 @@ export default function App() {
   >([]);
   const [suggestedActions, setSuggestedActions] = useState<
     Array<{
-      type: "refine_search" | "new_search" | "filter" | "explore" | "reason" | "find_similar";
+      type:
+        | "refine_search"
+        | "new_search"
+        | "filter"
+        | "explore"
+        | "reason"
+        | "find_similar";
       label: string;
       query?: string;
       entityIds?: string[];
@@ -93,17 +99,26 @@ export default function App() {
 
   // Graph RAG specific state
   const [useGraphRag, setUseGraphRag] = useState(true);
-  const [graphRagResults, setGraphRagResults] = useState<GraphRagSearchResult[]>([]);
-  const [selectedGraphRagResult, setSelectedGraphRagResult] = useState<GraphRagSearchResult | null>(null);
-  const [reasoningResults, setReasoningResults] = useState<ReasoningResult | undefined>();
+  const [graphRagResults, setGraphRagResults] = useState<
+    GraphRagSearchResult[]
+  >([]);
+  const [selectedGraphRagResult, setSelectedGraphRagResult] =
+    useState<GraphRagSearchResult | null>(null);
+  const [reasoningResults, setReasoningResults] = useState<
+    ReasoningResult | undefined
+  >();
   const [allEntities, setAllEntities] = useState<GraphRagEntity[]>([]);
-  const [graphRagMessages, setGraphRagMessages] = useState<Array<Message & {
-    entities?: GraphRagEntity[];
-    reasoning?: ReasoningResult;
-    searchCount?: number;
-    confidence?: number;
-    provenance?: any;
-  }>>([]);
+  const [graphRagMessages, setGraphRagMessages] = useState<
+    Array<
+      Message & {
+        entities?: GraphRagEntity[];
+        reasoning?: ReasoningResult;
+        searchCount?: number;
+        confidence?: number;
+        provenance?: any;
+      }
+    >
+  >([]);
 
   // Calculate composite confidence score from multiple factors
   const calculateCompositeScore = (result: any): number => {
@@ -245,28 +260,39 @@ export default function App() {
         setReasoningResults(undefined); // Clear previous reasoning
 
         // Extract all entities
-        const entities = graphRagResponse.results.flatMap(r => r.entities);
+        const entities = graphRagResponse.results.flatMap((r) => r.entities);
         setAllEntities(entities);
 
         // Transform for legacy components if needed
         const transformedResults = graphRagResponse.results.map((result) => ({
           id: result.id,
           title: result.metadata.section || "Document",
-          summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
+          summary:
+            result.text.substring(0, 200) +
+            (result.text.length > 200 ? "..." : ""),
           highlights: [
-            result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
+            result.text.substring(0, 100) +
+              (result.text.length > 100 ? "..." : ""),
             `Source: ${result.metadata.sourceFile}`,
             `Type: ${result.metadata.contentType}`,
           ],
           confidenceScore: result.score,
           source: {
-            type: result.metadata.contentType === "code" ? "component" : "documentation",
+            type:
+              result.metadata.contentType === "code"
+                ? "component"
+                : "documentation",
             path: result.metadata.sourceFile,
             url: result.metadata.url || `#${result.id}`,
           },
-          rationale: result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
-          tags: [result.metadata.contentType, ...(result.entities.slice(0, 2).map(e => e.type))],
-          lastUpdated: result.metadata.updatedAt || new Date().toISOString().split("T")[0],
+          rationale:
+            result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
+          tags: [
+            result.metadata.contentType,
+            ...result.entities.slice(0, 2).map((e) => e.type),
+          ],
+          lastUpdated:
+            result.metadata.updatedAt || new Date().toISOString().split("T")[0],
         }));
 
         setResults(transformedResults);
@@ -287,21 +313,38 @@ export default function App() {
         const transformedResults = searchResponse.results.map((result) => ({
           id: result.id,
           title: result.meta.section || "Documentation",
-          summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
+          summary:
+            result.text.substring(0, 200) +
+            (result.text.length > 200 ? "..." : ""),
           highlights: [
-            result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
+            result.text.substring(0, 100) +
+              (result.text.length > 100 ? "..." : ""),
             `Section: ${result.meta.section}`,
             `Type: ${result.meta.contentType}`,
           ],
           confidenceScore: calculateCompositeScore(result),
           source: {
-            type: result.meta.contentType === "code" ? "component" : result.meta.contentType === "heading" ? "guideline" : "documentation",
-            path: result.meta.breadcrumbs?.join(" > ") || result.meta.section || "Unknown",
+            type:
+              result.meta.contentType === "code"
+                ? "component"
+                : result.meta.contentType === "heading"
+                ? "guideline"
+                : "documentation",
+            path:
+              result.meta.breadcrumbs?.join(" > ") ||
+              result.meta.section ||
+              "Unknown",
             url: result.source?.url || result.meta.uri || `#${result.id}`,
           },
           rationale: generateDetailedRationale(result),
-          tags: [result.meta.contentType, ...result.meta.breadcrumbs.slice(0, 2)],
-          lastUpdated: result.meta.updatedAt || result.meta.createdAt || new Date().toISOString().split("T")[0],
+          tags: [
+            result.meta.contentType,
+            ...result.meta.breadcrumbs.slice(0, 2),
+          ],
+          lastUpdated:
+            result.meta.updatedAt ||
+            result.meta.createdAt ||
+            new Date().toISOString().split("T")[0],
         }));
 
         setResults(transformedResults);
@@ -323,7 +366,7 @@ export default function App() {
         }. Please try again.`,
         timestamp: new Date(),
       };
-      
+
       if (useGraphRag) {
         setGraphRagMessages([errorMessage]);
       } else {
@@ -339,7 +382,13 @@ export default function App() {
     options?: {
       contextResults?: SearchResult[];
       pastedContent?: string;
-      queryType?: "component" | "pattern" | "token" | "general" | "reasoning" | "exploration";
+      queryType?:
+        | "component"
+        | "pattern"
+        | "token"
+        | "general"
+        | "reasoning"
+        | "exploration";
       autoSearch?: boolean;
       enableReasoning?: boolean;
       entityIds?: string[];
@@ -363,7 +412,7 @@ export default function App() {
     } else {
       setMessages((prev) => [...prev, newMessage]);
     }
-    
+
     setIsLoading(true);
 
     try {
@@ -373,7 +422,9 @@ export default function App() {
         const chatResponse = await GraphRagChatService.chat(message, {
           pastedContent: options?.pastedContent,
           queryType: options?.queryType,
-          autoSearch: options?.autoSearch || (!contextResults.length && graphRagResults.length === 0),
+          autoSearch:
+            options?.autoSearch ||
+            (!contextResults.length && graphRagResults.length === 0),
           context: chatContext,
           model: selectedModel,
           enableReasoning: options?.enableReasoning ?? true,
@@ -403,33 +454,53 @@ export default function App() {
         setSuggestedActions(chatResponse.suggestedActions || []);
 
         // Update search results if found
-        if (chatResponse.searchResults && chatResponse.searchResults.length > 0) {
+        if (
+          chatResponse.searchResults &&
+          chatResponse.searchResults.length > 0
+        ) {
           setGraphRagResults(chatResponse.searchResults);
-          
+
           // Extract entities
-          const entities = chatResponse.searchResults.flatMap(r => r.entities);
+          const entities = chatResponse.searchResults.flatMap(
+            (r) => r.entities
+          );
           setAllEntities(entities);
 
           // Transform for legacy components
-          const transformedResults = chatResponse.searchResults.map((result) => ({
-            id: result.id,
-            title: result.metadata.section || "Document",
-            summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
-            highlights: [
-              result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
-              `Source: ${result.metadata.sourceFile}`,
-              `Type: ${result.metadata.contentType}`,
-            ],
-            confidenceScore: result.score,
-            source: {
-              type: result.metadata.contentType === "code" ? "component" : "documentation",
-              path: result.metadata.sourceFile,
-              url: result.metadata.url || `#${result.id}`,
-            },
-            rationale: result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
-            tags: [result.metadata.contentType, ...(result.entities.slice(0, 2).map(e => e.type))],
-            lastUpdated: result.metadata.updatedAt || new Date().toISOString().split("T")[0],
-          }));
+          const transformedResults = chatResponse.searchResults.map(
+            (result) => ({
+              id: result.id,
+              title: result.metadata.section || "Document",
+              summary:
+                result.text.substring(0, 200) +
+                (result.text.length > 200 ? "..." : ""),
+              highlights: [
+                result.text.substring(0, 100) +
+                  (result.text.length > 100 ? "..." : ""),
+                `Source: ${result.metadata.sourceFile}`,
+                `Type: ${result.metadata.contentType}`,
+              ],
+              confidenceScore: result.score,
+              source: {
+                type:
+                  result.metadata.contentType === "code"
+                    ? "component"
+                    : "documentation",
+                path: result.metadata.sourceFile,
+                url: result.metadata.url || `#${result.id}`,
+              },
+              rationale:
+                result.explanation ||
+                `Graph RAG score: ${result.score.toFixed(3)}`,
+              tags: [
+                result.metadata.contentType,
+                ...result.entities.slice(0, 2).map((e) => e.type),
+              ],
+              lastUpdated:
+                result.metadata.updatedAt ||
+                new Date().toISOString().split("T")[0],
+            })
+          );
 
           setResults(transformedResults);
           setHasSearched(true);
@@ -445,7 +516,9 @@ export default function App() {
         const chatResponse = await EnhancedChatService.chat(message, {
           pastedContent: options?.pastedContent,
           queryType: options?.queryType,
-          autoSearch: options?.autoSearch || (!options?.contextResults?.length && results.length === 0),
+          autoSearch:
+            options?.autoSearch ||
+            (!options?.contextResults?.length && results.length === 0),
           context: chatContext,
           model: selectedModel,
         });
@@ -462,26 +535,48 @@ export default function App() {
         setSuggestedActions(chatResponse.suggestedActions || []);
 
         // Update search results if found
-        if (chatResponse.searchResults && chatResponse.searchResults.length > 0) {
-          const transformedResults = chatResponse.searchResults.map((result) => ({
-            id: result.id,
-            title: result.meta.section || "Documentation",
-            summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
-            highlights: [
-              result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
-              `Section: ${result.meta.section}`,
-              `Type: ${result.meta.contentType}`,
-            ],
-            confidenceScore: calculateCompositeScore(result),
-            source: {
-              type: result.meta.contentType === "code" ? "component" : result.meta.contentType === "heading" ? "guideline" : "documentation",
-              path: result.meta.breadcrumbs?.join(" > ") || result.meta.section || "Unknown",
-              url: result.source?.url || result.meta.uri || `#${result.id}`,
-            },
-            rationale: generateDetailedRationale(result),
-            tags: [result.meta.contentType, ...result.meta.breadcrumbs.slice(0, 2)],
-            lastUpdated: result.meta.updatedAt || result.meta.createdAt || new Date().toISOString().split("T")[0],
-          }));
+        if (
+          chatResponse.searchResults &&
+          chatResponse.searchResults.length > 0
+        ) {
+          const transformedResults = chatResponse.searchResults.map(
+            (result) => ({
+              id: result.id,
+              title: result.meta.section || "Documentation",
+              summary:
+                result.text.substring(0, 200) +
+                (result.text.length > 200 ? "..." : ""),
+              highlights: [
+                result.text.substring(0, 100) +
+                  (result.text.length > 100 ? "..." : ""),
+                `Section: ${result.meta.section}`,
+                `Type: ${result.meta.contentType}`,
+              ],
+              confidenceScore: calculateCompositeScore(result),
+              source: {
+                type:
+                  result.meta.contentType === "code"
+                    ? "component"
+                    : result.meta.contentType === "heading"
+                    ? "guideline"
+                    : "documentation",
+                path:
+                  result.meta.breadcrumbs?.join(" > ") ||
+                  result.meta.section ||
+                  "Unknown",
+                url: result.source?.url || result.meta.uri || `#${result.id}`,
+              },
+              rationale: generateDetailedRationale(result),
+              tags: [
+                result.meta.contentType,
+                ...result.meta.breadcrumbs.slice(0, 2),
+              ],
+              lastUpdated:
+                result.meta.updatedAt ||
+                result.meta.createdAt ||
+                new Date().toISOString().split("T")[0],
+            })
+          );
 
           setResults(transformedResults);
           setHasSearched(true);
@@ -498,7 +593,7 @@ export default function App() {
         }. Please try again.`,
         timestamp: new Date(),
       };
-      
+
       if (useGraphRag) {
         setGraphRagMessages((prev) => [...prev, errorMessage]);
       } else {
@@ -634,10 +729,14 @@ export default function App() {
     }, 100);
   };
 
-  const handleExploreRelationship = async (relationship: GraphRagRelationship) => {
+  const handleExploreRelationship = async (
+    relationship: GraphRagRelationship
+  ) => {
     console.log("🔗 Exploring relationship:", relationship.type);
     if (relationship.sourceNode && relationship.targetNode) {
-      setQuery(`How are ${relationship.sourceNode.name} and ${relationship.targetNode.name} related?`);
+      setQuery(
+        `How are ${relationship.sourceNode.name} and ${relationship.targetNode.name} related?`
+      );
       setTimeout(() => {
         handleSearch();
       }, 100);
@@ -646,14 +745,19 @@ export default function App() {
 
   const handleReasonAbout = async (entities: GraphRagEntity[]) => {
     if (entities.length < 2) return;
-    
-    console.log("🧠 Reasoning about entities:", entities.map(e => e.name).join(", "));
-    
+
+    console.log(
+      "🧠 Reasoning about entities:",
+      entities.map((e) => e.name).join(", ")
+    );
+
     try {
       setIsLoading(true);
       const reasoningResult = await graphRagApiService.reason(
-        entities.map(e => e.id),
-        `What are the relationships and connections between ${entities.map(e => e.name).join(", ")}?`,
+        entities.map((e) => e.id),
+        `What are the relationships and connections between ${entities
+          .map((e) => e.name)
+          .join(", ")}?`,
         {
           maxDepth: 3,
           reasoningType: "exploratory",
@@ -673,7 +777,11 @@ export default function App() {
       } = {
         id: Date.now().toString(),
         type: "assistant",
-        content: `I found ${reasoningResult.paths.length} reasoning paths connecting ${entities.map(e => e.name).join(" and ")}. ${reasoningResult.explanation}`,
+        content: `I found ${
+          reasoningResult.paths.length
+        } reasoning paths connecting ${entities
+          .map((e) => e.name)
+          .join(" and ")}. ${reasoningResult.explanation}`,
         timestamp: new Date(),
         entities: entities,
         reasoning: reasoningResult,
@@ -697,7 +805,8 @@ export default function App() {
     const legacyResult: SearchResult = {
       id: result.id,
       title: result.metadata.section || "Document",
-      summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
+      summary:
+        result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
       highlights: [
         result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
         `Source: ${result.metadata.sourceFile}`,
@@ -705,13 +814,21 @@ export default function App() {
       ],
       confidenceScore: result.score,
       source: {
-        type: result.metadata.contentType === "code" ? "component" : "documentation",
+        type:
+          result.metadata.contentType === "code"
+            ? "component"
+            : "documentation",
         path: result.metadata.sourceFile,
         url: result.metadata.url || `#${result.id}`,
       },
-      rationale: result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
-      tags: [result.metadata.contentType, ...(result.entities.slice(0, 2).map(e => e.type))],
-      lastUpdated: result.metadata.updatedAt || new Date().toISOString().split("T")[0],
+      rationale:
+        result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
+      tags: [
+        result.metadata.contentType,
+        ...result.entities.slice(0, 2).map((e) => e.type),
+      ],
+      lastUpdated:
+        result.metadata.updatedAt || new Date().toISOString().split("T")[0],
     };
 
     // Add to context if not already present
@@ -759,7 +876,10 @@ export default function App() {
           onModelChange={setSelectedModel}
         />
         <div className="flex items-center gap-2 bg-background/95 backdrop-blur-sm border border-border rounded-lg px-3 py-2">
-          <label htmlFor="graphRagToggle" className="text-sm font-medium text-foreground">
+          <label
+            htmlFor="graphRagToggle"
+            className="text-sm font-medium text-foreground"
+          >
             Graph RAG
           </label>
           <input
@@ -808,14 +928,15 @@ export default function App() {
                 <p className="text-muted-foreground max-w-2xl mx-auto">
                   {useGraphRag ? (
                     <>
-                      🧠 <strong>Graph RAG Enhanced:</strong> AI-powered semantic search with 
-                      knowledge graph reasoning, entity extraction, relationship mapping, 
-                      and multi-hop intelligent reasoning across your knowledge base.
+                      🧠 <strong>Graph RAG Enhanced:</strong> AI-powered
+                      semantic search with knowledge graph reasoning, entity
+                      extraction, relationship mapping, and multi-hop
+                      intelligent reasoning across your knowledge base.
                     </>
                   ) : (
                     <>
-                      AI-powered semantic search through your Obsidian vault with
-                      vector embeddings, knowledge graph relationships, and
+                      AI-powered semantic search through your Obsidian vault
+                      with vector embeddings, knowledge graph relationships, and
                       intelligent reasoning across your personal knowledge base.
                     </>
                   )}
@@ -887,7 +1008,9 @@ export default function App() {
                     messages={graphRagMessages}
                     onSendMessage={handleSendMessage}
                     isLoading={isLoading}
-                    resultsCount={useGraphRag ? graphRagResults.length : results.length}
+                    resultsCount={
+                      useGraphRag ? graphRagResults.length : results.length
+                    }
                     contextResults={contextResults}
                     onRemoveContext={handleRemoveContext}
                     suggestedActions={suggestedActions}
@@ -940,7 +1063,9 @@ export default function App() {
                         },
                         rationale: context.explanation || "",
                         tags: [],
-                        lastUpdated: context.metadata.updatedAt || new Date().toISOString(),
+                        lastUpdated:
+                          context.metadata.updatedAt ||
+                          new Date().toISOString(),
                       };
                       handleAskFollowUp(question, legacyResult);
                     }}

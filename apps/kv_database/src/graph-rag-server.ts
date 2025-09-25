@@ -2,7 +2,7 @@
 import express from "express";
 import cors from "cors";
 import { Pool } from "pg";
-import { 
+import {
   HybridSearchEngine,
   MultiHopReasoningEngine,
   ResultRankingService,
@@ -11,7 +11,7 @@ import {
   ProvenanceTracker,
   QueryOptimizer,
   MonitoringSystem,
-  GraphRagApiServer
+  GraphRagApiServer,
 } from "./lib/knowledge-graph/index.js";
 import { EmbeddingService } from "./lib/embeddings.js";
 import { DatabaseService } from "./lib/database.js";
@@ -52,17 +52,21 @@ async function initializeServices() {
     // Initialize core services
     embeddingService = new EmbeddingService();
     databaseService = new DatabaseService(pool);
-    
+
     // Initialize Graph RAG components
     knowledgeGraphManager = new KnowledgeGraphManager(pool, embeddingService);
     entityExtractor = new EntityExtractor();
-    hybridSearchEngine = new HybridSearchEngine(pool, embeddingService, knowledgeGraphManager);
+    hybridSearchEngine = new HybridSearchEngine(
+      pool,
+      embeddingService,
+      knowledgeGraphManager
+    );
     reasoningEngine = new MultiHopReasoningEngine(knowledgeGraphManager);
     rankingService = new ResultRankingService();
     provenanceTracker = new ProvenanceTracker(pool);
     queryOptimizer = new QueryOptimizer(pool, knowledgeGraphManager);
     monitoringSystem = new MonitoringSystem(pool);
-    
+
     // Initialize Graph RAG API server
     graphRagApiServer = new GraphRagApiServer(
       hybridSearchEngine,
@@ -84,10 +88,10 @@ async function initializeServices() {
 // Health check endpoint
 app.get("/health", async (req, res) => {
   try {
-    const health = await monitoringSystem?.checkHealth() || {
+    const health = (await monitoringSystem?.checkHealth()) || {
       status: "unknown",
       checks: {},
-      summary: { total: 0, healthy: 0, degraded: 0, unhealthy: 1 }
+      summary: { total: 0, healthy: 0, degraded: 0, unhealthy: 1 },
     };
 
     res.json({
@@ -229,7 +233,10 @@ app.get("/api/graph-rag/entities/similar", async (req, res) => {
       return res.status(400).json({ error: "nodeId parameter is required" });
     }
 
-    const similarNodes = await knowledgeGraphManager.findSimilarNodes(nodeId, threshold);
+    const similarNodes = await knowledgeGraphManager.findSimilarNodes(
+      nodeId,
+      threshold
+    );
     const entities = similarNodes.slice(0, limit);
 
     res.json({ entities });
@@ -253,8 +260,8 @@ app.get("/api/graph-rag/entities/shortest-path", async (req, res) => {
     const maxDepth = parseInt(req.query.maxDepth as string) || 6;
 
     if (!startNodeId || !endNodeId) {
-      return res.status(400).json({ 
-        error: "Both startNodeId and endNodeId parameters are required" 
+      return res.status(400).json({
+        error: "Both startNodeId and endNodeId parameters are required",
       });
     }
 
@@ -280,24 +287,35 @@ app.get("/api/graph-rag/entities/shortest-path", async (req, res) => {
 });
 
 // Error handling middleware
-app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error("Unhandled error:", error);
-  res.status(500).json({
-    error: "Internal server error",
-    message: error instanceof Error ? error.message : "Unknown error",
-  });
-});
+app.use(
+  (
+    error: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    console.error("Unhandled error:", error);
+    res.status(500).json({
+      error: "Internal server error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+);
 
 // Start server
 async function startServer() {
   try {
     await initializeServices();
-    
+
     app.listen(port, () => {
       console.log(`🚀 Graph RAG API server running on port ${port}`);
       console.log(`📊 Health check: http://localhost:${port}/health`);
-      console.log(`🔍 Search API: http://localhost:${port}/api/graph-rag/search`);
-      console.log(`🧠 Reasoning API: http://localhost:${port}/api/graph-rag/reasoning`);
+      console.log(
+        `🔍 Search API: http://localhost:${port}/api/graph-rag/search`
+      );
+      console.log(
+        `🧠 Reasoning API: http://localhost:${port}/api/graph-rag/reasoning`
+      );
     });
   } catch (error) {
     console.error("❌ Failed to start Graph RAG server:", error);
