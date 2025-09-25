@@ -72,6 +72,7 @@ pids/
 tmp/
 temp/
 .cache/
+.stryker-tmp/
 
 # Generated types (if any)
 *.d.ts.map
