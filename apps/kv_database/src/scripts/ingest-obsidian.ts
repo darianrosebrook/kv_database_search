@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import { ObsidianDatabase } from "../lib/database";
 import { ObsidianEmbeddingService } from "../lib/embeddings";
 import { ObsidianIngestionPipeline } from "../lib/obsidian-ingest";

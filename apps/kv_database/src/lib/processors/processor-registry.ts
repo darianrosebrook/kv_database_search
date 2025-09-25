@@ -118,7 +118,7 @@ export class ContentProcessorRegistry {
 
     const initPromises: Promise<void>[] = [];
 
-    for (const processor of this.processors.values()) {
+    for (const processor of Array.from(this.processors.values())) {
       // Check if processor has an initialize method
       if (typeof (processor as any).initialize === "function") {
         initPromises.push((processor as any).initialize());
@@ -135,7 +135,7 @@ export class ContentProcessorRegistry {
   async cleanup(): Promise<void> {
     const cleanupPromises: Promise<void>[] = [];
 
-    for (const processor of this.processors.values()) {
+    for (const processor of Array.from(this.processors.values())) {
       // Check if processor has a cleanup method
       if (typeof (processor as any).cleanup === "function") {
         cleanupPromises.push((processor as any).cleanup());

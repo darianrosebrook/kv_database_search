@@ -1,4 +1,4 @@
-@use "../app/designTokens.scss" as designTokens;
+@use "./designTokens.scss" as designTokens;
 
 @layer base {
   *, :after, :before, ::backdrop {

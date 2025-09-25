@@ -153,7 +153,9 @@ export class WebSearchService {
     const searchPromises: Promise<WebSearchResult[]>[] = [];
 
     // Use all available providers
-    for (const [providerName, provider] of this.providers) {
+    for (const [providerName, provider] of Array.from(
+      this.providers.entries()
+    )) {
       searchPromises.push(
         provider.search(query, options).then((results) => {
           // Add provider name to results

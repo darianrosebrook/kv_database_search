@@ -170,8 +170,10 @@ describe("MultiModalIngestionPipeline Integration", () => {
     }, 30000);
 
     it("should handle large files appropriately", async () => {
-      // Create a moderately large text file
-      const largeContent = "This is a test sentence. ".repeat(1000);
+      // Create a moderately large text file with multiple paragraphs
+      const largeContent = "This is a test sentence for chunking.\n\n".repeat(
+        1000
+      );
       const largeFile = path.join(testDir, "large.txt");
       fs.writeFileSync(largeFile, largeContent);
 

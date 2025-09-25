@@ -49,6 +49,7 @@ export enum ContentType {
 
   // Audio
   AUDIO = "audio",
+  AUDIO_FILE = "audio_file",
   SPEECH = "speech",
 
   // Video
@@ -66,11 +67,16 @@ export enum ContentType {
 
 // Universal metadata schema
 export interface UniversalMetadata {
-  file: FileMetadata;
+  file: FileMetadata | EnhancedFileMetadata;
   content: ContentMetadata;
   processing: ProcessingMetadata;
   quality: QualityMetadata;
   relationships: RelationshipMetadata;
+  // Enhanced tracking (optional for backward compatibility)
+  changeTracking?: FileChangeMetadata;
+  version?: DocumentVersion;
+  processingStatus?: ProcessingStatus;
+  batchMetadata?: BatchProcessingMetadata;
 }
 
 export interface FileMetadata {
@@ -177,6 +183,70 @@ export interface RelationshipMetadata {
   topics: string[];
 }
 
+// File change tracking metadata
+export interface FileChangeMetadata {
+  changeType: "created" | "modified" | "deleted" | "moved" | "renamed";
+  previousPath?: string;
+  changeTimestamp: Date;
+  changeReason?: string; // git commit, manual edit, etc.
+  version?: string;
+  diffSummary?: string; // brief summary of changes
+  fileHash: string; // content hash for change detection
+  embeddingHash?: string; // embedding hash for change detection
+}
+
+// Document version history
+export interface DocumentVersion {
+  versionId: string;
+  contentHash: string;
+  embeddingHash: string;
+  createdAt: Date;
+  parentVersion?: string;
+  changeSummary: string;
+  changeType: FileChangeMetadata["changeType"];
+  metadata: Record<string, any>;
+  processingMetadata: ProcessingMetadata;
+  chunks: number; // number of chunks in this version
+}
+
+// Processing status tracking
+export interface ProcessingStatus {
+  fileId: string;
+  currentStep: string;
+  progress: number; // 0-100
+  estimatedTimeRemaining: number; // milliseconds
+  lastUpdated: Date;
+  errors: string[];
+  warnings: string[];
+  startedAt: Date;
+  completedAt?: Date;
+  status: "queued" | "processing" | "completed" | "failed" | "cancelled";
+}
+
+// Enhanced file metadata with change tracking
+export interface EnhancedFileMetadata extends FileMetadata {
+  changeHistory: FileChangeMetadata[];
+  versions: DocumentVersion[];
+  processingStatus?: ProcessingStatus;
+  lastProcessed?: Date;
+  processingAttempts: number;
+  isStale: boolean; // if file needs reprocessing
+}
+
+// Batch processing metadata
+export interface BatchProcessingMetadata {
+  batchId: string;
+  batchType: "initial" | "incremental" | "reindex" | "manual";
+  files: string[];
+  startTime: Date;
+  endTime?: Date;
+  processedFiles: number;
+  failedFiles: number;
+  totalChunks: number;
+  errors: string[];
+  status: "running" | "completed" | "failed" | "partial";
+}
+
 // Content type detection result
 export interface ContentTypeResult {
   mimeType: string;
@@ -193,6 +263,29 @@ export interface ContentFeatures {
   isStructured: boolean;
   encoding: string;
   language: string;
+}
+
+// Enhanced entity extraction types
+export interface ExtractedEntity {
+  text: string;
+  type: "person" | "organization" | "location" | "concept" | "term" | "other";
+  confidence: number;
+  position: { start: number; end: number };
+}
+
+export interface EntityRelationship {
+  subject: string;
+  predicate: string;
+  object: string;
+  confidence: number;
+}
+
+export interface EntityCluster {
+  id: string;
+  name: string;
+  entities: ExtractedEntity[];
+  centrality: number;
+  relationships: EntityRelationship[];
 }
 
 // Ingestion types
@@ -469,8 +562,6 @@ export interface ChatSession {
   updatedAt: string;
   userId?: string; // For multi-user support
   tags?: string[];
-  isPublic?: boolean;
-  embedding?: number[]; // For semantic search of chat sessions
   topics?: string[];
   webResults?: any[];
   contextDocuments?: any[];

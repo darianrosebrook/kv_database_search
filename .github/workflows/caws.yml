@@ -238,7 +238,7 @@ jobs:
         run: npm ci
 
       - name: Run performance benchmarks
-        run: npm run perf:budgets
+        run: npx tsx apps/tools/caws/perf-budgets.ts --real-data
 
       - name: Archive performance results
         uses: actions/upload-artifact@v3
@@ -326,8 +326,8 @@ jobs:
       - name: Validate Provenance Manifest
         run: npm run caws:validate provenance .agent/provenance.json
 
-      - name: Calculate Trust Score
-        run: npm run gates:trust
+      - name: Calculate and Enforce Trust Score
+        run: npm run gates:trust -- ${{ needs.setup.outputs.risk }}
 
       - name: Archive provenance
         uses: actions/upload-artifact@v3

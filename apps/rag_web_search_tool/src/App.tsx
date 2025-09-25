@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { SearchInput } from "../ui/components/SearchInput";
 import { ChatInterface } from "../ui/components/ChatInterface";
 import { ResultsPanel } from "./components/ResultsPanel";
-import { ModelSelector } from "../ui/components/ModelSelector";
-import { ChatHistory } from "../ui/components/ChatHistory";
+import ModelSelector from "../ui/components/ModelSelector";
+import ChatHistory from "../ui/components/ChatHistory";
 import {
   apiService,
   SearchResult as ApiSearchResult,

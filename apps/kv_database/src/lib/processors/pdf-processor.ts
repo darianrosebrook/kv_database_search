@@ -1,11 +1,16 @@
-import * as pdfParse from "pdf-parse";
+const pdfParse = require("pdf-parse");
 import { ContentType, ContentMetadata } from "../../types/index";
 import {
   BaseContentProcessor,
   ProcessorOptions,
   ProcessorResult,
 } from "./base-processor";
-import { detectLanguage } from "../utils";
+import {
+  detectLanguage,
+  EnhancedEntityExtractor,
+  ExtractedEntity,
+  EntityRelationship,
+} from "../utils";
 import * as fs from "fs";
 
 export interface PDFMetadata {
@@ -24,11 +29,22 @@ export interface PDFContentMetadata extends ContentMetadata {
   characterCount: number;
   hasText: boolean;
   pdfMetadata?: PDFMetadata;
+  entities?: ExtractedEntity[];
+  relationships?: EntityRelationship[];
+  structure?: {
+    headers: string[];
+    paragraphs: number;
+    hasTables: boolean;
+    hasImages: boolean;
+  };
 }
 
 export class PDFProcessor extends BaseContentProcessor {
+  private entityExtractor: EnhancedEntityExtractor;
+
   constructor() {
     super("PDF Processor", [ContentType.PDF]);
+    this.entityExtractor = new EnhancedEntityExtractor();
   }
 
   /**
@@ -58,15 +74,26 @@ export class PDFProcessor extends BaseContentProcessor {
             : undefined,
         };
 
-        // Extract text content
+        // Extract text content with enhanced processing
         const text = pdfData.text.trim();
         const cleanedText = this.cleanExtractedText(text);
-        const hasText = cleanedText.length > 0;
-        const wordCount = this.countWords(cleanedText);
-        const characterCount = this.countCharacters(cleanedText);
+        const enhancedText = this.enhanceExtractedText(cleanedText);
+        const hasText = enhancedText.length > 0;
+        const wordCount = this.countWords(enhancedText);
+        const characterCount = this.countCharacters(enhancedText);
 
         // Get language from options or detect
-        const language = options?.language || detectLanguage(cleanedText);
+        const language = options?.language || detectLanguage(enhancedText);
+
+        // Extract entities and relationships
+        const entities = this.entityExtractor.extractEntities(enhancedText);
+        const relationships = this.entityExtractor.extractRelationships(
+          enhancedText,
+          entities
+        );
+
+        // Analyze document structure
+        const structure = this.analyzeDocumentStructure(enhancedText);
 
         // Create content metadata
         const contentMetadata: PDFContentMetadata = {
@@ -78,10 +105,13 @@ export class PDFProcessor extends BaseContentProcessor {
           characterCount,
           hasText,
           pdfMetadata,
+          entities,
+          relationships,
+          structure,
         };
 
         return this.createSuccessResult(
-          hasText ? cleanedText : "PDF document contains no extractable text",
+          hasText ? enhancedText : "PDF document contains no extractable text",
           contentMetadata,
           time,
           language
@@ -173,7 +203,7 @@ export class PDFProcessor extends BaseContentProcessor {
   }
 
   /**
-   * Extract text from a PDF buffer (useful for testing)
+   * Extract text from a PDF buffer (useful for testing) with enhanced processing
    */
   async extractTextFromBuffer(buffer: Buffer): Promise<{
     text: string;
@@ -198,27 +228,44 @@ export class PDFProcessor extends BaseContentProcessor {
           : undefined,
       };
 
-      // Get the extracted text
+      // Extract text content with enhanced processing
       const text = pdfData.text.trim();
+      const cleanedText = this.cleanExtractedText(text);
+      const enhancedText = this.enhanceExtractedText(cleanedText);
+      const hasText = enhancedText.length > 0;
+      const wordCount = this.countWords(enhancedText);
+      const characterCount = this.countCharacters(enhancedText);
 
-      // Analyze text content
-      const words = text.split(/\s+/).filter((word) => word.length > 0);
-      const hasText = text.length > 0 && words.length > 0;
+      // Get language from options or detect
+      const language = this.detectLanguage(enhancedText);
+
+      // Extract entities and relationships
+      const entities = this.entityExtractor.extractEntities(enhancedText);
+      const relationships = this.entityExtractor.extractRelationships(
+        enhancedText,
+        entities
+      );
+
+      // Analyze document structure
+      const structure = this.analyzeDocumentStructure(enhancedText);
 
       // Create content metadata
       const contentMetadata: PDFContentMetadata = {
         type: ContentType.PDF,
-        language: this.detectLanguage(text),
+        language,
         encoding: "utf-8",
-        pageCount: pdfData.numpages,
-        wordCount: words.length,
-        characterCount: text.length,
+        pageCount: pdfData.numpages || 0,
+        wordCount,
+        characterCount,
         hasText,
         pdfMetadata,
+        entities,
+        relationships,
+        structure,
       };
 
       return {
-        text,
+        text: enhancedText,
         metadata: contentMetadata,
       };
     } catch (error) {
@@ -266,6 +313,77 @@ export class PDFProcessor extends BaseContentProcessor {
     if (maxMatches === frenchMatches) return "fr";
 
     return "unknown";
+  }
+
+  /**
+   * Enhanced text cleaning with structure preservation
+   */
+  private enhanceExtractedText(text: string): string {
+    return (
+      text
+        // Preserve paragraph breaks but normalize spacing
+        .replace(/\n{3,}/g, "\n\n")
+        // Clean up excessive whitespace within paragraphs
+        .replace(/[^\n]+/g, (line) =>
+          line.replace(/[ \t]+/g, " ").replace(/^\s+|\s+$/g, "")
+        )
+        // Ensure headers are properly formatted
+        .replace(/^[A-Z][^.!?]*$/gm, (header) => {
+          const trimmed = header.trim();
+          return trimmed.length > 0 ? `# ${trimmed}` : "";
+        })
+        // Clean up any remaining artifacts
+        .replace(/\0/g, "")
+        .trim()
+    );
+  }
+
+  /**
+   * Analyze document structure to extract headers and count elements
+   */
+  private analyzeDocumentStructure(text: string): {
+    headers: string[];
+    paragraphs: number;
+    hasTables: boolean;
+    hasImages: boolean;
+  } {
+    const headers: string[] = [];
+    let paragraphs = 0;
+    let hasTables = false;
+    let hasImages = false;
+
+    // Extract potential headers (lines that look like titles)
+    const lines = text.split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.length > 0 && trimmed.length < 100) {
+        // Check if it looks like a header (short, no punctuation, mostly uppercase)
+        const isHeader =
+          trimmed.length > 5 &&
+          !/[.!?]$/.test(trimmed) &&
+          (trimmed === trimmed.toUpperCase() || /^[A-Z][^.!?]*$/.test(trimmed));
+
+        if (isHeader) {
+          headers.push(trimmed);
+        }
+      }
+    }
+
+    // Count paragraphs (blocks of text separated by empty lines)
+    paragraphs = text
+      .split(/\n\s*\n/)
+      .filter((block) => block.trim().length > 0).length;
+
+    // Detect tables (multiple lines with similar structure)
+    const tablePattern = /(.+\t.+|.+,.+.+)\n(.+\t.+|.+,.+.+)/;
+    hasTables = tablePattern.test(text);
+
+    // Detect image references
+    hasImages =
+      /\b(image|figure|img|pic|photo)\b/i.test(text) ||
+      /\.(jpg|jpeg|png|gif|bmp|tiff|webp)\b/i.test(text);
+
+    return { headers, paragraphs, hasTables, hasImages };
   }
 
   /**

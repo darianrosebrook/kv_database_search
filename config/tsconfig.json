@@ -16,6 +16,6 @@
     "lib": ["ES2022"],
     "types": ["node"]
   },
-  "include": ["apps/kv_database/src/**/*", "apps/tools/**/*", "apps/kv_database/tests/**/*"],
+  "include": ["apps/kv_database/src/**/*", "apps/tools/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "apps/rag_web_search_tool/**/*"]
 }

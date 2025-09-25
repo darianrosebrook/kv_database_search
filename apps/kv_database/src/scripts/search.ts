@@ -1,12 +1,12 @@
 #!/usr/bin/env tsx
 
-import dotenv from "dotenv";
+import { config as dotenvConfig } from "dotenv";
 import { ObsidianDatabase } from "../lib/database";
 import { ObsidianEmbeddingService } from "../lib/embeddings";
 import { ObsidianSearchService } from "../lib/obsidian-search";
 
 // Load environment variables
-dotenv.config();
+dotenvConfig();
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || "embeddinggemma";
@@ -92,7 +92,7 @@ Examples:
       console.log("\n📋 Top Results:");
       searchResponse.results.slice(0, 5).forEach((result, i) => {
         console.log(`\n${i + 1}. ${result.meta.section}`);
-        console.log(`   File: ${result.obsidianMeta?.fileName || "unknown"}`);
+        console.log(`   File: ${result.documentId || "unknown"}`);
         console.log(`   Type: ${result.meta.contentType}`);
         console.log(`   Score: ${(result.cosineSimilarity * 100).toFixed(1)}%`);
 

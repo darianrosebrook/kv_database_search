@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import dotenv from "dotenv";
+import { config as dotenvConfig } from "dotenv";
 import { ObsidianDatabase } from "../lib/database";
 import { ObsidianEmbeddingService } from "../lib/embeddings";
 import { ObsidianIngestionPipeline } from "../lib/obsidian-ingest";
@@ -11,7 +11,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 // Load environment variables
-dotenv.config();
+dotenvConfig();
 
 const OBSIDIAN_VAULT_PATH =
   process.env.OBSIDIAN_VAULT_PATH ||

@@ -7,6 +7,12 @@ import {
   ChatMessage,
 } from "../types/index";
 
+// Extended ChatSession interface for database operations
+interface DatabaseChatSession extends ChatSession {
+  isPublic?: boolean;
+  embedding?: number[];
+}
+
 export class ObsidianDatabase {
   private pool: Pool;
   private readonly tableName = "obsidian_chunks";
@@ -516,7 +522,7 @@ export class ObsidianDatabase {
   }
 
   // Chat session methods
-  async saveChatSession(session: ChatSession): Promise<void> {
+  async saveChatSession(session: DatabaseChatSession): Promise<void> {
     const client = await this.pool.connect();
     try {
       await client.query(
@@ -545,8 +551,10 @@ export class ObsidianDatabase {
           session.updatedAt,
           session.userId || null,
           session.tags || [],
-          session.isPublic || false,
-          session.embedding ? `[${session.embedding.join(",")}]` : null,
+          (session as any).isPublic || false,
+          (session as any).embedding
+            ? `[((session as any).embedding as number[]).join(",")]`
+            : null,
           session.summary || null,
           session.messageCount,
           session.totalTokens || null,
@@ -596,7 +604,7 @@ export class ObsidianDatabase {
     }
   }
 
-  async getChatSessionById(id: string): Promise<ChatSession | null> {
+  async getChatSessionById(id: string): Promise<DatabaseChatSession | null> {
     const client = await this.pool.connect();
     try {
       const result = await client.query(
@@ -636,7 +644,7 @@ export class ObsidianDatabase {
     query: string,
     embedding: number[],
     limit = 10
-  ): Promise<Array<ChatSession & { similarity: number }>> {
+  ): Promise<Array<DatabaseChatSession & { similarity: number }>> {
     const client = await this.pool.connect();
     try {
       // Search using both semantic similarity and text matching
@@ -745,6 +753,340 @@ export class ObsidianDatabase {
         averageMessagesPerSession: parseFloat(row.avg_messages || 0),
         mostActiveDay: row.most_active_day || "No data",
       };
+    } finally {
+      client.release();
+    }
+  }
+
+  // =============================================================================
+  // VERSION MANAGEMENT METHODS
+  // =============================================================================
+
+  /**
+   * Create a new document version
+   */
+  async createDocumentVersion(filePath: string, version: any): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query(
+        `INSERT INTO document_versions (
+          file_path, version_id, content_hash, embedding_hash,
+          created_at, change_summary, change_type, metadata,
+          processing_metadata, chunks
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [
+          filePath,
+          version.versionId,
+          version.contentHash,
+          version.embeddingHash,
+          version.createdAt,
+          version.changeSummary,
+          version.changeType,
+          JSON.stringify(version.metadata || {}),
+          JSON.stringify(version.processingMetadata || {}),
+          version.chunks || 0,
+        ]
+      );
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Update an existing document version
+   */
+  async updateDocumentVersion(filePath: string, version: any): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query(
+        `UPDATE document_versions SET
+          content_hash = $3,
+          embedding_hash = $4,
+          created_at = $5,
+          change_summary = $6,
+          change_type = $7,
+          metadata = $8,
+          processing_metadata = $9,
+          chunks = $10
+        WHERE file_path = $1 AND version_id = $2`,
+        [
+          filePath,
+          version.versionId,
+          version.contentHash,
+          version.embeddingHash,
+          version.createdAt,
+          version.changeSummary,
+          version.changeType,
+          JSON.stringify(version.metadata || {}),
+          JSON.stringify(version.processingMetadata || {}),
+          version.chunks || 0,
+        ]
+      );
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Get all versions for a file
+   */
+  async getDocumentVersions(filePath: string): Promise<any[]> {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM document_versions
+         WHERE file_path = $1
+         ORDER BY created_at DESC`,
+        [filePath]
+      );
+
+      return result.rows.map((row) => ({
+        versionId: row.version_id,
+        contentHash: row.content_hash,
+        embeddingHash: row.embedding_hash,
+        createdAt: row.created_at,
+        changeSummary: row.change_summary,
+        changeType: row.change_type,
+        metadata: row.metadata || {},
+        processingMetadata: row.processing_metadata || {},
+        chunks: parseInt(row.chunks || 0),
+      }));
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Get version content by version ID
+   */
+  async getVersionContent(
+    versionId: string
+  ): Promise<{
+    content: string;
+    contentHash: string;
+    embeddingHash: string;
+  } | null> {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT dv.*, dc.content
+         FROM document_versions dv
+         LEFT JOIN document_chunks dc ON dv.file_path = dc.file_name AND dv.version_id = dc.version_id
+         WHERE dv.version_id = $1`,
+        [versionId]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      const row = result.rows[0];
+      return {
+        content: row.content || "",
+        contentHash: row.content_hash,
+        embeddingHash: row.embedding_hash,
+      };
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Get file change history
+   */
+  async getFileChangeHistory(filePath: string): Promise<any[]> {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM file_changes
+         WHERE file_path = $1
+         ORDER BY change_timestamp DESC`,
+        [filePath]
+      );
+
+      return result.rows.map((row) => ({
+        changeType: row.change_type,
+        previousPath: row.previous_path,
+        changeTimestamp: row.change_timestamp,
+        changeReason: row.change_reason,
+        version: row.version_id,
+        diffSummary: row.diff_summary,
+        fileHash: row.file_hash,
+        embeddingHash: row.embedding_hash,
+      }));
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Record a file change
+   */
+  async recordFileChange(
+    filePath: string,
+    changeType: "created" | "modified" | "deleted" | "moved" | "renamed",
+    options: {
+      previousPath?: string;
+      changeReason?: string;
+      version?: string;
+      diffSummary?: string;
+      fileHash: string;
+      embeddingHash?: string;
+    }
+  ): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query(
+        `INSERT INTO file_changes (
+          file_path, change_type, previous_path, change_timestamp,
+          change_reason, version_id, diff_summary, file_hash, embedding_hash
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          filePath,
+          changeType,
+          options.previousPath || null,
+          new Date(),
+          options.changeReason || null,
+          options.version || null,
+          options.diffSummary || null,
+          options.fileHash,
+          options.embeddingHash || null,
+        ]
+      );
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Get processing status for a file
+   */
+  async getFileProcessingStatus(filePath: string): Promise<any | null> {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM processing_status
+         WHERE file_path = $1
+         ORDER BY last_updated DESC
+         LIMIT 1`,
+        [filePath]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      const row = result.rows[0];
+      return {
+        fileId: row.file_path,
+        currentStep: row.current_step,
+        progress: parseFloat(row.progress),
+        estimatedTimeRemaining: parseInt(row.estimated_time_remaining),
+        lastUpdated: row.last_updated,
+        errors: row.errors || [],
+        warnings: row.warnings || [],
+        startedAt: row.started_at,
+        completedAt: row.completed_at,
+        status: row.status,
+      };
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Update processing status for a file
+   */
+  async updateFileProcessingStatus(
+    filePath: string,
+    status: {
+      currentStep?: string;
+      progress?: number;
+      estimatedTimeRemaining?: number;
+      errors?: string[];
+      warnings?: string[];
+      completedAt?: Date;
+      status?: "queued" | "processing" | "completed" | "failed" | "cancelled";
+    }
+  ): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      // First check if a status record exists
+      const existing = await client.query(
+        `SELECT id FROM processing_status WHERE file_path = $1 ORDER BY last_updated DESC LIMIT 1`,
+        [filePath]
+      );
+
+      if (existing.rows.length > 0) {
+        // Update existing record
+        await client.query(
+          `UPDATE processing_status SET
+            current_step = COALESCE($2, current_step),
+            progress = COALESCE($3, progress),
+            estimated_time_remaining = COALESCE($4, estimated_time_remaining),
+            errors = COALESCE($5, errors),
+            warnings = COALESCE($6, warnings),
+            completed_at = COALESCE($7, completed_at),
+            status = COALESCE($8, status),
+            last_updated = $9
+          WHERE id = $1`,
+          [
+            existing.rows[0].id,
+            status.currentStep,
+            status.progress,
+            status.estimatedTimeRemaining,
+            status.errors ? JSON.stringify(status.errors) : null,
+            status.warnings ? JSON.stringify(status.warnings) : null,
+            status.completedAt,
+            status.status,
+            new Date(),
+          ]
+        );
+      } else {
+        // Create new record
+        await client.query(
+          `INSERT INTO processing_status (
+            file_path, current_step, progress, estimated_time_remaining,
+            errors, warnings, started_at, status, last_updated
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [
+            filePath,
+            status.currentStep || "initializing",
+            status.progress || 0,
+            status.estimatedTimeRemaining || 0,
+            JSON.stringify(status.errors || []),
+            JSON.stringify(status.warnings || []),
+            new Date(),
+            status.status || "processing",
+            new Date(),
+          ]
+        );
+      }
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Clean up old versions (keep only last N versions per file)
+   */
+  async cleanupOldVersions(
+    filePath: string,
+    keepVersions: number = 10
+  ): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query(
+        `DELETE FROM document_versions
+         WHERE file_path = $1
+         AND version_id NOT IN (
+           SELECT version_id FROM document_versions
+           WHERE file_path = $1
+           ORDER BY created_at DESC
+           LIMIT $2
+         )`,
+        [filePath, keepVersions]
+      );
     } finally {
       client.release();
     }

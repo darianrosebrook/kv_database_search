@@ -32,5 +32,21 @@ declare module "sherpa-onnx" {
     reset(): void;
   }
 
-  export { SpeechRecognizer, SpeechRecognitionConfig, SpeechRecognitionResult };
+  // Export functions that might exist in the module
+  function createModel(config: any): any;
+  function createRecognizer(config: any): any;
+
+  // Export interfaces/types that might exist
+  interface ModelConfig {}
+  interface RecognizerConfig {}
+
+  export {
+    SpeechRecognizer,
+    SpeechRecognitionConfig,
+    SpeechRecognitionResult,
+    createModel,
+    createRecognizer,
+    ModelConfig,
+    RecognizerConfig,
+  };
 }

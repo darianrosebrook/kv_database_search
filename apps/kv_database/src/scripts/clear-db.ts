@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import { ObsidianDatabase } from "../lib/database";
 import * as readline from "readline";
 

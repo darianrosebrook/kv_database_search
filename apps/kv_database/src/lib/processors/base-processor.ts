@@ -57,6 +57,7 @@ export interface ProcessorResult {
   errors?: string[];
   processingTime: number;
   confidence?: number; // For processors that can provide confidence scores
+  features?: Record<string, any>; // Additional features extracted by the processor
 }
 
 /**

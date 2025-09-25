@@ -7,6 +7,11 @@ import {
 import { ContentType, ContentMetadata } from "../../types/index";
 import { detectLanguage } from "../utils";
 import * as fs from "fs";
+import {
+  ContentProcessor,
+  ProcessorResult,
+  ProcessorOptions,
+} from "./base-processor";
 
 export interface SpeechMetadata {
   duration?: number; // in seconds
@@ -25,7 +30,7 @@ export interface SpeechContentMetadata extends ContentMetadata {
   characterCount: number;
 }
 
-export class SpeechProcessor {
+export class SpeechProcessor implements ContentProcessor {
   private model: any = null;
   private recognizer: any = null;
   private initialized = false;
@@ -289,5 +294,65 @@ export class SpeechProcessor {
    */
   isReady(): boolean {
     return this.initialized && this.recognizer !== null;
+  }
+
+  /**
+   * Extract text and metadata from a file buffer
+   */
+  async extractFromBuffer(
+    buffer: Buffer,
+    options?: ProcessorOptions
+  ): Promise<ProcessorResult> {
+    // Convert buffer to temporary file path for processing
+    const tempPath = `/tmp/speech-${Date.now()}.wav`;
+    try {
+      require("fs").writeFileSync(tempPath, buffer);
+      return await this.extractFromFile(tempPath, options);
+    } finally {
+      // Clean up temp file
+      try {
+        require("fs").unlinkSync(tempPath);
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    }
+  }
+
+  /**
+   * Extract text and metadata from a file path
+   */
+  async extractFromFile(
+    filePath: string,
+    options?: ProcessorOptions
+  ): Promise<ProcessorResult> {
+    const result = await this.transcribeFromFile(filePath);
+    return {
+      text: result.text,
+      metadata: result.metadata,
+      success: true,
+      processingTime: Date.now() - Date.now(), // TODO: Calculate actual processing time
+      confidence: 1, // Speech processing doesn't have confidence scores
+    };
+  }
+
+  /**
+   * Check if this processor supports a given content type
+   */
+  supportsContentType(contentType: ContentType): boolean {
+    return contentType === ContentType.AUDIO_FILE;
+  }
+
+  /**
+   * Get the supported content types for this processor
+   */
+  getSupportedContentTypes(): ContentType[] {
+    return [ContentType.AUDIO_FILE];
+  }
+
+  /**
+   * Get the processor name/identifier
+   */
+  getProcessorName(): string {
+    return "speech-processor";
   }
 }

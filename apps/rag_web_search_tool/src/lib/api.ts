@@ -97,7 +97,7 @@ class ApiService {
     options: SearchOptions = {}
   ): Promise<SearchResponse> {
     try {
-      const response = await fetch(`${this.baseUrl}/search/strategic`, {
+      const response = await fetch(`${this.baseUrl}/search`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -145,21 +145,20 @@ class ApiService {
     }
   > {
     try {
-      const response = await fetch(`${this.baseUrl}/search/with-rationales`, {
+      const response = await fetch(`${this.baseUrl}/search`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           query,
-          generateRationales: true,
           ...options,
         }),
       });
 
       if (!response.ok) {
         throw new Error(
-          `Search with rationales failed: ${response.status} ${response.statusText}`
+          `Search failed: ${response.status} ${response.statusText}`
         );
       }
 
@@ -186,9 +185,9 @@ class ApiService {
 
       return data;
     } catch (error) {
-      console.error("Search with rationales API error:", error);
+      console.error("Search API error:", error);
       throw new Error(
-        `Failed to search with rationales: ${
+        `Failed to search: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );

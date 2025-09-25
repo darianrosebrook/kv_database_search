@@ -7,7 +7,21 @@
     "src/lib/database.ts",
     "src/lib/embeddings.ts",
     "src/lib/multi-modal.ts",
-    "src/lib/processors/base-processor.ts"
+    "src/lib/multi-modal-ingest.ts",
+    "src/lib/processors/base-processor.ts",
+    "src/lib/processors/image-classification-processor.ts",
+    "src/lib/processors/ocr-processor.ts",
+    "src/lib/processors/office-processor.ts",
+    "src/lib/processors/pdf-processor.ts",
+    "src/lib/processors/speech-processor.ts",
+    "src/lib/processors/video-processor.ts",
+    "src/lib/obsidian-search.ts",
+    "src/lib/obsidian-ingest.ts",
+    "src/lib/obsidian-models.ts",
+    "src/scripts/ingest-unified.ts",
+    "src/scripts/ingest-multi-modal.ts",
+    "src/scripts/ingest-obsidian.ts",
+    "src/scripts/search.ts"
   ],
   "thresholds": {
     "high": 80,
@@ -15,15 +29,18 @@
     "break": null
   },
   "maxConcurrentTestRunners": 1,
-  "timeoutMS": 15000,
-  "timeoutFactor": 1.5,
+  "timeoutMS": 30000,
+  "timeoutFactor": 2.0,
   "tempDirName": "stryker-tmp",
   "vitest": {
     "configFile": "config/vitest.config.ts",
     "configOverrides": {
       "test": {
-        "include": ["tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-        "exclude": ["tests/integration/**/*", "tests/contract/**/*", "tests/e2e/**/*", "tests/axe/**/*"]
+        "include": [
+          "tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+          "tests/contract/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"
+        ],
+        "exclude": ["tests/integration/**/*", "tests/e2e/**/*", "tests/axe/**/*"]
       }
     }
   }

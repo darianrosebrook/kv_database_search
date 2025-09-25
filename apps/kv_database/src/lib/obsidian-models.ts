@@ -110,6 +110,11 @@ export interface ObsidianSearchOptions {
   tags?: string[];
   fileTypes?: string[];
   contentTypes?: string[];
+  folders?: string[];
+  dateRange?: {
+    start?: Date;
+    end?: Date;
+  };
 }
 
 export interface ObsidianSearchResult {
@@ -143,6 +148,18 @@ export interface ObsidianSearchResult {
     id: string;
     content: string;
     score: number;
+  }>;
+  entities?: Array<{
+    text: string;
+    type: "person" | "organization" | "location" | "concept" | "term" | "other";
+    confidence: number;
+    position: { start: number; end: number };
+  }>;
+  relationships?: Array<{
+    subject: string;
+    predicate: string;
+    object: string;
+    confidence: number;
   }>;
 }
 

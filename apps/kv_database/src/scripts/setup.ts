@@ -9,7 +9,7 @@
  * @author @darianrosebrook
  */
 
-import dotenv from "dotenv";
+import { config as dotenvConfig } from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
 import * as readline from "readline";
@@ -17,7 +17,7 @@ import { ObsidianDatabase } from "../lib/database";
 import { ObsidianEmbeddingService } from "../lib/embeddings";
 
 // Load environment variables
-dotenv.config();
+dotenvConfig();
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -158,7 +158,13 @@ async function testDatabase() {
 
     logSuccess("Database connection successful!");
     console.log(`   📊 Total chunks: ${stats.totalChunks || 0}`);
-    console.log(`   📅 Last update: ${stats.lastUpdate || "Never"}`);
+    console.log(
+      `   📅 Last update: ${
+        (stats as any).lastUpdate
+          ? new Date((stats as any).lastUpdate).toLocaleString()
+          : "Never"
+      }`
+    );
 
     await db.close();
   } catch (error: any) {

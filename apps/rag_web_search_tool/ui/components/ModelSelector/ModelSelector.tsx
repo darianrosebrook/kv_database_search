@@ -8,7 +8,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../Select";
+} from "../../../src/components/ui/select";
 import { apiService } from "../../../src/lib/api";
 import styles from "./ModelSelector.module.scss";
 

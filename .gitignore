@@ -75,3 +75,11 @@ temp/
 
 # Generated types (if any)
 *.d.ts.map
+
+# Agent generated files
+apps/.agent/
+
+# Generated accessibility reports
+apps/rag_web_search_tool/accessibility-report.txt
+
+.env*

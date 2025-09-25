@@ -434,7 +434,9 @@ export interface HealthAPIResponse {
 /**
  * Supported Obsidian content types
  */
-export type ObsidianContentType = (typeof OBSIDIAN_CONTENT_TYPES)[number];
+import { ObsidianContentType } from "./obsidian-constants";
+
+export { ObsidianContentType };
 
 /**
  * Obsidian frontmatter field definitions

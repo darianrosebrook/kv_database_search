@@ -1,6 +1,12 @@
 import { ObsidianDatabase } from "./database";
 import { ObsidianEmbeddingService } from "./embeddings";
-import { detectLanguage } from "./utils";
+import {
+  detectLanguage,
+  EnhancedEntityExtractor,
+  ExtractedEntity,
+  EntityRelationship,
+  EntityCluster,
+} from "./utils";
 import {
   SearchResult,
   ObsidianSearchOptions,
@@ -12,6 +18,7 @@ import {
 export class ObsidianSearchService {
   private db: ObsidianDatabase;
   private embeddings: ObsidianEmbeddingService;
+  private entityExtractor: EnhancedEntityExtractor;
 
   constructor(
     database: ObsidianDatabase,
@@ -19,6 +26,7 @@ export class ObsidianSearchService {
   ) {
     this.db = database;
     this.embeddings = embeddingService;
+    this.entityExtractor = new EnhancedEntityExtractor();
   }
 
   async search(
@@ -155,13 +163,25 @@ export class ObsidianSearchService {
         }));
       }
 
-      // Generate graph context
+      // Generate graph context with enhanced entity extraction
       const graphContext = await this.generateChunkGraphContext(result, query);
+
+      // Extract entities from the result text
+      const entities = this.entityExtractor.extractEntities(result.text);
+      const relationships = this.entityExtractor.extractRelationships(
+        result.text,
+        entities
+      );
 
       // Generate multi-modal metadata for enhanced results
       const multiModalInfo = this.generateMultiModalInfo(multiModalMeta);
 
       enhanced.push({
+        documentId: result.id,
+        score: result.cosineSimilarity,
+        title: result.id,
+        path: result.meta?.uri || "",
+        matches: [],
         ...result,
         obsidianMeta: obsidianMeta
           ? {
@@ -173,6 +193,8 @@ export class ObsidianSearchService {
         multiModalMeta: multiModalInfo,
         highlights,
         relatedChunks,
+        entities: entities, // Add extracted entities
+        relationships: relationships, // Add entity relationships
       });
     }
 
@@ -515,34 +537,42 @@ export class ObsidianSearchService {
       centrality: number;
     }>;
   }> {
-    // Extract concepts from query and results
-    const queryConcepts = this.extractConcepts(query);
-    const allTags = results.flatMap((r) => r.obsidianMeta?.tags || []);
-    const relatedConcepts = Array.from(new Set(allTags))
-      .filter((tag) => !queryConcepts.includes(tag))
+    // Use enhanced entity extraction for query concepts
+    const queryEntities = this.entityExtractor.extractEntities(query);
+    const queryConcepts = queryEntities.map((e) => e.text);
+
+    // Extract entities from all result texts
+    const allResultText = results.map((r) => r.text).join(" ");
+    const resultEntities = this.entityExtractor.extractEntities(allResultText);
+    const resultTags = results.flatMap((r) => r.obsidianMeta?.tags || []);
+
+    // Combine entities and tags for related concepts
+    const allConcepts = new Set([
+      ...resultEntities.map((e) => e.text),
+      ...resultTags,
+    ]);
+    const relatedConcepts = Array.from(allConcepts)
+      .filter((concept) => !queryConcepts.includes(concept))
       .slice(0, 10);
 
-    // Group results by common tags to find knowledge clusters
-    const tagGroups = new Map<string, string[]>();
-    for (const result of results) {
-      if (result.obsidianMeta?.tags) {
-        for (const tag of result.obsidianMeta.tags) {
-          if (!tagGroups.has(tag)) {
-            tagGroups.set(tag, []);
-          }
-          tagGroups.get(tag)!.push(result.id);
-        }
-      }
-    }
+    // Enhanced clustering based on entity relationships
+    const allEntities = queryEntities.concat(resultEntities);
+    const relationships = this.entityExtractor.extractRelationships(
+      allResultText,
+      allEntities
+    );
+    const entityClusters = this.entityExtractor.clusterEntities(
+      allEntities,
+      relationships
+    );
 
-    const knowledgeClusters = Array.from(tagGroups.entries())
-      .filter(([_, files]) => files.length >= 2) // Only clusters with 2+ files
-      .map(([tag, files]) => ({
-        name: tag,
-        files: Array.from(new Set(files)), // Dedupe files
-        centrality: files.length / results.length, // Simple centrality measure
+    // Convert entity clusters to knowledge clusters format
+    const knowledgeClusters = entityClusters
+      .map((cluster) => ({
+        name: cluster.name,
+        files: Array.from(new Set(results.map((r) => r.documentId))), // All files in this cluster
+        centrality: cluster.centrality,
       }))
-      .sort((a, b) => b.centrality - a.centrality)
       .slice(0, 5);
 
     return {
@@ -550,26 +580,6 @@ export class ObsidianSearchService {
       relatedConcepts,
       knowledgeClusters,
     };
-  }
-
-  private extractConcepts(text: string): string[] {
-    // Simple concept extraction - could be enhanced with NLP
-    const words = text.toLowerCase().split(/\s+/);
-    const concepts = words.filter(
-      (word) =>
-        word.length > 3 &&
-        ![
-          "this",
-          "that",
-          "with",
-          "from",
-          "they",
-          "have",
-          "been",
-          "were",
-        ].includes(word)
-    );
-    return Array.from(new Set(concepts)).slice(0, 5);
   }
 
   // Specialized search methods for common Obsidian use cases
