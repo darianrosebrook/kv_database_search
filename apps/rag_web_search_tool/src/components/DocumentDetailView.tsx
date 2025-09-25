@@ -14,23 +14,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
 import { apiService } from "../lib/api";
-
-interface SearchResult {
-  id: string;
-  title: string;
-  summary: string;
-  highlights: string[];
-  confidenceScore: number;
-  source: {
-    type: "note" | "article" | "book" | "conversation" | "moc";
-    path: string;
-    url: string;
-  };
-  rationale: string;
-  tags: string[];
-  lastUpdated: string;
-  text?: string; // Full document text
-}
+import type { SearchResult } from "../types";
 
 interface DocumentDetailViewProps {
   result: SearchResult;

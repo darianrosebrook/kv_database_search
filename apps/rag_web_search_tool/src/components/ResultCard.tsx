@@ -24,30 +24,7 @@ import {
   ExplanationService,
   type ResultExplanation,
 } from "../lib/explanation-service";
-
-interface SearchResult {
-  id: string;
-  title: string;
-  summary: string;
-  highlights: string[];
-  confidenceScore: number;
-  source: {
-    type: "note" | "article" | "book" | "conversation" | "moc";
-    path: string;
-    url: string;
-  };
-  rationale: string;
-  tags: string[];
-  lastUpdated: string;
-  // Additional data from the actual API
-  text?: string;
-  meta?: {
-    contentType: string;
-    section: string;
-    breadcrumbs: string[];
-    uri?: string;
-  };
-}
+import type { SearchResult } from "../types";
 
 interface ResultCardProps {
   result: SearchResult;

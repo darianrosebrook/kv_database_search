@@ -13,22 +13,7 @@ import {
 import { KnowledgeGraph } from "./KnowledgeGraph";
 import { ResultCard } from "./ResultCard";
 import { DocumentDetailView } from "./DocumentDetailView";
-
-interface SearchResult {
-  id: string;
-  title: string;
-  summary: string;
-  highlights: string[];
-  confidenceScore: number;
-  source: {
-    type: "documentation" | "component" | "guideline";
-    path: string;
-    url: string;
-  };
-  rationale: string;
-  tags: string[];
-  lastUpdated: string;
-}
+import type { SearchResult } from "../types";
 
 interface ResultsPanelProps {
   results: SearchResult[];
