@@ -1,0 +1,481 @@
+# Knowledge Graph GraphQL Schema
+# Provides rich querying capabilities for entities, relationships, and graph traversal
+
+scalar DateTime
+scalar JSON
+
+# Root Query type
+type Query {
+  # Entity queries
+  entity(id: ID!): Entity
+  entities(
+    filter: EntityFilter
+    pagination: PaginationInput
+  ): EntityConnection!
+  
+  # Relationship queries
+  relationship(id: ID!): Relationship
+  relationships(
+    filter: RelationshipFilter
+    pagination: PaginationInput
+  ): RelationshipConnection!
+  
+  # Graph traversal queries
+  findPath(
+    sourceId: ID!
+    targetId: ID!
+    maxHops: Int = 3
+    relationshipTypes: [RelationshipType!]
+  ): [TraversalPath!]!
+  
+  findNeighbors(
+    entityId: ID!
+    hops: Int = 1
+    relationshipTypes: [RelationshipType!]
+    entityTypes: [EntityType!]
+  ): [Entity!]!
+  
+  # Graph analytics
+  graphStats: GraphStatistics!
+  entityClusters(algorithm: ClusteringAlgorithm = COMMUNITY_DETECTION): [EntityCluster!]!
+  
+  # Search integration
+  searchEntities(
+    query: String!
+    limit: Int = 20
+    fuzzy: Boolean = true
+  ): [EntitySearchResult!]!
+}
+
+# Root Mutation type
+type Mutation {
+  # Entity mutations
+  createEntity(input: CreateEntityInput!): Entity!
+  updateEntity(id: ID!, input: UpdateEntityInput!): Entity!
+  deleteEntity(id: ID!): Boolean!
+  mergeEntities(sourceId: ID!, targetId: ID!): Entity!
+  
+  # Relationship mutations
+  createRelationship(input: CreateRelationshipInput!): Relationship!
+  updateRelationship(id: ID!, input: UpdateRelationshipInput!): Relationship!
+  deleteRelationship(id: ID!): Boolean!
+  
+  # Bulk operations
+  bulkCreateEntities(input: [CreateEntityInput!]!): [Entity!]!
+  bulkCreateRelationships(input: [CreateRelationshipInput!]!): [Relationship!]!
+}
+
+# Root Subscription type for real-time updates
+type Subscription {
+  entityCreated: Entity!
+  entityUpdated: Entity!
+  entityDeleted: EntityDeletedEvent!
+  
+  relationshipCreated: Relationship!
+  relationshipUpdated: Relationship!
+  relationshipDeleted: RelationshipDeletedEvent!
+  
+  graphStatsUpdated: GraphStatistics!
+}
+
+# Core Entity type
+type Entity {
+  id: ID!
+  name: String!
+  type: EntityType!
+  aliases: [String!]!
+  confidence: Float!
+  
+  # Vector embedding for similarity search
+  embedding: [Float!]
+  
+  # Metadata
+  metadata: EntityMetadata!
+  
+  # Relationships (with pagination and filtering)
+  relationships(
+    types: [RelationshipType!]
+    direction: RelationshipDirection = BOTH
+    pagination: PaginationInput
+  ): RelationshipConnection!
+  
+  # Connected entities
+  connectedEntities(
+    hops: Int = 1
+    types: [EntityType!]
+    relationshipTypes: [RelationshipType!]
+  ): [Entity!]!
+  
+  # Similarity search
+  similarEntities(limit: Int = 10, threshold: Float = 0.7): [EntitySimilarity!]!
+  
+  # Content chunks where this entity appears
+  sourceChunks: [ContentChunk!]!
+}
+
+# Entity metadata
+type EntityMetadata {
+  sourceFiles: [String!]!
+  extractionMethods: [String!]!
+  firstSeen: DateTime!
+  lastUpdated: DateTime!
+  occurrenceCount: Int!
+  averageConfidence: Float!
+  
+  # Custom metadata as JSON
+  custom: JSON
+}
+
+# Relationship between entities
+type Relationship {
+  id: ID!
+  sourceEntity: Entity!
+  targetEntity: Entity!
+  type: RelationshipType!
+  confidence: Float!
+  strength: Float!
+  
+  # Evidence supporting this relationship
+  evidence: RelationshipEvidence!
+  
+  # Metadata
+  metadata: RelationshipMetadata!
+  
+  # Bidirectional access
+  isDirectional: Boolean!
+  
+  # Temporal information
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+# Evidence supporting a relationship
+type RelationshipEvidence {
+  sourceChunks: [ContentChunk!]!
+  cooccurrenceCount: Int!
+  extractionContext: String
+  confidenceScores: [Float!]!
+  
+  # Statistical measures
+  mutualInformation: Float
+  pointwiseMutualInformation: Float
+}
+
+# Relationship metadata
+type RelationshipMetadata {
+  extractionMethod: String!
+  validatedBy: String
+  validatedAt: DateTime
+  
+  # Custom metadata as JSON
+  custom: JSON
+}
+
+# Content chunk reference
+type ContentChunk {
+  id: ID!
+  text: String!
+  sourceFile: String!
+  contentType: ContentType!
+  chunkIndex: Int!
+  
+  # Entities mentioned in this chunk
+  entities: [Entity!]!
+  
+  # Relationships inferred from this chunk
+  relationships: [Relationship!]!
+  
+  # Vector embedding
+  embedding: [Float!]
+  
+  # Processing metadata
+  processingMetadata: JSON
+}
+
+# Traversal path between entities
+type TraversalPath {
+  entities: [Entity!]!
+  relationships: [Relationship!]!
+  confidence: Float!
+  hopCount: Int!
+  totalStrength: Float!
+  
+  # Path explanation
+  explanation: String
+}
+
+# Entity similarity result
+type EntitySimilarity {
+  entity: Entity!
+  similarity: Float!
+  method: SimilarityMethod!
+}
+
+# Entity search result with highlighting
+type EntitySearchResult {
+  entity: Entity!
+  score: Float!
+  highlights: [String!]!
+  matchedAliases: [String!]!
+}
+
+# Entity cluster for graph analytics
+type EntityCluster {
+  id: ID!
+  entities: [Entity!]!
+  centroid: Entity
+  coherenceScore: Float!
+  size: Int!
+  
+  # Cluster characteristics
+  dominantTypes: [EntityType!]!
+  averageConnectivity: Float!
+  
+  # Cluster summary
+  summary: String
+}
+
+# Graph statistics
+type GraphStatistics {
+  entityCount: Int!
+  relationshipCount: Int!
+  
+  # Type distributions
+  entityTypeDistribution: [TypeCount!]!
+  relationshipTypeDistribution: [TypeCount!]!
+  
+  # Connectivity metrics
+  averageConnectivity: Float!
+  maxConnectivity: Int!
+  connectedComponents: Int!
+  
+  # Graph density and clustering
+  density: Float!
+  clusteringCoefficient: Float!
+  
+  # Growth metrics
+  entitiesAddedToday: Int!
+  relationshipsAddedToday: Int!
+  
+  # Quality metrics
+  averageEntityConfidence: Float!
+  averageRelationshipConfidence: Float!
+  
+  # Last update
+  lastUpdated: DateTime!
+}
+
+# Type count for distributions
+type TypeCount {
+  type: String!
+  count: Int!
+  percentage: Float!
+}
+
+# Connection types for pagination
+type EntityConnection {
+  edges: [EntityEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type EntityEdge {
+  node: Entity!
+  cursor: String!
+}
+
+type RelationshipConnection {
+  edges: [RelationshipEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type RelationshipEdge {
+  node: Relationship!
+  cursor: String!
+}
+
+# Pagination info
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+# Event types for subscriptions
+type EntityDeletedEvent {
+  id: ID!
+  name: String!
+  deletedAt: DateTime!
+}
+
+type RelationshipDeletedEvent {
+  id: ID!
+  sourceEntityId: ID!
+  targetEntityId: ID!
+  deletedAt: DateTime!
+}
+
+# Input types for mutations
+input CreateEntityInput {
+  name: String!
+  type: EntityType!
+  aliases: [String!] = []
+  confidence: Float!
+  embedding: [Float!]
+  metadata: EntityMetadataInput
+}
+
+input UpdateEntityInput {
+  name: String
+  type: EntityType
+  aliases: [String!]
+  confidence: Float
+  embedding: [Float!]
+  metadata: EntityMetadataInput
+}
+
+input EntityMetadataInput {
+  sourceFiles: [String!]
+  extractionMethods: [String!]
+  custom: JSON
+}
+
+input CreateRelationshipInput {
+  sourceEntityId: ID!
+  targetEntityId: ID!
+  type: RelationshipType!
+  confidence: Float!
+  strength: Float = 1.0
+  evidence: RelationshipEvidenceInput!
+  isDirectional: Boolean = false
+}
+
+input UpdateRelationshipInput {
+  type: RelationshipType
+  confidence: Float
+  strength: Float
+  evidence: RelationshipEvidenceInput
+  isDirectional: Boolean
+}
+
+input RelationshipEvidenceInput {
+  sourceChunkIds: [ID!]!
+  extractionContext: String
+  cooccurrenceCount: Int = 1
+}
+
+# Filter inputs
+input EntityFilter {
+  types: [EntityType!]
+  nameContains: String
+  minConfidence: Float
+  sourceFiles: [String!]
+  extractionMethods: [String!]
+  createdAfter: DateTime
+  createdBefore: DateTime
+}
+
+input RelationshipFilter {
+  types: [RelationshipType!]
+  sourceEntityIds: [ID!]
+  targetEntityIds: [ID!]
+  minConfidence: Float
+  minStrength: Float
+  isDirectional: Boolean
+  createdAfter: DateTime
+  createdBefore: DateTime
+}
+
+# Pagination input
+input PaginationInput {
+  first: Int
+  after: String
+  last: Int
+  before: String
+}
+
+# Enums
+enum EntityType {
+  PERSON
+  ORGANIZATION
+  LOCATION
+  CONCEPT
+  TECHNOLOGY
+  PRODUCT
+  EVENT
+  DATE
+  MONEY
+  OTHER
+}
+
+enum RelationshipType {
+  WORKS_FOR
+  PART_OF
+  RELATED_TO
+  MENTIONS
+  LOCATED_IN
+  CREATED_BY
+  USED_BY
+  SIMILAR_TO
+  DEPENDS_ON
+  COLLABORATES_WITH
+  COMPETES_WITH
+  INFLUENCES
+  OTHER
+}
+
+enum ContentType {
+  PDF
+  VIDEO
+  AUDIO
+  IMAGE
+  MARKDOWN
+  HTML
+  CSV
+  OFFICE_DOCUMENT
+  OFFICE_SPREADSHEET
+  OFFICE_PRESENTATION
+}
+
+enum RelationshipDirection {
+  INCOMING
+  OUTGOING
+  BOTH
+}
+
+enum SimilarityMethod {
+  COSINE
+  EUCLIDEAN
+  DOT_PRODUCT
+  SEMANTIC
+}
+
+enum ClusteringAlgorithm {
+  COMMUNITY_DETECTION
+  K_MEANS
+  HIERARCHICAL
+  LOUVAIN
+}
+
+# Directives for caching and authorization
+directive @cacheControl(
+  maxAge: Int
+  scope: CacheControlScope
+) on FIELD_DEFINITION | OBJECT | INTERFACE
+
+directive @auth(
+  requires: UserRole = USER
+) on FIELD_DEFINITION | OBJECT
+
+enum CacheControlScope {
+  PUBLIC
+  PRIVATE
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  READONLY
+}
