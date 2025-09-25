@@ -78,7 +78,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload SAST results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: sast-results
@@ -100,7 +100,7 @@ jobs:
         run: npm run test:coverage
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           file: ./coverage/lcov.info
           flags: unittests
@@ -110,7 +110,7 @@ jobs:
         run: npm run gates:coverage -- ${{ needs.setup.outputs.risk }}
 
       - name: Archive test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: unit-test-results
           path: coverage/
@@ -135,7 +135,7 @@ jobs:
         run: npm run gates:mutation -- ${{ needs.setup.outputs.risk }}
 
       - name: Archive mutation reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mutation-test-results
           path: reports/mutation/
@@ -218,7 +218,7 @@ jobs:
         run: npm run caws:accessibility
 
       - name: Upload E2E screenshots on failure
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: e2e-screenshots
@@ -241,7 +241,7 @@ jobs:
         run: npx tsx apps/tools/caws/perf-budgets.ts --real-data
 
       - name: Archive performance results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-results
           path: perf-results/
@@ -260,7 +260,7 @@ jobs:
         run: npm ci
 
       - name: Download test artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: unit-test-results
           path: test-results/
@@ -272,7 +272,7 @@ jobs:
         run: npx tsx apps/tools/caws/flake-detector.ts status
 
       - name: Archive flake detection results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: flake-detection-results
           path: .caws/
@@ -297,7 +297,7 @@ jobs:
         run: npx tsx apps/tools/caws/feature-flags.ts stats
 
       - name: Archive feature flag state
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: feature-flags-state
           path: .caws/feature-flags.json
@@ -315,7 +315,7 @@ jobs:
         run: npm ci
 
       - name: Download test artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: unit-test-results
           path: coverage/
@@ -330,7 +330,7 @@ jobs:
         run: npm run gates:trust -- ${{ needs.setup.outputs.risk }}
 
       - name: Archive provenance
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: provenance-manifest
           path: .agent/provenance.json
