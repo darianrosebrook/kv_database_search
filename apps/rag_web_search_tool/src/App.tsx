@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { SearchInput } from "../ui/components/SearchInput";
 import { ChatInterface } from "../ui/components/ChatInterface";
 import { ResultsPanel } from "./components/ResultsPanel";
+import { GraphRagResultsPanel } from "./components/GraphRagResultsPanel";
+import { GraphRagChatInterface } from "./components/GraphRagChatInterface";
 import ModelSelector from "../ui/components/ModelSelector";
 import ChatHistory from "../ui/components/ChatHistory";
 import {
@@ -10,7 +12,15 @@ import {
   SearchResult as ApiSearchResult,
   SearchResponse,
 } from "./lib/api";
+import { 
+  graphRagApiService,
+  type GraphRagSearchResult,
+  type GraphRagEntity,
+  type GraphRagRelationship,
+  type ReasoningResult 
+} from "./lib/graph-rag-api";
 import { EnhancedChatService } from "./lib/enhanced-chat";
+import { GraphRagChatService } from "./lib/graph-rag-chat";
 import { TestIntegration } from "./test-integration";
 
 // UI SearchResult interface for the components
@@ -63,10 +73,15 @@ export default function App() {
   >([]);
   const [suggestedActions, setSuggestedActions] = useState<
     Array<{
-      type: "refine_search" | "new_search" | "filter" | "explore";
+      type: "refine_search" | "new_search" | "filter" | "explore" | "reason" | "find_similar";
       label: string;
       query?: string;
+      entityIds?: string[];
       filters?: any;
+      reasoning?: {
+        question: string;
+        type: "exploratory" | "targeted" | "comparative" | "causal";
+      };
     }>
   >([]);
   const [searchStartTime, setSearchStartTime] = useState<number>(0);
@@ -75,6 +90,20 @@ export default function App() {
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(
     null
   );
+
+  // Graph RAG specific state
+  const [useGraphRag, setUseGraphRag] = useState(true);
+  const [graphRagResults, setGraphRagResults] = useState<GraphRagSearchResult[]>([]);
+  const [selectedGraphRagResult, setSelectedGraphRagResult] = useState<GraphRagSearchResult | null>(null);
+  const [reasoningResults, setReasoningResults] = useState<ReasoningResult | undefined>();
+  const [allEntities, setAllEntities] = useState<GraphRagEntity[]>([]);
+  const [graphRagMessages, setGraphRagMessages] = useState<Array<Message & {
+    entities?: GraphRagEntity[];
+    reasoning?: ReasoningResult;
+    searchCount?: number;
+    confidence?: number;
+    provenance?: any;
+  }>>([]);
 
   // Calculate composite confidence score from multiple factors
   const calculateCompositeScore = (result: any): number => {
@@ -201,59 +230,88 @@ export default function App() {
     setSearchStartTime(Date.now());
 
     try {
-      // Call the real RAG API
-      const searchResponse = await apiService.search(query, {
-        limit: 10,
-        rerank: true,
-        minSimilarity: 0.1,
-      });
+      if (useGraphRag) {
+        // Use Graph RAG search
+        console.log("🔍 Using Graph RAG search...");
+        const graphRagResponse = await graphRagApiService.search(query, {
+          maxResults: 10,
+          includeExplanation: true,
+          strategy: "hybrid",
+          enableRanking: true,
+          enableProvenance: false,
+        });
 
-      const searchTime = Date.now() - searchStartTime;
+        setGraphRagResults(graphRagResponse.results);
+        setReasoningResults(undefined); // Clear previous reasoning
 
-      // Transform the API response to match our UI expectations
-      const transformedResults = searchResponse.results.map(
-        (result, index) => ({
+        // Extract all entities
+        const entities = graphRagResponse.results.flatMap(r => r.entities);
+        setAllEntities(entities);
+
+        // Transform for legacy components if needed
+        const transformedResults = graphRagResponse.results.map((result) => ({
+          id: result.id,
+          title: result.metadata.section || "Document",
+          summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
+          highlights: [
+            result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
+            `Source: ${result.metadata.sourceFile}`,
+            `Type: ${result.metadata.contentType}`,
+          ],
+          confidenceScore: result.score,
+          source: {
+            type: result.metadata.contentType === "code" ? "component" : "documentation",
+            path: result.metadata.sourceFile,
+            url: result.metadata.url || `#${result.id}`,
+          },
+          rationale: result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
+          tags: [result.metadata.contentType, ...(result.entities.slice(0, 2).map(e => e.type))],
+          lastUpdated: result.metadata.updatedAt || new Date().toISOString().split("T")[0],
+        }));
+
+        setResults(transformedResults);
+
+        // Clear messages for fresh search
+        setMessages([]);
+        setGraphRagMessages([]);
+      } else {
+        // Use traditional RAG search
+        console.log("🔍 Using traditional RAG search...");
+        const searchResponse = await apiService.search(query, {
+          limit: 10,
+          rerank: true,
+          minSimilarity: 0.1,
+        });
+
+        // Transform the API response to match our UI expectations
+        const transformedResults = searchResponse.results.map((result) => ({
           id: result.id,
           title: result.meta.section || "Documentation",
-          summary:
-            result.text.substring(0, 200) +
-            (result.text.length > 200 ? "..." : ""),
+          summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
           highlights: [
-            result.text.substring(0, 100) +
-              (result.text.length > 100 ? "..." : ""),
+            result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
             `Section: ${result.meta.section}`,
             `Type: ${result.meta.contentType}`,
           ],
           confidenceScore: calculateCompositeScore(result),
           source: {
-            type:
-              result.meta.contentType === "code"
-                ? "component"
-                : result.meta.contentType === "heading"
-                ? "guideline"
-                : "documentation",
-            path:
-              result.meta.breadcrumbs?.join(" > ") ||
-              result.meta.section ||
-              "Unknown",
+            type: result.meta.contentType === "code" ? "component" : result.meta.contentType === "heading" ? "guideline" : "documentation",
+            path: result.meta.breadcrumbs?.join(" > ") || result.meta.section || "Unknown",
             url: result.source?.url || result.meta.uri || `#${result.id}`,
           },
           rationale: generateDetailedRationale(result),
-          tags: [
-            result.meta.contentType,
-            ...result.meta.breadcrumbs.slice(0, 2),
-          ],
-          lastUpdated:
-            result.meta.updatedAt ||
-            result.meta.createdAt ||
-            new Date().toISOString().split("T")[0],
-        })
-      );
+          tags: [result.meta.contentType, ...result.meta.breadcrumbs.slice(0, 2)],
+          lastUpdated: result.meta.updatedAt || result.meta.createdAt || new Date().toISOString().split("T")[0],
+        }));
 
-      setResults(transformedResults);
+        setResults(transformedResults);
+        setGraphRagResults([]);
+        setAllEntities([]);
 
-      // Clear messages for fresh search - let user ask questions about results
-      setMessages([]);
+        // Clear messages for fresh search
+        setMessages([]);
+        setGraphRagMessages([]);
+      }
     } catch (error) {
       console.error("Search failed:", error);
       // Add error message
@@ -265,7 +323,12 @@ export default function App() {
         }. Please try again.`,
         timestamp: new Date(),
       };
-      setMessages([errorMessage]);
+      
+      if (useGraphRag) {
+        setGraphRagMessages([errorMessage]);
+      } else {
+        setMessages([errorMessage]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -276,91 +339,157 @@ export default function App() {
     options?: {
       contextResults?: SearchResult[];
       pastedContent?: string;
-      queryType?: "component" | "pattern" | "token" | "general";
+      queryType?: "component" | "pattern" | "token" | "general" | "reasoning" | "exploration";
       autoSearch?: boolean;
+      enableReasoning?: boolean;
+      entityIds?: string[];
     }
   ) => {
-    const newMessage: Message = {
+    const newMessage: Message & {
+      entities?: GraphRagEntity[];
+      reasoning?: ReasoningResult;
+      searchCount?: number;
+      confidence?: number;
+      provenance?: any;
+    } = {
       id: Date.now().toString(),
       type: "user",
       content: message,
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    if (useGraphRag) {
+      setGraphRagMessages((prev) => [...prev, newMessage]);
+    } else {
+      setMessages((prev) => [...prev, newMessage]);
+    }
+    
     setIsLoading(true);
 
     try {
-      // Use enhanced chat service for better handling
-      const chatResponse = await EnhancedChatService.chat(message, {
-        pastedContent: options?.pastedContent,
-        queryType: options?.queryType,
-        autoSearch:
-          options?.autoSearch ||
-          (!options?.contextResults?.length && results.length === 0),
-        context: chatContext,
-        model: selectedModel,
-      });
+      if (useGraphRag) {
+        // Use Graph RAG chat service
+        console.log("🧠 Using Graph RAG chat...");
+        const chatResponse = await GraphRagChatService.chat(message, {
+          pastedContent: options?.pastedContent,
+          queryType: options?.queryType,
+          autoSearch: options?.autoSearch || (!contextResults.length && graphRagResults.length === 0),
+          context: chatContext,
+          model: selectedModel,
+          enableReasoning: options?.enableReasoning ?? true,
+          includeProvenance: false,
+        });
 
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "assistant",
-        content: chatResponse.response,
-        timestamp: new Date(),
-      };
+        const aiResponse: Message & {
+          entities?: GraphRagEntity[];
+          reasoning?: ReasoningResult;
+          searchCount?: number;
+          confidence?: number;
+          provenance?: any;
+        } = {
+          id: (Date.now() + 1).toString(),
+          type: "assistant",
+          content: chatResponse.response,
+          timestamp: new Date(),
+          entities: chatResponse.entities,
+          reasoning: chatResponse.reasoningResults,
+          searchCount: chatResponse.searchResults?.length,
+          confidence: chatResponse.explanation?.confidenceScore,
+          provenance: chatResponse.provenance,
+        };
 
-      setMessages((prev) => [...prev, aiResponse]);
-      setChatContext(chatResponse.context); // Update conversation context
-      setSuggestedActions(chatResponse.suggestedActions || []); // Update suggested actions
+        setGraphRagMessages((prev) => [...prev, aiResponse]);
+        setChatContext(chatResponse.context);
+        setSuggestedActions(chatResponse.suggestedActions || []);
 
-      // If auto-search found results, update the results state
-      if (chatResponse.searchResults && chatResponse.searchResults.length > 0) {
-        const transformedResults = chatResponse.searchResults.map(
-          (result, index) => ({
+        // Update search results if found
+        if (chatResponse.searchResults && chatResponse.searchResults.length > 0) {
+          setGraphRagResults(chatResponse.searchResults);
+          
+          // Extract entities
+          const entities = chatResponse.searchResults.flatMap(r => r.entities);
+          setAllEntities(entities);
+
+          // Transform for legacy components
+          const transformedResults = chatResponse.searchResults.map((result) => ({
+            id: result.id,
+            title: result.metadata.section || "Document",
+            summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
+            highlights: [
+              result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
+              `Source: ${result.metadata.sourceFile}`,
+              `Type: ${result.metadata.contentType}`,
+            ],
+            confidenceScore: result.score,
+            source: {
+              type: result.metadata.contentType === "code" ? "component" : "documentation",
+              path: result.metadata.sourceFile,
+              url: result.metadata.url || `#${result.id}`,
+            },
+            rationale: result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
+            tags: [result.metadata.contentType, ...(result.entities.slice(0, 2).map(e => e.type))],
+            lastUpdated: result.metadata.updatedAt || new Date().toISOString().split("T")[0],
+          }));
+
+          setResults(transformedResults);
+          setHasSearched(true);
+        }
+
+        // Update reasoning results
+        if (chatResponse.reasoningResults) {
+          setReasoningResults(chatResponse.reasoningResults);
+        }
+      } else {
+        // Use traditional chat service
+        console.log("💬 Using traditional chat...");
+        const chatResponse = await EnhancedChatService.chat(message, {
+          pastedContent: options?.pastedContent,
+          queryType: options?.queryType,
+          autoSearch: options?.autoSearch || (!options?.contextResults?.length && results.length === 0),
+          context: chatContext,
+          model: selectedModel,
+        });
+
+        const aiResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "assistant",
+          content: chatResponse.response,
+          timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, aiResponse]);
+        setChatContext(chatResponse.context);
+        setSuggestedActions(chatResponse.suggestedActions || []);
+
+        // Update search results if found
+        if (chatResponse.searchResults && chatResponse.searchResults.length > 0) {
+          const transformedResults = chatResponse.searchResults.map((result) => ({
             id: result.id,
             title: result.meta.section || "Documentation",
-            summary:
-              result.text.substring(0, 200) +
-              (result.text.length > 200 ? "..." : ""),
+            summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
             highlights: [
-              result.text.substring(0, 100) +
-                (result.text.length > 100 ? "..." : ""),
+              result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
               `Section: ${result.meta.section}`,
               `Type: ${result.meta.contentType}`,
             ],
             confidenceScore: calculateCompositeScore(result),
             source: {
-              type:
-                result.meta.contentType === "code"
-                  ? "component"
-                  : result.meta.contentType === "heading"
-                  ? "guideline"
-                  : "documentation",
-              path:
-                result.meta.breadcrumbs?.join(" > ") ||
-                result.meta.section ||
-                "Unknown",
+              type: result.meta.contentType === "code" ? "component" : result.meta.contentType === "heading" ? "guideline" : "documentation",
+              path: result.meta.breadcrumbs?.join(" > ") || result.meta.section || "Unknown",
               url: result.source?.url || result.meta.uri || `#${result.id}`,
             },
             rationale: generateDetailedRationale(result),
-            tags: [
-              result.meta.contentType,
-              ...result.meta.breadcrumbs.slice(0, 2),
-            ],
-            lastUpdated:
-              result.meta.updatedAt ||
-              result.meta.createdAt ||
-              new Date().toISOString().split("T")[0],
-          })
-        );
+            tags: [result.meta.contentType, ...result.meta.breadcrumbs.slice(0, 2)],
+            lastUpdated: result.meta.updatedAt || result.meta.createdAt || new Date().toISOString().split("T")[0],
+          }));
 
-        setResults(transformedResults);
-        setHasSearched(true);
+          setResults(transformedResults);
+          setHasSearched(true);
+        }
       }
     } catch (error) {
       console.error("Failed to generate chat response:", error);
 
-      // Add error message
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "error",
@@ -369,7 +498,12 @@ export default function App() {
         }. Please try again.`,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      
+      if (useGraphRag) {
+        setGraphRagMessages((prev) => [...prev, errorMessage]);
+      } else {
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -477,14 +611,113 @@ export default function App() {
   const handleNewChat = () => {
     // Clear current session and messages
     setMessages([]);
+    setGraphRagMessages([]);
     setCurrentSession(null);
     setHasSearched(false);
     setQuery("");
     setResults([]);
+    setGraphRagResults([]);
     setContextResults([]);
     setChatContext([]);
     setSuggestedActions([]);
     setShowChatHistory(false);
+    setReasoningResults(undefined);
+    setAllEntities([]);
+  };
+
+  // Graph RAG specific handlers
+  const handleExploreEntity = async (entity: GraphRagEntity) => {
+    console.log("🔍 Exploring entity:", entity.name);
+    setQuery(`Tell me more about ${entity.name}`);
+    setTimeout(() => {
+      handleSearch();
+    }, 100);
+  };
+
+  const handleExploreRelationship = async (relationship: GraphRagRelationship) => {
+    console.log("🔗 Exploring relationship:", relationship.type);
+    if (relationship.sourceNode && relationship.targetNode) {
+      setQuery(`How are ${relationship.sourceNode.name} and ${relationship.targetNode.name} related?`);
+      setTimeout(() => {
+        handleSearch();
+      }, 100);
+    }
+  };
+
+  const handleReasonAbout = async (entities: GraphRagEntity[]) => {
+    if (entities.length < 2) return;
+    
+    console.log("🧠 Reasoning about entities:", entities.map(e => e.name).join(", "));
+    
+    try {
+      setIsLoading(true);
+      const reasoningResult = await graphRagApiService.reason(
+        entities.map(e => e.id),
+        `What are the relationships and connections between ${entities.map(e => e.name).join(", ")}?`,
+        {
+          maxDepth: 3,
+          reasoningType: "exploratory",
+          enableExplanation: true,
+        }
+      );
+
+      setReasoningResults(reasoningResult);
+
+      // Add reasoning result as a message
+      const reasoningMessage: Message & {
+        entities?: GraphRagEntity[];
+        reasoning?: ReasoningResult;
+        searchCount?: number;
+        confidence?: number;
+        provenance?: any;
+      } = {
+        id: Date.now().toString(),
+        type: "assistant",
+        content: `I found ${reasoningResult.paths.length} reasoning paths connecting ${entities.map(e => e.name).join(" and ")}. ${reasoningResult.explanation}`,
+        timestamp: new Date(),
+        entities: entities,
+        reasoning: reasoningResult,
+        confidence: reasoningResult.confidence,
+      };
+
+      if (useGraphRag) {
+        setGraphRagMessages((prev) => [...prev, reasoningMessage]);
+      }
+    } catch (error) {
+      console.error("Reasoning failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelectGraphRagResult = (result: GraphRagSearchResult) => {
+    setSelectedGraphRagResult(result);
+
+    // Transform to legacy format for context
+    const legacyResult: SearchResult = {
+      id: result.id,
+      title: result.metadata.section || "Document",
+      summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
+      highlights: [
+        result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
+        `Source: ${result.metadata.sourceFile}`,
+        `Type: ${result.metadata.contentType}`,
+      ],
+      confidenceScore: result.score,
+      source: {
+        type: result.metadata.contentType === "code" ? "component" : "documentation",
+        path: result.metadata.sourceFile,
+        url: result.metadata.url || `#${result.id}`,
+      },
+      rationale: result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
+      tags: [result.metadata.contentType, ...(result.entities.slice(0, 2).map(e => e.type))],
+      lastUpdated: result.metadata.updatedAt || new Date().toISOString().split("T")[0],
+    };
+
+    // Add to context if not already present
+    if (!contextResults.find((r) => r.id === legacyResult.id)) {
+      setContextResults((prev) => [...prev, legacyResult]);
+    }
   };
 
   // Show test mode if enabled
@@ -519,12 +752,29 @@ export default function App() {
         </button>
       </div>
 
-      {/* Model selector */}
-      <div className="absolute top-4 left-4 z-20">
+      {/* Model selector and Graph RAG toggle */}
+      <div className="absolute top-4 left-4 z-20 flex items-center gap-3">
         <ModelSelector
           selectedModel={selectedModel}
           onModelChange={setSelectedModel}
         />
+        <div className="flex items-center gap-2 bg-background/95 backdrop-blur-sm border border-border rounded-lg px-3 py-2">
+          <label htmlFor="graphRagToggle" className="text-sm font-medium text-foreground">
+            Graph RAG
+          </label>
+          <input
+            id="graphRagToggle"
+            type="checkbox"
+            checked={useGraphRag}
+            onChange={(e) => setUseGraphRag(e.target.checked)}
+            className="rounded"
+          />
+          {useGraphRag && (
+            <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+              🧠 Enhanced
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Chat history sidebar */}
@@ -556,9 +806,19 @@ export default function App() {
                   Obsidian RAG - Knowledge Base Search & Discovery
                 </h1>
                 <p className="text-muted-foreground max-w-2xl mx-auto">
-                  AI-powered semantic search through your Obsidian vault with
-                  vector embeddings, knowledge graph relationships, and
-                  intelligent reasoning across your personal knowledge base.
+                  {useGraphRag ? (
+                    <>
+                      🧠 <strong>Graph RAG Enhanced:</strong> AI-powered semantic search with 
+                      knowledge graph reasoning, entity extraction, relationship mapping, 
+                      and multi-hop intelligent reasoning across your knowledge base.
+                    </>
+                  ) : (
+                    <>
+                      AI-powered semantic search through your Obsidian vault with
+                      vector embeddings, knowledge graph relationships, and
+                      intelligent reasoning across your personal knowledge base.
+                    </>
+                  )}
                 </p>
               </motion.div>
 
@@ -621,33 +881,88 @@ export default function App() {
 
             <div className="flex-1 flex gap-6 p-6 min-h-0 overflow-hidden">
               <div className="w-1/2 min-w-0 flex flex-col">
-                <ChatInterface
-                  initialQuery={query}
-                  messages={messages}
-                  onSendMessage={handleSendMessage}
-                  isLoading={isLoading}
-                  resultsCount={results.length}
-                  contextResults={contextResults}
-                  onRemoveContext={handleRemoveContext}
-                  suggestedActions={suggestedActions}
-                  onSuggestedAction={handleSuggestedAction}
-                  selectedModel={selectedModel}
-                  currentSession={currentSession}
-                />
+                {useGraphRag ? (
+                  <GraphRagChatInterface
+                    initialQuery={query}
+                    messages={graphRagMessages}
+                    onSendMessage={handleSendMessage}
+                    isLoading={isLoading}
+                    resultsCount={useGraphRag ? graphRagResults.length : results.length}
+                    contextResults={contextResults}
+                    onRemoveContext={handleRemoveContext}
+                    suggestedActions={suggestedActions}
+                    onSuggestedAction={handleSuggestedAction}
+                    selectedModel={selectedModel}
+                    currentSession={currentSession}
+                    onExploreEntity={handleExploreEntity}
+                    onExploreRelationship={handleExploreRelationship}
+                    onReasonAbout={handleReasonAbout}
+                  />
+                ) : (
+                  <ChatInterface
+                    initialQuery={query}
+                    messages={messages}
+                    onSendMessage={handleSendMessage}
+                    isLoading={isLoading}
+                    resultsCount={results.length}
+                    contextResults={contextResults}
+                    onRemoveContext={handleRemoveContext}
+                    suggestedActions={suggestedActions}
+                    onSuggestedAction={handleSuggestedAction}
+                    selectedModel={selectedModel}
+                    currentSession={currentSession}
+                  />
+                )}
               </div>
 
               <div className="w-1/2 min-w-0 flex flex-col">
-                <ResultsPanel
-                  results={results}
-                  isLoading={isLoading}
-                  selectedResult={selectedResult}
-                  onSelectResult={handleSelectResult}
-                  onViewDocument={handleViewDocument}
-                  onAddToContext={handleSelectResult}
-                  onAskFollowUp={handleAskFollowUp}
-                  onRefineSearch={handleRefineSearch}
-                  query={query}
-                />
+                {useGraphRag ? (
+                  <GraphRagResultsPanel
+                    results={graphRagResults}
+                    reasoningResults={reasoningResults}
+                    isLoading={isLoading}
+                    selectedResult={selectedGraphRagResult}
+                    onSelectResult={handleSelectGraphRagResult}
+                    onViewDocument={handleViewDocument}
+                    onAddToContext={handleSelectGraphRagResult}
+                    onAskFollowUp={(question, context) => {
+                      // Transform GraphRagSearchResult to SearchResult for compatibility
+                      const legacyResult: SearchResult = {
+                        id: context.id,
+                        title: context.metadata.section || "Document",
+                        summary: context.text.substring(0, 200),
+                        highlights: [],
+                        confidenceScore: context.score,
+                        source: {
+                          type: "documentation",
+                          path: context.metadata.sourceFile,
+                          url: context.metadata.url || `#${context.id}`,
+                        },
+                        rationale: context.explanation || "",
+                        tags: [],
+                        lastUpdated: context.metadata.updatedAt || new Date().toISOString(),
+                      };
+                      handleAskFollowUp(question, legacyResult);
+                    }}
+                    onRefineSearch={handleRefineSearch}
+                    onExploreEntity={handleExploreEntity}
+                    onExploreRelationship={handleExploreRelationship}
+                    onReasonAbout={handleReasonAbout}
+                    query={query}
+                  />
+                ) : (
+                  <ResultsPanel
+                    results={results}
+                    isLoading={isLoading}
+                    selectedResult={selectedResult}
+                    onSelectResult={handleSelectResult}
+                    onViewDocument={handleViewDocument}
+                    onAddToContext={handleSelectResult}
+                    onAskFollowUp={handleAskFollowUp}
+                    onRefineSearch={handleRefineSearch}
+                    query={query}
+                  />
+                )}
               </div>
             </div>
           </motion.div>

@@ -12,6 +12,8 @@
     "server:3001": "PORT=3001 tsx apps/kv_database/src/server.ts",
     "server:3002": "PORT=3002 tsx apps/kv_database/src/server.ts",
     "server:3003": "PORT=3003 tsx apps/kv_database/src/server.ts",
+    "graph-rag-server": "tsx apps/kv_database/src/graph-rag-server.ts",
+    "graph-rag-server:3002": "GRAPH_RAG_PORT=3002 tsx apps/kv_database/src/graph-rag-server.ts",
     "setup": "tsx apps/kv_database/src/scripts/setup.ts",
     "ingest": "tsx apps/kv_database/src/scripts/ingest-unified.ts",
     "ingest-unified": "tsx apps/kv_database/src/scripts/ingest-unified.ts",
