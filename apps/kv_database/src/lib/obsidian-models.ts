@@ -250,16 +250,6 @@ export interface HealthAPIResponse {
 // ADDITIONAL TYPE DEFINITIONS
 // =============================================================================
 
-export type ObsidianContentType =
-  | "markdown"
-  | "text"
-  | "image"
-  | "pdf"
-  | "office"
-  | "audio"
-  | "video"
-  | "unknown";
-
 export interface ObsidianFrontmatterSchema {
   title?: string;
   tags?: string[];
@@ -286,3 +276,17 @@ export interface ValidationWarning {
 
 // Export utility class
 export { ObsidianUtils } from "./types/obsidian-utils";
+
+// Content types constant
+export const OBSIDIAN_CONTENT_TYPES = Object.freeze([
+  "note",
+  "moc",
+  "article",
+  "conversation",
+  "template",
+  "book-note",
+  "canvas",
+  "dataview",
+]) as readonly string[];
+
+export type ObsidianContentType = (typeof OBSIDIAN_CONTENT_TYPES)[number];

@@ -105,8 +105,10 @@ async function debugGraphRAG() {
 
     // Get entity nodes only
     const entityNodes = Array.from(
-      (knowledgeGraph as any).nodes.values()
-    ).filter((node: any) => node.type === "entity");
+      (knowledgeGraph as KnowledgeGraphService).nodes.values()
+    ).filter(
+      (node: KnowledgeGraphService["nodes"][number]) => node.type === "entity"
+    );
 
     console.log(`   Found ${entityNodes.length} entity nodes`);
 
@@ -117,7 +119,12 @@ async function debugGraphRAG() {
       console.log(
         `   Finding paths between entity "${node1.label}" and "${node2.label}"...`
       );
-      const paths = knowledgeGraph.findPaths(node1.id, node2.id, 3, 0.1);
+      const paths = (knowledgeGraph as KnowledgeGraphService).findPaths(
+        node1.id,
+        node2.id,
+        3,
+        0.1
+      );
 
       console.log(`   Found ${paths.length} paths:`);
       paths.slice(0, 3).forEach((path, i) => {
@@ -127,23 +134,24 @@ async function debugGraphRAG() {
           } nodes, score: ${path.score.toFixed(3)}`
         );
         console.log(
-          `     Nodes: ${path.nodes.map((n: any) => n.label).join(" -> ")}`
+          `     Nodes: ${path.nodes
+            .map((n: KnowledgeGraphService["nodes"][number]) => n.label)
+            .join(" -> ")}`
         );
       });
 
       // Also try a more connected search
       console.log("\n   Testing broader connectivity...");
-      const connectedNodes = knowledgeGraph.findPaths(
-        node1.id,
-        node2.id,
-        5,
-        0.0
-      );
+      const connectedNodes = (
+        knowledgeGraph as KnowledgeGraphService
+      ).findPaths(node1.id, node2.id, 5, 0.0);
       console.log(`   With lower threshold: ${connectedNodes.length} paths`);
 
       // Debug the actual graph structure
       console.log("\n4. Debugging graph structure...");
-      const nodes = Array.from((knowledgeGraph as any).nodes.values());
+      const nodes = Array.from(
+        (knowledgeGraph as KnowledgeGraphService).nodes.values()
+      );
       const edges = Array.from((knowledgeGraph as any).edges.values()).flat();
 
       console.log(`   Total nodes: ${nodes.length}`);
@@ -151,7 +159,9 @@ async function debugGraphRAG() {
 
       console.log("\n   Entity nodes:");
       nodes
-        .filter((n: any) => n.type === "entity")
+        .filter(
+          (n: KnowledgeGraphService["nodes"][number]) => n.type === "entity"
+        )
         .forEach((node: any) => {
           console.log(`     • ${node.label} (${node.id})`);
         });
@@ -159,12 +169,18 @@ async function debugGraphRAG() {
       console.log("\n   Entity-to-entity edges:");
       edges
         .filter(
-          (e: any) =>
+          (e: KnowledgeGraphService["edges"][number]) =>
             e.sourceId.includes("entity_") && e.targetId.includes("entity_")
         )
-        .forEach((edge: any) => {
-          const sourceNode = nodes.find((n: any) => n.id === edge.sourceId);
-          const targetNode = nodes.find((n: any) => n.id === edge.targetId);
+        .forEach((edge: KnowledgeGraphService["edges"][number]) => {
+          const sourceNode = nodes.find(
+            (n: KnowledgeGraphService["nodes"][number]) =>
+              n.id === edge.sourceId
+          );
+          const targetNode = nodes.find(
+            (n: KnowledgeGraphService["nodes"][number]) =>
+              n.id === edge.targetId
+          );
           console.log(
             `     • ${sourceNode?.label} --[${edge.type}]--> ${targetNode?.label} (weight: ${edge.weight})`
           );

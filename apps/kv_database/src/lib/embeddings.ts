@@ -21,7 +21,7 @@ export interface EmbeddingStrategy {
   };
 }
 
-export class ObsidianEmbeddingService {
+export class DocumentEmbeddingService {
   private config: EmbeddingConfig;
   private cache: Map<string, number[]> = new Map();
   private strategy: EmbeddingStrategy;
@@ -232,7 +232,7 @@ export class ObsidianEmbeddingService {
         model: selectedModel,
         confidence,
       };
-    } catch (error) {
+    } catch {
       console.warn(
         `Failed to embed with ${selectedModel.name}, trying fallback...`
       );
@@ -256,7 +256,7 @@ export class ObsidianEmbeddingService {
             model: fallbackModel,
             confidence: confidence * 0.8, // Penalty for fallback
           };
-        } catch (fallbackError) {
+        } catch {
           console.warn(`Fallback model ${fallbackModel.name} also failed`);
         }
       }
@@ -428,3 +428,9 @@ export class ObsidianEmbeddingService {
     };
   }
 }
+
+/**
+ * Backward compatibility class for Obsidian-specific usage
+ * @deprecated Use DocumentEmbeddingService instead
+ */
+export class ObsidianEmbeddingService extends DocumentEmbeddingService {}

@@ -74,6 +74,9 @@ temp/
 .cache/
 .stryker-tmp/
 
+# on-device test files
+test/test-files/
+
 # Generated types (if any)
 *.d.ts.map
 

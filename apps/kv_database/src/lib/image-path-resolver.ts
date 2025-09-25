@@ -165,12 +165,12 @@ export class ImagePathResolver {
         const withinVault = resolvedPath.startsWith(this.vaultPath);
 
         // Check if file exists
-        let exists = false;
+        // let exists = false; // Unused variable
         let size: number | undefined;
 
         try {
           const stat = fs.statSync(resolvedPath);
-          exists = true;
+          // exists = true; // Unused variable
           size = stat.size;
         } catch {
           // File doesn't exist, continue to next attempt

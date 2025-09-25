@@ -4,7 +4,7 @@ import {
   SearchResult,
   DocumentMetadata,
   ChatSession,
-  ChatMessage,
+  // ChatMessage, // Unused import
 } from "../types/index";
 
 // Extended ChatSession interface for database operations
@@ -13,10 +13,10 @@ interface DatabaseChatSession extends ChatSession {
   embedding?: number[];
 }
 
-export class ObsidianDatabase {
-  private pool: Pool;
-  private readonly tableName = "obsidian_chunks";
-  private readonly dimension = 768;
+export class DocumentDatabase {
+  protected pool: Pool;
+  protected readonly tableName: string;
+  protected readonly dimension = 768;
   private performanceMetrics: {
     searchLatency: number[];
     totalQueries: number;
@@ -27,7 +27,8 @@ export class ObsidianDatabase {
     slowQueries: 0,
   };
 
-  constructor(connectionString: string) {
+  constructor(connectionString: string, tableName: string = "document_chunks") {
+    this.tableName = tableName;
     this.pool = new Pool({
       connectionString,
       max: 20, // Increased for better concurrency
@@ -859,9 +860,7 @@ export class ObsidianDatabase {
   /**
    * Get version content by version ID
    */
-  async getVersionContent(
-    versionId: string
-  ): Promise<{
+  async getVersionContent(versionId: string): Promise<{
     content: string;
     contentHash: string;
     embeddingHash: string;
@@ -1090,5 +1089,15 @@ export class ObsidianDatabase {
     } finally {
       client.release();
     }
+  }
+}
+
+/**
+ * Backward compatibility class for Obsidian-specific usage
+ * @deprecated Use DocumentDatabase instead
+ */
+export class ObsidianDatabase extends DocumentDatabase {
+  constructor(connectionString: string) {
+    super(connectionString, "obsidian_chunks");
   }
 }

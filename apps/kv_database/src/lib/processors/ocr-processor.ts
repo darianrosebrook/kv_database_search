@@ -317,7 +317,7 @@ export class OCRProcessor implements ContentProcessor {
         // Fix common OCR artifacts
         .replace(/\|/g, "I") // Fix pipe characters that should be I
         .replace(/0/g, "O") // Fix zero characters that should be O
-        .replace(/([a-z])\s+([a-z])/g, "$1$2") // Remove single spaces between letters
+        .replace(/([a-z])\s+([a-z])/g, "$1 $2") // Keep spaces between letters but normalize
         .replace(/\s+/g, " ") // Normalize remaining whitespace
         .replace(/\n{3,}/g, "\n\n") // Preserve paragraph breaks
         // Clean up any remaining artifacts

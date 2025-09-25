@@ -9,10 +9,12 @@ import {
 } from "../../src/lib/obsidian-models.ts";
 
 // Mock crypto module
-vi.mock("crypto", () => ({
+vi.mock("node:crypto", () => ({
   createHash: vi.fn(() => ({
     update: vi.fn().mockReturnThis(),
-    digest: vi.fn(() => "mocked-hash"),
+    digest: vi.fn(
+      () => "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
+    ),
   })),
 }));
 

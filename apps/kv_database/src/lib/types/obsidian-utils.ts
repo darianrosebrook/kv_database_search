@@ -19,16 +19,21 @@ export class ObsidianUtils {
     return extractObsidianTags(content);
   }
 
-  static parseFrontmatter(content: string): {
-    frontmatter: Record<string, any>;
-    body: string;
-  } {
+  static cleanMarkdown(content: string): string {
+    return cleanMarkdown(content);
+  }
+
+  static extractWikilinks(content: string): string[] {
+    return extractWikilinks(content);
+  }
+
+  static parseFrontmatter(content: string): Record<string, any> {
     const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
     const match = content.match(frontmatterRegex);
 
     if (!match) {
-      // No frontmatter found, return empty frontmatter and full content as body
-      return { frontmatter: {}, body: content };
+      // No frontmatter found, return empty frontmatter
+      return {};
     }
 
     try {
@@ -103,11 +108,10 @@ export class ObsidianUtils {
         }
       }
 
-      return { frontmatter, body };
+      return frontmatter;
     } catch (error) {
-      // If frontmatter parsing fails, treat the whole content as body
-      const fallbackBody = content.substring(match[0].length);
-      return { frontmatter: {}, body: fallbackBody };
+      // If frontmatter parsing fails, return empty frontmatter
+      return {};
     }
   }
 
@@ -127,32 +131,29 @@ export class ObsidianUtils {
 
     const relativePath = filePath.replace(vaultPath, "").replace(/^\/+/, "");
 
-    // Content-based classification (more flexible for zettelkasten)
-    // Check frontmatter first (allows explicit type declaration)
-    if (frontmatter.type) {
-      const explicitType = frontmatter.type.toLowerCase();
-      if (
-        ["moc", "article", "conversation", "book", "template"].includes(
-          explicitType
-        )
-      ) {
-        return explicitType;
-      }
-    }
-
-    // Structure-based classification (fallback to content analysis)
-    if (relativePath.includes("mocs") || relativePath.includes("maps"))
+    // Structure-based classification
+    if (
+      relativePath.toLowerCase().includes("mocs") ||
+      relativePath.toLowerCase().includes("maps")
+    )
       return "moc";
-    if (relativePath.includes("articles") || relativePath.includes("posts"))
+    if (
+      relativePath.toLowerCase().includes("articles") ||
+      relativePath.toLowerCase().includes("posts")
+    )
       return "article";
     if (
-      relativePath.includes("chats") ||
-      relativePath.includes("conversations")
+      relativePath.toLowerCase().includes("chats") ||
+      relativePath.toLowerCase().includes("conversations") ||
+      relativePath.toLowerCase().includes("aichats")
     )
       return "conversation";
-    if (relativePath.includes("books") || relativePath.includes("reading"))
-      return "book";
-    if (relativePath.includes("templates")) return "template";
+    if (
+      relativePath.toLowerCase().includes("books") ||
+      relativePath.toLowerCase().includes("reading")
+    )
+      return "book-note";
+    if (relativePath.toLowerCase().includes("templates")) return "template";
 
     return "note";
   }

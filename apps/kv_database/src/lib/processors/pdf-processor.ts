@@ -1,4 +1,4 @@
-const pdfParse = require("pdf-parse");
+import pdfParse from "pdf-parse";
 import { ContentType, ContentMetadata } from "../../types/index";
 import {
   BaseContentProcessor,
@@ -327,10 +327,15 @@ export class PDFProcessor extends BaseContentProcessor {
         .replace(/[^\n]+/g, (line) =>
           line.replace(/[ \t]+/g, " ").replace(/^\s+|\s+$/g, "")
         )
-        // Ensure headers are properly formatted
-        .replace(/^[A-Z][^.!?]*$/gm, (header) => {
+        // Ensure headers are properly formatted (only for lines that look like actual headers)
+        .replace(/^[A-Z][A-Za-z\s]{20,}$/gm, (header) => {
           const trimmed = header.trim();
-          return trimmed.length > 0 ? `# ${trimmed}` : "";
+          // Only format as header if it's clearly a title (longer and contains multiple words)
+          return trimmed.length > 0 &&
+            trimmed.includes(" ") &&
+            trimmed.length > 30
+            ? `# ${trimmed}`
+            : trimmed;
         })
         // Clean up any remaining artifacts
         .replace(/\0/g, "")

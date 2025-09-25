@@ -113,16 +113,43 @@ export function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Extract Obsidian wikilinks from text
+ * Extract wikilinks from text (legacy Obsidian-specific function)
+ * @deprecated Use extractLinks with appropriate configuration instead
  */
 export function extractWikilinks(text: string): string[] {
-  const wikilinkRegex = /\[\[([^\]]+)\]\]/g;
-  const wikilinks: string[] = [];
-  let match;
-  while ((match = wikilinkRegex.exec(text)) !== null) {
-    wikilinks.push(match[1]);
+  return extractLinks(text, [
+    {
+      pattern: /\[\[([^\]]+)\]\]/g,
+      extractTarget: (match) => match[1].split("|")[0],
+    },
+  ]);
+}
+
+/**
+ * Extract links from text using configurable patterns
+ */
+export function extractLinks(
+  text: string,
+  linkFormats: Array<{
+    pattern: RegExp;
+    extractTarget: (match: RegExpMatchArray) => string;
+    extractDisplayText?: (match: RegExpMatchArray) => string | undefined;
+  }>
+): string[] {
+  const links: string[] = [];
+
+  for (const format of linkFormats) {
+    const regex = new RegExp(format.pattern.source, format.pattern.flags);
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      const target = format.extractTarget(match);
+      if (target) {
+        links.push(target);
+      }
+    }
   }
-  return Array.from(new Set(wikilinks)); // Remove duplicates
+
+  return Array.from(new Set(links)); // Remove duplicates
 }
 
 /**
@@ -139,15 +166,41 @@ export function extractHashtags(text: string): string[] {
 }
 
 /**
- * Extract Obsidian-style tags from text (including nested paths)
+ * Extract Obsidian-style tags from text (legacy function)
+ * @deprecated Use extractTags with appropriate configuration instead
  */
 export function extractObsidianTags(text: string): string[] {
-  const tagRegex = /#([a-zA-Z0-9_/-]+)/g;
+  return extractTags(text, [
+    {
+      pattern: /#([a-zA-Z0-9_/-]+)/g,
+      extractTag: (match) => match[1],
+    },
+  ]);
+}
+
+/**
+ * Extract tags from text using configurable patterns
+ */
+export function extractTags(
+  text: string,
+  tagFormats: Array<{
+    pattern: RegExp;
+    extractTag: (match: RegExpMatchArray) => string;
+  }>
+): string[] {
   const tags: string[] = [];
-  let match;
-  while ((match = tagRegex.exec(text)) !== null) {
-    tags.push(match[1]);
+
+  for (const format of tagFormats) {
+    const regex = new RegExp(format.pattern.source, format.pattern.flags);
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      const tag = format.extractTag(match);
+      if (tag) {
+        tags.push(tag);
+      }
+    }
   }
+
   return Array.from(new Set(tags)); // Remove duplicates
 }
 
@@ -471,8 +524,11 @@ export function cleanMarkdown(text: string): string {
     text
       // Remove frontmatter
       .replace(/^---[\s\S]*?---\n?/, "")
-      // Remove wikilinks but keep the text
-      .replace(/\[\[([^\]]+)\]\]/g, "$1")
+      // Remove wikilinks but keep the display text or target
+      .replace(/\[\[([^\]]+)\]\]/g, (match, content) => {
+        // If there's a |, use the display text, otherwise use the target
+        return content.includes("|") ? content.split("|")[1] : content;
+      })
       // Remove markdown links but keep the text
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
       // Remove markdown formatting
@@ -534,15 +590,19 @@ export function determineContentTypeFromFrontmatter(
 ): string {
   const relativePath = filePath.replace(vaultPath, "").replace(/^\/+/, "");
 
-  if (relativePath.includes("mocs") || relativePath.includes("maps"))
-    return "moc";
-  if (relativePath.includes("articles") || relativePath.includes("posts"))
+  const lowerPath = relativePath.toLowerCase();
+  if (lowerPath.includes("mocs") || lowerPath.includes("maps")) return "moc";
+  if (lowerPath.includes("articles") || lowerPath.includes("posts"))
     return "article";
-  if (relativePath.includes("chats") || relativePath.includes("conversations"))
+  if (
+    lowerPath.includes("chats") ||
+    lowerPath.includes("conversations") ||
+    lowerPath.includes("aichats")
+  )
     return "conversation";
-  if (relativePath.includes("books") || relativePath.includes("reading"))
-    return "book";
-  if (relativePath.includes("templates")) return "template";
+  if (lowerPath.includes("books") || lowerPath.includes("reading"))
+    return "book-note";
+  if (lowerPath.includes("templates")) return "template";
 
   // Check frontmatter type
   if (frontmatter.type) {
@@ -550,4 +610,21 @@ export function determineContentTypeFromFrontmatter(
   }
 
   return "note";
+}
+
+/**
+ * Count words in text
+ */
+export function countWords(text: string): number {
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0).length;
+}
+
+/**
+ * Count characters in text
+ */
+export function countCharacters(text: string): number {
+  return text.length;
 }

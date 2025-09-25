@@ -10,6 +10,7 @@ import {
   cleanMarkdown,
   generateBreadcrumbs,
   determineContentType,
+  determineContentTypeFromFrontmatter,
 } from "../../src/lib/utils.ts";
 
 describe("normalize", () => {
@@ -228,14 +229,18 @@ describe("generateBreadcrumbs", () => {
   // The implementation handles empty paths gracefully
 });
 
-describe("determineContentType", () => {
+describe("determineContentTypeFromFrontmatter", () => {
   it("should detect MOC content type", () => {
-    const result = determineContentType("/vault/MOCs/file.md", "/vault", {});
+    const result = determineContentTypeFromFrontmatter(
+      "/vault/MOCs/file.md",
+      "/vault",
+      {}
+    );
     expect(result).toBe("moc");
   });
 
   it("should detect article content type", () => {
-    const result = determineContentType(
+    const result = determineContentTypeFromFrontmatter(
       "/vault/Articles/file.md",
       "/vault",
       {}
@@ -244,17 +249,25 @@ describe("determineContentType", () => {
   });
 
   it("should detect conversation content type", () => {
-    const result = determineContentType("/vault/AIChats/file.md", "/vault", {});
+    const result = determineContentTypeFromFrontmatter(
+      "/vault/AIChats/file.md",
+      "/vault",
+      {}
+    );
     expect(result).toBe("conversation");
   });
 
   it("should detect book-note content type", () => {
-    const result = determineContentType("/vault/Books/file.md", "/vault", {});
+    const result = determineContentTypeFromFrontmatter(
+      "/vault/Books/file.md",
+      "/vault",
+      {}
+    );
     expect(result).toBe("book-note");
   });
 
   it("should detect template content type", () => {
-    const result = determineContentType(
+    const result = determineContentTypeFromFrontmatter(
       "/vault/templates/file.md",
       "/vault",
       {}
@@ -263,19 +276,31 @@ describe("determineContentType", () => {
   });
 
   it("should use frontmatter type if available", () => {
-    const result = determineContentType("/vault/file.md", "/vault", {
-      type: "custom",
-    });
+    const result = determineContentTypeFromFrontmatter(
+      "/vault/file.md",
+      "/vault",
+      {
+        type: "custom",
+      }
+    );
     expect(result).toBe("custom");
   });
 
   it("should default to note type", () => {
-    const result = determineContentType("/vault/file.md", "/vault", {});
+    const result = determineContentTypeFromFrontmatter(
+      "/vault/file.md",
+      "/vault",
+      {}
+    );
     expect(result).toBe("note");
   });
 
   it("should handle paths with trailing slash", () => {
-    const result = determineContentType("/vault/MOCs/", "/vault/", {});
+    const result = determineContentTypeFromFrontmatter(
+      "/vault/MOCs/",
+      "/vault/",
+      {}
+    );
     expect(result).toBe("moc");
   });
 

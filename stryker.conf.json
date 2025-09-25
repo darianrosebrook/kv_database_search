@@ -7,6 +7,10 @@
     "apps/kv_database/src/**/*.ts",
     "apps/tools/**/*.ts"
   ],
+  "ignore": [
+    "apps/rag_web_search_tool/**/*",
+    "test/test-files/**/*"
+  ],
   "thresholds": {
     "high": 80,
     "low": 30,

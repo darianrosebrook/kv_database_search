@@ -1,55 +1,54 @@
-import { ObsidianDatabase } from "./database";
-import { ObsidianEmbeddingService } from "./embeddings";
+import { DocumentDatabase } from "./database";
+import { DocumentEmbeddingService } from "./embeddings";
+import { DocumentChunk, DocumentMetadata } from "../types/index";
 import {
-  DocumentChunk,
-  DocumentMetadata,
-  ObsidianFile,
-  ObsidianDocument,
-} from "../types/index";
+  Document,
+  DocumentFile,
+  ChunkingOptions,
+} from "./types/document-models";
+import {
+  DocumentProcessingConfig,
+  MARKDOWN_CONFIG,
+} from "./types/document-config";
 import * as fs from "fs";
 import * as path from "path";
 import {
   createHash,
-  extractWikilinks,
-  extractObsidianTags,
+  extractLinks,
+  extractTags,
   cleanMarkdown,
-  // detectLanguage, // Unused import
   generateDeterministicId,
   sleep,
   determineContentType,
+  determineContentTypeFromFrontmatter,
 } from "./utils";
 
-export interface ObsidianChunkingOptions {
-  maxChunkSize?: number;
-  chunkOverlap?: number;
-  preserveStructure?: boolean;
-  includeContext?: boolean;
-  cleanContent?: boolean;
-}
-
-export class ObsidianIngestionPipeline {
-  private db: ObsidianDatabase;
-  private embeddings: ObsidianEmbeddingService;
-  private vaultPath: string;
+export class DocumentIngestionPipeline {
+  private db: DocumentDatabase;
+  private embeddings: DocumentEmbeddingService;
+  private rootPath: string;
+  private config: DocumentProcessingConfig;
 
   constructor(
-    database: ObsidianDatabase,
-    embeddingService: ObsidianEmbeddingService,
-    vaultPath: string
+    database: DocumentDatabase,
+    embeddingService: DocumentEmbeddingService,
+    rootPath: string,
+    config: DocumentProcessingConfig = MARKDOWN_CONFIG
   ) {
     this.db = database;
     this.embeddings = embeddingService;
-    this.vaultPath = vaultPath;
+    this.rootPath = rootPath;
+    this.config = config;
   }
 
-  async ingestVault(
+  async ingestDocuments(
     options: {
       batchSize?: number;
       rateLimitMs?: number;
       skipExisting?: boolean;
       includePatterns?: string[];
       excludePatterns?: string[];
-      chunkingOptions?: ObsidianChunkingOptions;
+      chunkingOptions?: ChunkingOptions;
     } = {}
   ): Promise<{
     totalFiles: number;
@@ -60,12 +59,13 @@ export class ObsidianIngestionPipeline {
     errors: string[];
   }> {
     const {
-      batchSize = 5, // Smaller batches for Obsidian files
+      batchSize = 5, // Smaller batches for better processing
       rateLimitMs = 200,
       skipExisting = true,
       includePatterns = ["**/*.md"],
       excludePatterns = [
-        "**/.obsidian/**",
+        "**/.git/**",
+        "**/node_modules/**",
         "**/node_modules/**",
         "**/.git/**",
         "**/Attachments/**",
@@ -74,7 +74,7 @@ export class ObsidianIngestionPipeline {
       chunkingOptions = {},
     } = options;
 
-    console.log(`🚀 Starting Obsidian vault ingestion: ${this.vaultPath}`);
+    console.log(`🚀 Starting document ingestion: ${this.rootPath}`);
 
     try {
       // Discover all markdown files
@@ -134,11 +134,11 @@ export class ObsidianIngestionPipeline {
         errors,
       };
 
-      console.log(`✅ Obsidian ingestion complete:`, result);
+      console.log(`✅ Document ingestion complete:`, result);
       return result;
     } catch (error) {
-      console.error(`❌ Obsidian ingestion failed: ${error}`);
-      throw new Error(`Obsidian ingestion pipeline failed: ${error}`);
+      console.error(`❌ Document ingestion failed: ${error}`);
+      throw new Error(`Document ingestion pipeline failed: ${error}`);
     }
   }
 
@@ -371,9 +371,9 @@ export class ObsidianIngestionPipeline {
     const frontmatter = parseResult?.frontmatter || {};
     const body = parseResult?.body || content;
 
-    // Extract wikilinks and tags
-    const wikilinks = extractWikilinks(body);
-    const contentTags = extractObsidianTags(body);
+    // Extract links and tags using configuration
+    const links = extractLinks(body, this.config.linkFormats);
+    const contentTags = extractTags(body, this.config.tagFormats);
 
     // Combine frontmatter tags with content tags (defensive programming)
     const frontmatterTags =
@@ -434,10 +434,10 @@ export class ObsidianIngestionPipeline {
       },
 
       relationships: {
-        wikilinks:
-          wikilinks?.map((link) => ({
+        links:
+          links?.map((link) => ({
             target: link,
-            display: link,
+            displayText: link,
             type: "document" as const,
             position: { line: 0, column: 0, offset: 0 },
             context: "",
@@ -487,16 +487,18 @@ export class ObsidianIngestionPipeline {
           content: "",
           startLine: i,
           endLine: i,
-          wikilinks: [],
+          links: [],
           tags: [],
         };
       } else if (currentSection) {
         // Add content to current section
         currentSection.content += line + "\n";
 
-        // Extract wikilinks and tags from this line
-        currentSection.wikilinks.push(...extractWikilinks(line));
-        currentSection.tags.push(...extractObsidianTags(line));
+        // Extract links and tags from this line using configuration
+        currentSection.links.push(
+          ...extractLinks(line, this.config.linkFormats)
+        );
+        currentSection.tags.push(...extractTags(line, this.config.tagFormats));
       }
     }
 
@@ -529,9 +531,10 @@ export class ObsidianIngestionPipeline {
 
     const chunks: DocumentChunk[] = [];
 
-    // TODO: Implement proper content type determination
-    const contentType = determineContentType(
-      document.filePath || document.path
+    // Determine content type using configuration
+    const contentType = this.determineContentType(
+      document.filePath || document.path,
+      document.frontmatter
     );
 
     // Create base metadata
@@ -555,8 +558,7 @@ export class ObsidianIngestionPipeline {
         fileName: document.fileName || document.name || "untitled",
         filePath: document.relativePath || document.path || "unknown",
         frontmatter: document.frontmatter,
-        wikilinks:
-          document.relationships.wikilinks?.map((w: any) => w.target) || [],
+        links: document.relationships.links?.map((w: any) => w.target) || [],
         tags: (document.relationships.tags as any[]) || [],
         checksum: document.metadata.checksum,
         stats: {
@@ -574,7 +576,7 @@ export class ObsidianIngestionPipeline {
         fileName: document.fileName || document.name || "untitled",
         content: document.content,
         frontmatter: document.frontmatter,
-        wikilinks: document.relationships.wikilinks?.map((w) => w.target) || [],
+        links: document.relationships.links?.map((w) => w.target) || [],
         tags: document.relationships.tags || [],
         createdAt: document.metadata.created,
         updatedAt: document.metadata.modified,
@@ -877,5 +879,71 @@ export class ObsidianIngestionPipeline {
     }
 
     return breadcrumbs;
+  }
+
+  /**
+   * Determine content type using configuration
+   */
+  private determineContentType(
+    filePath: string,
+    frontmatter: Record<string, any>
+  ): string {
+    // Check frontmatter first (highest priority)
+    if (frontmatter.type && typeof frontmatter.type === "string") {
+      return frontmatter.type;
+    }
+
+    // Check configured content type patterns
+    const relativePath = path.relative(this.rootPath, filePath).toLowerCase();
+
+    for (const [contentType, pattern] of Object.entries(
+      this.config.contentTypes
+    )) {
+      // Check folder patterns
+      if (
+        pattern.folderPatterns.some((folderPattern) =>
+          relativePath.includes(folderPattern.toLowerCase())
+        )
+      ) {
+        return contentType;
+      }
+
+      // Check file patterns if configured
+      if (pattern.filePatterns) {
+        const fileName = path.basename(filePath).toLowerCase();
+        if (
+          pattern.filePatterns.some((filePattern) =>
+            fileName.includes(filePattern.toLowerCase())
+          )
+        ) {
+          return contentType;
+        }
+      }
+    }
+
+    // Fall back to default content type
+    return this.config.defaultContentType;
+  }
+}
+
+// Backward compatibility exports
+export interface ObsidianChunkingOptions extends ChunkingOptions {}
+
+/**
+ * Backward compatibility class for Obsidian-specific usage
+ * @deprecated Use DocumentIngestionPipeline instead
+ */
+export class ObsidianIngestionPipeline extends DocumentIngestionPipeline {
+  constructor(
+    database: any, // Using any to avoid circular dependencies
+    embeddingService: any,
+    vaultPath: string
+  ) {
+    const { OBSIDIAN_CONFIG } = require("./types/document-config");
+    super(database, embeddingService, vaultPath, OBSIDIAN_CONFIG);
+  }
+
+  async ingestVault(options: any = {}) {
+    return this.ingestDocuments(options);
   }
 }

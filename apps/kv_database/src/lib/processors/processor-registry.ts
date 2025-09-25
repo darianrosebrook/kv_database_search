@@ -4,9 +4,11 @@ import {
   ProcessorOptions,
   ProcessorResult,
 } from "./base-processor";
-import { PDFProcessor } from "./pdf-processor";
+import { EnhancedPDFProcessor } from "./enhanced-pdf-processor";
 import { OCRProcessor } from "./ocr-processor";
-import { OfficeProcessor } from "./office-processor";
+import { EnhancedOfficeProcessor } from "./enhanced-office-processor";
+import { VideoProcessor } from "./video-processor";
+import { AudioTranscriptionProcessor } from "./audio-transcription-processor";
 import { SpeechProcessor } from "./speech-processor";
 
 /**
@@ -149,9 +151,11 @@ export class ContentProcessorRegistry {
    * Register all default processors
    */
   private registerDefaultProcessors(): void {
-    this.registerProcessor(new PDFProcessor());
+    this.registerProcessor(new EnhancedPDFProcessor());
     this.registerProcessor(new OCRProcessor());
-    this.registerProcessor(new OfficeProcessor());
+    this.registerProcessor(new EnhancedOfficeProcessor());
+    this.registerProcessor(new VideoProcessor());
+    this.registerProcessor(new AudioTranscriptionProcessor());
     this.registerProcessor(new SpeechProcessor());
   }
 

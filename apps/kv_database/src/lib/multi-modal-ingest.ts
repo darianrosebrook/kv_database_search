@@ -6,7 +6,7 @@ import {
   UniversalMetadata,
   ContentType,
 } from "./multi-modal";
-import { PDFProcessor } from "./processors/pdf-processor";
+import { EnhancedPDFProcessor } from "./processors/enhanced-pdf-processor";
 import { OCRProcessor } from "./processors/ocr-processor";
 import { OfficeProcessor } from "./processors/office-processor";
 import { SpeechProcessor } from "./processors/speech-processor";
@@ -47,7 +47,7 @@ export class MultiModalIngestionPipeline {
   private embeddings: ObsidianEmbeddingService;
   private contentDetector: MultiModalContentDetector;
   private metadataExtractor: UniversalMetadataExtractor;
-  private pdfProcessor: PDFProcessor;
+  private pdfProcessor: EnhancedPDFProcessor;
   private ocrProcessor: OCRProcessor;
   private officeProcessor: OfficeProcessor;
   private speechProcessor: SpeechProcessor;
@@ -59,7 +59,7 @@ export class MultiModalIngestionPipeline {
     this.db = database;
     this.embeddings = embeddingService;
     this.contentDetector = new MultiModalContentDetector();
-    this.pdfProcessor = new PDFProcessor();
+    this.pdfProcessor = new EnhancedPDFProcessor();
     this.ocrProcessor = new OCRProcessor();
     this.officeProcessor = new OfficeProcessor();
     this.speechProcessor = new SpeechProcessor();

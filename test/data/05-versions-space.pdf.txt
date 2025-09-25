@@ -1,4 +1,0 @@
-
-
-Obsidian RAG Test Document
-This is a test PDF for multi-modal processing.

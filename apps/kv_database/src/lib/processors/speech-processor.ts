@@ -1,9 +1,20 @@
-import {
-  createModel,
-  createRecognizer,
-  type ModelConfig,
-  type RecognizerConfig,
-} from "sherpa-onnx";
+// Temporarily disabled sherpa-onnx import to fix module resolution
+// import {
+//   createModel,
+//   createRecognizer,
+//   type ModelConfig,
+//   type RecognizerConfig,
+// } from "sherpa-onnx";
+
+// Temporary stubs for testing
+type ModelConfig = any;
+type RecognizerConfig = any;
+const createModel = () => {
+  throw new Error("sherpa-onnx not available");
+};
+const createRecognizer = () => {
+  throw new Error("sherpa-onnx not available");
+};
 import { ContentType, ContentMetadata } from "../../types/index";
 import { detectLanguage } from "../utils";
 import * as fs from "fs";
