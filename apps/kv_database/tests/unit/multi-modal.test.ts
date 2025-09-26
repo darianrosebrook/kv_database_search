@@ -6,17 +6,18 @@ import {
   ContentTypeResult,
   UniversalMetadata,
 } from "../../src/lib/multi-modal.ts";
-import * as fs from "fs";
+import fs from "fs";
 
-// Mock fs module
-vi.mock("fs", () => ({
-  default: {
+// Mock fs module for ESM
+vi.mock("fs", async () => {
+  const actual = await vi.importActual("fs");
+  return {
+    ...actual,
     statSync: vi.fn(),
     readFileSync: vi.fn(),
-  },
-  statSync: vi.fn(),
-  readFileSync: vi.fn(),
-}));
+    existsSync: vi.fn(),
+  };
+});
 
 describe("MultiModalContentDetector", () => {
   let detector: MultiModalContentDetector;

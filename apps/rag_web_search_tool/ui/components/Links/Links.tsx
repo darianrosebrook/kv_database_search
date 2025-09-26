@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRef } from 'react';
-import { gsap } from 'gsap';
-import { SplitText } from 'gsap/SplitText';
-import { useGSAP } from '@gsap/react';
-import { useFontsLoaded } from '@/hooks/useFontsLoaded';
-import styles from './Links.module.scss';
+import Link from "next/link";
+import { useRef } from "react";
+import { gsap } from "gsap";
+import { SplitText } from "gsap/SplitText";
+import { useGSAP } from "@gsap/react";
+import { useFontsLoaded } from "@/hooks/useFontsLoaded";
+import styles from "./Links.module.scss";
 
 gsap.registerPlugin(useGSAP, SplitText);
 
@@ -15,7 +15,7 @@ export interface AnimatedLinkProps
   href: string;
   children: string; // plain text; we split into characters
   className?: string;
-  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+  onClick?: (_e: React.MouseEvent<HTMLAnchorElement>) => void;
   staggerMs?: number;
   durationMs?: number;
 }
@@ -43,13 +43,13 @@ export function AnimatedLink({
 
       // Split text into characters
       const splitText = new SplitText(textEl, {
-        type: 'chars',
-        charsClass: 'char',
+        type: "chars",
+        charsClass: "char",
       });
 
       const splitClone = new SplitText(cloneEl, {
-        type: 'chars',
-        charsClass: 'char',
+        type: "chars",
+        charsClass: "char",
       });
 
       const originalChars = splitText.chars;
@@ -61,7 +61,7 @@ export function AnimatedLink({
 
       const t = gsap.timeline({
         paused: true,
-        defaults: { ease: 'expo.inOut' },
+        defaults: { ease: "expo.inOut" },
       });
 
       t.to(
@@ -85,16 +85,16 @@ export function AnimatedLink({
       const onEnter = () => t.play();
       const onLeave = () => t.reverse();
 
-      el.addEventListener('mouseenter', onEnter);
-      el.addEventListener('mouseleave', onLeave);
-      el.addEventListener('focus', onEnter);
-      el.addEventListener('blur', onLeave);
+      el.addEventListener("mouseenter", onEnter);
+      el.addEventListener("mouseleave", onLeave);
+      el.addEventListener("focus", onEnter);
+      el.addEventListener("blur", onLeave);
 
       return () => {
-        el.removeEventListener('mouseenter', onEnter);
-        el.removeEventListener('mouseleave', onLeave);
-        el.removeEventListener('focus', onEnter);
-        el.removeEventListener('blur', onLeave);
+        el.removeEventListener("mouseenter", onEnter);
+        el.removeEventListener("mouseleave", onLeave);
+        el.removeEventListener("focus", onEnter);
+        el.removeEventListener("blur", onLeave);
         splitText.revert();
         splitClone.revert();
       };
@@ -106,7 +106,7 @@ export function AnimatedLink({
     <Link
       ref={rootRef}
       href={href}
-      className={`${styles.root} ${className || ''}`}
+      className={`${styles.root} ${className || ""}`}
       onClick={onClick}
       {...props}
     >

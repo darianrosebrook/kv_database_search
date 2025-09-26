@@ -13,7 +13,7 @@ import {
   type KnowledgeGraphRelationship,
   type EntityExtractionResult,
 } from "../../src/lib/knowledge-graph/entity-extractor.ts";
-import { ContentType } from "../../src/lib/types/index.ts";
+import { ContentType } from "../../types/index.ts";
 
 // Mock the embedding service
 const mockEmbeddingService = {

@@ -3,13 +3,11 @@ import { motion } from "motion/react";
 import {
   Bot,
   User,
-  Send,
   MessageCircle,
   Search,
   Filter,
   Lightbulb,
   AlertCircle,
-  Code,
 } from "lucide-react";
 import { Button } from "../Button";
 import { ScrollArea } from "../../../src/components/ui/scroll-area";
@@ -53,11 +51,11 @@ interface ChatSession {
 }
 
 interface ChatInterfaceProps {
-  initialQuery: string;
+  _initialQuery: string;
   messages: Message[];
   onSendMessage: (
-    message: string,
-    options?: {
+    _message: string,
+    _options?: {
       contextResults?: SearchResult[];
       pastedContent?: string;
       queryType?: "component" | "pattern" | "token" | "general";
@@ -67,14 +65,14 @@ interface ChatInterfaceProps {
   isLoading: boolean;
   resultsCount?: number;
   contextResults?: SearchResult[];
-  onRemoveContext?: (resultId: string) => void;
+  onRemoveContext?: (_resultId: string) => void;
   suggestedActions?: Array<{
     type: "refine_search" | "new_search" | "filter" | "explore";
     label: string;
     query?: string;
     filters?;
   }>;
-  onSuggestedAction?: (action: {
+  onSuggestedAction?: (_action: {
     type: "refine_search" | "new_search" | "filter" | "explore";
     label: string;
     query?: string;
@@ -85,7 +83,7 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({
-  initialQuery,
+  _initialQuery,
   messages,
   onSendMessage,
   isLoading,
@@ -113,7 +111,7 @@ export function ChatInterface({
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const _handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (currentMessage.trim()) {
       handleEnhancedMessage(currentMessage);
@@ -229,22 +227,22 @@ export function ChatInterface({
                 <span className={styles.suggestionsTitle}>Suggestions</span>
               </div>
               <div className={styles.suggestionsGrid}>
-                {suggestedActions.map((action, index) => (
+                {suggestedActions.map((_action, index) => (
                   <Button
                     key={index}
                     variant="secondary"
                     size="small"
-                    onClick={() => onSuggestedAction?.(action)}
+                    onClick={() => onSuggestedAction?.(_action)}
                   >
-                    {action.type === "new_search" ||
-                    action.type === "refine_search" ? (
+                    {_action.type === "new_search" ||
+                    _action.type === "refine_search" ? (
                       <Search />
-                    ) : action.type === "filter" ? (
+                    ) : _action.type === "filter" ? (
                       <Filter />
                     ) : (
                       <Lightbulb />
                     )}
-                    {action.label}
+                    {_action.label}
                   </Button>
                 ))}
               </div>

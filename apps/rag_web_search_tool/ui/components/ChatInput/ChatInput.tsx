@@ -7,9 +7,8 @@ import styles from "./ChatInput.module.scss";
 
 interface ChatInputProps {
   onSendMessage: (
-    message: string, // eslint-disable-line no-unused-vars
-    options?: {
-      // eslint-disable-line no-unused-vars
+    _message: string,
+    _options?: {
       pastedContent?: string;
       queryType?: "component" | "pattern" | "token" | "general";
       autoSearch?: boolean;

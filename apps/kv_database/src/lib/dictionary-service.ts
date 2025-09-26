@@ -222,7 +222,10 @@ export class DictionaryService {
 
   constructor(database: ObsidianDatabase) {
     this.db = database;
-    this.initializeService();
+    // Initialize service asynchronously to avoid blocking constructor
+    this.initializeService().catch((error) => {
+      console.warn(`⚠️ Dictionary service initialization failed: ${error}`);
+    });
   }
 
   /**

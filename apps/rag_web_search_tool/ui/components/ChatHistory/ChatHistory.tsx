@@ -1,19 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  History,
-  MessageSquare,
-  Trash2,
-  Plus,
-  Calendar,
-  Bot,
-  User,
-  Save,
-  Clock,
-} from "lucide-react";
+import { History, MessageSquare, Trash2, Plus, Bot, Save } from "lucide-react";
 import { Button } from "../Button";
 import { ScrollArea } from "../ScrollArea";
-import { apiService } from "../../../src/lib/api";
+// import { apiService } from "../../../src/lib/api";
 import styles from "./ChatHistory.module.scss";
 
 interface ChatMessage {
@@ -36,7 +26,7 @@ interface ChatSession {
 interface ChatHistoryProps {
   isOpen: boolean;
   onToggle: () => void;
-  onLoadSession: (session: ChatSession) => void;
+  onLoadSession: (_session: ChatSession) => void;
   onNewChat: () => void;
   currentSessionId?: string;
   className?: string;

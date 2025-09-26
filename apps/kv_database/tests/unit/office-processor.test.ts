@@ -25,17 +25,18 @@ vi.mock("pdf-parse", () => ({
   }),
 }));
 
-// Mock fs module
-vi.mock("fs", () => ({
-  default: {
+// Mock fs module for ESM
+vi.mock("fs", async () => {
+  const actual = await vi.importActual("fs");
+  return {
+    ...actual,
     readFileSync: vi.fn(),
-  },
-  readFileSync: vi.fn(),
-}));
+  };
+});
 
 import * as mammoth from "mammoth";
 import * as XLSX from "xlsx";
-import * as fs from "fs";
+import fs from "fs";
 
 describe("OfficeProcessor", () => {
   let processor: OfficeProcessor;

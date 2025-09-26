@@ -4,18 +4,18 @@ import {
   MultiModalIngestionConfig,
 } from "../../src/lib/multi-modal-ingest.ts";
 import { ContentType } from "../../src/lib/multi-modal.ts";
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 
-// Mock fs module
-vi.mock("fs", () => ({
-  default: {
+// Mock fs module for ESM
+vi.mock("fs", async () => {
+  const actual = await vi.importActual("fs");
+  return {
+    ...actual,
     statSync: vi.fn(),
     readFileSync: vi.fn(),
-  },
-  statSync: vi.fn(),
-  readFileSync: vi.fn(),
-}));
+  };
+});
 
 describe("MultiModalIngestionPipeline", () => {
   let mockDatabase;

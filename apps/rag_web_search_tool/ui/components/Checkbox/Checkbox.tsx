@@ -8,14 +8,14 @@
  * without labels, validation, or complex orchestration. Those concerns belong
  * to higher layers (Field composer, forms, etc.)
  */
-'use client';
-import React, { useId } from 'react';
-import styles from './Checkbox.module.scss';
+"use client";
+import React, { useId } from "react";
+import styles from "./Checkbox.module.scss";
 
-export type CheckboxSize = 'sm' | 'md' | 'lg';
+export type CheckboxSize = "sm" | "md" | "lg";
 
 export interface CheckboxProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'type'> {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size" | "type"> {
   /** Size variant using design tokens */
   size?: CheckboxSize;
   /** Checked state (controlled) */
@@ -27,7 +27,7 @@ export interface CheckboxProps
   /** Disabled state */
   disabled?: boolean;
   /** Change handler */
-  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (_event: React.ChangeEvent<HTMLInputElement>) => void;
   /** Additional CSS classes */
   className?: string;
   /** Custom id (auto-generated if not provided) */
@@ -37,13 +37,13 @@ export interface CheckboxProps
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   (
     {
-      size = 'md',
+      size = "md",
       checked,
       defaultChecked,
       indeterminate = false,
       disabled = false,
       onChange,
-      className = '',
+      className = "",
       id: providedId,
       ...rest
     },
@@ -76,7 +76,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           onChange={onChange}
           data-size={size}
           data-indeterminate={indeterminate || undefined}
-          aria-checked={indeterminate ? 'mixed' : checked}
+          aria-checked={indeterminate ? "mixed" : checked}
           {...rest}
         />
         <div className={styles.checkboxIndicator} aria-hidden="true">
@@ -110,6 +110,6 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   }
 );
 
-Checkbox.displayName = 'Checkbox';
+Checkbox.displayName = "Checkbox";
 
 export default Checkbox;

@@ -1,11 +1,23 @@
 import * as React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { axe, toHaveNoViolations } from 'jest-axe';
+import axe from 'axe-core';
 import { vi } from 'vitest';
 import { ToastProvider, ToastViewport, useToast } from '../index';
 
-expect.extend(toHaveNoViolations);
+// Vitest-compatible axe matcher
+function toHaveNoViolations(results: any) {
+  const violations = results.violations;
+  if (violations.length > 0) {
+    return {
+      pass: false,
+      message: () => `Expected no accessibility violations but found: ${violations.map((v: any) => v.description).join(', ')}`
+    };
+  }
+  return { pass: true, message: () => 'Expected accessibility violations but found none' };
+}
+
+expect.extend({ toHaveNoViolations });
 
 function WithEnqueue({
   count = 1,

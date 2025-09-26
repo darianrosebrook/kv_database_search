@@ -183,7 +183,4 @@ export class ContentProcessorRegistry {
   }
 }
 
-/**
- * Singleton instance of the processor registry
- */
-export const contentProcessorRegistry = new ContentProcessorRegistry();
+// Singleton instance moved to separate file to avoid circular dependencies

@@ -31,7 +31,7 @@ export type {
 
 // Re-export enum as value for use in switch statements etc.
 export { ContentType } from "../types/index";
-import { contentProcessorRegistry } from "./processors/processor-registry";
+import { contentProcessorRegistry } from "./processors/processor-registry-instance";
 
 /**
  * Multi-modal content detector and processor

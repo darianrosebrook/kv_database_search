@@ -20,7 +20,7 @@ import {
   MultiHopReasoningEngine,
   type ReasoningQuery,
 } from "../../src/lib/knowledge-graph/multi-hop-reasoning.js";
-import { ContentType } from "../../src/lib/types/index.js";
+import { ContentType } from "../../types/index.js";
 import path from "path";
 import fs from "fs";
 

@@ -1,22 +1,22 @@
-'use client';
-import { ReactNode, useMemo } from 'react';
-import styles from './ToggleSwitch.module.scss';
+"use client";
+import { ReactNode, useMemo } from "react";
+import styles from "./ToggleSwitch.module.scss";
 
-type NativeInputProps = React.ComponentProps<'input'>;
+type NativeInputProps = React.ComponentProps<"input">;
 
 export type ToggleSwitchProps = Omit<
   NativeInputProps,
-  'checked' | 'onChange' | 'type' | 'className' | 'size'
+  "checked" | "onChange" | "type" | "className" | "size"
 > & {
   checked: boolean;
   disabled?: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (_e: React.ChangeEvent<HTMLInputElement>) => void;
   children: ReactNode;
   className?: string;
   id?: string;
   ariaLabel?: string;
   ariaDescription?: string;
-  size?: 'small' | 'medium' | 'large';
+  size?: "small" | "medium" | "large";
 };
 
 const ToggleSwitch = ({
@@ -24,27 +24,27 @@ const ToggleSwitch = ({
   checked,
   onChange,
   disabled = false,
-  className = '',
+  className = "",
   id,
   ariaLabel,
   ariaDescription,
-  size = 'medium',
+  size = "medium",
   ...rest
 }: ToggleSwitchProps) => {
   const safeId = useMemo(() => {
     if (id) return id;
-    if (typeof children === 'string') {
-      return `toggleSwitch-${children.replace(/[^\w-]/g, '-')}`;
+    if (typeof children === "string") {
+      return `toggleSwitch-${children.replace(/[^\w-]/g, "-")}`;
     }
     return `toggleSwitch-${Math.random().toString(36).substring(2, 9)}`;
   }, [id, children]);
 
   const sizeClass =
-    size === 'small'
+    size === "small"
       ? styles.small
-      : size === 'large'
-        ? styles.large
-        : styles.medium;
+      : size === "large"
+      ? styles.large
+      : styles.medium;
 
   return (
     <div className={`${styles.toggleSwitch} ${sizeClass} ${className}`}>
@@ -54,15 +54,17 @@ const ToggleSwitch = ({
         onChange={onChange}
         disabled={disabled}
         id={safeId}
-        className={`${styles.input} ${checked ? styles.checked : ''}`}
+        className={`${styles.input} ${checked ? styles.checked : ""}`}
         aria-label={
-          ariaLabel || (typeof children === 'string' ? children : undefined)
+          ariaLabel || (typeof children === "string" ? children : undefined)
         }
         aria-describedby={ariaDescription ? `${safeId}-description` : undefined}
         {...rest}
       />
       <label
-        className={`${styles.label} ${checked ? styles.checked : ''} ${disabled ? styles.disabled : ''}`}
+        className={`${styles.label} ${checked ? styles.checked : ""} ${
+          disabled ? styles.disabled : ""
+        }`}
         htmlFor={safeId}
       >
         {children}
@@ -80,15 +82,15 @@ export default ToggleSwitch;
 
 export const ToggleSwitchGroup = ({
   children,
-  className = '',
-  orientation = 'vertical',
+  className = "",
+  orientation = "vertical",
 }: {
   children: React.ReactNode;
   className?: string;
-  orientation?: 'vertical' | 'horizontal';
+  orientation?: "vertical" | "horizontal";
 }) => {
   const orientationClass =
-    orientation === 'horizontal' ? styles.horizontal : styles.vertical;
+    orientation === "horizontal" ? styles.horizontal : styles.vertical;
   return (
     <div
       className={`${styles.toggleSwitchGroup} ${className} ${orientationClass}`}

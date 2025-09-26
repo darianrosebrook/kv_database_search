@@ -1,6 +1,7 @@
 import js from "@eslint/js";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
+import reactHooks from "eslint-plugin-react-hooks";
 // import localRules from "./eslint-rules/index.js";
 
 export default [
@@ -53,6 +54,7 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tseslint,
+      "react-hooks": reactHooks,
       // local: localRules,
     },
     rules: {
@@ -68,6 +70,7 @@ export default [
       ],
       "@typescript-eslint/no-explicit-any": "warn",
       "no-undef": "error", // Keep this to catch undefined variables
+      ...reactHooks.configs.recommended.rules,
       // "local/no-hype-identifiers": "error", // Purpose-first naming rule
     },
   },
@@ -82,13 +85,112 @@ export default [
         jsx: true,
       },
       globals: {
-        HTMLTextAreaElement: "readonly",
-        Event: "readonly",
+        // Browser globals
+        window: "readonly",
+        document: "readonly",
+        console: "readonly",
+        navigator: "readonly",
+        localStorage: "readonly",
+        sessionStorage: "readonly",
+        fetch: "readonly",
+        URL: "readonly",
+        URLSearchParams: "readonly",
+        Blob: "readonly",
+        CSS: "readonly",
+        getComputedStyle: "readonly",
+        requestAnimationFrame: "readonly",
+        cancelAnimationFrame: "readonly",
+        clearTimeout: "readonly",
+        clearInterval: "readonly",
+        setInterval: "readonly",
         setTimeout: "readonly",
+        performance: "readonly",
+        ResizeObserver: "readonly",
+        IntersectionObserver: "readonly",
+        MutationObserver: "readonly",
+        CustomEvent: "readonly",
+        Event: "readonly",
+        KeyboardEvent: "readonly",
+        MouseEvent: "readonly",
+        PointerEvent: "readonly",
+        DragEvent: "readonly",
+        DataTransfer: "readonly",
+        Node: "readonly",
+        Element: "readonly",
+        HTMLElement: "readonly",
+        HTMLDivElement: "readonly",
+        HTMLSpanElement: "readonly",
+        HTMLButtonElement: "readonly",
+        HTMLInputElement: "readonly",
+        HTMLSelectElement: "readonly",
+        HTMLTextAreaElement: "readonly",
+        HTMLAnchorElement: "readonly",
+        HTMLImageElement: "readonly",
+        HTMLVideoElement: "readonly",
+        HTMLCanvasElement: "readonly",
+        HTMLIFrameElement: "readonly",
+        HTMLHRElement: "readonly",
+        HTMLLabelElement: "readonly",
+        HTMLDetailsElement: "readonly",
+        HTMLHeadingElement: "readonly",
+        HTMLParagraphElement: "readonly",
+        HTMLQuoteElement: "readonly",
+        CanvasRenderingContext2D: "readonly",
+        CanvasPath: "readonly",
+        CSSStyleDeclaration: "readonly",
+        Window: "readonly",
+        EventListener: "readonly",
+        PerformanceObserver: "readonly",
+        PerformanceNavigationTiming: "readonly",
+        // React globals
+        React: "readonly",
+        JSX: "readonly",
+        // Test globals
+        describe: "readonly",
+        it: "readonly",
+        test: "readonly",
+        expect: "readonly",
+        beforeEach: "readonly",
+        afterEach: "readonly",
+        beforeAll: "readonly",
+        afterAll: "readonly",
+        vi: "readonly",
+        jest: "readonly",
+        user: "readonly",
+        // Node.js globals for build scripts
+        process: "readonly",
+        Buffer: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+        global: "readonly",
+        module: "readonly",
+        require: "readonly",
+        exports: "readonly",
+        NodeJS: "readonly",
       },
     },
+    plugins: {
+      "@typescript-eslint": tseslint,
+      "react-hooks": reactHooks,
+    },
     rules: {
-      "@typescript-eslint/no-unused-vars": "off", // Allow unused vars in interfaces
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+      "no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+      ...reactHooks.configs.recommended.rules,
     },
   },
   {

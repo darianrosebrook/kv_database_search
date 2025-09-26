@@ -16,8 +16,8 @@ export interface TruncateProps
   collapseText?: string;
   /** Callback when expand/collapse state changes */
   onToggle?: (
-    expanded: boolean,
-    event: React.MouseEvent<HTMLButtonElement>
+    _expanded: boolean,
+    _event: React.MouseEvent<HTMLButtonElement>
   ) => void;
 }
 

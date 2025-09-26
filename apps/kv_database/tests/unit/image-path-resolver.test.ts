@@ -4,18 +4,18 @@ import {
   ResolvedImagePath,
   PathResolutionResult,
 } from "../../src/lib/image-path-resolver";
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 
-// Mock fs module
-vi.mock("fs", () => ({
-  default: {
+// Mock fs module for ESM
+vi.mock("fs", async () => {
+  const actual = await vi.importActual("fs");
+  return {
+    ...actual,
     statSync: vi.fn(),
     existsSync: vi.fn(),
-  },
-  statSync: vi.fn(),
-  existsSync: vi.fn(),
-}));
+  };
+});
 
 describe("ImagePathResolver", () => {
   let resolver: ImagePathResolver;

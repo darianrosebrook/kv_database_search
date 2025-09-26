@@ -2,18 +2,18 @@
  * Switch - Binary toggle control component
  * Replaces ToggleSwitch with improved API and design token integration
  */
-'use client';
-import React, { ReactNode, useMemo } from 'react';
-import styles from './Switch.module.scss';
+"use client";
+import React, { ReactNode, useMemo } from "react";
+import styles from "./Switch.module.scss";
 
-type ControlSize = 'sm' | 'md' | 'lg';
+type ControlSize = "sm" | "md" | "lg";
 
-type NativeInputProps = React.ComponentProps<'input'>;
+type NativeInputProps = React.ComponentProps<"input">;
 
 export interface SwitchProps
   extends Omit<
     NativeInputProps,
-    'checked' | 'onChange' | 'type' | 'className' | 'size'
+    "checked" | "onChange" | "type" | "className" | "size"
   > {
   /**
    * Whether the switch is checked
@@ -26,7 +26,7 @@ export interface SwitchProps
   /**
    * Change handler
    */
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (_e: React.ChangeEvent<HTMLInputElement>) => void;
   /**
    * Label content
    */
@@ -58,17 +58,17 @@ const Switch = ({
   checked,
   onChange,
   disabled = false,
-  className = '',
+  className = "",
   id,
   ariaLabel,
   ariaDescription,
-  size = 'md',
+  size = "md",
   ...rest
 }: SwitchProps) => {
   const safeId = useMemo(() => {
     if (id) return id;
-    if (typeof children === 'string') {
-      return `switch-${children.replace(/[^\w-]/g, '-')}`;
+    if (typeof children === "string") {
+      return `switch-${children.replace(/[^\w-]/g, "-")}`;
     }
     return `switch-${Math.random().toString(36).substring(2, 9)}`;
   }, [id, children]);
@@ -81,7 +81,7 @@ const Switch = ({
     className,
   ]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 
   return (
     <div className={switchClassName}>
@@ -91,15 +91,17 @@ const Switch = ({
         onChange={onChange}
         disabled={disabled}
         id={safeId}
-        className={`${styles.input} ${checked ? styles.checked : ''}`}
+        className={`${styles.input} ${checked ? styles.checked : ""}`}
         aria-label={
-          ariaLabel || (typeof children === 'string' ? children : undefined)
+          ariaLabel || (typeof children === "string" ? children : undefined)
         }
         aria-describedby={ariaDescription ? `${safeId}-description` : undefined}
         {...rest}
       />
       <label
-        className={`${styles.label} ${checked ? styles.checked : ''} ${disabled ? styles.disabled : ''}`}
+        className={`${styles.label} ${checked ? styles.checked : ""} ${
+          disabled ? styles.disabled : ""
+        }`}
         htmlFor={safeId}
       >
         {children}
@@ -113,7 +115,7 @@ const Switch = ({
   );
 };
 
-Switch.displayName = 'Switch';
+Switch.displayName = "Switch";
 
 export default Switch;
 
@@ -121,17 +123,17 @@ export default Switch;
 export interface SwitchGroupProps {
   children: React.ReactNode;
   className?: string;
-  orientation?: 'vertical' | 'horizontal';
+  orientation?: "vertical" | "horizontal";
 }
 
 export const SwitchGroup = ({
   children,
-  className = '',
-  orientation = 'vertical',
+  className = "",
+  orientation = "vertical",
 }: SwitchGroupProps) => {
   const groupClassName = [styles.switchGroup, styles[orientation], className]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 
   return <div className={groupClassName}>{children}</div>;
 };

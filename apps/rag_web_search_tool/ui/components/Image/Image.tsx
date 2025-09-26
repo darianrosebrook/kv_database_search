@@ -1,28 +1,28 @@
-'use client';
-import * as React from 'react';
-import styles from './Image.module.scss';
+"use client";
+import * as React from "react";
+import styles from "./Image.module.scss";
 
 export interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   /** Aspect ratio preset */
-  aspectRatio?: 'square' | 'video' | 'photo' | 'wide' | 'portrait' | number;
+  aspectRatio?: "square" | "video" | "photo" | "wide" | "portrait" | number;
   /** Object fit behavior */
-  objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down' | 'none';
+  objectFit?: "cover" | "contain" | "fill" | "scale-down" | "none";
   /** Object position */
   objectPosition?: string;
   /** Loading behavior */
-  loading?: 'lazy' | 'eager';
+  loading?: "lazy" | "eager";
   /** Size variant */
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "full";
   /** Border radius variant */
-  radius?: 'none' | 'sm' | 'md' | 'lg' | 'full';
+  radius?: "none" | "sm" | "md" | "lg" | "full";
   /** Whether to show a placeholder while loading */
   showPlaceholder?: boolean;
   /** Fallback image source */
   fallbackSrc?: string;
   /** Callback when image fails to load */
-  onError?: (event: React.SyntheticEvent<HTMLImageElement>) => void;
+  onError?: (_event: React.SyntheticEvent<HTMLImageElement>) => void;
   /** Callback when image loads successfully */
-  onLoad?: (event: React.SyntheticEvent<HTMLImageElement>) => void;
+  onLoad?: (_event: React.SyntheticEvent<HTMLImageElement>) => void;
 }
 
 const ASPECT_RATIOS = {
@@ -37,16 +37,16 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
   (
     {
       aspectRatio,
-      objectFit = 'cover',
-      objectPosition = 'center',
-      loading = 'lazy',
-      size = 'full',
-      radius = 'none',
+      objectFit = "cover",
+      objectPosition = "center",
+      loading = "lazy",
+      size = "full",
+      radius = "none",
       showPlaceholder = true,
       fallbackSrc,
       onError,
       onLoad,
-      className = '',
+      className = "",
       style,
       alt,
       src,
@@ -90,7 +90,7 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
     );
 
     const aspectRatioValue = React.useMemo(() => {
-      if (typeof aspectRatio === 'number') return aspectRatio;
+      if (typeof aspectRatio === "number") return aspectRatio;
       if (aspectRatio && aspectRatio in ASPECT_RATIOS) {
         return ASPECT_RATIOS[aspectRatio as keyof typeof ASPECT_RATIOS];
       }
@@ -108,19 +108,19 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
       styles.container,
       styles[size],
       styles[`radius-${radius}`],
-      aspectRatio ? styles.aspectRatio : '',
+      aspectRatio ? styles.aspectRatio : "",
       className,
     ]
       .filter(Boolean)
-      .join(' ');
+      .join(" ");
 
     const imageClasses = [
       styles.image,
-      isLoading ? styles.loading : '',
-      hasError ? styles.error : '',
+      isLoading ? styles.loading : "",
+      hasError ? styles.error : "",
     ]
       .filter(Boolean)
-      .join(' ');
+      .join(" ");
 
     return (
       <div className={containerClasses}>
@@ -148,7 +148,7 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
           <div
             className={styles.errorState}
             role="img"
-            aria-label={alt || 'Failed to load image'}
+            aria-label={alt || "Failed to load image"}
           >
             <div className={styles.errorIcon} />
             <span className={styles.errorText}>Image failed to load</span>
@@ -159,5 +159,5 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
   }
 );
 
-Image.displayName = 'Image';
+Image.displayName = "Image";
 export default Image;

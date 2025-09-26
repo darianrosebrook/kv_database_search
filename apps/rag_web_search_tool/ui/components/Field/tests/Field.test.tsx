@@ -1,14 +1,25 @@
 import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { axe, toHaveNoViolations } from 'jest-axe';
+import axe from 'axe-core';
 import { FieldProvider } from '../FieldProvider';
 import { Field } from '../Field';
 import { TextInputAdapter } from '../TextInputAdapter';
 import { TextareaAdapter } from '../TextareaAdapter';
 import { CheckboxAdapter } from '../CheckboxAdapter';
 
-// Extend Jest matchers
-expect.extend(toHaveNoViolations);
+// Vitest-compatible axe matcher
+function toHaveNoViolations(results: any) {
+  const violations = results.violations;
+  if (violations.length > 0) {
+    return {
+      pass: false,
+      message: () => `Expected no accessibility violations but found: ${violations.map((v: any) => v.description).join(', ')}`
+    };
+  }
+  return { pass: true, message: () => 'Expected accessibility violations but found none' };
+}
+
+expect.extend({ toHaveNoViolations });
 
 function wrap(ui: React.ReactNode) {
   return render(ui);

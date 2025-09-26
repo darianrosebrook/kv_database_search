@@ -29,7 +29,7 @@ interface ButtonAsButton
   autoFocus?: boolean;
   tabIndex?: number;
   "data-testid"?: string;
-  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onClick?: (_event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 interface ButtonAsAnchor
@@ -42,7 +42,7 @@ interface ButtonAsAnchor
   href: string;
   tabIndex?: number;
   "data-testid"?: string;
-  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
+  onClick?: (_event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 export type ButtonProps = ButtonAsButton | ButtonAsAnchor;

@@ -4,19 +4,18 @@ import { ObsidianDatabase } from "../../src/lib/database";
 import { ObsidianEmbeddingService } from "../../src/lib/embeddings";
 import { ImageLinkExtractor } from "../../src/lib/image-link-extractor";
 import { ImagePathResolver } from "../../src/lib/image-path-resolver";
-import * as fs from "fs";
+import fs from "fs";
 
-// Mock dependencies
-vi.mock("fs", () => ({
-  default: {
+// Mock dependencies for ESM
+vi.mock("fs", async () => {
+  const actual = await vi.importActual("fs");
+  return {
+    ...actual,
     existsSync: vi.fn(),
     readdirSync: vi.fn(),
     statSync: vi.fn(),
-  },
-  existsSync: vi.fn(),
-  readdirSync: vi.fn(),
-  statSync: vi.fn(),
-}));
+  };
+});
 
 vi.mock("../../src/lib/database");
 vi.mock("../../src/lib/embeddings");

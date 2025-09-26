@@ -9,12 +9,12 @@
  *
  * @author @darianrosebrook
  */
-'use client';
-import React, { useEffect, useCallback } from 'react';
-import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { useDetails, type UseDetailsOptions } from './useDetails';
-import { useDetailsContext } from './DetailsProvider';
-import styles from './Details.module.scss';
+"use client";
+import React, { useEffect, useCallback } from "react";
+import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { useDetails, type UseDetailsOptions } from "./useDetails";
+import { useDetailsContext } from "./DetailsProvider";
+import styles from "./Details.module.scss";
 
 export interface DetailsProps extends UseDetailsOptions {
   /** The summary text displayed in the toggle button */
@@ -24,11 +24,11 @@ export interface DetailsProps extends UseDetailsOptions {
   /** Additional CSS class names */
   className?: string;
   /** Visual variant - replaces boolean props */
-  variant?: 'default' | 'inline' | 'compact';
+  variant?: "default" | "inline" | "compact";
   /** Icon configuration - replaces showIcon + iconPosition booleans */
-  icon?: 'left' | 'right' | 'none';
+  icon?: "left" | "right" | "none";
   /** Custom keyboard handler */
-  onKeyDown?: (e: React.KeyboardEvent) => void;
+  onKeyDown?: (_e: React.KeyboardEvent) => void;
 }
 
 const Details = React.forwardRef<HTMLDetailsElement, DetailsProps>(
@@ -36,9 +36,9 @@ const Details = React.forwardRef<HTMLDetailsElement, DetailsProps>(
     const {
       summary,
       children,
-      className = '',
-      variant = 'default',
-      icon = 'left',
+      className = "",
+      variant = "default",
+      icon = "left",
       onKeyDown,
       ...detailsOptions
     } = props;
@@ -79,7 +79,7 @@ const Details = React.forwardRef<HTMLDetailsElement, DetailsProps>(
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           handleToggle();
         }
@@ -99,18 +99,18 @@ const Details = React.forwardRef<HTMLDetailsElement, DetailsProps>(
         ref={ref}
         id={id}
         open={isOpen}
-        className={[styles.details, className].filter(Boolean).join(' ')}
+        className={[styles.details, className].filter(Boolean).join(" ")}
         data-variant={variant}
         data-icon={icon}
-        data-state={isOpen ? 'open' : 'closed'}
+        data-state={isOpen ? "open" : "closed"}
         data-disabled={disabled || undefined}
         {...ariaAttributes}
       >
         <summary className={styles.summary} onKeyDown={handleKeyDown}>
           <span className={styles.summaryContent}>
-            {icon === 'left' ? iconElement : null}
+            {icon === "left" ? iconElement : null}
             <span className={styles.summaryText}>{summary}</span>
-            {icon === 'right' ? iconElement : null}
+            {icon === "right" ? iconElement : null}
           </span>
         </summary>
         <div className={styles.content}>{children}</div>
@@ -119,22 +119,22 @@ const Details = React.forwardRef<HTMLDetailsElement, DetailsProps>(
   }
 );
 
-Details.displayName = 'Details';
+Details.displayName = "Details";
 
 // Slot components for composition
 export const DetailsInline = React.forwardRef<
   HTMLDetailsElement,
-  Omit<DetailsProps, 'variant'>
+  Omit<DetailsProps, "variant">
 >((props, ref) => <Details {...props} ref={ref} variant="inline" />);
-DetailsInline.displayName = 'Details.Inline';
+DetailsInline.displayName = "Details.Inline";
 
 export const DetailsCompact = React.forwardRef<
   HTMLDetailsElement,
-  Omit<DetailsProps, 'variant' | 'icon'>
+  Omit<DetailsProps, "variant" | "icon">
 >((props, ref) => (
   <Details {...props} ref={ref} variant="compact" icon="none" />
 ));
-DetailsCompact.displayName = 'Details.Compact';
+DetailsCompact.displayName = "Details.Compact";
 
 export { Details };
 export default Details;
