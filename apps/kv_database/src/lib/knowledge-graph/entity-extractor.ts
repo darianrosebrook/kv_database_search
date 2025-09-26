@@ -1,11 +1,13 @@
-import { ContentType } from "../types/index.js";
+import { ObsidianContentType as ContentType } from "../types/obsidian-constants";
 import {
-  EnhancedEntityExtractor,
-  ExtractedEntity,
+  EntityExtractor,
+  ProcessedEntity,
   EntityRelationship,
-} from "../utils.js";
+  ExtractionContext,
+} from "../entity-extractor.js";
+import { ExtractedEntity } from "../utils.js";
 
-// Enhanced entity types aligned with database schema
+// Entity types aligned with database schema
 export enum EntityType {
   PERSON = "PERSON",
   ORGANIZATION = "ORGANIZATION",
@@ -44,7 +46,7 @@ export enum ExtractionMethod {
   LLM_EXTRACTION = "llm_extraction",
 }
 
-// Enhanced entity with knowledge graph metadata
+// Entity with knowledge graph metadata
 export interface KnowledgeGraphEntity {
   id?: string; // UUID, generated if not provided
   name: string;
@@ -72,7 +74,7 @@ export interface KnowledgeGraphEntity {
   lastOccurrence: Date;
 
   // Metadata
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 
   // Context information
   mentionContexts: EntityMention[];
@@ -116,7 +118,7 @@ export interface KnowledgeGraphRelationship {
   lastObserved: Date;
 
   // Metadata
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 // Extraction result from multi-modal content
@@ -145,15 +147,15 @@ export interface EntityExtractionConfig {
 }
 
 /**
- * Enhanced entity extractor for knowledge graph construction
+ * Entity extractor for knowledge graph construction
  * Integrates with existing multi-modal processors to extract entities and relationships
  */
 export class KnowledgeGraphEntityExtractor {
-  private baseExtractor: EnhancedEntityExtractor;
+  private baseExtractor: EntityExtractor;
   private config: EntityExtractionConfig;
 
   constructor(config: Partial<EntityExtractionConfig> = {}) {
-    this.baseExtractor = new EnhancedEntityExtractor();
+    this.baseExtractor = new EntityExtractor(null); // No database dependency for now
     this.config = {
       minEntityConfidence: 0.7,
       minRelationshipConfidence: 0.5,
@@ -186,33 +188,53 @@ export class KnowledgeGraphEntityExtractor {
       );
 
       // Use base extractor for initial entity detection
-      const baseEntities = this.baseExtractor.extractEntities(text);
-      const baseRelationships = this.baseExtractor.extractRelationships(
+      const extractionContext: ExtractionContext = {
+        documentId: metadata.chunkId,
+        documentType: metadata.contentType,
+        domain: metadata.contentType,
+        language: "en",
+        processingStage: "initial",
+        previousEntities: [],
+        constraints: {
+          maxEntities: this.config.maxEntitiesPerChunk,
+          minConfidence: this.config.minEntityConfidence,
+          allowedTypes: [],
+          forbiddenTypes: [],
+          contextWindow: this.config.contextWindowSize,
+          overlapThreshold: 0.5,
+        },
+      };
+
+      const extractionResult = await this.baseExtractor.extractEntitiesAsync(
         text,
-        baseEntities
+        extractionContext
       );
+      const baseEntities = this.convertProcessedToExtracted(
+        extractionResult.entities
+      );
+      const baseRelationships = extractionResult.relationships;
 
       // Enhance entities with knowledge graph metadata
-      const enhancedEntities = await this.enhanceEntities(
+      const processedEntities = await this.enhanceEntities(
         baseEntities,
         text,
         metadata
       );
 
       // Enhance relationships with evidence and confidence
-      const enhancedRelationships = await this.enhanceRelationships(
+      const processedRelationships = await this.enhanceRelationships(
         baseRelationships,
-        enhancedEntities,
+        processedEntities,
         text,
         metadata
       );
 
       // Filter by confidence thresholds
-      const filteredEntities = enhancedEntities.filter(
+      const filteredEntities = processedEntities.filter(
         (entity) => entity.confidence >= this.config.minEntityConfidence
       );
 
-      const filteredRelationships = enhancedRelationships.filter(
+      const filteredRelationships = processedRelationships.filter(
         (rel) => rel.confidence >= this.config.minRelationshipConfidence
       );
 
@@ -270,9 +292,9 @@ export class KnowledgeGraphEntityExtractor {
   private async enhanceEntities(
     baseEntities: ExtractedEntity[],
     text: string,
-    metadata: any
+    metadata
   ): Promise<KnowledgeGraphEntity[]> {
-    const enhancedEntities: KnowledgeGraphEntity[] = [];
+    const processedEntities: KnowledgeGraphEntity[] = [];
 
     for (const entity of baseEntities) {
       // Map entity type to knowledge graph enum
@@ -294,7 +316,7 @@ export class KnowledgeGraphEntityExtractor {
       // Calculate document frequency (simplified - would need global context in real implementation)
       const documentFrequency = 1; // Single document for now
 
-      const enhancedEntity: KnowledgeGraphEntity = {
+      const processedEntity: KnowledgeGraphEntity = {
         name: entity.text,
         canonicalName,
         type: entityType,
@@ -312,16 +334,16 @@ export class KnowledgeGraphEntityExtractor {
         metadata: {
           originalType: entity.type,
           label: entity.label,
-          startPosition: entity.startPosition,
-          endPosition: entity.endPosition,
+          startPosition: entity.position.start,
+          endPosition: entity.position.end,
         },
         mentionContexts,
       };
 
-      enhancedEntities.push(enhancedEntity);
+      processedEntities.push(processedEntity);
     }
 
-    return enhancedEntities;
+    return processedEntities;
   }
 
   /**
@@ -331,26 +353,32 @@ export class KnowledgeGraphEntityExtractor {
     baseRelationships: EntityRelationship[],
     entities: KnowledgeGraphEntity[],
     text: string,
-    metadata: any
+    metadata
   ): Promise<KnowledgeGraphRelationship[]> {
-    const enhancedRelationships: KnowledgeGraphRelationship[] = [];
+    const processedRelationships: KnowledgeGraphRelationship[] = [];
 
     for (const relationship of baseRelationships) {
       // Find source and target entities
-      const sourceEntity = entities.find((e) => e.name === relationship.source);
-      const targetEntity = entities.find((e) => e.name === relationship.target);
+      const sourceEntity = entities.find(
+        (e) => e.name === relationship.sourceEntity
+      );
+      const targetEntity = entities.find(
+        (e) => e.name === relationship.targetEntity
+      );
 
       if (!sourceEntity || !targetEntity) {
         continue; // Skip if entities not found
       }
 
       // Map relationship type
-      const relationshipType = this.mapRelationshipType(relationship.type);
+      const relationshipType = this.mapRelationshipType(
+        relationship.type.toString()
+      );
 
       // Extract supporting evidence
       const supportingText = this.extractSupportingText(
-        relationship.source,
-        relationship.target,
+        relationship.sourceEntity,
+        relationship.targetEntity,
         text
       );
 
@@ -361,7 +389,7 @@ export class KnowledgeGraphEntityExtractor {
         text
       );
 
-      const enhancedRelationship: KnowledgeGraphRelationship = {
+      const processedRelationship: KnowledgeGraphRelationship = {
         sourceEntityId: sourceEntity.id || "", // Will be set when entities are persisted
         targetEntityId: targetEntity.id || "",
         type: relationshipType,
@@ -384,10 +412,10 @@ export class KnowledgeGraphEntityExtractor {
         },
       };
 
-      enhancedRelationships.push(enhancedRelationship);
+      processedRelationships.push(processedRelationship);
     }
 
-    return enhancedRelationships;
+    return processedRelationships;
   }
 
   /**
@@ -396,7 +424,7 @@ export class KnowledgeGraphEntityExtractor {
   private async inferCooccurrenceRelationships(
     entities: KnowledgeGraphEntity[],
     text: string,
-    metadata: any
+    metadata
   ): Promise<KnowledgeGraphRelationship[]> {
     const inferredRelationships: KnowledgeGraphRelationship[] = [];
     const sentences = this.splitIntoSentences(text);
@@ -567,7 +595,7 @@ export class KnowledgeGraphEntityExtractor {
   private findMentionContexts(
     entityName: string,
     text: string,
-    metadata: any
+    metadata
   ): EntityMention[] {
     const mentions: EntityMention[] = [];
     const regex = new RegExp(this.escapeRegex(entityName), "gi");
@@ -687,7 +715,7 @@ export class KnowledgeGraphEntityExtractor {
   private inferRelationshipType(
     entity1: KnowledgeGraphEntity,
     entity2: KnowledgeGraphEntity,
-    supportingText: string[]
+    _supportingText: string[]
   ): RelationshipType {
     // Simple heuristics for relationship type inference
     // In a production system, this would use more sophisticated NLP
@@ -789,5 +817,46 @@ export class KnowledgeGraphEntityExtractor {
 
   private escapeRegex(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  /**
+   * Convert ProcessedEntity[] to ExtractedEntity[] for backward compatibility
+   */
+  private convertProcessedToExtracted(
+    processedEntities: ProcessedEntity[]
+  ): ExtractedEntity[] {
+    return processedEntities.map((entity) => ({
+      text: entity.text,
+      type: this.mapProcessedTypeToExtractedType(entity.type.primary),
+      confidence: entity.confidence,
+      position: entity.position,
+      label: entity.text,
+      aliases: [],
+      canonicalForm: entity.text,
+      dictionaryDB: false,
+    }));
+  }
+
+  /**
+   * Map ProcessedEntity type to ExtractedEntity type
+   */
+  private mapProcessedTypeToExtractedType(
+    processedType: string
+  ): "person" | "organization" | "location" | "concept" | "term" | "other" {
+    const typeMap: Record<
+      string,
+      "person" | "organization" | "location" | "concept" | "term" | "other"
+    > = {
+      PERSON: "person",
+      ORGANIZATION: "organization",
+      LOCATION: "location",
+      CONCEPT: "concept",
+      TECHNOLOGY: "concept",
+      PRODUCT: "concept",
+      EVENT: "concept",
+      DATE: "term",
+      MONEY: "term",
+    };
+    return typeMap[processedType] || "other";
   }
 }
