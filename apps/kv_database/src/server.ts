@@ -28,6 +28,7 @@ import { MLEntityAPI } from "./lib/ml-entity-api";
 import { TemporalReasoningAPI } from "./lib/temporal-reasoning-api";
 import { FederatedSearchAPI } from "./lib/federated-search-api";
 import { WorkspaceAPI } from "./lib/workspace-api";
+import { GraphQueryAPI } from "./lib/graph-query-api";
 import { ChatSession } from "./types/index";
 import type {
   HealthResponse,
@@ -208,6 +209,7 @@ let mlEntityAPI: MLEntityAPI | null = null;
 let temporalReasoningAPI: TemporalReasoningAPI | null = null;
 let federatedSearchAPI: FederatedSearchAPI | null = null;
 let workspaceAPI: WorkspaceAPI | null = null;
+let graphQueryAPI: GraphQueryAPI | null = null;
 
 /**
  * Initialize all services
@@ -366,6 +368,19 @@ async function initializeServices() {
     );
     console.error("💡 Workspace management features will be limited");
     // Don't throw - workspace service can work with limited functionality
+  }
+
+  // Initialize graph query engine service
+  try {
+    graphQueryAPI = new GraphQueryAPI(database);
+    console.log("✅ Graph Query Engine service initialized");
+  } catch (error: any) {
+    console.error(
+      "❌ Graph Query Engine service initialization failed:",
+      error.message
+    );
+    console.error("💡 Graph query features will be limited");
+    // Don't throw - graph query service can work with limited functionality
   }
 
   // Initialize web search providers based on environment variables
@@ -2725,6 +2740,12 @@ if (workspaceAPI) {
   console.log("📁 Workspace Manager API routes registered");
 }
 
+// Register graph query API routes
+if (graphQueryAPI) {
+  server.register(graphQueryAPI.getRouter(), { prefix: "/graph" });
+  console.log("🕸️ Graph Query Engine API routes registered");
+}
+
 // Start server
 async function start() {
   try {
@@ -2833,12 +2854,33 @@ async function start() {
     );
     console.log(`🔍 System Health: http://${HOST}:${PORT}/federated/health`);
     console.log(`🔍 System Status: http://${HOST}:${PORT}/federated/status`);
-    console.log(`📁 Workspace Management: http://${HOST}:${PORT}/workspaces/workspaces`);
-    console.log(`📁 Data Sources: http://${HOST}:${PORT}/workspaces/:workspace/datasources`);
-    console.log(`📁 Entity Resolution: http://${HOST}:${PORT}/workspaces/:workspace/resolve/:entity`);
-    console.log(`📁 Cross-Workspace Search: http://${HOST}:${PORT}/workspaces/search`);
-    console.log(`📁 Workspace Health: http://${HOST}:${PORT}/workspaces/health`);
-    console.log(`📁 Workspace Status: http://${HOST}:${PORT}/workspaces/status`);
+    console.log(
+      `📁 Workspace Management: http://${HOST}:${PORT}/workspaces/workspaces`
+    );
+    console.log(
+      `📁 Data Sources: http://${HOST}:${PORT}/workspaces/:workspace/datasources`
+    );
+    console.log(
+      `📁 Entity Resolution: http://${HOST}:${PORT}/workspaces/:workspace/resolve/:entity`
+    );
+    console.log(
+      `📁 Cross-Workspace Search: http://${HOST}:${PORT}/workspaces/search`
+    );
+    console.log(
+      `📁 Workspace Health: http://${HOST}:${PORT}/workspaces/health`
+    );
+    console.log(
+      `📁 Workspace Status: http://${HOST}:${PORT}/workspaces/status`
+    );
+    console.log(`🕸️ Graph Query Engine: http://${HOST}:${PORT}/graph/query`);
+    console.log(`🕸️ Path Finding: http://${HOST}:${PORT}/graph/paths/find`);
+    console.log(
+      `🕸️ Pattern Analysis: http://${HOST}:${PORT}/graph/patterns/analyze`
+    );
+    console.log(`🕸️ Graph Traversal: http://${HOST}:${PORT}/graph/traverse`);
+    console.log(`🕸️ Query Optimization: http://${HOST}:${PORT}/graph/optimize`);
+    console.log(`🕸️ Graph Query Health: http://${HOST}:${PORT}/graph/health`);
+    console.log(`🕸️ Graph Query Status: http://${HOST}:${PORT}/graph/status`);
     console.log("=".repeat(60));
 
     // Log helpful setup instructions if needed

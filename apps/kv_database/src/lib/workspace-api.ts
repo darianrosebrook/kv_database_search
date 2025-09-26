@@ -46,22 +46,49 @@ export class WorkspaceAPI {
     // Workspace management endpoints
     this.router.post("/workspaces", this.handleCreateWorkspace.bind(this));
     this.router.get("/workspaces", this.handleListWorkspaces.bind(this));
-    this.router.get("/workspaces/:identifier", this.handleGetWorkspace.bind(this));
-    this.router.put("/workspaces/:identifier", this.handleUpdateWorkspace.bind(this));
-    this.router.delete("/workspaces/:identifier", this.handleDeleteWorkspace.bind(this));
+    this.router.get(
+      "/workspaces/:identifier",
+      this.handleGetWorkspace.bind(this)
+    );
+    this.router.put(
+      "/workspaces/:identifier",
+      this.handleUpdateWorkspace.bind(this)
+    );
+    this.router.delete(
+      "/workspaces/:identifier",
+      this.handleDeleteWorkspace.bind(this)
+    );
 
     // Data source management endpoints
-    this.router.post("/workspaces/:workspaceName/datasources", this.handleAddDataSource.bind(this));
-    this.router.delete("/workspaces/:workspaceName/datasources/:dataSourceId", this.handleRemoveDataSource.bind(this));
-    this.router.post("/workspaces/:workspaceName/datasources/:dataSourceId/sync", this.handleSyncDataSource.bind(this));
+    this.router.post(
+      "/workspaces/:workspaceName/datasources",
+      this.handleAddDataSource.bind(this)
+    );
+    this.router.delete(
+      "/workspaces/:workspaceName/datasources/:dataSourceId",
+      this.handleRemoveDataSource.bind(this)
+    );
+    this.router.post(
+      "/workspaces/:workspaceName/datasources/:dataSourceId/sync",
+      this.handleSyncDataSource.bind(this)
+    );
 
     // Entity mapping endpoints
-    this.router.post("/workspaces/:workspaceName/mappings", this.handleCreateEntityMapping.bind(this));
-    this.router.get("/workspaces/:workspaceName/resolve/:entityText", this.handleResolveEntity.bind(this));
+    this.router.post(
+      "/workspaces/:workspaceName/mappings",
+      this.handleCreateEntityMapping.bind(this)
+    );
+    this.router.get(
+      "/workspaces/:workspaceName/resolve/:entityText",
+      this.handleResolveEntity.bind(this)
+    );
 
     // Cross-workspace operations
     this.router.post("/search", this.handleSearchAcrossWorkspaces.bind(this));
-    this.router.get("/workspaces/:workspaceName/statistics", this.handleGetWorkspaceStatistics.bind(this));
+    this.router.get(
+      "/workspaces/:workspaceName/statistics",
+      this.handleGetWorkspaceStatistics.bind(this)
+    );
 
     // Health and monitoring endpoints
     this.router.get("/health", this.handleHealthCheck.bind(this));
@@ -85,7 +112,7 @@ export class WorkspaceAPI {
       if (!name || !description || !type || !owner) {
         res.status(400).json({
           error: "Invalid request",
-          message: "Name, description, type, and owner are required"
+          message: "Name, description, type, and owner are required",
         });
         return;
       }
@@ -103,13 +130,13 @@ export class WorkspaceAPI {
         workspace,
         message: "Workspace created successfully",
         timestamp: new Date(),
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ Create workspace failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Failed to create workspace"
+        message: "Failed to create workspace",
       });
     }
   }
@@ -141,8 +168,8 @@ export class WorkspaceAPI {
       }
 
       if (queryParams.owner) {
-        workspaces = workspaces.filter(
-          (ws) => ws.permissions.owner.includes(queryParams.owner as string)
+        workspaces = workspaces.filter((ws) =>
+          ws.permissions.owner.includes(queryParams.owner as string)
         );
       }
 
@@ -150,13 +177,13 @@ export class WorkspaceAPI {
         workspaces,
         totalCount: workspaces.length,
         timestamp: new Date(),
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ List workspaces failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Failed to list workspaces"
+        message: "Failed to list workspaces",
       });
     }
   }
@@ -174,7 +201,7 @@ export class WorkspaceAPI {
       if (!identifier) {
         res.status(400).json({
           error: "Invalid request",
-          message: "Workspace identifier is required"
+          message: "Workspace identifier is required",
         });
         return;
       }
@@ -185,20 +212,20 @@ export class WorkspaceAPI {
       if (!workspace) {
         res.status(404).json({
           error: "Workspace not found",
-          message: `Workspace '${identifier}' does not exist`
+          message: `Workspace '${identifier}' does not exist`,
         });
         return;
       }
 
       res.json({
         workspace,
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ Get workspace failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Failed to get workspace"
+        message: "Failed to get workspace",
       });
     }
   }
@@ -217,26 +244,29 @@ export class WorkspaceAPI {
       if (!identifier || !updates) {
         res.status(400).json({
           error: "Invalid request",
-          message: "Workspace identifier and updates are required"
+          message: "Workspace identifier and updates are required",
         });
         return;
       }
 
       console.log(`🔄 Updating workspace: ${identifier}`);
 
-      const workspace = await this.workspaceManager.updateWorkspace(identifier, updates);
+      const workspace = await this.workspaceManager.updateWorkspace(
+        identifier,
+        updates
+      );
 
       res.json({
         workspace,
         message: "Workspace updated successfully",
         timestamp: new Date(),
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ Update workspace failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Failed to update workspace"
+        message: "Failed to update workspace",
       });
     }
   }
@@ -254,7 +284,7 @@ export class WorkspaceAPI {
       if (!identifier) {
         res.status(400).json({
           error: "Invalid request",
-          message: "Workspace identifier is required"
+          message: "Workspace identifier is required",
         });
         return;
       }
@@ -266,13 +296,13 @@ export class WorkspaceAPI {
       res.json({
         message: "Workspace deleted successfully",
         timestamp: new Date(),
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ Delete workspace failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Failed to delete workspace"
+        message: "Failed to delete workspace",
       });
     }
   }
@@ -295,16 +325,20 @@ export class WorkspaceAPI {
       if (!dataSourceData || !dataSourceData.name || !dataSourceData.type) {
         res.status(400).json({
           error: "Invalid request",
-          message: "Data source name and type are required"
+          message: "Data source name and type are required",
         });
         return;
       }
 
-      console.log(`📝 Adding data source '${dataSourceData.name}' to workspace '${workspaceName}'`);
+      console.log(
+        `📝 Adding data source '${dataSourceData.name}' to workspace '${workspaceName}'`
+      );
 
       // Create data source object
       const dataSource: DataSource = {
-        id: `datasource_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `datasource_${Date.now()}_${Math.random()
+          .toString(36)
+          .substr(2, 9)}`,
         name: dataSourceData.name,
         type: dataSourceData.type,
         status: {
@@ -317,15 +351,30 @@ export class WorkspaceAPI {
         configuration: dataSourceData.configuration || {
           autoSync: false,
           syncInterval: 60,
-          retryPolicy: { maxRetries: 3, backoffStrategy: "exponential", baseDelay: 1000, maxDelay: 30000 },
-          rateLimits: { requestsPerSecond: 10, requestsPerMinute: 600, requestsPerHour: 36000, burstLimit: 20 },
+          retryPolicy: {
+            maxRetries: 3,
+            backoffStrategy: "exponential",
+            baseDelay: 1000,
+            maxDelay: 30000,
+          },
+          rateLimits: {
+            requestsPerSecond: 10,
+            requestsPerMinute: 600,
+            requestsPerHour: 36000,
+            burstLimit: 20,
+          },
           fieldMappings: [],
           transformationRules: [],
         },
         connection: dataSourceData.connection || {
           endpoint: "http://localhost:9200",
           authentication: { type: "none", credentials: {} },
-          connectionPool: { minConnections: 1, maxConnections: 5, idleTimeout: 30000, maxLifetime: 300000 },
+          connectionPool: {
+            minConnections: 1,
+            maxConnections: 5,
+            idleTimeout: 30000,
+            maxLifetime: 300000,
+          },
           timeout: 5000,
           keepAlive: true,
           ssl: false,
@@ -381,20 +430,23 @@ export class WorkspaceAPI {
         },
       };
 
-      const workspace = await this.workspaceManager.addDataSource(workspaceName, dataSource);
+      const workspace = await this.workspaceManager.addDataSource(
+        workspaceName,
+        dataSource
+      );
 
       res.status(201).json({
         workspace,
         dataSource,
         message: "Data source added successfully",
         timestamp: new Date(),
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ Add data source failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Failed to add data source"
+        message: "Failed to add data source",
       });
     }
   }
@@ -412,26 +464,31 @@ export class WorkspaceAPI {
       if (!workspaceName || !dataSourceId) {
         res.status(400).json({
           error: "Invalid request",
-          message: "Workspace name and data source ID are required"
+          message: "Workspace name and data source ID are required",
         });
         return;
       }
 
-      console.log(`🗑️ Removing data source '${dataSourceId}' from workspace '${workspaceName}'`);
+      console.log(
+        `🗑️ Removing data source '${dataSourceId}' from workspace '${workspaceName}'`
+      );
 
-      const workspace = await this.workspaceManager.removeDataSource(workspaceName, dataSourceId);
+      const workspace = await this.workspaceManager.removeDataSource(
+        workspaceName,
+        dataSourceId
+      );
 
       res.json({
         workspace,
         message: "Data source removed successfully",
         timestamp: new Date(),
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ Remove data source failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Failed to remove data source"
+        message: "Failed to remove data source",
       });
     }
   }
@@ -449,26 +506,31 @@ export class WorkspaceAPI {
       if (!workspaceName || !dataSourceId) {
         res.status(400).json({
           error: "Invalid request",
-          message: "Workspace name and data source ID are required"
+          message: "Workspace name and data source ID are required",
         });
         return;
       }
 
-      console.log(`🔄 Syncing data source '${dataSourceId}' in workspace '${workspaceName}'`);
+      console.log(
+        `🔄 Syncing data source '${dataSourceId}' in workspace '${workspaceName}'`
+      );
 
-      const syncResult = await this.workspaceManager.syncDataSource(workspaceName, dataSourceId);
+      const syncResult = await this.workspaceManager.syncDataSource(
+        workspaceName,
+        dataSourceId
+      );
 
       res.json({
         syncResult,
         message: "Data source sync completed",
         timestamp: new Date(),
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ Sync data source failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Failed to sync data source"
+        message: "Failed to sync data source",
       });
     }
   }
@@ -488,10 +550,14 @@ export class WorkspaceAPI {
       const { workspaceName } = req.params;
       const mappingData = req.body;
 
-      if (!mappingData || !mappingData.workspaceEntity || !mappingData.dataSource) {
+      if (
+        !mappingData ||
+        !mappingData.workspaceEntity ||
+        !mappingData.dataSource
+      ) {
         res.status(400).json({
           error: "Invalid request",
-          message: "Workspace entity and data source are required"
+          message: "Workspace entity and data source are required",
         });
         return;
       }
@@ -517,20 +583,23 @@ export class WorkspaceAPI {
         },
       };
 
-      const workspace = await this.workspaceManager.createEntityMapping(workspaceName, mapping);
+      const workspace = await this.workspaceManager.createEntityMapping(
+        workspaceName,
+        mapping
+      );
 
       res.status(201).json({
         workspace,
         mapping,
         message: "Entity mapping created successfully",
         timestamp: new Date(),
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ Create entity mapping failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Failed to create entity mapping"
+        message: "Failed to create entity mapping",
       });
     }
   }
@@ -548,26 +617,31 @@ export class WorkspaceAPI {
       if (!workspaceName || !entityText) {
         res.status(400).json({
           error: "Invalid request",
-          message: "Workspace name and entity text are required"
+          message: "Workspace name and entity text are required",
         });
         return;
       }
 
-      console.log(`🔍 Resolving entity '${entityText}' in workspace '${workspaceName}'`);
+      console.log(
+        `🔍 Resolving entity '${entityText}' in workspace '${workspaceName}'`
+      );
 
-      const resolution = await this.workspaceManager.resolveEntities(workspaceName, entityText);
+      const resolution = await this.workspaceManager.resolveEntities(
+        workspaceName,
+        entityText
+      );
 
       res.json({
         resolution,
         message: "Entity resolution completed",
         timestamp: new Date(),
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ Resolve entity failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Failed to resolve entity"
+        message: "Failed to resolve entity",
       });
     }
   }
@@ -589,7 +663,7 @@ export class WorkspaceAPI {
       if (!query || !workspaceNames || !Array.isArray(workspaceNames)) {
         res.status(400).json({
           error: "Invalid request",
-          message: "Query and workspace names array are required"
+          message: "Query and workspace names array are required",
         });
         return;
       }
@@ -598,19 +672,22 @@ export class WorkspaceAPI {
         `🔍 Searching across ${workspaceNames.length} workspaces: ${query}`
       );
 
-      const results = await this.workspaceManager.searchAcrossWorkspaces(query, workspaceNames);
+      const results = await this.workspaceManager.searchAcrossWorkspaces(
+        query,
+        workspaceNames
+      );
 
       res.json({
         results,
         message: "Cross-workspace search completed",
         timestamp: new Date(),
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ Cross-workspace search failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Cross-workspace search failed"
+        message: "Cross-workspace search failed",
       });
     }
   }
@@ -628,26 +705,28 @@ export class WorkspaceAPI {
       if (!workspaceName) {
         res.status(400).json({
           error: "Invalid request",
-          message: "Workspace name is required"
+          message: "Workspace name is required",
         });
         return;
       }
 
       console.log(`📊 Getting statistics for workspace: ${workspaceName}`);
 
-      const statistics = await this.workspaceManager.getWorkspaceStatistics(workspaceName);
+      const statistics = await this.workspaceManager.getWorkspaceStatistics(
+        workspaceName
+      );
 
       res.json({
         workspaceName,
         statistics,
         timestamp: new Date(),
-        requestId: req.headers["x-request-id"] || "unknown"
+        requestId: req.headers["x-request-id"] || "unknown",
       });
     } catch (error) {
       console.error("❌ Get workspace statistics failed:", error);
       res.status(500).json({
         error: "Internal server error",
-        message: "Failed to get workspace statistics"
+        message: "Failed to get workspace statistics",
       });
     }
   }
@@ -724,15 +803,32 @@ export class WorkspaceAPI {
         ],
         statistics: {
           totalWorkspaces: workspaces.length,
-          activeWorkspaces: workspaces.filter((ws) => ws.status.current === "active").length,
-          totalDataSources: workspaces.reduce((sum, ws) => sum + ws.dataSources.length, 0),
-          activeDataSources: workspaces.reduce(
-            (sum, ws) => sum + ws.dataSources.filter((ds) => ds.status.current === "active").length,
+          activeWorkspaces: workspaces.filter(
+            (ws) => ws.status.current === "active"
+          ).length,
+          totalDataSources: workspaces.reduce(
+            (sum, ws) => sum + ws.dataSources.length,
             0
           ),
-          totalEntities: workspaces.reduce((sum, ws) => sum + ws.statistics.totalEntities, 0),
-          totalRelationships: workspaces.reduce((sum, ws) => sum + ws.statistics.totalRelationships, 0),
-          totalSize: workspaces.reduce((sum, ws) => sum + ws.statistics.totalSize, 0),
+          activeDataSources: workspaces.reduce(
+            (sum, ws) =>
+              sum +
+              ws.dataSources.filter((ds) => ds.status.current === "active")
+                .length,
+            0
+          ),
+          totalEntities: workspaces.reduce(
+            (sum, ws) => sum + ws.statistics.totalEntities,
+            0
+          ),
+          totalRelationships: workspaces.reduce(
+            (sum, ws) => sum + ws.statistics.totalRelationships,
+            0
+          ),
+          totalSize: workspaces.reduce(
+            (sum, ws) => sum + ws.statistics.totalSize,
+            0
+          ),
         },
         configuration: {
           maxWorkspaces: 100,

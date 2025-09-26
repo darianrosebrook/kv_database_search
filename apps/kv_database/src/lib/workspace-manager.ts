@@ -133,7 +133,14 @@ export interface DataSource {
 }
 
 export interface DataSourceType {
-  category: "database" | "file_system" | "api" | "web" | "document" | "stream" | "custom";
+  category:
+    | "database"
+    | "file_system"
+    | "api"
+    | "web"
+    | "document"
+    | "stream"
+    | "custom";
   subtype: string;
   format: string;
   protocol: string;
@@ -457,7 +464,10 @@ export class WorkspaceManager {
 
     // Archive data sources first
     for (const dataSource of workspace.dataSources) {
-      await this.dataSourceRegistry.removeDataSource(workspace.id, dataSource.id);
+      await this.dataSourceRegistry.removeDataSource(
+        workspace.id,
+        dataSource.id
+      );
     }
 
     // Remove from memory
@@ -572,7 +582,9 @@ export class WorkspaceManager {
       throw new Error(`Workspace '${workspaceName}' not found`);
     }
 
-    const dataSource = workspace.dataSources.find((ds) => ds.id === dataSourceId);
+    const dataSource = workspace.dataSources.find(
+      (ds) => ds.id === dataSourceId
+    );
     if (!dataSource) {
       throw new Error(`Data source '${dataSourceId}' not found`);
     }
@@ -652,7 +664,9 @@ export class WorkspaceManager {
       workspaceNames.map((name) => this.getWorkspace(name))
     );
 
-    const activeWorkspaces = workspaces.filter((ws) => ws && ws.status.current === "active");
+    const activeWorkspaces = workspaces.filter(
+      (ws) => ws && ws.status.current === "active"
+    );
 
     if (activeWorkspaces.length === 0) {
       throw new Error("No active workspaces found");
@@ -673,7 +687,9 @@ export class WorkspaceManager {
   /**
    * Get workspace statistics
    */
-  async getWorkspaceStatistics(workspaceName: string): Promise<WorkspaceStatistics> {
+  async getWorkspaceStatistics(
+    workspaceName: string
+  ): Promise<WorkspaceStatistics> {
     const workspace = await this.getWorkspace(workspaceName);
     if (!workspace) {
       throw new Error(`Workspace '${workspaceName}' not found`);
@@ -753,7 +769,9 @@ export class WorkspaceManager {
       (m) => m.workspaceEntity === mapping.workspaceEntity
     );
     if (workspaceEntity) {
-      throw new Error(`Workspace entity '${mapping.workspaceEntity}' already mapped`);
+      throw new Error(
+        `Workspace entity '${mapping.workspaceEntity}' already mapped`
+      );
     }
 
     // Validate that data source exists
@@ -761,11 +779,15 @@ export class WorkspaceManager {
       (ds) => ds.id === mapping.dataSource
     );
     if (!dataSource) {
-      throw new Error(`Data source '${mapping.dataSource}' not found in workspace`);
+      throw new Error(
+        `Data source '${mapping.dataSource}' not found in workspace`
+      );
     }
   }
 
-  private async updateWorkspaceStatistics(workspace: Workspace): Promise<WorkspaceStatistics> {
+  private async updateWorkspaceStatistics(
+    workspace: Workspace
+  ): Promise<WorkspaceStatistics> {
     const stats = { ...workspace.statistics };
 
     // Aggregate from data sources
@@ -807,11 +829,17 @@ export class WorkspaceManager {
 class DataSourceRegistry {
   constructor(private database: any) {}
 
-  async registerDataSource(workspaceId: string, dataSource: DataSource): Promise<void> {
+  async registerDataSource(
+    workspaceId: string,
+    dataSource: DataSource
+  ): Promise<void> {
     console.log(`📝 Registering data source: ${dataSource.name}`);
   }
 
-  async removeDataSource(workspaceId: string, dataSourceId: string): Promise<void> {
+  async removeDataSource(
+    workspaceId: string,
+    dataSourceId: string
+  ): Promise<void> {
     console.log(`🗑️ Removing data source: ${dataSourceId}`);
   }
 
@@ -881,7 +909,10 @@ class QueryFederator {
       suggestions: [],
       performance: {
         totalTime: 500,
-        workspaceTimes: workspaces.reduce((acc, ws) => ({ ...acc, [ws.name]: 100 }), {}),
+        workspaceTimes: workspaces.reduce(
+          (acc, ws) => ({ ...acc, [ws.name]: 100 }),
+          {}
+        ),
       },
     };
   }
