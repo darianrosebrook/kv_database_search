@@ -191,8 +191,8 @@ export class ComprehensiveSearchService {
         case "basic":
           response = await this.basicSearch(query);
           break;
-        case "enhanced":
-          response = await this.enhancedSearch_(query);
+        case "advanced":
+          response = await this.advancedSearch_(query);
           break;
         case "graph":
           response = await this.graphSearch(query);
@@ -260,9 +260,9 @@ export class ComprehensiveSearchService {
   }
 
   /**
-   * Enhanced semantic search
+   * Advanced semantic search
    */
-  private async enhancedSearch_(
+  private async advancedSearch_(
     query: ComprehensiveSearchQuery
   ): Promise<ComprehensiveSearchResponse> {
     const timeBreakdown = {
@@ -274,8 +274,8 @@ export class ComprehensiveSearchService {
       reranking: 0,
     };
 
-    // Build enhanced query
-    const enhancedQuery: EnhancedSearchQuery = {
+    // Build advanced query
+    const advancedQuery: SearchQuery = {
       text: query.text,
       strategy: "hybrid",
       expansion: {
@@ -287,11 +287,11 @@ export class ComprehensiveSearchService {
     };
 
     const start = Date.now();
-    const enhancedResults = await this.enhancedSearch.search(enhancedQuery);
+    const advancedResults = await this.advancedSearch.search(advancedQuery);
     timeBreakdown.vectorSearch = Date.now() - start;
 
     // Convert to standard format
-    const results = enhancedResults.map(this.convertEnhancedToStandard);
+    const results = enhancedResults.map(this.convertAdvancedToStandard);
 
     return {
       results,
@@ -327,7 +327,7 @@ export class ComprehensiveSearchService {
     };
 
     // Build graph-focused query
-    const enhancedQuery: EnhancedSearchQuery = {
+    const advancedQuery: SearchQuery = {
       text: query.text,
       strategy: "graph",
       expansion: {
@@ -346,10 +346,10 @@ export class ComprehensiveSearchService {
     };
 
     const start = Date.now();
-    const enhancedResults = await this.enhancedSearch.search(enhancedQuery);
+    const advancedResults = await this.advancedSearch.search(advancedQuery);
     timeBreakdown.graphSearch = Date.now() - start;
 
-    const results = enhancedResults.map(this.convertEnhancedToStandard);
+    const results = enhancedResults.map(this.convertAdvancedToStandard);
 
     // Generate comprehensive knowledge insights
     const knowledgeInsights = await this.generateKnowledgeInsights(
@@ -391,7 +391,7 @@ export class ComprehensiveSearchService {
     };
 
     // Build multi-modal query
-    const enhancedQuery: EnhancedSearchQuery = {
+    const advancedQuery: SearchQuery = {
       text: query.text,
       strategy: "multi_modal",
       expansion: {
@@ -411,10 +411,10 @@ export class ComprehensiveSearchService {
     };
 
     const start = Date.now();
-    const enhancedResults = await this.enhancedSearch.search(enhancedQuery);
+    const advancedResults = await this.advancedSearch.search(advancedQuery);
     timeBreakdown.multiModalSearch = Date.now() - start;
 
-    const results = enhancedResults.map(this.convertEnhancedToStandard);
+    const results = enhancedResults.map(this.convertAdvancedToStandard);
 
     // Generate multi-modal analysis
     const multiModalAnalysis = this.generateMultiModalAnalysis(enhancedResults);
@@ -459,7 +459,7 @@ export class ComprehensiveSearchService {
     timeBreakdown.queryAnalysis = Date.now() - queryAnalysisStart;
 
     // Build comprehensive query
-    const enhancedQuery: EnhancedSearchQuery = {
+    const advancedQuery: SearchQuery = {
       text: query.text,
       strategy: "comprehensive",
       expansion: {
@@ -505,7 +505,7 @@ export class ComprehensiveSearchService {
 
     // Execute enhanced search
     const searchStart = Date.now();
-    const enhancedResults = await this.enhancedSearch.search(enhancedQuery);
+    const advancedResults = await this.advancedSearch.search(advancedQuery);
     const searchTime = Date.now() - searchStart;
 
     // Distribute search time across components (estimated)
@@ -515,7 +515,7 @@ export class ComprehensiveSearchService {
     timeBreakdown.resultFusion = searchTime * 0.1;
     timeBreakdown.reranking = searchTime * 0.1;
 
-    const results = enhancedResults.map(this.convertEnhancedToStandard);
+    const results = enhancedResults.map(this.convertAdvancedToStandard);
 
     // Generate all insights
     const knowledgeInsights = await this.generateKnowledgeInsights(
@@ -550,9 +550,9 @@ export class ComprehensiveSearchService {
     return `${query.mode}:${query.text}:${JSON.stringify(query.options)}`;
   }
 
-  private convertEnhancedToStandard(enhanced: EnhancedSearchResult): any {
+  private convertAdvancedToStandard(advanced: SearchResult): any {
     return {
-      ...enhanced,
+      ...advanced,
       // Maintain compatibility with existing result format
     };
   }
@@ -583,7 +583,7 @@ export class ComprehensiveSearchService {
     };
   }
 
-  private generateBasicGraphInsights(results: EnhancedSearchResult[]) {
+  private generateBasicGraphInsights(results: SearchResult[]) {
     // Basic graph insights
     const entities = new Map<string, number>();
     const relationships = new Map<string, number>();
@@ -613,7 +613,7 @@ export class ComprehensiveSearchService {
     };
   }
 
-  private generateAdvancedGraphInsights(results: EnhancedSearchResult[]) {
+  private generateAdvancedGraphInsights(results: SearchResult[]) {
     const basicInsights = this.generateBasicGraphInsights(results);
 
     // Add centrality analysis
@@ -649,7 +649,7 @@ export class ComprehensiveSearchService {
     };
   }
 
-  private async generateKnowledgeInsights(results: EnhancedSearchResult[]) {
+  private async generateKnowledgeInsights(results: SearchResult[]) {
     // Extract key entities across all results
     const entityFrequency = new Map<
       string,
@@ -718,7 +718,7 @@ export class ComprehensiveSearchService {
     };
   }
 
-  private generateContentClusters(results: EnhancedSearchResult[]) {
+  private generateContentClusters(results: SearchResult[]) {
     // Simplified clustering based on shared entities
     const clusters: Array<{
       id: string;
