@@ -24,6 +24,7 @@ import {
   ObsidianSearchResult,
   // ObsidianSearchResponse, // Not used
   ContentType,
+  Wikilink,
 } from "../types/index";
 
 // Search interfaces

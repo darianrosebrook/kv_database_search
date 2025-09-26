@@ -314,7 +314,7 @@ export class DictionaryAPI {
     res: express.Response
   ): Promise<void> {
     try {
-      const { terms, relationshipTypes } = req.query;
+      const { terms } = req.query;
 
       if (!terms) {
         res.status(400).json({

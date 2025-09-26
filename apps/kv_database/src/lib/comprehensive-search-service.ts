@@ -291,13 +291,13 @@ export class ComprehensiveSearchService {
     timeBreakdown.vectorSearch = Date.now() - start;
 
     // Convert to standard format
-    const results = enhancedResults.map(this.convertAdvancedToStandard);
+    const results = advancedResults.map(this.convertAdvancedToStandard);
 
     return {
       results,
-      enhancedResults,
+      advancedResults,
       facets: await this.generateBasicFacets(results),
-      graphInsights: this.generateBasicGraphInsights(enhancedResults),
+      graphInsights: this.generateBasicGraphInsights(advancedResults),
       analytics: {
         totalTime: 0,
         timeBreakdown,
@@ -349,18 +349,18 @@ export class ComprehensiveSearchService {
     const advancedResults = await this.advancedSearch.search(advancedQuery);
     timeBreakdown.graphSearch = Date.now() - start;
 
-    const results = enhancedResults.map(this.convertAdvancedToStandard);
+    const results = advancedResults.map(this.convertAdvancedToStandard);
 
     // Generate comprehensive knowledge insights
     const knowledgeInsights = await this.generateKnowledgeInsights(
-      enhancedResults
+      advancedResults
     );
 
     return {
       results,
-      enhancedResults,
+      advancedResults,
       facets: await this.generateBasicFacets(results),
-      graphInsights: this.generateAdvancedGraphInsights(enhancedResults),
+      graphInsights: this.generateAdvancedGraphInsights(advancedResults),
       knowledgeInsights,
       analytics: {
         totalTime: 0,
@@ -414,16 +414,16 @@ export class ComprehensiveSearchService {
     const advancedResults = await this.advancedSearch.search(advancedQuery);
     timeBreakdown.multiModalSearch = Date.now() - start;
 
-    const results = enhancedResults.map(this.convertAdvancedToStandard);
+    const results = advancedResults.map(this.convertAdvancedToStandard);
 
     // Generate multi-modal analysis
-    const multiModalAnalysis = this.generateMultiModalAnalysis(enhancedResults);
+    const multiModalAnalysis = this.generateMultiModalAnalysis(advancedResults);
 
     return {
       results,
-      enhancedResults,
+      advancedResults,
       facets: await this.generateBasicFacets(results),
-      graphInsights: this.generateBasicGraphInsights(enhancedResults),
+      graphInsights: this.generateBasicGraphInsights(advancedResults),
       multiModalAnalysis,
       analytics: {
         totalTime: 0,
@@ -503,7 +503,7 @@ export class ComprehensiveSearchService {
       },
     };
 
-    // Execute enhanced search
+    // Execute advanced search
     const searchStart = Date.now();
     const advancedResults = await this.advancedSearch.search(advancedQuery);
     const searchTime = Date.now() - searchStart;
@@ -515,19 +515,19 @@ export class ComprehensiveSearchService {
     timeBreakdown.resultFusion = searchTime * 0.1;
     timeBreakdown.reranking = searchTime * 0.1;
 
-    const results = enhancedResults.map(this.convertAdvancedToStandard);
+    const results = advancedResults.map(this.convertAdvancedToStandard);
 
     // Generate all insights
     const knowledgeInsights = await this.generateKnowledgeInsights(
-      enhancedResults
+      advancedResults
     );
-    const multiModalAnalysis = this.generateMultiModalAnalysis(enhancedResults);
+    const multiModalAnalysis = this.generateMultiModalAnalysis(advancedResults);
 
     return {
       results,
-      enhancedResults,
+      advancedResults,
       facets: await this.generateBasicFacets(results),
-      graphInsights: this.generateAdvancedGraphInsights(enhancedResults),
+      graphInsights: this.generateAdvancedGraphInsights(advancedResults),
       knowledgeInsights,
       multiModalAnalysis,
       queryAnalysis,
@@ -761,7 +761,7 @@ export class ComprehensiveSearchService {
     return clusters;
   }
 
-  private generateMultiModalAnalysis(results: EnhancedSearchResult[]) {
+  private generateMultiModalAnalysis(results: SearchResult[]) {
     const contentDistribution: { [contentType: string]: number } = {};
     const qualityDistribution = { high: 0, medium: 0, low: 0 };
     let totalCorrelations = 0;

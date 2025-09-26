@@ -41,6 +41,7 @@ const initialState: AppState = {
   // UI state
   showTestMode: false,
   showChatHistory: false,
+  showMultiModalInterface: false,
   selectedModel: "llama3.1",
   currentSession: null,
 
@@ -149,6 +150,10 @@ export function useAppState() {
 
   const setShowChatHistory = useCallback((showChatHistory: boolean) => {
     setState((prev) => ({ ...prev, showChatHistory }));
+  }, []);
+
+  const setShowMultiModalInterface = useCallback((showMultiModalInterface: boolean) => {
+    setState((prev) => ({ ...prev, showMultiModalInterface }));
   }, []);
 
   const setSelectedModel = useCallback((selectedModel: string) => {
@@ -318,6 +323,7 @@ export function useAppState() {
     setSuggestedActions,
     setShowTestMode,
     setShowChatHistory,
+    setShowMultiModalInterface,
     setSelectedModel,
     setCurrentSession,
     setUseGraphRag,

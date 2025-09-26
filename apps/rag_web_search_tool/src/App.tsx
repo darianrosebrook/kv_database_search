@@ -10,6 +10,7 @@ import ResultCard from "../ui/components/ResultCard";
 import ModelSelector from "../ui/components/ModelSelector";
 import ChatHistory from "../ui/components/ChatHistory";
 import { TestIntegration } from "./test-integration";
+import MultiModalInterface from "./components/MultiModalInterface";
 
 // Hooks and Services
 import { useAppState } from "./hooks/useAppState";
@@ -51,6 +52,9 @@ export default function App() {
     reasoningResults,
     allEntities,
 
+    // Multi-modal state
+    showMultiModalInterface,
+
     // Computed values
     currentResults,
     currentMessages,
@@ -80,6 +84,7 @@ export default function App() {
     removeFromContext,
     clearContext,
     resetChat,
+    setShowMultiModalInterface,
   } = useAppState();
 
   // ============================================================================
@@ -346,6 +351,12 @@ export default function App() {
     resetChat();
   };
 
+  const handleMultiModalProcessingComplete = (result: any) => {
+    // Add the processed content to the current search results
+    console.log("Multi-modal processing completed:", result);
+    // You could add this to the knowledge base or trigger a new search
+  };
+
   // ============================================================================
   // RENDER
   // ============================================================================
@@ -384,6 +395,38 @@ export default function App() {
             </span>
           )}
         </div>
+      </div>
+
+      {/* Multi-Modal Interface Toggle */}
+      <div className="fixed top-4 left-4 z-50 flex flex-col gap-2">
+        <div className="flex items-center gap-2 bg-background/95 backdrop-blur-sm border border-border rounded-lg px-3 py-2">
+          <label
+            htmlFor="graphRagToggle"
+            className="text-sm font-medium text-foreground"
+          >
+            Knowledge Graph
+          </label>
+          <input
+            id="graphRagToggle"
+            type="checkbox"
+            checked={useGraphRag}
+            onChange={(e) => toggleGraphRag()}
+            className="rounded"
+          />
+          {useGraphRag && (
+            <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+              🧠 Advanced
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => setShowMultiModalInterface(true)}
+          className="flex items-center gap-2 bg-background/95 backdrop-blur-sm border border-border rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+          title="Multi-Modal Processing - Upload and process various file types"
+        >
+          <span>📁</span>
+          <span>Multi-Modal</span>
+        </button>
       </div>
 
       {/* Chat History Sidebar */}
@@ -550,6 +593,13 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Multi-Modal Interface */}
+      <MultiModalInterface
+        isOpen={showMultiModalInterface}
+        onClose={() => setShowMultiModalInterface(false)}
+        onProcessingComplete={handleMultiModalProcessingComplete}
+      />
     </div>
   );
 }
