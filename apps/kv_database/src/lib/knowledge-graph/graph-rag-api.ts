@@ -18,7 +18,7 @@ import {
   ResultRankingEngine,
   type RankedSearchResult,
 } from "./result-ranking.js";
-import { KnowledgeGraphManager } from "./knowledge-graph-manager.js";
+import { KnowledgeGraph } from "./knowledge-graph-manager.js";
 
 // API Request/Response Types following OpenAPI contract
 export interface SearchRequest {
@@ -324,7 +324,7 @@ export class GraphRAGAPIRouter {
   private searchEngine: HybridSearchEngine;
   private reasoningEngine: MultiHopReasoningEngine;
   private rankingEngine: ResultRankingEngine;
-  private graphManager: KnowledgeGraphManager;
+  private graphManager: KnowledgeGraph;
 
   constructor(
     pool: Pool,
@@ -341,7 +341,7 @@ export class GraphRAGAPIRouter {
     this.searchEngine = new HybridSearchEngine(pool, embeddings);
     this.reasoningEngine = new MultiHopReasoningEngine(pool);
     this.rankingEngine = new ResultRankingEngine(pool);
-    this.graphManager = new KnowledgeGraphManager(pool, embeddings);
+    this.graphManager = new KnowledgeGraph(pool, embeddings);
 
     // Setup middleware
     this.setupMiddleware();

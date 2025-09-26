@@ -1,0 +1,99 @@
+id: DICT-2025
+title: "Dictionary Data Integration for Entity Enhancement"
+risk_tier: 2
+scope:
+  in:
+    - "WordNet integration for semantic relationships and synsets"
+    - "Wiktionary integration for multilingual definitions and etymology"
+    - "OpenThesaurus integration for synonym expansion"
+    - "FreeDict integration for bilingual dictionaries"
+    - "Entity canonicalization using dictionary data"
+    - "Semantic relationship detection (hypernymy, hyponymy, meronymy)"
+    - "Multi-language support for dictionary lookups (100+ languages)"
+    - "Dictionary data caching and performance optimization"
+    - "Real-time dictionary lookup during entity processing"
+  out:
+    - "Custom dictionary creation or training"
+    - "Proprietary dictionary data licensing"
+    - "Advanced linguistic analysis beyond lexical relationships"
+    - "Dictionary data maintenance and updates (handled by external sources)"
+    - "Deep linguistic parsing and syntax analysis"
+invariants:
+  - "Entity canonicalization maintains ≥90% accuracy across supported languages"
+  - "Dictionary lookup response time ≤200ms for cached entries"
+  - "Semantic relationship detection accuracy ≥85% for WordNet relationships"
+  - "Synonym expansion covers ≥80% of common terms in target domains"
+  - "Multi-language support maintains consistent API across all languages"
+  - "Dictionary data corruption detection accuracy ≥99%"
+  - "Cache hit ratio ≥90% for repeated lookups"
+acceptance:
+  - id: A1
+    given: "entities with ambiguous names (e.g., 'Apple', 'Java')"
+    when: "dictionary canonicalization processes entities with context"
+    then: "correctly resolves to canonical forms with ≥90% accuracy using context clues"
+  - id: A2
+    given: "search query with limited recall"
+    when: "dictionary expansion adds synonyms and related terms"
+    then: "improves search recall by ≥40% while maintaining precision ≥80%"
+  - id: A3
+    given: "multilingual content in supported languages"
+    when: "dictionary lookup processes terms in native language"
+    then: "provides accurate definitions and relationships with ≥85% accuracy"
+  - id: A4
+    given: "knowledge graph entities needing semantic relationships"
+    when: "dictionary integration adds WordNet relationships"
+    then: "enhances entity graph with hypernyms, hyponyms, and meronyms with ≥85% accuracy"
+  - id: A5
+    given: "high-frequency entity processing load"
+    when: "dictionary service handles concurrent requests"
+    then: "maintains ≤200ms response time with ≥99% availability"
+  - id: A6
+    given: "dictionary data corruption or missing entries"
+    when: "validation and fallback mechanisms activate"
+    then: "gracefully handles errors with informative messages and alternative suggestions"
+non_functional:
+  a11y:
+    - "Dictionary API responses include clear error messages for accessibility"
+    - "Multi-language support respects user's language preferences"
+    - "Processing status accessible through monitoring interfaces"
+  perf:
+    api_p95_ms: 200
+  security:
+    - "Dictionary data access controls prevent unauthorized data extraction"
+    - "No storage of sensitive dictionary content in plain text"
+    - "Rate limiting prevents dictionary data abuse"
+    - "Input validation prevents malicious dictionary queries"
+contracts:
+  - type: openapi
+    path: "apps/contracts/dictionary-service-api.yaml"
+  - type: graphql
+    path: "apps/contracts/knowledge-graph-schema.graphql#/DictionaryIntegration"
+observability:
+  logs:
+    - "dictionary.lookup.started with terms, sources, language"
+    - "dictionary.canonicalization.completed with original, canonical, confidence"
+    - "dictionary.relationship.detected with source_entity, target_entity, relationship_type"
+    - "dictionary.expansion.applied with original_terms, expanded_terms, expansion_count"
+    - "dictionary.cache.hit with cache_key, response_time"
+  metrics:
+    - "dictionary_lookup_latency_histogram"
+    - "dictionary_canonicalization_accuracy_gauge"
+    - "dictionary_cache_hit_ratio_gauge"
+    - "dictionary_relationship_detection_rate_counter"
+    - "dictionary_multilingual_coverage_gauge"
+  traces:
+    - "DictionaryLookup span with source, language, result_count"
+    - "EntityCanonicalization span with entity_count, processing_time, accuracy_score"
+    - "SemanticRelationshipDetection span with relationship_types, confidence_threshold"
+migrations:
+  - "Add dictionary_sources table for tracking available dictionary services"
+  - "Add dictionary_cache table for storing cached lookup results"
+  - "Add entity_dictionary_metadata table for canonicalization tracking"
+  - "Add semantic_relationships_cache table for relationship data"
+  - "Extend knowledge_graph_entities with dictionary_enhanced flag"
+rollback:
+  - "Feature flag DICTIONARY_INTEGRATION_ENABLED=false"
+  - "Fallback to basic entity processing without dictionary enhancement"
+  - "Dictionary cache tables can be safely dropped"
+  - "Entity metadata preserved during rollback"
+  - "Search functionality remains operational without expansion"

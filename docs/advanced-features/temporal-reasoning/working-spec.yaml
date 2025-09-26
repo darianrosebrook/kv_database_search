@@ -1,4 +1,4 @@
-id: TEMP-RSN-001
+id: TEMP-001
 title: "Temporal Reasoning and Causality Detection System"
 risk_tier: 2
 scope:
@@ -56,9 +56,6 @@ non_functional:
     - "High contrast temporal trend indicators"
   perf:
     api_p95_ms: 500
-    temporal_query_throughput: 100 # queries per minute
-    storage_growth_factor: 3.0
-    change_detection_latency_ms: 1000
   security:
     - "Temporal data access controls preserve privacy"
     - "Historical data immutability and audit trails"

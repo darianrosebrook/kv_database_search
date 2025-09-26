@@ -1,11 +1,12 @@
-// Refactored App.tsx - Using new centralized architecture
-// Reduced from 1,098 lines to ~400 lines with improved maintainability
+// Refactored App.tsx - Using unified chat service architecture
+// Simplified and maintainable with clean separation of concerns
 
 import React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { SearchInput } from "../ui/components/SearchInput";
-import { UnifiedChatInterface } from "./components/shared/UnifiedChatInterface";
-import { UnifiedResultsPanel } from "./components/shared/UnifiedResultsPanel";
+import { ChatInterface } from "./components/shared/ChatInterface";
+import { ResultsPanel } from "./components/shared/ResultsPanel";
+import ResultCard from "../ui/components/ResultCard";
 import ModelSelector from "../ui/components/ModelSelector";
 import ChatHistory from "../ui/components/ChatHistory";
 import { TestIntegration } from "./test-integration";
@@ -49,7 +50,7 @@ export default function App() {
     selectedGraphRagResult,
     reasoningResults,
     allEntities,
-    
+
     // Computed values
     currentResults,
     currentMessages,
@@ -57,7 +58,7 @@ export default function App() {
     hasContext,
     hasEntities,
     hasReasoning,
-    
+
     // Actions
     setQuery,
     setIsLoading,
@@ -115,7 +116,10 @@ export default function App() {
   // CHAT HANDLERS
   // ============================================================================
 
-  const handleSendMessage = async (message: string, options?: SearchOptions) => {
+  const handleSendMessage = async (
+    message: string,
+    options?: SearchOptions
+  ) => {
     const newMessage: EnhancedMessage = {
       id: Date.now().toString(),
       type: "user",
@@ -141,7 +145,9 @@ export default function App() {
         timestamp: new Date(),
         entities: chatResponse.entities,
         reasoning: chatResponse.reasoningResults,
-        searchCount: chatResponse.searchResults?.length,
+        searchCount:
+          (chatResponse.searchResults?.length || 0) +
+          (chatResponse.graphRagResults?.length || 0),
         confidence: chatResponse.explanation?.confidenceScore,
       };
 
@@ -185,7 +191,9 @@ export default function App() {
     }, 100);
   };
 
-  const handleExploreRelationship = async (relationship: GraphRagRelationship) => {
+  const handleExploreRelationship = async (
+    relationship: GraphRagRelationship
+  ) => {
     console.log("🔗 Exploring relationship:", relationship.type);
     if (relationship.sourceNode && relationship.targetNode) {
       setQuery(
@@ -207,22 +215,30 @@ export default function App() {
 
     try {
       setIsLoading(true);
-      const reasoningResult = await searchService.findRelationships(entities);
-      
-      if (reasoningResult) {
+      const chatResponse = await searchService.chat(
+        `How are ${entities.map((e) => e.name).join(" and ")} related?`,
+        {
+          useGraphRag: true,
+          context: chatContext,
+          model: selectedModel,
+          searchOptions: {
+            enableReasoning: true,
+          },
+        }
+      );
+
+      if (chatResponse.reasoningResults) {
         const reasoningMessage: EnhancedMessage = {
           id: Date.now().toString(),
           type: "assistant",
-          content: `I found ${
-            reasoningResult.paths.length
-          } reasoning paths connecting ${entities
-            .map((e) => e.name)
-            .join(" and ")}. ${reasoningResult.explanation}`,
+          content: chatResponse.response,
           timestamp: new Date(),
           entities: entities,
-          reasoning: reasoningResult,
+          reasoning: chatResponse.reasoningResults,
         };
         addMessage(reasoningMessage);
+        setChatContext(chatResponse.context);
+        setSuggestedActions(chatResponse.suggestedActions);
       }
     } catch (error) {
       console.error("Reasoning failed:", error);
@@ -241,12 +257,13 @@ export default function App() {
 
   const handleSelectGraphRagResult = (result: GraphRagSearchResult) => {
     setSelectedGraphRagResult(result);
-    
+
     // Also set the transformed result for compatibility
     const transformedResult: SearchResult = {
       id: result.id,
       title: result.metadata.section || "Document",
-      summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
+      summary:
+        result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
       highlights: [
         result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
         `Source: ${result.metadata.sourceFile}`,
@@ -254,18 +271,23 @@ export default function App() {
       ],
       confidenceScore: result.score,
       source: {
-        type: result.metadata.contentType === "code" ? "component" : "documentation",
+        type:
+          result.metadata.contentType === "code"
+            ? "component"
+            : "documentation",
         path: result.metadata.sourceFile,
         url: result.metadata.url || `#${result.id}`,
       },
-      rationale: result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
+      rationale:
+        result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
       tags: [
         result.metadata.contentType,
         ...result.entities.slice(0, 2).map((e) => e.type),
       ],
-      lastUpdated: result.metadata.updatedAt || new Date().toISOString().split("T")[0],
+      lastUpdated:
+        result.metadata.updatedAt || new Date().toISOString().split("T")[0],
     };
-    
+
     setSelectedResult(transformedResult);
   };
 
@@ -343,8 +365,11 @@ export default function App() {
       {/* Graph RAG Toggle */}
       <div className="fixed top-4 left-4 z-50">
         <div className="flex items-center gap-2 bg-background/95 backdrop-blur-sm border border-border rounded-lg px-3 py-2">
-          <label htmlFor="graphRagToggle" className="text-sm font-medium text-foreground">
-            Graph RAG
+          <label
+            htmlFor="graphRagToggle"
+            className="text-sm font-medium text-foreground"
+          >
+            Knowledge Graph
           </label>
           <input
             id="graphRagToggle"
@@ -355,7 +380,7 @@ export default function App() {
           />
           {useGraphRag && (
             <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-              🧠 Enhanced
+              🧠 Advanced
             </span>
           )}
         </div>
@@ -402,20 +427,19 @@ export default function App() {
                 className="text-center mb-8"
               >
                 <h1 className="text-4xl font-bold text-foreground mb-4">
-                  Obsidian Knowledge Search
+                  Knowledge Search
                 </h1>
                 <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                   {useGraphRag ? (
                     <>
-                      🧠 <strong>Graph RAG Enhanced:</strong> AI-powered semantic search with 
-                      knowledge graph reasoning, entity extraction, relationship mapping, 
-                      and multi-hop intelligent reasoning across your knowledge base.
+                      Advanced AI-powered search with knowledge graph reasoning,
+                      entity extraction, and relationship mapping across your
+                      vault.
                     </>
                   ) : (
                     <>
-                      AI-powered semantic search through your Obsidian vault with
-                      vector embeddings, knowledge graph relationships, and
-                      intelligent reasoning across your personal knowledge base.
+                      AI-powered semantic search through your knowledge base
+                      with intelligent reasoning and contextual understanding.
                     </>
                   )}
                 </p>
@@ -433,8 +457,8 @@ export default function App() {
                   isLoading={isLoading}
                   placeholder={
                     useGraphRag
-                      ? "Ask about your knowledge base... (supports entities, relationships, and reasoning)"
-                      : "Search your Obsidian vault..."
+                      ? "Ask about your knowledge base..."
+                      : "Search your knowledge base..."
                   }
                 />
               </motion.div>
@@ -472,7 +496,7 @@ export default function App() {
                   placeholder={
                     useGraphRag
                       ? "Ask about your knowledge base..."
-                      : "Search your Obsidian vault..."
+                      : "Search your knowledge base..."
                   }
                 />
               </div>
@@ -481,12 +505,14 @@ export default function App() {
             {/* Main Content */}
             <div className="flex-1 container mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0">
               {/* Chat Interface */}
-              <UnifiedChatInterface
+              <ChatInterface
                 initialQuery={query}
                 messages={currentMessages}
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
-                resultsCount={useGraphRag ? graphRagResults.length : results.length}
+                resultsCount={
+                  useGraphRag ? graphRagResults.length : results.length
+                }
                 selectedModel={selectedModel}
                 contextResults={contextResults}
                 onRemoveContext={removeFromContext}
@@ -500,7 +526,7 @@ export default function App() {
               />
 
               {/* Results Panel */}
-              <UnifiedResultsPanel
+              <ResultsPanel
                 results={results}
                 isLoading={isLoading}
                 selectedResult={selectedResult}

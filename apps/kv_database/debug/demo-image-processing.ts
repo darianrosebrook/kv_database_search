@@ -88,8 +88,8 @@ async function demoPathResolution(imageLinks: any[]) {
   return imagePaths;
 }
 
-async function demoUnifiedIngestion() {
-  console.log("\n🚀 UNIFIED INGESTION DEMO");
+async function demoIngestion() {
+  console.log("\n🚀 INGESTION DEMO");
   console.log("=".repeat(50));
 
   console.log("✅ Features implemented:");
@@ -117,10 +117,10 @@ async function main() {
   try {
     const imageLinks = await demoImageExtraction();
     await demoPathResolution(imageLinks);
-    await demoUnifiedIngestion();
+    await demoIngestion();
 
     console.log("\n🎉 Demo completed successfully!");
-    console.log("\nThe unified ingestion system now automatically:");
+    console.log("\nThe ingestion system now automatically:");
     console.log("• Discovers embedded images in markdown files");
     console.log("• Processes images with OCR for text extraction");
     console.log("• Links image content back to source documents");

@@ -71,9 +71,9 @@ const classificationExamples: SceneClassificationExample[] = [
   },
 ];
 
-async function demoEnhancedClassification() {
-  console.log("🎯 ENHANCED IMAGE CLASSIFICATION & SCENE DESCRIPTION");
-  console.log("=====================================================");
+async function demoClassification() {
+  console.log("🎯 IMAGE CLASSIFICATION & SCENE DESCRIPTION");
+  console.log("=============================================");
   console.log("Beyond OCR: Understanding images through scene description\n");
 
   let totalExamples = 0;
@@ -174,4 +174,4 @@ async function demoEnhancedClassification() {
 }
 
 // Run the demo
-demoEnhancedClassification().catch(console.error);
+demoClassification().catch(console.error);

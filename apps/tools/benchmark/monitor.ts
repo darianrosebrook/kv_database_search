@@ -3,6 +3,7 @@
 import { performance } from "perf_hooks";
 import fs from "fs";
 import path from "path";
+import fetch from "node-fetch";
 
 interface PerformanceMetrics {
   timestamp: string;

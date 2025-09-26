@@ -45,6 +45,19 @@ type Query {
     limit: Int = 20
     fuzzy: Boolean = true
   ): [EntitySearchResult!]!
+
+  # Dictionary integration
+  dictionaryLookup(
+    terms: [String!]!
+    sources: [DictionarySource!]!
+    language: String = "en"
+  ): [DictionaryResult!]!
+
+  # ML Entity extraction
+  mlExtractEntities(
+    text: String!
+    options: MLEntityExtractionOptions
+  ): MLEntityExtractionResult!
 }
 
 # Root Mutation type
@@ -478,4 +491,93 @@ enum UserRole {
   ADMIN
   USER
   READONLY
+}
+
+# Dictionary Integration Types
+enum DictionarySource {
+  WORDNET
+  WIKTIONARY
+  OPENTHESAURUS
+  FREEDICT
+}
+
+type DictionaryResult {
+  term: String!
+  canonicalForm: String!
+  confidence: Float!
+  sources: [DictionarySourceResult!]!
+  disambiguationContext: String
+  alternatives: [DictionaryAlternative!]!
+}
+
+type DictionarySourceResult {
+  source: DictionarySource!
+  definition: String!
+  synonyms: [String!]!
+  antonyms: [String!]!
+  relationships: [SemanticRelationship!]!
+  examples: [String!]!
+  etymology: String
+  pronunciation: String
+}
+
+type DictionaryAlternative {
+  canonicalForm: String!
+  confidence: Float!
+  context: String!
+}
+
+# ML Entity Extraction Types
+input MLEntityExtractionOptions {
+  confidenceThreshold: Float = 0.8
+  enableDisambiguation: Boolean = true
+  domain: String = "general"
+  language: String = "en"
+}
+
+type MLEntityExtractionResult {
+  entities: [MLEntity!]!
+  processingMetadata: MLProcessingMetadata!
+}
+
+type MLEntity {
+  id: ID!
+  text: String!
+  canonicalName: String!
+  type: EntityType!
+  confidence: Float!
+  position: TextPosition
+  mlMetadata: MLEntityMetadata!
+  knowledgeGraphLinks: [KnowledgeGraphLink!]!
+}
+
+type MLEntityMetadata {
+  modelVersion: String!
+  disambiguationConfidence: Float!
+  knowledgeBaseLinks: [KnowledgeBaseLink!]!
+}
+
+type KnowledgeBaseLink {
+  knowledgeBase: String!
+  entityId: String!
+  confidence: Float!
+  url: String
+}
+
+type KnowledgeGraphLink {
+  entityId: ID!
+  confidence: Float!
+  relationshipType: RelationshipType!
+}
+
+type MLProcessingMetadata {
+  processingTime: Float!
+  modelVersion: String!
+  confidenceDistribution: ConfidenceDistribution!
+}
+
+type ConfidenceDistribution {
+  highConfidence: Int!
+  mediumConfidence: Int!
+  lowConfidence: Int!
 }

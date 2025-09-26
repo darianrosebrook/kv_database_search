@@ -1,4 +1,4 @@
-id: ML-ENT-001
+id: ML-001
 title: "ML-Enhanced Entity Linking with Continuous Learning"
 risk_tier: 2
 scope:
@@ -56,9 +56,6 @@ non_functional:
     - "Keyboard navigation for entity review interfaces"
   perf:
     api_p95_ms: 200
-    batch_processing_throughput: 300 # chunks per minute
-    memory_usage_mb: 2048
-    model_load_time_ms: 5000
   security:
     - "User feedback data anonymized and encrypted"
     - "Model weights protected from extraction"

@@ -8,6 +8,7 @@ import {
   ExtractedEntity,
   EntityRelationship,
 } from "../../utils";
+import { DictionaryService } from "../../dictionary-service";
 
 export interface EntityAnalysisResult {
   entities: ExtractedEntity[];
@@ -382,5 +383,79 @@ export class EntityAnalyzer {
     const relationshipBonus = Math.min(0.1, relationshipRatio * 0.2);
 
     return Math.min(1, avgEntityConfidence + densityBonus + relationshipBonus);
+  }
+
+  /**
+   * Enhance entities with dictionary data using the DictionaryService
+   */
+  static async enhanceEntitiesWithDictionary(
+    entities: ExtractedEntity[],
+    dictionaryService: DictionaryService,
+    context?: string
+  ): Promise<ExtractedEntity[]> {
+    console.log(
+      `🔍 Enhancing ${entities.length} entities with dictionary data`
+    );
+
+    const enhancedEntities = [...entities];
+
+    for (const entity of enhancedEntities) {
+      try {
+        // Create canonicalization request
+        const canonicalizationRequest = {
+          entities: [
+            {
+              name: entity.label,
+              type: entity.type as any, // Type mapping may need adjustment
+              context,
+              aliases: entity.aliases,
+            },
+          ],
+        };
+
+        // Get canonicalization results
+        const results = await dictionaryService.canonicalizeEntities(
+          canonicalizationRequest
+        );
+
+        if (results.length > 0) {
+          const result = results[0];
+
+          // Update entity with dictionary data
+          if (result.confidence >= 0.7) {
+            entity.canonicalForm = result.canonicalName;
+            entity.dictionaryEnhanced = true;
+            entity.dictionarySource = result.source;
+            entity.dictionaryConfidence = result.confidence;
+            entity.dictionaryReasoning = result.reasoning;
+
+            // Add synonyms as additional aliases
+            const synonymResults = await dictionaryService.expandSearchTerms({
+              queryTerms: [result.canonicalName],
+              expansionTypes: ["synonyms"],
+              maxExpansionsPerTerm: 5,
+            });
+
+            if (synonymResults.length > 0) {
+              const synonyms = synonymResults[0].expandedTerms
+                .filter((term) => term.expansionType === "synonyms")
+                .map((term) => term.term);
+
+              entity.aliases = [...(entity.aliases || []), ...synonyms];
+            }
+          }
+        }
+      } catch (error) {
+        console.warn(`⚠️ Failed to enhance entity "${entity.label}": ${error}`);
+        // Continue with original entity
+      }
+    }
+
+    console.log(
+      `✅ Enhanced ${
+        enhancedEntities.filter((e) => e.dictionaryEnhanced).length
+      } entities with dictionary data`
+    );
+    return enhancedEntities;
   }
 }

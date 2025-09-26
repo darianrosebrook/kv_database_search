@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Pool, PoolClient } from "pg";
 import {
-  KnowledgeGraphManager,
+  KnowledgeGraph,
   type EntitySimilarity,
   type GraphStatistics,
 } from "../../src/lib/knowledge-graph/knowledge-graph-manager.js";
@@ -32,12 +32,12 @@ const mockPool = {
   connect: vi.fn().mockResolvedValue(mockClient),
 } as unknown as Pool;
 
-describe("KnowledgeGraphManager", () => {
-  let manager: KnowledgeGraphManager;
+describe("KnowledgeGraph", () => {
+  let manager: KnowledgeGraph;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    manager = new KnowledgeGraphManager(mockPool, mockEmbeddingService as any, {
+    manager = new KnowledgeGraph(mockPool, mockEmbeddingService as any, {
       similarityThreshold: 0.8,
       enableAutoMerge: false,
     });
@@ -711,7 +711,7 @@ describe("KnowledgeGraphManager", () => {
 
     it("should filter duplicates by similarity threshold [INV: Similarity threshold]", async () => {
       // Arrange
-      const strictManager = new KnowledgeGraphManager(
+      const strictManager = new KnowledgeGraph(
         mockPool,
         mockEmbeddingService as any,
         { similarityThreshold: 0.9 }

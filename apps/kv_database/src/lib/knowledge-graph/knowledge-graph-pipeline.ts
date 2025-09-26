@@ -7,7 +7,7 @@ import {
   EntityExtractionResult,
   ExtractionMethod,
 } from "./entity-extractor.js";
-import { KnowledgeGraphManager } from "./knowledge-graph-manager.js";
+import { KnowledgeGraph } from "./knowledge-graph-manager.js";
 
 export interface KnowledgeGraphPipelineConfig {
   entityExtraction: Partial<EntityExtractionConfig>;
@@ -50,7 +50,7 @@ export interface ChunkProcessingInput {
  */
 export class KnowledgeGraphPipeline {
   private entityExtractor: KnowledgeGraphEntityExtractor;
-  private graphManager: KnowledgeGraphManager;
+  private graphManager: KnowledgeGraph;
   private config: KnowledgeGraphPipelineConfig;
   private pool: Pool;
   private embeddings: ObsidianEmbeddingService;
@@ -90,7 +90,7 @@ export class KnowledgeGraphPipeline {
     this.entityExtractor = new KnowledgeGraphEntityExtractor(
       this.config.entityExtraction
     );
-    this.graphManager = new KnowledgeGraphManager(
+    this.graphManager = new KnowledgeGraph(
       pool,
       embeddings,
       this.config.knowledgeGraph

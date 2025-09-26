@@ -1,0 +1,370 @@
+@import './ResultCard.tokens.generated.scss';
+
+:root {
+  @include vars;
+}
+
+.resultCard {
+  transition: var(--resultCard-container-transition);
+  cursor: var(--resultCard-container-cursor);
+  overflow: var(--resultCard-container-overflow);
+
+  .card {
+    background: var(--resultCard-card-background);
+    border: 1px solid var(--resultCard-card-border);
+    border-radius: var(--resultCard-card-borderRadius);
+    box-shadow: var(--resultCard-card-shadow);
+    transition: var(--resultCard-card-transition);
+
+    &:hover {
+      box-shadow: var(--resultCard-cardHover-shadow);
+      border-color: var(--resultCard-cardHover-borderColor);
+    }
+
+    &.selected {
+      border-color: var(--resultCard-cardSelected-borderColor);
+      box-shadow: var(--resultCard-cardSelected-shadow);
+      outline: var(--resultCard-cardSelected-ring);
+      outline-offset: 2px;
+    }
+  }
+
+  .header {
+    padding-bottom: var(--resultCard-header-paddingBottom);
+
+    .headerContent {
+      display: flex;
+      align-items: center;
+      gap: var(--resultCard-headerContent-gap);
+
+      .sourceIcon {
+        font-size: var(--resultCard-sourceIcon-fontSize);
+        flex-shrink: var(--resultCard-sourceIcon-flexShrink);
+      }
+
+      .title {
+        font-weight: var(--resultCard-title-fontWeight);
+        font-size: var(--resultCard-title-fontSize);
+        line-height: var(--resultCard-title-lineHeight);
+        color: var(--resultCard-title-color);
+        flex: 1;
+        min-width: 0;
+      }
+
+      .badge {
+        margin-left: var(--resultCard-badge-marginLeft);
+        flex-shrink: var(--resultCard-badge-flexShrink);
+        font-size: var(--resultCard-badge-fontSize);
+      }
+    }
+  }
+
+  .metadata {
+    display: flex;
+    align-items: center;
+    gap: var(--resultCard-metadata-gap);
+    font-size: var(--resultCard-metadata-fontSize);
+    color: var(--resultCard-metadata-color);
+    margin-bottom: var(--resultCard-metadata-marginBottom);
+
+    .confidenceScore {
+      display: flex;
+      align-items: center;
+      gap: var(--resultCard-confidenceScore-gap);
+
+      .confidenceIcon {
+        width: var(--resultCard-confidenceIcon-width);
+        height: var(--resultCard-confidenceIcon-height);
+      }
+
+      &.high {
+        color: var(--resultCard-confidenceHigh-color);
+      }
+
+      &.medium {
+        color: var(--resultCard-confidenceMedium-color);
+      }
+
+      &.low {
+        color: var(--resultCard-confidenceLow-color);
+      }
+    }
+
+    .badgeGroup {
+      display: flex;
+      gap: var(--resultCard-badgeGroup-gap);
+    }
+
+    .pathText {
+      font-size: var(--resultCard-pathText-fontSize);
+      color: var(--resultCard-pathText-color);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .actionButton {
+      opacity: var(--resultCard-actionButton-opacity);
+      transition: var(--resultCard-actionButton-transition);
+
+      &.visible {
+        opacity: var(--resultCard-actionButtonVisible-opacity);
+      }
+    }
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--resultCard-content-gap);
+
+    .contentPreview {
+      display: flex;
+      flex-direction: column;
+      gap: var(--resultCard-contentPreview-gap);
+
+      .previewBox {
+        font-size: var(--resultCard-previewBox-fontSize);
+        line-height: var(--resultCard-previewBox-lineHeight);
+        background: var(--resultCard-previewBox-background);
+        padding: var(--resultCard-previewBox-padding);
+        border-radius: var(--resultCard-previewBox-borderRadius);
+        border-left: var(--resultCard-previewBox-borderLeft);
+        position: var(--resultCard-previewBox-position);
+
+        .highlight {
+          background: var(--resultCard-highlight-background);
+          padding: var(--resultCard-highlight-padding);
+          border-radius: var(--resultCard-highlight-borderRadius);
+        }
+
+        .copyButton {
+          position: var(--resultCard-copyButton-position);
+          top: var(--resultCard-copyButton-top);
+          right: var(--resultCard-copyButton-right);
+          opacity: var(--resultCard-copyButton-opacity);
+          transition: var(--resultCard-copyButton-transition);
+          height: var(--resultCard-copyButton-height);
+          width: var(--resultCard-copyButton-width);
+          padding: var(--resultCard-copyButton-padding);
+
+          &.visible {
+            opacity: var(--resultCard-copyButtonVisible-opacity);
+          }
+        }
+
+        .copiedIndicator {
+          position: var(--resultCard-copiedIndicator-position);
+          top: var(--resultCard-copiedIndicator-top);
+          right: var(--resultCard-copiedIndicator-right);
+          font-size: var(--resultCard-copiedIndicator-fontSize);
+          color: var(--resultCard-copiedIndicator-color);
+        }
+
+        &:hover .copyButton {
+          opacity: var(--resultCard-copyButtonVisible-opacity);
+        }
+      }
+
+      .expandButton {
+        margin-top: var(--resultCard-expandButton-marginTop);
+        font-size: var(--resultCard-expandButton-fontSize);
+        height: var(--resultCard-expandButton-height);
+      }
+    }
+
+    .separator {
+      background: var(--resultCard-separator-background);
+      height: var(--resultCard-separator-height);
+      width: var(--resultCard-separator-width);
+    }
+
+    .explanation {
+      display: flex;
+      flex-direction: column;
+      gap: var(--resultCard-explanation-gap);
+
+      .explanationHeader {
+        display: flex;
+        align-items: center;
+        gap: var(--resultCard-explanationHeader-gap);
+
+        .explanationIcon {
+          width: var(--resultCard-explanationIcon-width);
+          height: var(--resultCard-explanationIcon-height);
+          color: var(--resultCard-explanationIcon-color);
+        }
+
+        .explanationTitle {
+          font-size: var(--resultCard-explanationTitle-fontSize);
+          font-weight: var(--resultCard-explanationTitle-fontWeight);
+        }
+      }
+
+      .explanationContent {
+        display: flex;
+        flex-direction: column;
+        gap: var(--resultCard-explanationContent-gap);
+
+        .explanationText {
+          font-size: var(--resultCard-explanationText-fontSize);
+          color: var(--resultCard-explanationText-color);
+          line-height: var(--resultCard-explanationText-lineHeight);
+        }
+
+        .insights {
+          display: flex;
+          flex-direction: column;
+          gap: var(--resultCard-insights-gap);
+
+          .insightsHeader {
+            display: flex;
+            align-items: center;
+            gap: var(--resultCard-insightsHeader-gap);
+
+            .insightsIcon {
+              width: var(--resultCard-insightsIcon-width);
+              height: var(--resultCard-insightsIcon-height);
+              color: var(--resultCard-insightsIcon-color);
+            }
+
+            .insightsTitle {
+              font-size: var(--resultCard-insightsTitle-fontSize);
+              font-weight: var(--resultCard-insightsTitle-fontWeight);
+            }
+          }
+
+          .insightsList {
+            display: flex;
+            flex-direction: column;
+            gap: var(--resultCard-insightsList-gap);
+
+            .insightItem {
+              display: flex;
+              font-size: var(--resultCard-insightItem-fontSize);
+              color: var(--resultCard-insightItem-color);
+              gap: var(--resultCard-insightItem-gap);
+
+              .insightBullet {
+                color: var(--resultCard-insightBullet-color);
+                margin-top: var(--resultCard-insightBullet-marginTop);
+              }
+            }
+          }
+        }
+
+        .actions {
+          display: flex;
+          flex-direction: column;
+          gap: var(--resultCard-actions-gap);
+
+          .actionsHeader {
+            display: flex;
+            align-items: center;
+            gap: var(--resultCard-actionsHeader-gap);
+
+            .actionsIcon {
+              width: var(--resultCard-actionsIcon-width);
+              height: var(--resultCard-actionsIcon-height);
+              color: var(--resultCard-actionsIcon-color);
+            }
+
+            .actionsTitle {
+              font-size: var(--resultCard-actionsTitle-fontSize);
+              font-weight: var(--resultCard-actionsTitle-fontWeight);
+            }
+          }
+
+          .actionsGrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--resultCard-actionsGrid-gap);
+
+            .actionButton {
+              justify-content: var(--resultCard-actionButton-justifyContent);
+              font-size: var(--resultCard-actionButton-fontSize);
+              height: var(--resultCard-actionButton-height);
+              text-align: var(--resultCard-actionButton-textAlign);
+
+              .actionIcon {
+                width: var(--resultCard-actionIcon-width);
+                height: var(--resultCard-actionIcon-height);
+                margin-right: var(--resultCard-actionIcon-marginRight);
+                flex-shrink: var(--resultCard-actionIcon-flexShrink);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .footer {
+    padding-top: var(--resultCard-footer-paddingTop);
+    border-top: var(--resultCard-footer-borderTop);
+
+    .footerContent {
+      display: flex;
+      align-items: center;
+      justify-content: var(--resultCard-footerContent-justifyContent);
+
+      .tagGroup {
+        display: flex;
+        gap: var(--resultCard-tagGroup-gap);
+        flex: 1;
+        min-width: 0;
+
+        .tag {
+          font-size: var(--resultCard-tag-fontSize);
+        }
+
+        .tagOverflow {
+          font-size: var(--resultCard-tagOverflow-fontSize);
+        }
+      }
+
+      .footerMeta {
+        display: flex;
+        align-items: center;
+        gap: var(--resultCard-footerMeta-gap);
+
+        .lastUpdated {
+          font-size: var(--resultCard-lastUpdated-fontSize);
+          color: var(--resultCard-lastUpdated-color);
+        }
+
+        .viewButton {
+          height: var(--resultCard-viewButton-height);
+          padding-left: var(--resultCard-viewButton-paddingX);
+          padding-right: var(--resultCard-viewButton-paddingX);
+          font-size: var(--resultCard-viewButton-fontSize);
+
+          .viewButtonIcon {
+            width: var(--resultCard-viewButtonIcon-width);
+            height: var(--resultCard-viewButtonIcon-height);
+            margin-right: var(--resultCard-viewButtonIcon-marginRight);
+          }
+        }
+      }
+    }
+  }
+
+  .skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: var(--resultCard-skeleton-gap);
+
+    .skeletonLine {
+      height: var(--resultCard-skeletonLine-height);
+      background: var(--resultCard-skeletonLine-background);
+      border-radius: var(--resultCard-skeletonLine-borderRadius);
+    }
+  }
+
+  // Group hover states
+  &:hover {
+    .actionButton {
+      opacity: var(--resultCard-actionButtonVisible-opacity);
+    }
+  }
+}

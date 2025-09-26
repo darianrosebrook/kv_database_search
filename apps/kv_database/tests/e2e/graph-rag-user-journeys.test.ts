@@ -10,7 +10,7 @@ import { MultiModalIngestionPipeline } from "../../src/lib/multi-modal-ingest.js
 import { HybridSearchEngine } from "../../src/lib/knowledge-graph/hybrid-search-engine.js";
 import { MultiHopReasoningEngine } from "../../src/lib/knowledge-graph/multi-hop-reasoning.js";
 import { ResultRankingService } from "../../src/lib/knowledge-graph/result-ranking.js";
-import { KnowledgeGraphManager } from "../../src/lib/knowledge-graph/knowledge-graph-manager.js";
+import { KnowledgeGraph } from "../../src/lib/knowledge-graph/knowledge-graph-manager.js";
 import { ProvenanceTracker } from "../../src/lib/knowledge-graph/provenance-tracker.js";
 import { QueryOptimizer } from "../../src/lib/knowledge-graph/query-optimizer.js";
 import { MonitoringSystem } from "../../src/lib/knowledge-graph/monitoring-system.js";
@@ -33,7 +33,7 @@ describe("Graph RAG End-to-End User Journeys", () => {
   let searchEngine: HybridSearchEngine;
   let reasoningEngine: MultiHopReasoningEngine;
   let rankingService: ResultRankingService;
-  let graphManager: KnowledgeGraphManager;
+  let graphManager: KnowledgeGraph;
   let provenanceTracker: ProvenanceTracker;
   let queryOptimizer: QueryOptimizer;
   let monitoringSystem: MonitoringSystem;
@@ -79,7 +79,7 @@ describe("Graph RAG End-to-End User Journeys", () => {
     searchEngine = new HybridSearchEngine(pool, embeddings);
     reasoningEngine = new MultiHopReasoningEngine(pool);
     rankingService = new ResultRankingService(pool);
-    graphManager = new KnowledgeGraphManager(pool, embeddings);
+    graphManager = new KnowledgeGraph(pool, embeddings);
     provenanceTracker = new ProvenanceTracker(pool);
     queryOptimizer = new QueryOptimizer(pool);
     monitoringSystem = new MonitoringSystem(pool);

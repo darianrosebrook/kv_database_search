@@ -17,6 +17,7 @@ import {
   generateDeterministicId,
   sleep,
   determineContentType,
+  determineContentTypeFromFrontmatter,
 } from "./utils";
 import { ImageLinkExtractor, ImageLink } from "./image-link-extractor";
 import { ImagePathResolver, ResolvedImagePath } from "./image-path-resolver";
@@ -933,9 +934,11 @@ export class ObsidianIngestionPipeline {
 
     const chunks: DocumentChunk[] = [];
 
-    // TODO: Implement proper content type determination
-    const contentType = determineContentType(
-      document.filePath || document.path
+    // Determine content type using path-based detection
+    const contentType = determineContentTypeFromFrontmatter(
+      document.filePath || document.path,
+      this.vaultPath,
+      document.frontmatter || {}
     );
 
     // Create base metadata

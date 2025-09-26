@@ -10,6 +10,7 @@ import { PDFProcessingPipeline } from "./processors/pipelines/pdf-processing-pip
 import { OCRProcessor } from "./processors/ocr-processor";
 import { OfficeProcessor } from "./processors/office-processor";
 import { SpeechProcessor } from "./processors/speech-processor";
+import { ImageClassificationProcessor } from "./processors/image-classification-processor";
 import { DocumentChunk, DocumentMetadata } from "../types/index";
 import { cleanMarkdown } from "./utils";
 import * as fs from "fs";
@@ -51,6 +52,7 @@ export class MultiModalIngestionPipeline {
   private ocrProcessor: OCRProcessor;
   private officeProcessor: OfficeProcessor;
   private speechProcessor: SpeechProcessor;
+  private imageClassificationProcessor: ImageClassificationProcessor;
 
   constructor(
     database: ObsidianDatabase,
@@ -63,6 +65,7 @@ export class MultiModalIngestionPipeline {
     this.ocrProcessor = new OCRProcessor();
     this.officeProcessor = new OfficeProcessor();
     this.speechProcessor = new SpeechProcessor();
+    this.imageClassificationProcessor = new ImageClassificationProcessor();
     this.metadataExtractor = new UniversalMetadataExtractor(
       this.contentDetector
     );
@@ -564,65 +567,55 @@ export class MultiModalIngestionPipeline {
     metadata: UniversalMetadata
   ): Promise<DocumentChunk[]> {
     try {
-      // For raster images, OCR might have been performed
-      if (metadata.content.type === ContentType.RASTER_IMAGE) {
-        // Check if OCR extracted text (content has hasText and wordCount > 0)
-        if (
-          (metadata.content as any).hasText &&
-          (metadata.content as any).wordCount > 0
-        ) {
-          // Perform OCR to get the actual text
-          const ocrResult = await this.ocrProcessor.extractTextFromBuffer(
-            buffer
-          );
+      // Use ImageClassificationProcessor for comprehensive image analysis
+      const imageClassificationResult =
+        await this.imageClassificationProcessor.extractFromBuffer(buffer, {
+          enableOCR: true,
+          enableClassification: true,
+          minClassificationConfidence: 0.6,
+          maxObjects: 5,
+          includeVisualFeatures: true,
+          modelPreference: "local",
+        });
 
-          // If OCR was successful, chunk the text
-          if (ocrResult.metadata.hasText && ocrResult.text.length > 100) {
-            // Use text chunking for substantial OCR content
-            return await this.chunkTextFile(
-              buffer,
-              baseMetadata,
-              metadata,
-              ocrResult.text
-            );
-          } else {
-            // Create a chunk with OCR results and metadata
-            const chunk: DocumentChunk = {
-              id: this.generateChunkId(metadata.file.id, 0),
-              text:
-                `Image OCR: ${metadata.file.name}\n` +
-                `OCR Confidence: ${
-                  (metadata.content as any).confidence?.toFixed(1) || "Unknown"
-                }%\n` +
-                `Has Text: ${
-                  (metadata.content as any).hasText ? "Yes" : "No"
-                }\n` +
-                `Word Count: ${(metadata.content as any).wordCount || 0}\n` +
-                `${ocrResult.text}`,
-              meta: {
-                ...baseMetadata,
-                chunkIndex: 0,
-                chunkCount: 1,
-              },
-            };
-
-            return [chunk];
-          }
-        }
-      }
-
-      // Fallback for images without OCR or unsupported image types
-      const chunk: DocumentChunk = {
-        id: this.generateChunkId(metadata.file.id, 0),
-        text: `Image: ${metadata.file.name}\nType: ${metadata.content.type}\nFormat: ${metadata.file.extension}`,
-        meta: {
+      if (imageClassificationResult.success) {
+        // Enhanced metadata from image classification
+        const enhancedMetadata = {
           ...baseMetadata,
-          chunkIndex: 0,
-          chunkCount: 1,
-        },
-      };
+          imageClassification:
+            imageClassificationResult.metadata.imageClassification,
+        };
 
-      return [chunk];
+        // Create chunk with comprehensive image analysis
+        const chunk: DocumentChunk = {
+          id: this.generateChunkId(metadata.file.id, 0),
+          text: this.formatImageAnalysisContent(
+            metadata.file.name,
+            imageClassificationResult.text,
+            imageClassificationResult.metadata.imageClassification
+          ),
+          meta: {
+            ...enhancedMetadata,
+            chunkIndex: 0,
+            chunkCount: 1,
+          },
+        };
+
+        return [chunk];
+      } else {
+        // Fallback for failed classification
+        const chunk: DocumentChunk = {
+          id: this.generateChunkId(metadata.file.id, 0),
+          text: `Image Processing Failed: ${metadata.file.name}\n${imageClassificationResult.text}`,
+          meta: {
+            ...baseMetadata,
+            chunkIndex: 0,
+            chunkCount: 1,
+          },
+        };
+
+        return [chunk];
+      }
     } catch (error) {
       // Fallback for image processing errors
       const errorMessage =
@@ -639,6 +632,73 @@ export class MultiModalIngestionPipeline {
 
       return [chunk];
     }
+  }
+
+  /**
+   * Format image analysis content for search indexing
+   */
+  private formatImageAnalysisContent(
+    fileName: string,
+    combinedContent: string,
+    imageClassification?: any
+  ): string {
+    let content = `Image Analysis: ${fileName}\n`;
+
+    if (imageClassification) {
+      content += `\n=== OCR TEXT ===\n${combinedContent}\n`;
+
+      content += `\n=== SCENE DESCRIPTION ===\n`;
+      content += `Scene Type: ${imageClassification.sceneType || "Unknown"}\n`;
+      content += `Description: ${
+        imageClassification.description || "No description available"
+      }\n`;
+      content += `Confidence: ${
+        imageClassification.confidence?.toFixed(2) || "Unknown"
+      }\n`;
+
+      if (
+        imageClassification.objects &&
+        imageClassification.objects.length > 0
+      ) {
+        content += `Detected Objects: ${imageClassification.objects.join(
+          ", "
+        )}\n`;
+      }
+
+      if (
+        imageClassification.relationships &&
+        imageClassification.relationships.length > 0
+      ) {
+        content += `Spatial Relationships: ${imageClassification.relationships.join(
+          ", "
+        )}\n`;
+      }
+
+      content += `\nProcessing Details:\n`;
+      content += `- OCR Available: ${
+        imageClassification.ocrAvailable ? "Yes" : "No"
+      }\n`;
+      content += `- Scene Description Available: ${
+        imageClassification.sceneDescriptionAvailable ? "Yes" : "No"
+      }\n`;
+      content += `- Objects Detected: ${
+        imageClassification.objectsDetected || 0
+      }\n`;
+      content += `- Visual Features Analyzed: ${
+        imageClassification.visualFeaturesAnalyzed ? "Yes" : "No"
+      }\n`;
+      content += `- Model Used: ${
+        imageClassification.modelUsed || "Unknown"
+      }\n`;
+      content += `- Processing Time: ${
+        imageClassification.processingTime || 0
+      }ms\n`;
+    } else {
+      content += `Basic Analysis: ${fileName}\n`;
+      content += `Content: ${combinedContent}\n`;
+    }
+
+    return content;
   }
 
   private async chunkAudioFile(

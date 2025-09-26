@@ -1,14 +1,11 @@
 import { DocumentDatabase } from "./database";
 import { DocumentEmbeddingService } from "./embeddings";
 import { DocumentChunk, DocumentMetadata } from "../types/index";
-import {
-  Document,
-  DocumentFile,
-  ChunkingOptions,
-} from "./types/document-models";
+import { ChunkingOptions } from "./types/document-models";
 import {
   DocumentProcessingConfig,
   MARKDOWN_CONFIG,
+  OBSIDIAN_CONFIG,
 } from "./types/document-config";
 import * as fs from "fs";
 import * as path from "path";
@@ -19,9 +16,8 @@ import {
   cleanMarkdown,
   generateDeterministicId,
   sleep,
-  determineContentType,
-  determineContentTypeFromFrontmatter,
 } from "./utils";
+import { ObsidianDocument, ObsidianFile, Wikilink } from "../types/index";
 
 export class DocumentIngestionPipeline {
   private db: DocumentDatabase;
@@ -376,6 +372,7 @@ export class DocumentIngestionPipeline {
     const contentTags = extractTags(body, this.config.tagFormats);
 
     // Combine frontmatter tags with content tags (defensive programming)
+    const allTags = [...frontmatterTags, ...contentTags];
     const frontmatterTags =
       frontmatter && (frontmatter as any).tags
         ? Array.isArray((frontmatter as any).tags)
@@ -384,8 +381,6 @@ export class DocumentIngestionPipeline {
           ? [(frontmatter as any).tags]
           : []
         : [];
-
-    const allTags = Array.from(new Set([...frontmatterTags, ...contentTags]));
 
     // Get file stats
     let stats: fs.Stats;
@@ -426,7 +421,7 @@ export class DocumentIngestionPipeline {
         characterCount,
         lineCount,
         headingCount: sections?.length || 0,
-        linkCount: wikilinks.length,
+        linkCount: links.length,
         tagCount: allTags.length,
         size: stats.size,
         createdAt: stats.birthtime,
@@ -939,7 +934,6 @@ export class ObsidianIngestionPipeline extends DocumentIngestionPipeline {
     embeddingService: any,
     vaultPath: string
   ) {
-    const { OBSIDIAN_CONFIG } = require("./types/document-config");
     super(database, embeddingService, vaultPath, OBSIDIAN_CONFIG);
   }
 

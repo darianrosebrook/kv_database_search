@@ -9,6 +9,10 @@
 
 import { ObsidianEmbeddingService } from "./embeddings";
 
+// Add fetch polyfill for Node.js
+import fetch from "node-fetch";
+import { URLSearchParams } from "url";
+
 export interface WebSearchResult {
   title: string;
   url: string;

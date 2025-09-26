@@ -34,7 +34,7 @@ export interface EntityDeduplicationResult {
 /**
  * Manages knowledge graph construction, entity deduplication, and persistence
  */
-export class KnowledgeGraphManager {
+export class KnowledgeGraph {
   private pool: Pool;
   private embeddings: ObsidianEmbeddingService;
   private similarityThreshold: number;

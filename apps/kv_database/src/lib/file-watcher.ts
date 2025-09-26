@@ -676,7 +676,7 @@ export class ObsidianFileWatcher extends EventEmitter {
         this.emit("processingError", {
           change,
           error: `Failed to process queued change: ${
-            error instanceof Error ? error.message : "Unknown error"
+            _error instanceof Error ? _error.message : "Unknown error"
           }`,
         });
       }
@@ -1106,7 +1106,7 @@ export class ObsidianFileWatcher extends EventEmitter {
       };
     } catch (_error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
+        _error instanceof Error ? _error.message : "Unknown error";
 
       this.emit("rollbackError", {
         filePath,
@@ -1152,7 +1152,7 @@ export class ObsidianFileWatcher extends EventEmitter {
         chunks: v.chunks,
       }));
     } catch (_error) {
-      console.error(`Failed to get versions for ${filePath}:`, error);
+      console.error(`Failed to get versions for ${filePath}:`, _error);
       return [];
     }
   }

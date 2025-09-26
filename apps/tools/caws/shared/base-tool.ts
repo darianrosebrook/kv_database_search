@@ -7,6 +7,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { BufferEncoding } from "buffer";
 
 export interface ToolResult {
   success: boolean;

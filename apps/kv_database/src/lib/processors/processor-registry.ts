@@ -6,10 +6,11 @@ import {
 } from "./base-processor";
 import { PDFProcessorAdapter } from "./pdf-processor-adapter";
 import { OCRProcessor } from "./ocr-processor";
-import { EnhancedOfficeProcessor } from "./enhanced-office-processor";
+import { OfficeProcessor } from "./office-processor";
 import { VideoProcessor } from "./video-processor";
 import { AudioTranscriptionProcessor } from "./audio-transcription-processor";
 import { SpeechProcessor } from "./speech-processor";
+import { ImageClassificationProcessor } from "./image-classification-processor";
 
 /**
  * Registry for managing all content processors
@@ -153,10 +154,11 @@ export class ContentProcessorRegistry {
   private registerDefaultProcessors(): void {
     this.registerProcessor(new PDFProcessorAdapter());
     this.registerProcessor(new OCRProcessor());
-    this.registerProcessor(new EnhancedOfficeProcessor());
+    this.registerProcessor(new OfficeProcessor());
     this.registerProcessor(new VideoProcessor());
     this.registerProcessor(new AudioTranscriptionProcessor());
     this.registerProcessor(new SpeechProcessor());
+    this.registerProcessor(new ImageClassificationProcessor());
   }
 
   /**

@@ -1,0 +1,566 @@
+openapi: 3.0.3
+info:
+  title: Multi-Modal Processing API
+  description: |
+    API for processing and extracting content from multiple media types including
+    images, audio, video, and documents. Supports OCR, transcription, and metadata extraction.
+  version: 1.0.0
+  contact:
+    name: Multi-Modal Processing Team
+    email: multimodal-team@company.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Development server
+  - url: https://api.company.com/multimodal/v1
+    description: Production server
+
+paths:
+  /multimodal/process:
+    post:
+      summary: Process multi-modal content
+      description: |
+        Process various types of content including images, audio, video, and documents.
+        Extracts text, metadata, and generates embeddings for all supported formats.
+      operationId: processContent
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MultiModalRequest'
+            examples:
+              image_processing:
+                summary: Image OCR and analysis
+                value:
+                  file: image.jpg
+                  content_type: image
+                  options:
+                    enable_ocr: true
+                    extract_metadata: true
+                    generate_embeddings: true
+                    language: "en"
+              audio_transcription:
+                summary: Audio transcription
+                value:
+                  file: recording.mp3
+                  content_type: audio
+                  options:
+                    enable_transcription: true
+                    detect_language: true
+                    include_timestamps: true
+              document_processing:
+                summary: Document analysis
+                value:
+                  file: document.pdf
+                  content_type: document
+                  options:
+                    extract_text: true
+                    extract_images: true
+                    preserve_layout: true
+      responses:
+        '200':
+          description: Multi-modal processing completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiModalResponse'
+              examples:
+                successful_processing:
+                  summary: Successful processing result
+                  value:
+                    content_id: "uuid-12345"
+                    processing_status: "completed"
+                    extracted_content:
+                      text_content: "Extracted text from the content..."
+                      metadata:
+                        content_type: "image"
+                        original_filename: "document.jpg"
+                        file_size: 2048576
+                        dimensions: "1920x1080"
+                        language: "en"
+                        confidence: 0.95
+                      quality_score: 0.92
+                    processing_time_ms: 2500
+                    model_versions:
+                      ocr_model: "tesseract-5.3.0"
+                      embedding_model: "sentence-transformers-2.2.0"
+        '202':
+          description: Processing started asynchronously
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncProcessingResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          description: Unsupported content type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Processing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /multimodal/process/{contentId}:
+    get:
+      summary: Get processing status and results
+      description: Retrieve the status and results of multi-modal content processing
+      operationId: getProcessingStatus
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Content processing job identifier
+        - name: include_results
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Include processing results in response
+      responses:
+        '200':
+          description: Processing status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingStatusResponse'
+        '404':
+          description: Processing job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /multimodal/process/{contentId}/download:
+    get:
+      summary: Download processed content artifacts
+      description: Download specific artifacts from multi-modal processing (e.g., extracted text, thumbnails)
+      operationId: downloadProcessingArtifact
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: artifact_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [text, metadata, thumbnail, embeddings, audio_transcript]
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [json, txt, csv, binary]
+            default: json
+      responses:
+        '200':
+          description: Artifact downloaded successfully
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Artifact not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /multimodal/capabilities:
+    get:
+      summary: Get multi-modal processing capabilities
+      description: Retrieve information about supported content types, languages, and processing options
+      operationId: getCapabilities
+      responses:
+        '200':
+          description: Capabilities retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilitiesResponse'
+
+  /multimodal/health:
+    get:
+      summary: Multi-modal processing health check
+      description: Check the health and availability of multi-modal processing services
+      operationId: checkHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    MultiModalRequest:
+      type: object
+      required:
+        - file
+        - content_type
+      properties:
+        file:
+          type: string
+          format: binary
+          description: Content file to process
+        content_type:
+          type: string
+          enum: [image, audio, video, document, text]
+          description: Type of content being processed
+        options:
+          $ref: '#/components/schemas/ProcessingOptions'
+        metadata:
+          type: object
+          description: Additional metadata about the content
+          properties:
+            filename:
+              type: string
+            source:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+            context:
+              type: string
+
+    ProcessingOptions:
+      type: object
+      properties:
+        enable_ocr:
+          type: boolean
+          default: true
+          description: Enable optical character recognition for images
+        enable_transcription:
+          type: boolean
+          default: true
+          description: Enable speech-to-text for audio/video
+        extract_metadata:
+          type: boolean
+          default: true
+          description: Extract metadata from content
+        generate_embeddings:
+          type: boolean
+          default: true
+          description: Generate vector embeddings for extracted content
+        detect_language:
+          type: boolean
+          default: true
+          description: Automatically detect content language
+        include_timestamps:
+          type: boolean
+          default: false
+          description: Include timestamps in audio/video transcription
+        preserve_layout:
+          type: boolean
+          default: true
+          description: Preserve document layout structure
+        extract_images:
+          type: boolean
+          default: false
+          description: Extract images from documents
+        quality_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.8
+          description: Minimum quality threshold for processing
+        language:
+          type: string
+          pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+          description: Target language for processing (e.g., 'en', 'en-US')
+
+    MultiModalResponse:
+      type: object
+      required:
+        - content_id
+        - processing_status
+        - extracted_content
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the processing job
+        processing_status:
+          type: string
+          enum: [completed, failed, in_progress]
+        extracted_content:
+          $ref: '#/components/schemas/ExtractedContent'
+        processing_time_ms:
+          type: integer
+          minimum: 0
+          description: Total processing time in milliseconds
+        model_versions:
+          type: object
+          description: Versions of models used for processing
+          additionalProperties:
+            type: string
+        quality_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall quality score of the processing
+
+    ExtractedContent:
+      type: object
+      properties:
+        text_content:
+          type: string
+          description: Extracted text content
+        metadata:
+          type: object
+          description: Metadata extracted from the content
+          properties:
+            content_type:
+              type: string
+            original_filename:
+              type: string
+            file_size:
+              type: integer
+              minimum: 0
+            dimensions:
+              type: string
+              description: Content dimensions (e.g., "1920x1080" for images/video)
+            duration:
+              type: number
+              description: Duration in seconds (for audio/video)
+            language:
+              type: string
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+        embeddings:
+          type: array
+          items:
+            type: number
+          description: Vector embeddings for the extracted content
+        structured_data:
+          type: object
+          description: Structured data extracted from content (e.g., tables, forms)
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExtractedEntity'
+
+    ExtractedEntity:
+      type: object
+      required:
+        - text
+        - type
+        - confidence
+      properties:
+        text:
+          type: string
+        type:
+          type: string
+          enum: [PERSON, ORGANIZATION, LOCATION, DATE, MONEY, PERCENT, OTHER]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        position:
+          type: object
+          description: Position information for the entity
+          properties:
+            start:
+              type: integer
+              minimum: 0
+            end:
+              type: integer
+              minimum: 0
+            page:
+              type: integer
+              minimum: 0
+
+    AsyncProcessingResponse:
+      type: object
+      required:
+        - content_id
+        - status
+        - estimated_time
+      properties:
+        content_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing]
+        estimated_time:
+          type: integer
+          minimum: 0
+          description: Estimated processing time in seconds
+        queue_position:
+          type: integer
+          minimum: 0
+          description: Position in processing queue
+
+    ProcessingStatusResponse:
+      type: object
+      required:
+        - content_id
+        - status
+        - progress
+      properties:
+        content_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Processing progress percentage
+        results:
+          $ref: '#/components/schemas/MultiModalResponse'
+        error_message:
+          type: string
+          description: Error message if processing failed
+
+    CapabilitiesResponse:
+      type: object
+      required:
+        - supported_content_types
+        - supported_languages
+        - max_file_size
+        - processing_options
+      properties:
+        supported_content_types:
+          type: array
+          items:
+            type: string
+            enum: [image, audio, video, document, text]
+        supported_languages:
+          type: array
+          items:
+            type: string
+            pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+        max_file_size:
+          type: integer
+          minimum: 0
+          description: Maximum supported file size in bytes
+        processing_options:
+          type: array
+          items:
+            type: string
+            enum: [ocr, transcription, metadata_extraction, embedding_generation, language_detection]
+        models:
+          type: object
+          description: Available models and their versions
+          additionalProperties:
+            type: string
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [up, down, degraded]
+              response_time_ms:
+                type: number
+              last_check:
+                type: string
+                format: date-time
+        queue_status:
+          type: object
+          properties:
+            queue_length:
+              type: integer
+              minimum: 0
+            average_wait_time:
+              type: number
+              minimum: 0
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+        request_id:
+          type: string
+          format: uuid
+        retry_after:
+          type: integer
+          description: Suggested retry time in seconds
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Multi-Modal Processing
+    description: Core multi-modal content processing operations
+  - name: Processing Management
+    description: Processing job status and artifact management
+  - name: System
+    description: System capabilities and health monitoring

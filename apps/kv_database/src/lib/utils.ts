@@ -212,6 +212,22 @@ export interface ExtractedEntity {
   type: "person" | "organization" | "location" | "concept" | "term" | "other";
   confidence: number;
   position: { start: number; end: number };
+  label: string;
+  aliases?: string[];
+
+  // Dictionary enhancement fields
+  canonicalForm?: string;
+  dictionaryEnhanced?: boolean;
+  dictionarySource?: string;
+  dictionaryConfidence?: number;
+  dictionaryReasoning?: string;
+}
+
+export interface LegacyExtractedEntity {
+  text: string;
+  type: "person" | "organization" | "location" | "concept" | "term" | "other";
+  confidence: number;
+  position: { start: number; end: number };
 }
 
 export interface EntityRelationship {
@@ -358,6 +374,7 @@ export class EnhancedEntityExtractor {
         type: "person",
         confidence: 0.7,
         position: { start: match.index, end: match.index + match[1].length },
+        label: match[1], // Use text as label for person entities
       });
     }
 
@@ -370,6 +387,7 @@ export class EnhancedEntityExtractor {
         type: "organization",
         confidence: 0.8,
         position: { start: match.index, end: match.index + match[1].length },
+        label: match[1], // Use text as label for organization entities
       });
     }
 
@@ -383,6 +401,7 @@ export class EnhancedEntityExtractor {
           type: "concept",
           confidence: 0.6,
           position: { start: match.index, end: match.index + term.length },
+          label: term, // Use text as label for concept entities
         });
       }
     }
@@ -398,6 +417,7 @@ export class EnhancedEntityExtractor {
           start: text.indexOf(term),
           end: text.indexOf(term) + term.length,
         },
+        label: term, // Use text as label for term entities
       });
     }
 

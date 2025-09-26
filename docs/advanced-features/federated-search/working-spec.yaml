@@ -1,4 +1,4 @@
-id: FED-SRCH-001
+id: FED-001
 title: "Federated Search and Cross-System Knowledge Integration"
 risk_tier: 2
 scope:
@@ -56,9 +56,6 @@ non_functional:
     - "Keyboard navigation for federated result filtering"
   perf:
     api_p95_ms: 1000
-    federated_query_throughput: 50 # queries per minute
-    max_latency_multiplier: 2.0
-    system_failure_recovery_ms: 5000
   security:
     - "Federated authentication and authorization"
     - "Encrypted communication between federated systems"

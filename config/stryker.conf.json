@@ -18,7 +18,7 @@
     "src/lib/obsidian-search.ts",
     "src/lib/obsidian-ingest.ts",
     "src/lib/obsidian-models.ts",
-    "src/scripts/ingest-unified.ts",
+    "src/scripts/ingest.ts",
     "src/scripts/ingest-multi-modal.ts",
     "src/scripts/ingest-obsidian.ts",
     "src/scripts/search.ts"

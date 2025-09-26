@@ -18,7 +18,7 @@ import { ObsidianEmbeddingService } from "../embeddings.js";
 import { HybridSearchEngine } from "./hybrid-search-engine.js";
 import { MultiHopReasoningEngine } from "./multi-hop-reasoning.js";
 import { ResultRankingService } from "./result-ranking.js";
-import { KnowledgeGraphManager } from "./knowledge-graph-manager.js";
+import { KnowledgeGraph } from "./knowledge-graph-manager.js";
 import { ProvenanceTracker } from "./provenance-tracker.js";
 import { QueryOptimizer } from "./query-optimizer.js";
 import {
@@ -97,7 +97,7 @@ const NodeType = new GraphQLObjectType({
     firstSeen: { type: GraphQLString }, // ISO date string
     lastUpdated: { type: GraphQLString }, // ISO date string
     relationships: {
-      type: new GraphQLList(RelationshipType),
+      type: new GraphQLList(RelationshipObjectType),
       args: {
         type: { type: RelationshipTypeEnum },
         limit: { type: GraphQLInt, defaultValue: 10 },
@@ -131,7 +131,7 @@ const NodeType = new GraphQLObjectType({
   }),
 });
 
-const RelationshipType = new GraphQLObjectType({
+const RelationshipObjectType = new GraphQLObjectType({
   name: "Relationship",
   fields: () => ({
     id: { type: new GraphQLNonNull(GraphQLID) },
@@ -169,7 +169,7 @@ const SearchResultType = new GraphQLObjectType({
     rankingScore: { type: GraphQLFloat },
     metadata: { type: GraphQLString }, // JSON string
     entities: { type: new GraphQLList(NodeType) },
-    relationships: { type: new GraphQLList(RelationshipType) },
+    relationships: { type: new GraphQLList(RelationshipObjectType) },
     explanation: { type: GraphQLString },
   }),
 });
@@ -179,7 +179,7 @@ const ReasoningPathType = new GraphQLObjectType({
   fields: () => ({
     id: { type: new GraphQLNonNull(GraphQLID) },
     entities: { type: new GraphQLList(NodeType) },
-    relationships: { type: new GraphQLList(RelationshipType) },
+    relationships: { type: new GraphQLList(RelationshipObjectType) },
     confidence: { type: new GraphQLNonNull(GraphQLFloat) },
     strength: { type: new GraphQLNonNull(GraphQLFloat) },
     depth: { type: new GraphQLNonNull(GraphQLInt) },
@@ -309,7 +309,7 @@ const QueryType = new GraphQLObjectType({
 
     // Relationship queries
     relationship: {
-      type: RelationshipType,
+      type: RelationshipObjectType,
       args: {
         id: { type: new GraphQLNonNull(GraphQLID) },
       },
@@ -318,7 +318,7 @@ const QueryType = new GraphQLObjectType({
       },
     },
     relationships: {
-      type: new GraphQLList(RelationshipType),
+      type: new GraphQLList(RelationshipObjectType),
       args: {
         type: { type: RelationshipTypeEnum },
         sourceNodeId: { type: GraphQLID },
@@ -609,7 +609,7 @@ const MutationType = new GraphQLObjectType({
 
     // Relationship mutations
     createRelationship: {
-      type: RelationshipType,
+      type: RelationshipObjectType,
       args: {
         type: { type: new GraphQLNonNull(RelationshipTypeEnum) },
         sourceNodeId: { type: new GraphQLNonNull(GraphQLID) },
@@ -632,7 +632,7 @@ const MutationType = new GraphQLObjectType({
     },
 
     updateRelationship: {
-      type: RelationshipType,
+      type: RelationshipObjectType,
       args: {
         id: { type: new GraphQLNonNull(GraphQLID) },
         properties: { type: GraphQLString }, // JSON string
@@ -737,7 +737,7 @@ const SubscriptionType = new GraphQLObjectType({
     },
 
     relationshipUpdated: {
-      type: RelationshipType,
+      type: RelationshipObjectType,
       args: {
         relationshipId: { type: GraphQLID },
       },
@@ -767,7 +767,7 @@ export interface GraphQLContext {
   searchEngine: HybridSearchEngine;
   reasoningEngine: MultiHopReasoningEngine;
   rankingService: ResultRankingService;
-  graphManager: KnowledgeGraphManager;
+  graphManager: KnowledgeGraph;
   provenanceTracker: ProvenanceTracker;
   queryOptimizer: QueryOptimizer;
   sessionId?: string;
@@ -783,7 +783,7 @@ export const createGraphQLContext = (
   searchEngine: HybridSearchEngine,
   reasoningEngine: MultiHopReasoningEngine,
   rankingService: ResultRankingService,
-  graphManager: KnowledgeGraphManager,
+  graphManager: KnowledgeGraph,
   provenanceTracker: ProvenanceTracker,
   queryOptimizer: QueryOptimizer
 ): GraphQLContext => {

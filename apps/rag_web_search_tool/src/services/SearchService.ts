@@ -3,8 +3,6 @@
 
 import { apiService } from "../lib/api";
 import { graphRagApiService } from "../lib/graph-rag-api";
-import { EnhancedChatService } from "../lib/enhanced-chat";
-import { GraphRagChatService } from "../lib/graph-rag-chat";
 import type {
   SearchResult,
   EnhancedMessage,
@@ -265,20 +263,21 @@ export class SearchService {
       searchOptions?: SearchOptions;
     }
   ): Promise<UnifiedChatResponse> {
-    const chatResponse = await GraphRagChatService.chat(message, {
+    const chatResponse = await ChatService.chat(message, {
       pastedContent: options.searchOptions?.pastedContent,
       queryType: options.searchOptions?.queryType,
       autoSearch: options.searchOptions?.autoSearch ?? true,
       context: options.context,
       model: options.model,
+      useGraphRag: true,
       enableReasoning: options.searchOptions?.enableReasoning ?? true,
       includeProvenance: false,
     });
 
     // Transform search results if present
     let results: SearchResult[] = [];
-    if (chatResponse.searchResults) {
-      results = chatResponse.searchResults.map((result) =>
+    if (chatResponse.graphRagResults) {
+      results = chatResponse.graphRagResults.map((result) =>
         transformGraphRagToSearchResult(result, { includeMetadata: true })
       );
     }
@@ -287,7 +286,7 @@ export class SearchService {
       response: chatResponse.response,
       context: chatResponse.context,
       searchResults: results,
-      graphRagResults: chatResponse.searchResults,
+      graphRagResults: chatResponse.graphRagResults,
       entities: chatResponse.entities,
       reasoningResults: chatResponse.reasoningResults,
       suggestedActions: chatResponse.suggestedActions || [],
@@ -307,12 +306,13 @@ export class SearchService {
       searchOptions?: SearchOptions;
     }
   ): Promise<UnifiedChatResponse> {
-    const chatResponse = await EnhancedChatService.chat(message, {
+    const chatResponse = await ChatService.chat(message, {
       pastedContent: options.searchOptions?.pastedContent,
       queryType: options.searchOptions?.queryType,
       autoSearch: options.searchOptions?.autoSearch ?? true,
       context: options.context,
       model: options.model,
+      useGraphRag: false,
     });
 
     // Transform search results if present
@@ -331,7 +331,7 @@ export class SearchService {
       explanation: {
         searchStrategy: "vector_only",
         reasoningApplied: false,
-        confidenceScore: 0.8,
+        confidenceScore: chatResponse.explanation?.confidenceScore || 0.8,
       },
     };
   }

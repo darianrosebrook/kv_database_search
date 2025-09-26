@@ -58,9 +58,9 @@ export class KnowledgeGraphIntegration {
   }
 
   /**
-   * Enhanced multi-modal ingestion pipeline with knowledge graph integration
+   * Multi-modal ingestion pipeline with knowledge graph integration
    */
-  createEnhancedIngestionPipeline(): MultiModalIngestionPipeline {
+  createIngestionPipeline(): MultiModalIngestionPipeline {
     const originalPipeline = new MultiModalIngestionPipeline(
       this.database,
       this.embeddings
@@ -323,9 +323,9 @@ export class KnowledgeGraphIntegration {
 }
 
 /**
- * Factory function to create enhanced ingestion pipeline with knowledge graph integration
+ * Factory function to create ingestion pipeline with knowledge graph integration
  */
-export function createEnhancedIngestionPipeline(
+export function createIngestionPipeline(
   database: ObsidianDatabase,
   embeddings: ObsidianEmbeddingService,
   config: Partial<KnowledgeGraphIntegrationConfig> = {}
@@ -338,7 +338,7 @@ export function createEnhancedIngestionPipeline(
     embeddings,
     config
   );
-  const pipeline = knowledgeGraph.createEnhancedIngestionPipeline();
+  const pipeline = knowledgeGraph.createIngestionPipeline();
 
   return {
     pipeline,

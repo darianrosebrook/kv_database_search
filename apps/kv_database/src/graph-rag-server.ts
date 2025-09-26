@@ -6,12 +6,13 @@ import {
   HybridSearchEngine,
   MultiHopReasoningEngine,
   ResultRankingService,
-  KnowledgeGraphManager,
+  KnowledgeGraph,
   EntityExtractor,
   ProvenanceTracker,
   QueryOptimizer,
   MonitoringSystem,
   GraphRagApiServer,
+  // KnowledgeGraphManager, // Not implemented yet
 } from "./lib/knowledge-graph/index.js";
 import { EmbeddingService } from "./lib/embeddings.js";
 import { DatabaseService } from "./lib/database.js";
@@ -36,7 +37,7 @@ const pool = new Pool({
 let hybridSearchEngine: HybridSearchEngine;
 let reasoningEngine: MultiHopReasoningEngine;
 let rankingService: ResultRankingService;
-let knowledgeGraphManager: KnowledgeGraphManager;
+let knowledgeGraphManager: KnowledgeGraph;
 let entityExtractor: EntityExtractor;
 let provenanceTracker: ProvenanceTracker;
 let queryOptimizer: QueryOptimizer;
@@ -54,7 +55,7 @@ async function initializeServices() {
     databaseService = new DatabaseService(pool);
 
     // Initialize Graph RAG components
-    knowledgeGraphManager = new KnowledgeGraphManager(pool, embeddingService);
+    knowledgeGraphManager = new KnowledgeGraph();
     entityExtractor = new EntityExtractor();
     hybridSearchEngine = new HybridSearchEngine(
       pool,

@@ -23,6 +23,10 @@ import { ObsidianSearchService } from "./lib/obsidian-search";
 import { ObsidianIngestionPipeline } from "./lib/obsidian-ingest";
 import { WebSearchService } from "./lib/web-search";
 import { ContextManager } from "./lib/context-manager";
+import { DictionaryAPI } from "./lib/dictionary-api";
+import { MLEntityAPI } from "./lib/ml-entity-api";
+import { TemporalReasoningAPI } from "./lib/temporal-reasoning-api";
+import { FederatedSearchAPI } from "./lib/federated-search-api";
 import { ChatSession } from "./types/index";
 import type {
   HealthResponse,
@@ -198,6 +202,10 @@ let searchService: ObsidianSearchService | null = null;
 let ingestionPipeline: ObsidianIngestionPipeline | null = null;
 let webSearchService: WebSearchService | null = null;
 let contextManager: ContextManager | null = null;
+let dictionaryAPI: DictionaryAPI | null = null;
+let mlEntityAPI: MLEntityAPI | null = null;
+let temporalReasoningAPI: TemporalReasoningAPI | null = null;
+let federatedSearchAPI: FederatedSearchAPI | null = null;
 
 /**
  * Initialize all services
@@ -294,6 +302,55 @@ async function initializeServices() {
     console.error("❌ Context manager initialization failed:", error.message);
     console.error("💡 Context management features will be limited");
     // Don't throw - context manager can work with limited functionality
+  }
+
+  // Initialize dictionary service
+  try {
+    dictionaryAPI = new DictionaryAPI(database);
+    console.log("✅ Dictionary service initialized");
+  } catch (error: any) {
+    console.error(
+      "❌ Dictionary service initialization failed:",
+      error.message
+    );
+    console.error("💡 Dictionary features will be limited");
+    // Don't throw - dictionary service can work with limited functionality
+  }
+
+  // Initialize ML entity service
+  try {
+    mlEntityAPI = new MLEntityAPI(database);
+    console.log("✅ ML entity service initialized");
+  } catch (error: any) {
+    console.error("❌ ML entity service initialization failed:", error.message);
+    console.error("💡 ML entity features will be limited");
+    // Don't throw - ML entity service can work with limited functionality
+  }
+
+  // Initialize temporal reasoning service
+  try {
+    temporalReasoningAPI = new TemporalReasoningAPI(database);
+    console.log("✅ Temporal reasoning service initialized");
+  } catch (error: any) {
+    console.error(
+      "❌ Temporal reasoning service initialization failed:",
+      error.message
+    );
+    console.error("💡 Temporal reasoning features will be limited");
+    // Don't throw - temporal reasoning service can work with limited functionality
+  }
+
+  // Initialize federated search service
+  try {
+    federatedSearchAPI = new FederatedSearchAPI(database);
+    console.log("✅ Federated search service initialized");
+  } catch (error: any) {
+    console.error(
+      "❌ Federated search service initialization failed:",
+      error.message
+    );
+    console.error("💡 Federated search features will be limited");
+    // Don't throw - federated search service can work with limited functionality
   }
 
   // Initialize web search providers based on environment variables
@@ -2623,6 +2680,30 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
   });
 })();
 
+// Register dictionary API routes
+if (dictionaryAPI) {
+  server.register(dictionaryAPI.getRouter(), { prefix: "/dictionary" });
+  console.log("📚 Dictionary API routes registered");
+}
+
+// Register ML entity API routes
+if (mlEntityAPI) {
+  server.register(mlEntityAPI.getRouter(), { prefix: "/ml/entities" });
+  console.log("🤖 ML Entity API routes registered");
+}
+
+// Register temporal reasoning API routes
+if (temporalReasoningAPI) {
+  server.register(temporalReasoningAPI.getRouter(), { prefix: "/temporal" });
+  console.log("⏰ Temporal Reasoning API routes registered");
+}
+
+// Register federated search API routes
+if (federatedSearchAPI) {
+  server.register(federatedSearchAPI.getRouter(), { prefix: "/federated" });
+  console.log("🔍 Federated Search API routes registered");
+}
+
 // Start server
 async function start() {
   try {
@@ -2686,6 +2767,51 @@ async function start() {
     console.log(`📄 Conflict status: http://${HOST}:${PORT}/files/conflicts`);
     console.log(`📊 Statistics: http://${HOST}:${PORT}/stats`);
     console.log(`🕸️  Graph data: http://${HOST}:${PORT}/graph`);
+    console.log(`📚 Dictionary API: http://${HOST}:${PORT}/dictionary`);
+    console.log(
+      `📚 Dictionary Health: http://${HOST}:${PORT}/dictionary/health`
+    );
+    console.log(
+      `📚 Dictionary Lookup: http://${HOST}:${PORT}/dictionary/lookup`
+    );
+    console.log(
+      `📚 Entity Canonicalization: http://${HOST}:${PORT}/dictionary/canonicalize`
+    );
+    console.log(
+      `📚 Search Expansion: http://${HOST}:${PORT}/dictionary/expand`
+    );
+    console.log(
+      `🤖 ML Entity Extraction: http://${HOST}:${PORT}/ml/entities/extract`
+    );
+    console.log(
+      `🤖 ML Entity Linking: http://${HOST}:${PORT}/ml/entities/link`
+    );
+    console.log(
+      `🤖 ML Relationships: http://${HOST}:${PORT}/ml/entities/relationships`
+    );
+    console.log(
+      `🤖 ML Health Check: http://${HOST}:${PORT}/ml/entities/health`
+    );
+    console.log(`🤖 ML Metrics: http://${HOST}:${PORT}/ml/entities/metrics`);
+    console.log(`🤖 ML Models: http://${HOST}:${PORT}/ml/entities/models`);
+    console.log(
+      `⏰ Causality Analysis: http://${HOST}:${PORT}/temporal/causality/analyze`
+    );
+    console.log(
+      `⏰ Trend Analysis: http://${HOST}:${PORT}/temporal/trends/analyze`
+    );
+    console.log(
+      `⏰ Change Detection: http://${HOST}:${PORT}/temporal/changes/detect`
+    );
+    console.log(`⏰ Temporal Queries: http://${HOST}:${PORT}/temporal/query`);
+    console.log(`⏰ Temporal Health: http://${HOST}:${PORT}/temporal/health`);
+    console.log(`⏰ Temporal Status: http://${HOST}:${PORT}/temporal/status`);
+    console.log(`🔍 Federated Search: http://${HOST}:${PORT}/federated/search`);
+    console.log(
+      `🔍 System Management: http://${HOST}:${PORT}/federated/systems`
+    );
+    console.log(`🔍 System Health: http://${HOST}:${PORT}/federated/health`);
+    console.log(`🔍 System Status: http://${HOST}:${PORT}/federated/status`);
     console.log("=".repeat(60));
 
     // Log helpful setup instructions if needed

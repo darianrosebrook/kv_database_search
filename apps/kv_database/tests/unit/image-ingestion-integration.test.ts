@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { UnifiedIngestionPipeline } from "../../src/scripts/ingest-unified";
+import { IngestionPipeline } from "../../src/scripts/ingest";
 import { ObsidianDatabase } from "../../src/lib/database";
 import { ObsidianEmbeddingService } from "../../src/lib/embeddings";
 import { ImageLinkExtractor } from "../../src/lib/image-link-extractor";
@@ -23,18 +23,18 @@ vi.mock("../../src/lib/embeddings");
 vi.mock("../../src/lib/obsidian-ingest");
 vi.mock("../../src/lib/multi-modal-ingest");
 
-// Mock the UnifiedIngestionPipeline constructor
-vi.mock("../../src/scripts/ingest-unified", () => ({
-  UnifiedIngestionPipeline: vi.fn().mockImplementation(() => ({
+// Mock the IngestionPipeline constructor
+vi.mock("../../src/scripts/ingest", () => ({
+  IngestionPipeline: vi.fn().mockImplementation(() => ({
     ingestVault: vi.fn(),
     validateIngestion: vi.fn(),
   })),
 }));
 
-describe("UnifiedIngestionPipeline", () => {
+describe("IngestionPipeline", () => {
   let mockDatabase: any;
   let mockEmbeddingService: any;
-  let pipeline: UnifiedIngestionPipeline;
+  let pipeline: IngestionPipeline;
   const vaultPath = "/test/vault";
 
   beforeEach(() => {
@@ -49,8 +49,8 @@ describe("UnifiedIngestionPipeline", () => {
         .mockResolvedValue({ success: true, dimension: 768 }),
     };
 
-    // Create a mock constructor for UnifiedIngestionPipeline
-    pipeline = new (UnifiedIngestionPipeline as any)(
+    // Create a mock constructor for IngestionPipeline
+    pipeline = new (IngestionPipeline as any)(
       mockDatabase,
       mockEmbeddingService,
       vaultPath
