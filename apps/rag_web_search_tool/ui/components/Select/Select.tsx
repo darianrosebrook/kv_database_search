@@ -7,11 +7,11 @@
  * Before: 6 boolean props (multiselect, searchable, clearable, loading, disabled, required)
  * After: Provider pattern with context orchestration and slots
  */
-'use client';
-import React, { useCallback, useRef, useEffect } from 'react';
-import { useSelectContext } from './SelectProvider';
-import { ControlSize } from '@/types/ui';
-import styles from './Select.module.scss';
+"use client";
+import React, { useCallback, useRef, useEffect } from "react";
+import { useSelectContext } from "./SelectProvider";
+import { ControlSize } from "@/types/ui";
+import styles from "./Select.module.scss";
 
 // Trigger component - what the user clicks to open the select
 export interface SelectTriggerProps {
@@ -31,10 +31,10 @@ export interface SelectTriggerProps {
   /** Blur handler */
   onBlur?: React.FocusEventHandler<HTMLElement>;
   /** ARIA attributes */
-  'aria-labelledby'?: string;
-  'aria-describedby'?: string;
-  'aria-errormessage'?: string;
-  'aria-invalid'?: boolean;
+  "aria-labelledby"?: string;
+  "aria-describedby"?: string;
+  "aria-errormessage"?: string;
+  "aria-invalid"?: boolean;
 }
 
 export const SelectTrigger = React.forwardRef<
@@ -42,9 +42,9 @@ export const SelectTrigger = React.forwardRef<
   SelectTriggerProps
 >((props, ref) => {
   const {
-    placeholder = 'Select an option...',
-    className = '',
-    size = 'md',
+    placeholder = "Select an option...",
+    className = "",
+    size = "md",
     clearable = false,
     loading = false,
     onBlur,
@@ -71,7 +71,7 @@ export const SelectTrigger = React.forwardRef<
           node;
       }
       if (ref) {
-        if (typeof ref === 'function') {
+        if (typeof ref === "function") {
           ref(node);
         } else {
           ref.current = node;
@@ -84,19 +84,19 @@ export const SelectTrigger = React.forwardRef<
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       switch (e.key) {
-        case 'Enter':
-        case ' ':
+        case "Enter":
+        case " ":
           e.preventDefault();
           toggle();
           break;
-        case 'ArrowDown':
-        case 'ArrowUp':
+        case "ArrowDown":
+        case "ArrowUp":
           e.preventDefault();
           if (!isOpen) {
             toggle();
           }
           break;
-        case 'Escape':
+        case "Escape":
           if (isOpen) {
             e.preventDefault();
             toggle();
@@ -117,7 +117,7 @@ export const SelectTrigger = React.forwardRef<
 
   const displayText = isEmpty
     ? placeholder
-    : selectedOptions.map((option) => option.title).join(', ');
+    : selectedOptions.map((option) => option.title).join(", ");
 
   const sizeClass = styles[size] || styles.md;
 
@@ -129,13 +129,13 @@ export const SelectTrigger = React.forwardRef<
       onClick={toggle}
       onKeyDown={handleKeyDown}
       onBlur={onBlur}
-      data-state={isOpen ? 'open' : 'closed'}
+      data-state={isOpen ? "open" : "closed"}
       data-loading={loading || undefined}
       {...ariaAttributes}
       {...ariaProps}
     >
       <span className={styles.text}>
-        {loading ? 'Loading...' : displayText}
+        {loading ? "Loading..." : displayText}
       </span>
 
       <div className={styles.icons}>
@@ -185,7 +185,7 @@ export const SelectTrigger = React.forwardRef<
   );
 });
 
-SelectTrigger.displayName = 'Select.Trigger';
+SelectTrigger.displayName = "Select.Trigger";
 
 // Content component - the dropdown content container
 export interface SelectContentProps {
@@ -194,7 +194,7 @@ export interface SelectContentProps {
   /** Maximum height before scrolling */
   maxHeight?: string;
   /** Positioning strategy */
-  position?: 'bottom' | 'top' | 'auto';
+  position?: "bottom" | "top" | "auto";
 }
 
 export const SelectContent = React.forwardRef<
@@ -202,7 +202,7 @@ export const SelectContent = React.forwardRef<
   SelectContentProps
 >(
   (
-    { children, className = '', maxHeight = '200px', position = 'bottom' },
+    { children, className = "", maxHeight = "200px", position = "bottom" },
     ref
   ) => {
     const { isOpen, close, listboxRef } = useSelectContext();
@@ -214,7 +214,7 @@ export const SelectContent = React.forwardRef<
           (listboxRef as React.MutableRefObject<HTMLDivElement>).current = node;
         }
         if (ref) {
-          if (typeof ref === 'function') {
+          if (typeof ref === "function") {
             ref(node);
           } else {
             ref.current = node;
@@ -231,8 +231,8 @@ export const SelectContent = React.forwardRef<
       const handleClickOutside = (event: MouseEvent) => {
         const target = event.target as Node;
         const content = listboxRef?.current;
-        const trigger = (listboxRef as any)?.current
-          ?.closest('[data-select-root]')
+        const trigger = listboxRef?.current
+          ?.closest("[data-select-root]")
           ?.querySelector('[role="combobox"]');
 
         if (
@@ -245,9 +245,9 @@ export const SelectContent = React.forwardRef<
         }
       };
 
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
       return () =>
-        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener("mousedown", handleClickOutside);
     }, [isOpen, close, listboxRef]);
 
     if (!isOpen) return null;
@@ -266,7 +266,7 @@ export const SelectContent = React.forwardRef<
   }
 );
 
-SelectContent.displayName = 'Select.Content';
+SelectContent.displayName = "Select.Content";
 
 // Search component - for filtering options
 export interface SelectSearchProps {
@@ -275,8 +275,8 @@ export interface SelectSearchProps {
 }
 
 export const SelectSearch: React.FC<SelectSearchProps> = ({
-  placeholder = 'Search...',
-  className = '',
+  placeholder = "Search...",
+  className = "",
 }) => {
   const { searchTerm, setSearchTerm } = useSelectContext();
 
@@ -294,7 +294,7 @@ export const SelectSearch: React.FC<SelectSearchProps> = ({
   );
 };
 
-SelectSearch.displayName = 'Select.Search';
+SelectSearch.displayName = "Select.Search";
 
 // Options component - renders the list of options
 export interface SelectOptionsProps {
@@ -304,8 +304,8 @@ export interface SelectOptionsProps {
 }
 
 export const SelectOptions: React.FC<SelectOptionsProps> = ({
-  className = '',
-  emptyState = 'No options found',
+  className = "",
+  emptyState = "No options found",
 }) => {
   const {
     filteredOptions,
@@ -323,7 +323,7 @@ export const SelectOptions: React.FC<SelectOptionsProps> = ({
   );
 
   const handleClick = useCallback(
-    (option: any) => {
+    (option) => {
       selectOption(option);
     },
     [selectOption]
@@ -346,7 +346,9 @@ export const SelectOptions: React.FC<SelectOptionsProps> = ({
         return (
           <div
             key={option.id}
-            className={`${styles.option} ${isSelected ? styles.selected : ''} ${isActive ? styles.active : ''}`}
+            className={`${styles.option} ${isSelected ? styles.selected : ""} ${
+              isActive ? styles.active : ""
+            }`}
             role="option"
             aria-selected={isSelected}
             data-disabled={option.disabled || undefined}
@@ -378,7 +380,7 @@ export const SelectOptions: React.FC<SelectOptionsProps> = ({
   );
 };
 
-SelectOptions.displayName = 'Select.Options';
+SelectOptions.displayName = "Select.Options";
 
 // Main Select component (for backward compatibility)
 export interface SelectProps {
@@ -386,7 +388,7 @@ export interface SelectProps {
   className?: string;
 }
 
-export const Select: React.FC<SelectProps> = ({ children, className = '' }) => {
+export const Select: React.FC<SelectProps> = ({ children, className = "" }) => {
   return (
     <div className={`${styles.root} ${className}`} data-select-root>
       {children}
@@ -394,6 +396,6 @@ export const Select: React.FC<SelectProps> = ({ children, className = '' }) => {
   );
 };
 
-Select.displayName = 'Select';
+Select.displayName = "Select";
 
 export default Select;

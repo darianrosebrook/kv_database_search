@@ -200,7 +200,7 @@ export class ImageOCRExtractor {
   /**
    * Extract images from PDF pages and perform OCR
    */
-  async extractFromPDFPages(pages: any[]): Promise<{
+  async extractFromPDFPages(pages): Promise<{
     images: Array<{
       pageNumber: number;
       width: number;

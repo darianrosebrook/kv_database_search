@@ -5,6 +5,8 @@ import path from "path";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import { fileURLToPath } from "url";
+import { DocumentChunk } from "../../kv_database/src/types";
+import { SearchRequest } from "../../kv_database/src/lib/knowledge-graph/graph-rag-api";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,7 +16,7 @@ interface ContractValidationResult {
     type: "request" | "response" | "schema";
     endpoint: string;
     message: string;
-    details?: any;
+    details?: unknown;
   }>;
   coverage: {
     endpointsTested: number;
@@ -25,7 +27,7 @@ interface ContractValidationResult {
 
 export class ObsidianContractValidator {
   private ajv: Ajv;
-  private specs: Map<string, any> = new Map();
+  private specs: Map<string, unknown> = new Map();
 
   constructor() {
     this.ajv = new Ajv({
@@ -65,7 +67,9 @@ export class ObsidianContractValidator {
     }
   }
 
-  validateWorkingSpec(spec: any): ContractValidationResult {
+  validateWorkingSpec(
+    spec: ContractValidationResult
+  ): ContractValidationResult {
     const errors: ContractValidationResult["errors"] = [];
     let schemasValidated = 0;
 
@@ -109,7 +113,7 @@ export class ObsidianContractValidator {
     };
   }
 
-  validateSearchRequest(request: any): ContractValidationResult {
+  validateSearchRequest(request: SearchRequest): ContractValidationResult {
     const errors: ContractValidationResult["errors"] = [];
 
     // Validate query parameter
@@ -126,11 +130,11 @@ export class ObsidianContractValidator {
     }
 
     // Validate limit
-    if (request.limit !== undefined) {
+    if (request.options?.maxResults !== undefined) {
       if (
-        typeof request.limit !== "number" ||
-        request.limit < 1 ||
-        request.limit > 50
+        typeof request.options.maxResults !== "number" ||
+        request.options.maxResults < 1 ||
+        request.options.maxResults > 50
       ) {
         errors.push({
           type: "request",
@@ -141,7 +145,7 @@ export class ObsidianContractValidator {
     }
 
     // Validate fileTypes
-    if (request.fileTypes !== undefined) {
+    if (request.options?.fileTypes !== undefined) {
       const validTypes = [
         "moc",
         "article",
@@ -150,14 +154,14 @@ export class ObsidianContractValidator {
         "template",
         "note",
       ];
-      if (!Array.isArray(request.fileTypes)) {
+      if (!Array.isArray(request.options.fileTypes)) {
         errors.push({
           type: "request",
           endpoint: "/search",
           message: "fileTypes must be an array",
         });
       } else {
-        const invalidTypes = request.fileTypes.filter(
+        const invalidTypes = request.options.fileTypes.filter(
           (type: string) => !validTypes.includes(type)
         );
         if (invalidTypes.length > 0) {
@@ -181,7 +185,9 @@ export class ObsidianContractValidator {
     };
   }
 
-  validateSearchResponse(response: any): ContractValidationResult {
+  validateSearchResponse(
+    response: ContractValidationResult
+  ): ContractValidationResult {
     const errors: ContractValidationResult["errors"] = [];
 
     // Validate required fields
@@ -201,7 +207,7 @@ export class ObsidianContractValidator {
       });
     } else {
       // Validate each result
-      response.results.forEach((result: any, index: number) => {
+      response.results.forEach((result, index: number) => {
         if (!result.id || typeof result.id !== "string") {
           errors.push({
             type: "response",
@@ -259,7 +265,7 @@ export class ObsidianContractValidator {
     };
   }
 
-  validateDocumentChunk(chunk: any): ContractValidationResult {
+  validateDocumentChunk(chunk: DocumentChunk): ContractValidationResult {
     const errors: ContractValidationResult["errors"] = [];
 
     // Validate required fields
@@ -331,9 +337,7 @@ export class ObsidianContractValidator {
           message: "embedding must be an array of numbers",
         });
       } else {
-        const nonNumbers = chunk.embedding.filter(
-          (x: any) => typeof x !== "number"
-        );
+        const nonNumbers = chunk.embedding.filter((x) => typeof x !== "number");
         if (nonNumbers.length > 0) {
           errors.push({
             type: "schema",
@@ -420,74 +424,85 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   switch (command) {
     case "validate-working-spec":
-      const specFile = process.argv[3];
-      if (!specFile || !fs.existsSync(specFile)) {
-        console.error("Working spec file not found");
-        process.exit(1);
+      {
+        const specFile = process.argv[3];
+        if (!specFile || !fs.existsSync(specFile)) {
+          console.error("Working spec file not found");
+          process.exit(1);
+        }
+        const spec = JSON.parse(fs.readFileSync(specFile, "utf-8"));
+        const specResult = validator.validateWorkingSpec(spec);
+        console.log(JSON.stringify(specResult, null, 2));
+        process.exit(specResult.isValid ? 0 : 1);
       }
-      const spec = JSON.parse(fs.readFileSync(specFile, "utf-8"));
-      const specResult = validator.validateWorkingSpec(spec);
-      console.log(JSON.stringify(specResult, null, 2));
-      process.exit(specResult.isValid ? 0 : 1);
+      break;
 
     case "validate-search-request":
-      const requestFile = process.argv[3];
-      if (!requestFile || !fs.existsSync(requestFile)) {
-        console.error("Request file not found");
-        process.exit(1);
-      }
-      const request = JSON.parse(fs.readFileSync(requestFile, "utf-8"));
-      const requestResult = validator.validateSearchRequest(request);
-      console.log(JSON.stringify(requestResult, null, 2));
-      process.exit(requestResult.isValid ? 0 : 1);
-
-    case "validate-search-response":
-      const responseFile = process.argv[3];
-      if (!responseFile || !fs.existsSync(responseFile)) {
-        console.error("Response file not found");
-        process.exit(1);
-      }
-      const response = JSON.parse(fs.readFileSync(responseFile, "utf-8"));
-      const responseResult = validator.validateSearchResponse(response);
-      console.log(JSON.stringify(responseResult, null, 2));
-      process.exit(responseResult.isValid ? 0 : 1);
-
-    case "validate-chunk":
-      const chunkFile = process.argv[3];
-      if (!chunkFile || !fs.existsSync(chunkFile)) {
-        console.error("Chunk file not found");
-        process.exit(1);
-      }
-      const chunk = JSON.parse(fs.readFileSync(chunkFile, "utf-8"));
-      const chunkResult = validator.validateDocumentChunk(chunk);
-      console.log(JSON.stringify(chunkResult, null, 2));
-      process.exit(chunkResult.isValid ? 0 : 1);
-
-    case "run-tests":
-      validator
-        .runContractTests()
-        .then(({ results, summary }) => {
-          console.log("Contract Test Results:");
-          console.log(`Total Tests: ${summary.totalTests}`);
-          console.log(`Passed: ${summary.passedTests}`);
-          console.log(`Failed: ${summary.failedTests}`);
-          console.log(`Coverage: ${(summary.coverage * 100).toFixed(1)}%`);
-
-          if (summary.failedTests > 0) {
-            console.log("\nFailed Tests:");
-            results
-              .filter((r) => !r.isValid)
-              .forEach((result, i) => {
-                console.log(`${i + 1}. ${result.errors[0]?.message}`);
-              });
-          }
-
-          process.exit(summary.failedTests === 0 ? 0 : 1);
-        })
-        .catch((error) => {
-          console.error("Contract tests failed:", error);
+      {
+        const requestFile = process.argv[3];
+        if (!requestFile || !fs.existsSync(requestFile)) {
+          console.error("Request file not found");
           process.exit(1);
-        });
+        }
+        const request = JSON.parse(fs.readFileSync(requestFile, "utf-8"));
+        const requestResult = validator.validateSearchRequest(request);
+        console.log(JSON.stringify(requestResult, null, 2));
+        process.exit(requestResult.isValid ? 0 : 1);
+      }
+      break;
+    case "validate-search-response":
+      {
+        const responseFile = process.argv[3];
+        if (!responseFile || !fs.existsSync(responseFile)) {
+          console.error("Response file not found");
+          process.exit(1);
+        }
+        const response = JSON.parse(fs.readFileSync(responseFile, "utf-8"));
+        const responseResult = validator.validateSearchResponse(response);
+        console.log(JSON.stringify(responseResult, null, 2));
+        process.exit(responseResult.isValid ? 0 : 1);
+      }
+      break;
+    case "validate-chunk":
+      {
+        const chunkFile = process.argv[3];
+        if (!chunkFile || !fs.existsSync(chunkFile)) {
+          console.error("Chunk file not found");
+          process.exit(1);
+        }
+        const chunk = JSON.parse(fs.readFileSync(chunkFile, "utf-8"));
+        const chunkResult = validator.validateDocumentChunk(chunk);
+        console.log(JSON.stringify(chunkResult, null, 2));
+        process.exit(chunkResult.isValid ? 0 : 1);
+      }
+      break;
+    case "run-tests":
+      {
+        validator
+          .runContractTests()
+          .then(({ results, summary }) => {
+            console.log("Contract Test Results:");
+            console.log(`Total Tests: ${summary.totalTests}`);
+            console.log(`Passed: ${summary.passedTests}`);
+            console.log(`Failed: ${summary.failedTests}`);
+            console.log(`Coverage: ${(summary.coverage * 100).toFixed(1)}%`);
+
+            if (summary.failedTests > 0) {
+              console.log("\nFailed Tests:");
+              results
+                .filter((r) => !r.isValid)
+                .forEach((result, i) => {
+                  console.log(`${i + 1}. ${result.errors[0]?.message}`);
+                });
+            }
+
+            process.exit(summary.failedTests === 0 ? 0 : 1);
+          })
+          .catch((error) => {
+            console.error("Contract tests failed:", error);
+            process.exit(1);
+          });
+      }
       break;
 
     default:

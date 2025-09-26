@@ -2,7 +2,6 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { execSync } from "child_process";
 
 /**
  * CAWS Migration Script Generator
@@ -18,7 +17,7 @@ interface MigrationStep {
 }
 
 class MigrationGenerator {
-  private workingSpec: any;
+  private workingSpec;
 
   constructor() {
     this.loadWorkingSpec();
@@ -250,12 +249,13 @@ async function main() {
     }
 
     switch (command) {
-      case "generate":
+      case "generate": {
         const script = generator.generateMigrationScript(migrations);
         const scriptPath = path.join(process.cwd(), "migrate.sh");
         fs.writeFileSync(scriptPath, script, { mode: 0o755 });
         console.log("📄 Migration script generated:", scriptPath);
         break;
+      }
 
       case "list":
         console.log("📋 Available Migrations:");

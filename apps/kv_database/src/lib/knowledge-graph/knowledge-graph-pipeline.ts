@@ -4,9 +4,8 @@ import { ContentType } from "../types/index.js";
 import {
   KnowledgeGraphEntityExtractor,
   EntityExtractionConfig,
-  EntityExtractionResult,
   ExtractionMethod,
-} from "./entity-extractor.js";
+} from "./entity-extractor";
 import { KnowledgeGraph } from "./knowledge-graph-manager.js";
 
 export interface KnowledgeGraphPipelineConfig {
@@ -41,7 +40,7 @@ export interface ChunkProcessingInput {
   text: string;
   contentType: ContentType;
   sourceFile: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -187,7 +186,7 @@ export class KnowledgeGraphPipeline {
     const maxConcurrent = this.config.processing.maxConcurrentExtractions!;
     const semaphore = new Array(maxConcurrent).fill(null);
 
-    const processingPromises = batch.map(async (chunk, index) => {
+    const processingPromises = batch.map(async (chunk, _index) => {
       // Wait for available slot
       await new Promise((resolve) => {
         const checkSlot = () => {
@@ -200,7 +199,7 @@ export class KnowledgeGraphPipeline {
           }
         };
         checkSlot();
-      }).then(async (slotIndex: any) => {
+      }).then(async (slotIndex) => {
         try {
           const chunkResult = await this.processChunk(chunk);
 
@@ -350,7 +349,7 @@ export class KnowledgeGraphPipeline {
       `;
 
       const conditions: string[] = [];
-      const values: any[] = [];
+      const values = [];
       let paramIndex = 1;
 
       // Add content type filter

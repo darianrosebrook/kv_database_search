@@ -20,8 +20,8 @@ export interface ObsidianDocument {
   name?: string;
   extension?: string;
   content: string;
-  frontmatter: Record<string, any>;
-  sections?: any[];
+  frontmatter: Record<string, unknown>;
+  sections?;
   relationships: {
     wikilinks: Array<{ target: string; displayText?: string }>;
     tags: string[];
@@ -131,7 +131,7 @@ export interface ObsidianSearchResult {
   obsidianMeta?: {
     tags?: string[];
     wikilinks?: string[];
-    frontmatter?: Record<string, any>;
+    frontmatter?: Record<string, unknown>;
   };
   multiModalMeta?: {
     contentType?: string;
@@ -140,7 +140,7 @@ export interface ObsidianSearchResult {
       quality?: number;
     };
   };
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
   cosineSimilarity?: number;
   highlights?: string[];
   text?: string;
@@ -201,14 +201,14 @@ export interface ObsidianIngestionConfig {
 export interface SearchAPIRequest {
   query: string;
   context?: string;
-  filters?: Record<string, any>;
-  options?: Record<string, any>;
+  filters?: Record<string, unknown>;
+  options?: Record<string, unknown>;
 }
 
 export interface SearchAPIResponse {
   results: ObsidianSearchResult[];
   total: number;
-  facets?: Record<string, any>;
+  facets?: Record<string, unknown>;
 }
 
 export interface IngestionAPIRequest {
@@ -255,7 +255,7 @@ export interface ObsidianFrontmatterSchema {
   tags?: string[];
   created?: string | Date;
   modified?: string | Date;
-  [key: string]: any;
+  [key: string];
 }
 
 export interface ValidationError {

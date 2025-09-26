@@ -342,7 +342,7 @@ export default function App() {
     }
   };
 
-  const handleLoadChatSession = (session: any) => {
+  const handleLoadChatSession = (session) => {
     setCurrentSession(session);
     setMessages(session.messages || []);
   };
@@ -351,7 +351,7 @@ export default function App() {
     resetChat();
   };
 
-  const handleMultiModalProcessingComplete = (result: any) => {
+  const handleMultiModalProcessingComplete = (result) => {
     // Add the processed content to the current search results
     console.log("Multi-modal processing completed:", result);
     // You could add this to the knowledge base or trigger a new search

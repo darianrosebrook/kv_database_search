@@ -2,13 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown, Brain, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "../Button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../src/components/ui/select";
+import { Select, SelectContent, SelectTrigger } from "../Select";
 import { apiService } from "../../../src/lib/api";
 import styles from "./ModelSelector.module.scss";
 
@@ -93,7 +87,7 @@ export function ModelSelector({
         <SelectTrigger className={styles.trigger}>
           <div className={styles.triggerContent}>
             <Brain className={styles.modelIcon} />
-            <SelectValue placeholder="Select model...">
+            <div className={styles.selectValue}>
               {selectedModel ? (
                 <div className={styles.selectedModel}>
                   <span className={styles.modelEmoji}>
@@ -117,7 +111,7 @@ export function ModelSelector({
               ) : (
                 "Select model..."
               )}
-            </SelectValue>
+            </div>
             <ChevronDown
               className={`${styles.chevron} ${isOpen ? styles.open : ""}`}
             />
@@ -175,10 +169,10 @@ export function ModelSelector({
               </div>
             ) : (
               models.map((model) => (
-                <SelectItem
+                <div
                   key={model.name}
-                  value={model.name}
                   className={styles.modelItem}
+                  onClick={() => handleModelSelect(model.name)}
                 >
                   <div className={styles.modelItemContent}>
                     <div className={styles.modelHeader}>
@@ -216,7 +210,7 @@ export function ModelSelector({
                       </div>
                     )}
                   </div>
-                </SelectItem>
+                </div>
               ))
             )}
           </div>

@@ -1,11 +1,10 @@
 import express, { Request, Response, NextFunction } from "express";
 import { Pool } from "pg";
 import { ObsidianEmbeddingService } from "../embeddings.js";
-import { ContentType } from "../types/index.js";
+import { ContentType } from "../../types/index.js";
 import {
   HybridSearchEngine,
   type SearchQuery,
-  type SearchResult,
   type SearchMetrics,
   type SearchExplanation,
 } from "./hybrid-search-engine.js";
@@ -310,7 +309,7 @@ export interface ErrorResponse {
   error: {
     code: string;
     message: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
   };
   timestamp: string;
   requestId: string;
@@ -329,7 +328,7 @@ export class GraphRAGAPIRouter {
   constructor(
     pool: Pool,
     embeddings: ObsidianEmbeddingService,
-    options: {
+    _options: {
       enableRateLimit?: boolean;
       enableCaching?: boolean;
       enableMetrics?: boolean;
@@ -386,7 +385,7 @@ export class GraphRAGAPIRouter {
 
     // Error handling
     this.router.use(
-      (error: Error, req: Request, res: Response, next: NextFunction) => {
+      (error: Error, req: Request, res: Response, _next: NextFunction) => {
         const requestId = req.headers["x-request-id"] as string;
         console.error(
           `❌ Error in ${req.method} ${req.path} [${requestId}]:`,
@@ -469,11 +468,9 @@ export class GraphRAGAPIRouter {
               contentTypes: searchRequest.filters.contentTypes?.map(
                 (ct) => ct as ContentType
               ),
-              entityTypes: searchRequest.filters.entityTypes?.map(
-                (et) => et as any
-              ),
+              entityTypes: searchRequest.filters.entityTypes?.map((et) => et),
               relationshipTypes: searchRequest.filters.relationshipTypes?.map(
-                (rt) => rt as any
+                (rt) => rt
               ),
               sourceFiles: searchRequest.filters.sourceFiles,
               minConfidence: searchRequest.filters.minConfidence,
@@ -589,8 +586,8 @@ export class GraphRAGAPIRouter {
         parseInt(req.query.pageSize as string) || 20,
         100
       );
-      const entityType = req.query.type as string;
-      const search = req.query.search as string;
+      const _entityType = req.query.type as string;
+      const _search = req.query.search as string;
 
       // This would typically query the database for entities
       // For now, return a placeholder response
@@ -659,7 +656,7 @@ export class GraphRAGAPIRouter {
     res: Response
   ): Promise<void> {
     try {
-      const entityId = req.params.id;
+      const _entityId = req.params.id;
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = Math.min(
         parseInt(req.query.pageSize as string) || 20,
@@ -708,7 +705,7 @@ export class GraphRAGAPIRouter {
         parseInt(req.query.pageSize as string) || 20,
         100
       );
-      const relationshipType = req.query.type as string;
+      const _relationshipType = req.query.type as string;
 
       const response: RelationshipListResponse = {
         relationships: [],

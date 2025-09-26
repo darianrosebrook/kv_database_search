@@ -228,7 +228,7 @@ class AccessibilityValidator {
               results.ariaCount += ariaMatches.length;
               results.files.push(filePath);
             }
-          } catch (error) {
+          } catch {
             // Skip files that can't be read
           }
         }
@@ -284,7 +284,7 @@ class AccessibilityValidator {
                 results.files.push(filePath);
               }
             }
-          } catch (error) {
+          } catch {
             // Skip files that can't be read
           }
         }
@@ -343,18 +343,20 @@ async function main() {
     console.log();
 
     switch (scope) {
-      case "tokens":
+      case "tokens": {
         const tokenResult = await validator.validateDesignTokens();
         printResult("Design Tokens", tokenResult);
         break;
+      }
 
-      case "code":
+      case "code": {
         const codeResult = await validator.validateCodeAccessibility();
         printResult("Code Accessibility", codeResult);
         break;
+      }
 
       case "all":
-      default:
+      default: {
         const allResults = await validator.validateAll();
         printResult("Design Tokens", allResults.designTokens);
         printResult("Code Accessibility", allResults.codeAccessibility);
@@ -371,6 +373,7 @@ async function main() {
           );
         }
         break;
+      }
     }
 
     // Exit with appropriate code for CI/CD

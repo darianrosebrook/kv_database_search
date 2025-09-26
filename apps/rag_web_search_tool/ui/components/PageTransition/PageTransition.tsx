@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { ReactNode, useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import styles from './PageTransition.module.scss';
+import React, { ReactNode, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import styles from "./PageTransition.module.scss";
 
 interface PageTransitionProps {
   children: ReactNode;
@@ -48,12 +48,12 @@ export function PageTransition({
 
   // Check if View Transitions API is supported
   const supportsViewTransitions =
-    typeof document !== 'undefined' && 'startViewTransition' in document;
+    typeof document !== "undefined" && "startViewTransition" in document;
 
   // Check for reduced motion preference
   const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const shouldAnimate = enabled && !prefersReducedMotion;
 
@@ -66,13 +66,13 @@ export function PageTransition({
 
     // Add view-transition-name CSS property for this component
     const element = document.querySelector(
-      `[data-transition-name="${transitionName || 'main-content'}"]`
+      `[data-transition-name="${transitionName || "main-content"}"]`
     );
     if (element && supportsViewTransitions) {
       // Set view-transition-name using CSS custom property for now
       (element as HTMLElement).style.setProperty(
-        'view-transition-name',
-        transitionName || 'main-content'
+        "view-transition-name",
+        transitionName || "main-content"
       );
     }
   }, [transitionName, supportsViewTransitions, shouldAnimate]);
@@ -103,16 +103,16 @@ export function PageTransition({
     className,
   ]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 
   return (
     <div
       className={transitionClasses}
-      data-transition-name={transitionName || 'main-content'}
+      data-transition-name={transitionName || "main-content"}
       data-transition-duration={duration}
       style={
         {
-          '--transition-duration': `${duration}ms`,
+          "--transition-duration": `${duration}ms`,
         } as React.CSSProperties
       }
     >
@@ -129,7 +129,7 @@ interface TransitionLinkProps {
   href: string;
   children: ReactNode;
   className?: string;
-  'aria-label'?: string;
+  "aria-label"?: string;
   onClick?: () => void;
   replace?: boolean;
 }
@@ -138,27 +138,27 @@ export function TransitionLink({
   href,
   children,
   className,
-  'aria-label': ariaLabel,
+  "aria-label": ariaLabel,
   onClick,
   replace = false,
 }: TransitionLinkProps) {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // Check if View Transitions API is supported and user hasn't disabled animations
-    const supportsViewTransitions = 'startViewTransition' in document;
+    const supportsViewTransitions = "startViewTransition" in document;
     const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
+      "(prefers-reduced-motion: reduce)"
     ).matches;
 
     if (supportsViewTransitions && !prefersReducedMotion) {
       e.preventDefault();
 
       // Start view transition with proper type casting
-      const transition = (document as any).startViewTransition(() => {
+      const transition = document.startViewTransition(() => {
         // Navigate to the new page
         if (replace) {
-          window.history.replaceState(null, '', href);
+          window.history.replaceState(null, "", href);
         } else {
-          window.history.pushState(null, '', href);
+          window.history.pushState(null, "", href);
         }
 
         // Trigger a page navigation

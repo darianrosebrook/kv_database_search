@@ -35,9 +35,7 @@ async function debugGraphRAG() {
 
   // Test entity extraction first
   console.log("   Testing entity extraction...");
-  const entityExtractor = new (
-    knowledgeGraph as any
-  ).entityExtractor.constructor();
+  const entityExtractor = new knowledgeGraph.entityExtractor.constructor();
   for (const result of basicResults.results.slice(0, 2)) {
     const entities = await entityExtractor.extract(result.text);
     console.log(`   Text: "${result.text.substring(0, 200)}..."`);
@@ -70,9 +68,8 @@ async function debugGraphRAG() {
 
     // Test relationship extraction
     console.log(`   Testing relationship extraction...`);
-    const relationshipExtractor = new (
-      knowledgeGraph as any
-    ).relationshipExtractor.constructor();
+    const relationshipExtractor =
+      new knowledgeGraph.relationshipExtractor.constructor();
     const relationships = await relationshipExtractor.extract(
       result.text,
       entities,
@@ -152,7 +149,7 @@ async function debugGraphRAG() {
       const nodes = Array.from(
         (knowledgeGraph as KnowledgeGraphService).nodes.values()
       );
-      const edges = Array.from((knowledgeGraph as any).edges.values()).flat();
+      const edges = Array.from(knowledgeGraph.edges.values()).flat();
 
       console.log(`   Total nodes: ${nodes.length}`);
       console.log(`   Total edges: ${edges.length}`);
@@ -162,7 +159,7 @@ async function debugGraphRAG() {
         .filter(
           (n: KnowledgeGraphService["nodes"][number]) => n.type === "entity"
         )
-        .forEach((node: any) => {
+        .forEach((node) => {
           console.log(`     • ${node.label} (${node.id})`);
         });
 
@@ -208,13 +205,13 @@ async function debugGraphRAG() {
 
     // Check for graph context in results
     const hasGraphContext = graphResults.results.some(
-      (result) => (result as any).graphContext
+      (result) => result.graphContext
     );
     console.log(`   Has graph context: ${hasGraphContext}`);
 
     if (hasGraphContext) {
       const graphContexts = graphResults.results
-        .map((result) => (result as any).graphContext)
+        .map((result) => result.graphContext)
         .filter((context) => context);
 
       console.log(`   Graph contexts found: ${graphContexts.length}`);

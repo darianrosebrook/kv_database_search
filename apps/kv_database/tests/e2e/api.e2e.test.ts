@@ -12,7 +12,7 @@ const sleep = promisify(setTimeout);
 
 describe("Obsidian RAG API E2E", () => {
   let postgresContainer: StartedPostgreSqlContainer;
-  let serverProcess: any;
+  let serverProcess;
   let apiBaseUrl: string;
 
   beforeAll(async () => {
@@ -131,7 +131,7 @@ describe("Obsidian RAG API E2E", () => {
 
       expect(result.results.length).toBeLessThanOrEqual(5);
       // All results should be notes if filter is applied
-      result.results.forEach((r: any) => {
+      result.results.forEach((r) => {
         if (r.meta.contentType) {
           expect(["note", "moc", "article"]).toContain(r.meta.contentType);
         }

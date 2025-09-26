@@ -44,6 +44,14 @@ interface PerformanceReport {
   recommendations: string[];
 }
 
+interface EndpointSummary {
+  count: number;
+  averageTime: number;
+  minTime: number;
+  maxTime: number;
+  errorCount: number;
+}
+
 class PerformanceMonitor {
   private metrics: PerformanceMetrics[] = [];
   private startTime: number;
@@ -93,7 +101,7 @@ class PerformanceMonitor {
     }
 
     // Calculate endpoint summaries
-    const endpoints: { [key: string]: any } = {};
+    const endpoints: { [key: string]: EndpointSummary } = {};
     for (const [endpoint, stats] of Object.entries(endpointStats)) {
       const times = stats.times.sort((a, b) => a - b);
       endpoints[endpoint] = {
@@ -300,7 +308,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const command = process.argv[2];
   const baseUrl = process.argv[3] || "http://localhost:3001";
   const duration = parseInt(process.argv[4]) || 30000;
-
+  let filename: string;
   if (!command) {
     console.log("Performance Monitor CLI");
     console.log("");
@@ -322,10 +330,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   switch (command) {
     case "api":
-      const endpoints = ["/health", "/search", "/analytics"];
-      monitor.monitorAPI(baseUrl, endpoints, duration).then(() => {
-        monitor.printReport();
-      });
+      {
+        const endpoints = ["/health", "/search", "/analytics"];
+        monitor.monitorAPI(baseUrl, endpoints, duration).then(() => {
+          monitor.printReport();
+        });
+      }
       break;
 
     case "report":
@@ -333,7 +343,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       break;
 
     case "save":
-      const filename = process.argv[3];
+      filename = process.argv[3];
       monitor.saveReport(filename);
       break;
 

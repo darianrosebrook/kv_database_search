@@ -265,7 +265,7 @@ interface SystemAdapter {
   async connect(): Promise<Connection>;
   async query(query: FederatedQuery): Promise<SystemResult>;
   async getSchema(): Promise<SystemSchema>;
-  async mapToStandard(data: any): Promise<StandardizedData>;
+  async mapToStandard(data): Promise<StandardizedData>;
 }
 ```
 

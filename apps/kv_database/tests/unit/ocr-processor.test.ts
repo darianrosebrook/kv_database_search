@@ -28,7 +28,7 @@ import * as fs from "fs";
 
 describe("OCRProcessor", () => {
   let processor: OCRProcessor;
-  let mockWorker: any;
+  let mockWorker;
 
   beforeEach(() => {
     processor = new OCRProcessor();
@@ -37,7 +37,7 @@ describe("OCRProcessor", () => {
       recognize: vi.fn(),
       terminate: vi.fn(),
     };
-    (createWorker as any).mockResolvedValue(mockWorker);
+    createWorker.mockResolvedValue(mockWorker);
   });
 
   describe("extractTextFromBuffer", () => {
@@ -125,7 +125,7 @@ describe("OCRProcessor", () => {
   describe("extractTextFromFile", () => {
     it("should read file and perform OCR", async () => {
       // Mock fs.readFileSync
-      (fs.readFileSync as any).mockReturnValue(Buffer.from("image data"));
+      fs.readFileSync.mockReturnValue(Buffer.from("image data"));
 
       mockWorker.recognize.mockResolvedValue({
         data: {
@@ -141,7 +141,7 @@ describe("OCRProcessor", () => {
     });
 
     it("should handle file read errors", async () => {
-      (fs.readFileSync as any).mockImplementation(() => {
+      fs.readFileSync.mockImplementation(() => {
         throw new Error("File not found");
       });
 
@@ -242,7 +242,7 @@ describe("OCRProcessor", () => {
 
     it("should reuse initialized worker", async () => {
       // Clear previous calls
-      (createWorker as any).mockClear();
+      createWorker.mockClear();
 
       mockWorker.recognize.mockResolvedValue({
         data: { text: "test", confidence: 80 },

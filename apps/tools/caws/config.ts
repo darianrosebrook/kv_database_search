@@ -3,6 +3,7 @@
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { CawsConfigManager } from "./shared/config-manager.ts";
+import { CawsConfig } from "./shared/types.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -10,14 +11,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 if (import.meta.url === `file://${process.argv[1]}`) {
   const command = process.argv[2];
   const configManager = new CawsConfigManager();
+  let section: keyof CawsConfig;
+  let key: string;
+  let value: string;
 
   switch (command) {
-    case "get":
-      const section = process.argv[3];
+    case "get": {
+      section = process.argv[3] as keyof CawsConfig;
       if (!section) {
         console.log(JSON.stringify(configManager.getConfig(), null, 2));
       } else {
-        const configSection = configManager.getSection(section as any);
+        const configSection = configManager.getSection(section);
         if (configSection) {
           console.log(JSON.stringify(configSection, null, 2));
         } else {
@@ -26,10 +30,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         }
       }
       break;
+    }
 
-    case "set":
-      const key = process.argv[3];
-      const value = process.argv[4];
+    case "set": {
+      key = process.argv[3];
+      value = process.argv[4];
 
       if (!key || !value) {
         console.error("Usage: config set <key> <value>");
@@ -42,7 +47,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       const parsedValue = JSON.parse(value);
 
       // Build the update object
-      const update: any = {};
+      const update = {};
       let current = update;
       for (let i = 0; i < keyParts.length - 1; i++) {
         current[keyParts[i]] = {};
@@ -61,8 +66,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         process.exit(1);
       }
       break;
+    }
 
-    case "reset":
+    case "reset": {
       const resetResult = configManager.resetConfig();
       if (resetResult.success) {
         console.log("✅ Configuration reset to defaults");
@@ -73,8 +79,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         process.exit(1);
       }
       break;
+    }
 
-    case "export":
+    case "export": {
       const yamlOutput = configManager.exportAsYaml();
       if (yamlOutput) {
         console.log(yamlOutput);
@@ -83,8 +90,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         process.exit(1);
       }
       break;
+    }
 
-    case "import":
+    case "import": {
       const filePath = process.argv[3];
       if (!filePath) {
         console.error("Usage: config import <file-path>");
@@ -115,8 +123,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         process.exit(1);
       }
       break;
+    }
 
-    case "load":
+    case "load": {
       const loadPath = process.argv[3];
       if (!loadPath) {
         console.error("Usage: config load <file-path>");
@@ -131,8 +140,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         process.exit(1);
       }
       break;
+    }
 
-    case "save":
+    case "save": {
       const savePath = process.argv[3];
       if (!savePath) {
         console.error("Usage: config save <file-path>");
@@ -147,8 +157,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         process.exit(1);
       }
       break;
+    }
 
-    case "features":
+    case "features": {
       const features = configManager.getSection("features");
       if (features) {
         console.log("Enabled features:");
@@ -159,8 +170,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.error("❌ No features configuration found");
       }
       break;
+    }
 
-    case "paths":
+    case "paths": {
       const paths = configManager.getSection("paths");
       if (paths) {
         console.log("Configured paths:");
@@ -171,8 +183,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.error("❌ No paths configuration found");
       }
       break;
+    }
 
-    case "gates":
+    case "gates": {
       const gates = configManager.getSection("gates");
       if (gates) {
         console.log("Gate configurations:");
@@ -183,8 +196,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.error("❌ No gates configuration found");
       }
       break;
+    }
 
-    case "tools":
+    case "tools": {
       const tools = configManager.getSection("tools");
       if (tools) {
         console.log("Tool configurations:");
@@ -195,6 +209,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.error("❌ No tools configuration found");
       }
       break;
+    }
 
     default:
       console.log("CAWS Configuration Manager");

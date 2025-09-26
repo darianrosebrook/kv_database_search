@@ -140,7 +140,7 @@ interface SystemAdapter {
   
   // Schema Operations
   async getSchema(): Promise<SystemSchema>;
-  async mapToStandard(data: any): Promise<StandardizedData>;
+  async mapToStandard(data): Promise<StandardizedData>;
   async mapFromStandard(data: StandardizedData): Promise<any>;
   
   // Synchronization
@@ -176,7 +176,7 @@ class ElasticsearchAdapter implements SystemAdapter {
     };
   }
   
-  private convertToElasticsearchQuery(query: AdaptedQuery): any {
+  private convertToElasticsearchQuery(query: AdaptedQuery) {
     return {
       query: {
         bool: {

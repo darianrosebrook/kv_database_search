@@ -10,29 +10,40 @@
 // CORE INTERFACES
 // =============================================================================
 
+export interface ValidationDetailsSchema {
+  type: "object";
+  properties: {
+    passed: { type: "boolean" };
+    score: { type: "number" };
+    details: { type: "object" };
+  };
+  required: ["passed", "score", "details"];
+}
+
 export interface ValidationResult {
   passed: boolean;
   score: number;
-  details: Record<string, any>;
+  details: ValidationDetailsSchema["properties"];
   errors?: string[];
   warnings?: string[];
   recommendations?: string[];
 }
 
 export interface GateResult extends ValidationResult {
-  tier?: number;
+  tier?: string;
   tierPolicy?: TierPolicy;
 }
 
 export interface AccessibilityResult {
   passed: boolean;
+  score: number;
+  details: ValidationDetailsSchema["properties"];
   violations: Array<{
     rule: string;
     severity: "error" | "warning" | "info";
     message: string;
     location?: string;
   }>;
-  score: number;
   recommendations: string[];
 }
 
@@ -42,15 +53,50 @@ export interface PerformanceResult {
   budget_ms: number;
   passed: boolean;
   deviation_percent: number;
+  score: number;
+  details: ValidationDetailsSchema["properties"];
+}
+
+export interface ContractDetails {
+  endpoint: string;
+  method: string;
+  status: "valid" | "invalid" | "warning";
+  schema?: Record<string, unknown>;
+  examples?: Array<{
+    request?: Record<string, unknown>;
+    response?: Record<string, unknown>;
+  }>;
+}
+
+export interface NonFunctionalRequirements {
+  performance?: {
+    maxResponseTime?: number;
+    throughput?: number;
+  };
+  security?: {
+    authentication?: boolean;
+    authorization?: boolean;
+    encryption?: boolean;
+  };
+  reliability?: {
+    availability?: number;
+    errorRate?: number;
+  };
 }
 
 export interface ContractValidationResult {
-  isValid: boolean;
+  passed: boolean;
+  score: number;
+  details: Record<string, unknown>;
+  risk_tier?: number;
+  acceptance?: string[];
+  contracts?: ContractDetails[];
+  non_functional?: NonFunctionalRequirements;
   errors: Array<{
     type: "request" | "response" | "schema";
     endpoint: string;
     message: string;
-    details?: any;
+    details?: ValidationDetailsSchema["properties"];
   }>;
   coverage: {
     endpointsTested: number;
@@ -121,7 +167,7 @@ export interface FeatureContext {
   userId?: string;
   userGroups?: string[];
   requestId?: string;
-  metadata?: Record<string, any>;
+  metadata?: ValidationDetailsSchema["properties"];
 }
 
 // =============================================================================
@@ -179,45 +225,52 @@ export interface GateCheckOptions {
   verbose?: boolean;
 }
 
+export interface GateConfig {
+  enabled: boolean;
+  threshold?: number;
+  timeout?: number;
+  retries?: number;
+  options?: Record<string, unknown>;
+}
+
+export interface ToolConfig {
+  name: string;
+  version?: string;
+  enabled: boolean;
+  config?: Record<string, unknown>;
+  dependencies?: string[];
+}
+
+export interface LoggingConfig {
+  level: "debug" | "info" | "warn" | "error";
+  format?: "json" | "text";
+  output?: "console" | "file" | "both";
+  filePath?: string;
+  maxSize?: number;
+  maxFiles?: number;
+}
+
+export interface FeatureConfig {
+  name: string;
+  enabled: boolean;
+  config?: Record<string, unknown>;
+  dependencies?: string[];
+}
+
 export interface CawsConfig {
   version?: string;
   environment?: string;
-  tiers: Record<string, TierPolicy>;
+  tiers: TierPolicyConfig;
   defaultTier: string;
   workingSpecPath: string;
   provenancePath: string;
   cawsDirectory: string;
   paths?: Record<string, string>;
-  gates?: Record<string, any>;
-  tools?: Record<string, any>;
-  logging?: Record<string, any>;
-  features?: Record<string, any>;
+  gates?: Record<string, GateConfig>;
+  tools?: Record<string, ToolConfig>;
+  logging?: LoggingConfig;
+  features?: Record<string, FeatureConfig>;
 }
-
-export const CawsConfigSchema = {
-  type: "object",
-  properties: {
-    version: { type: "string" },
-    environment: { type: "string" },
-    tiers: { type: "object" },
-    defaultTier: { type: "string" },
-    workingSpecPath: { type: "string" },
-    provenancePath: { type: "string" },
-    cawsDirectory: { type: "string" },
-    paths: { type: "object" },
-    gates: { type: "object" },
-    tools: { type: "object" },
-    logging: { type: "object" },
-    features: { type: "object" },
-  },
-  required: [
-    "tiers",
-    "defaultTier",
-    "workingSpecPath",
-    "provenancePath",
-    "cawsDirectory",
-  ],
-};
 
 // =============================================================================
 // MIGRATION TYPES
@@ -274,6 +327,26 @@ export interface TestRun {
 // PROVENANCE TYPES
 // =============================================================================
 
+export interface PerformanceMetrics {
+  p95_ms?: number;
+  p99_ms?: number;
+  average_ms?: number;
+  throughput?: number;
+  error_rate?: number;
+  budget_ms?: number;
+  deviation_percent?: number;
+}
+
+export interface ProvenanceMetadata {
+  environment?: string;
+  branch?: string;
+  pullRequest?: number;
+  buildId?: string;
+  deploymentId?: string;
+  tags?: string[];
+  custom?: Record<string, unknown>;
+}
+
 export interface ProvenanceData {
   agent: string;
   model: string;
@@ -284,7 +357,7 @@ export interface ProvenanceData {
     mutation_score: number;
     tests_passed: number;
     a11y?: string;
-    perf?: any;
+    perf?: PerformanceMetrics;
     contracts?: {
       consumer: boolean;
       provider: boolean;
@@ -297,7 +370,7 @@ export interface ProvenanceData {
     type: string;
   }>;
   generatedAt: string;
-  metadata?: Record<string, any>;
+  metadata?: ProvenanceMetadata;
 }
 
 // =============================================================================

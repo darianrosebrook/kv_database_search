@@ -1,12 +1,12 @@
-import { Node, mergeAttributes } from '@tiptap/core';
-import { ReactNodeViewRenderer } from '@tiptap/react';
-import { DetailsNodeView } from './DetailsNodeView';
+import { Node, mergeAttributes } from "@tiptap/core";
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import { DetailsNodeView } from "./DetailsNodeView";
 
 export interface DetailsOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, unknown>;
 }
 
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     details: {
       /**
@@ -28,7 +28,7 @@ declare module '@tiptap/core' {
  * @author @darianrosebrook
  */
 export const DetailsExtension = Node.create<DetailsOptions>({
-  name: 'details',
+  name: "details",
 
   addOptions() {
     return {
@@ -36,27 +36,27 @@ export const DetailsExtension = Node.create<DetailsOptions>({
     };
   },
 
-  group: 'block',
+  group: "block",
 
-  content: 'block+',
+  content: "block+",
 
   addAttributes() {
     return {
       summary: {
-        default: 'Details',
-        parseHTML: (element) => element.getAttribute('data-summary'),
+        default: "Details",
+        parseHTML: (element) => element.getAttribute("data-summary"),
         renderHTML: (attributes) => {
           if (!attributes.summary) {
             return {};
           }
           return {
-            'data-summary': attributes.summary,
+            "data-summary": attributes.summary,
           };
         },
       },
       open: {
         default: false,
-        parseHTML: (element) => element.hasAttribute('open'),
+        parseHTML: (element) => element.hasAttribute("open"),
         renderHTML: (attributes) => {
           if (!attributes.open) {
             return {};
@@ -72,22 +72,22 @@ export const DetailsExtension = Node.create<DetailsOptions>({
   parseHTML() {
     return [
       {
-        tag: 'details',
+        tag: "details",
       },
     ];
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    const summary = node.attrs.summary || 'Details';
+    const summary = node.attrs.summary || "Details";
 
     return [
-      'details',
+      "details",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
         open: node.attrs.open,
-        'data-summary': summary,
+        "data-summary": summary,
       }),
-      ['summary', {}, summary],
-      ['div', { class: 'details-content' }, 0],
+      ["summary", {}, summary],
+      ["div", { class: "details-content" }, 0],
     ];
   },
 
@@ -108,11 +108,11 @@ export const DetailsExtension = Node.create<DetailsOptions>({
             },
             content: [
               {
-                type: 'paragraph',
+                type: "paragraph",
                 content: [
                   {
-                    type: 'text',
-                    text: 'Add your content here...',
+                    type: "text",
+                    text: "Add your content here...",
                   },
                 ],
               },
@@ -122,7 +122,7 @@ export const DetailsExtension = Node.create<DetailsOptions>({
       toggleDetails:
         (summary: string) =>
         ({ commands }) => {
-          return commands.toggleNode(this.name, 'paragraph', {
+          return commands.toggleNode(this.name, "paragraph", {
             summary,
             open: false,
           });
@@ -132,7 +132,7 @@ export const DetailsExtension = Node.create<DetailsOptions>({
 
   addKeyboardShortcuts() {
     return {
-      'Mod-Shift-d': () => this.editor.commands.setDetails('Details'),
+      "Mod-Shift-d": () => this.editor.commands.setDetails("Details"),
     };
   },
 });

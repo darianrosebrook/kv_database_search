@@ -1,10 +1,5 @@
 import { Pool, PoolClient } from "pg";
-import {
-  EntityType,
-  RelationshipType,
-  type KnowledgeGraphEntity,
-  type KnowledgeGraphRelationship,
-} from "./entity-extractor.js";
+import { EntityType, RelationshipType } from "./entity-extractor.js";
 
 export interface ReasoningQuery {
   startEntities: string[]; // Entity IDs to start reasoning from
@@ -33,7 +28,7 @@ export interface ReasoningEntity {
   type: EntityType;
   confidence: number;
   role: "start" | "intermediate" | "target" | "supporting";
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
   contextualRelevance: number;
 }
 
@@ -254,7 +249,12 @@ export class MultiHopReasoningEngine {
    */
   private async exploreReasoningPaths(
     query: ReasoningQuery,
-    context: any
+    context: {
+      startEntities: ReasoningEntity[];
+      targetEntities: ReasoningEntity[];
+      neighborhood: Map<string, ReasoningEntity[]>;
+      relationshipIndex: Map<string, ReasoningRelationship[]>;
+    }
   ): Promise<ReasoningPath[]> {
     switch (query.reasoningType) {
       case "exploratory":
@@ -275,7 +275,12 @@ export class MultiHopReasoningEngine {
    */
   private async exploratoryReasoning(
     query: ReasoningQuery,
-    context: any
+    context: {
+      startEntities: ReasoningEntity[];
+      targetEntities: ReasoningEntity[];
+      neighborhood: Map<string, ReasoningEntity[]>;
+      relationshipIndex: Map<string, ReasoningRelationship[]>;
+    }
   ): Promise<ReasoningPath[]> {
     console.log("🔍 Performing exploratory reasoning...");
 
@@ -306,7 +311,12 @@ export class MultiHopReasoningEngine {
    */
   private async targetedReasoning(
     query: ReasoningQuery,
-    context: any
+    context: {
+      startEntities: ReasoningEntity[];
+      targetEntities: ReasoningEntity[];
+      neighborhood: Map<string, ReasoningEntity[]>;
+      relationshipIndex: Map<string, ReasoningRelationship[]>;
+    }
   ): Promise<ReasoningPath[]> {
     console.log("🎯 Performing targeted reasoning...");
 
@@ -342,7 +352,12 @@ export class MultiHopReasoningEngine {
    */
   private async comparativeReasoning(
     query: ReasoningQuery,
-    context: any
+    context: {
+      startEntities: ReasoningEntity[];
+      targetEntities: ReasoningEntity[];
+      neighborhood: Map<string, ReasoningEntity[]>;
+      relationshipIndex: Map<string, ReasoningRelationship[]>;
+    }
   ): Promise<ReasoningPath[]> {
     console.log("⚖️ Performing comparative reasoning...");
 
@@ -387,7 +402,12 @@ export class MultiHopReasoningEngine {
    */
   private async causalReasoning(
     query: ReasoningQuery,
-    context: any
+    context: {
+      startEntities: ReasoningEntity[];
+      targetEntities: ReasoningEntity[];
+      neighborhood: Map<string, ReasoningEntity[]>;
+      relationshipIndex: Map<string, ReasoningRelationship[]>;
+    }
   ): Promise<ReasoningPath[]> {
     console.log("🔗 Performing causal reasoning...");
 
@@ -430,8 +450,12 @@ export class MultiHopReasoningEngine {
     const inferredPaths: ReasoningPath[] = [...paths];
 
     for (const rule of this.config.logicalRules) {
-      const newPaths = await this.applyLogicalRule(rule, paths, query);
-      inferredPaths.push(...newPaths);
+      const inferredPathsFromRule = await this.applyLogicalRule(
+        rule,
+        paths,
+        query
+      );
+      inferredPaths.push(...inferredPathsFromRule);
     }
 
     return inferredPaths;
@@ -443,29 +467,29 @@ export class MultiHopReasoningEngine {
   private async applyLogicalRule(
     rule: LogicalRule,
     paths: ReasoningPath[],
-    query: ReasoningQuery
+    _query: ReasoningQuery
   ): Promise<ReasoningPath[]> {
-    const newPaths: ReasoningPath[] = [];
+    const ruleInferredPaths: ReasoningPath[] = [];
 
     switch (rule.type) {
       case "transitive":
-        newPaths.push(...this.applyTransitiveRule(rule, paths));
+        ruleInferredPaths.push(...this.applyTransitiveRule(rule, paths));
         break;
       case "symmetric":
-        newPaths.push(...this.applySymmetricRule(rule, paths));
+        ruleInferredPaths.push(...this.applySymmetricRule(rule, paths));
         break;
       case "causal":
-        newPaths.push(...this.applyCausalRule(rule, paths));
+        ruleInferredPaths.push(...this.applyCausalRule(rule, paths));
         break;
       case "similarity":
-        newPaths.push(...this.applySimilarityRule(rule, paths));
+        ruleInferredPaths.push(...this.applySimilarityRule(rule, paths));
         break;
       case "hierarchical":
-        newPaths.push(...this.applyHierarchicalRule(rule, paths));
+        ruleInferredPaths.push(...this.applyHierarchicalRule(rule, paths));
         break;
     }
 
-    return newPaths;
+    return ruleInferredPaths;
   }
 
   /**
@@ -475,7 +499,7 @@ export class MultiHopReasoningEngine {
     rule: LogicalRule,
     paths: ReasoningPath[]
   ): ReasoningPath[] {
-    const newPaths: ReasoningPath[] = [];
+    const transitivePaths: ReasoningPath[] = [];
 
     // Find paths that can be connected transitively
     for (let i = 0; i < paths.length; i++) {
@@ -493,13 +517,13 @@ export class MultiHopReasoningEngine {
           // Create transitive path
           const transitivePath = this.createTransitivePath(path1, path2, rule);
           if (transitivePath.confidence >= this.config.minPathConfidence) {
-            newPaths.push(transitivePath);
+            transitivePaths.push(transitivePath);
           }
         }
       }
     }
 
-    return newPaths;
+    return transitivePaths;
   }
 
   /**
@@ -623,7 +647,7 @@ export class MultiHopReasoningEngine {
         if (!relationship || relationship.confidence < minConfidence) continue;
 
         // Create new path
-        const newPath: ReasoningPath = {
+        const reasoningPath: ReasoningPath = {
           id: `${current.path.id}_${neighbor.id}`,
           entities: [...current.path.entities, neighbor],
           relationships: [...current.path.relationships, relationship],
@@ -646,13 +670,13 @@ export class MultiHopReasoningEngine {
           ],
         };
 
-        paths.push(newPath);
+        paths.push(reasoningPath);
 
         // Add to queue for further exploration
         if (current.depth + 1 < maxDepth) {
           queue.push({
             entity: neighbor,
-            path: newPath,
+            path: reasoningPath,
             depth: current.depth + 1,
           });
         }
@@ -817,82 +841,82 @@ export class MultiHopReasoningEngine {
    */
   private prunePaths(
     paths: ReasoningPath[],
-    threshold: number
+    _threshold: number
   ): ReasoningPath[] {
-    return paths.filter((path) => path.confidence >= threshold);
+    return paths.filter((path) => path.confidence >= _threshold);
   }
 
   /**
    * Placeholder methods for other reasoning strategies
    */
   private async findPathsBetweenEntities(
-    startId: string,
-    targetId: string,
-    maxDepth: number,
-    minConfidence: number,
-    client: PoolClient
+    _startId: string,
+    _targetId: string,
+    _maxDepth: number,
+    _minConfidence: number,
+    _client: PoolClient
   ): Promise<ReasoningPath[]> {
     // Implementation would use bidirectional search or A* algorithm
     return [];
   }
 
   private async findSimilarityPaths(
-    entity1Id: string,
-    entity2Id: string,
-    maxDepth: number,
-    client: PoolClient
+    _entity1Id: string,
+    _entity2Id: string,
+    _maxDepth: number,
+    _client: PoolClient
   ): Promise<ReasoningPath[]> {
     // Implementation would find common neighbors and similar attributes
     return [];
   }
 
   private async findDifferencePaths(
-    entity1Id: string,
-    entity2Id: string,
-    maxDepth: number,
-    client: PoolClient
+    _entity1Id: string,
+    _entity2Id: string,
+    _maxDepth: number,
+    _client: PoolClient
   ): Promise<ReasoningPath[]> {
     // Implementation would find distinguishing relationships
     return [];
   }
 
   private async findCausalChains(
-    startId: string,
-    maxDepth: number,
-    causalRelationships: RelationshipType[],
-    client: PoolClient
+    _startId: string,
+    _maxDepth: number,
+    _causalRelationships: RelationshipType[],
+    _client: PoolClient
   ): Promise<ReasoningPath[]> {
     // Implementation would follow causal relationship chains
     return [];
   }
 
   private applySymmetricRule(
-    rule: LogicalRule,
-    paths: ReasoningPath[]
+    _rule: LogicalRule,
+    _paths: ReasoningPath[]
   ): ReasoningPath[] {
     // Implementation would create symmetric relationships
     return [];
   }
 
   private applyCausalRule(
-    rule: LogicalRule,
-    paths: ReasoningPath[]
+    _rule: LogicalRule,
+    _paths: ReasoningPath[]
   ): ReasoningPath[] {
     // Implementation would infer causal chains
     return [];
   }
 
   private applySimilarityRule(
-    rule: LogicalRule,
-    paths: ReasoningPath[]
+    _rule: LogicalRule,
+    _paths: ReasoningPath[]
   ): ReasoningPath[] {
     // Implementation would infer similarity relationships
     return [];
   }
 
   private applyHierarchicalRule(
-    rule: LogicalRule,
-    paths: ReasoningPath[]
+    _rule: LogicalRule,
+    _paths: ReasoningPath[]
   ): ReasoningPath[] {
     // Implementation would infer hierarchical relationships
     return [];
@@ -900,8 +924,13 @@ export class MultiHopReasoningEngine {
 
   private async evaluateAndRankPaths(
     paths: ReasoningPath[],
-    query: ReasoningQuery,
-    context: any
+    _query: ReasoningQuery,
+    _context: {
+      startEntities: ReasoningEntity[];
+      targetEntities: ReasoningEntity[];
+      neighborhood: Map<string, ReasoningEntity[]>;
+      relationshipIndex: Map<string, ReasoningRelationship[]>;
+    }
   ): Promise<ReasoningPath[]> {
     // Implementation would rank paths by relevance and confidence
     return paths.sort((a, b) => b.confidence - a.confidence);
@@ -910,7 +939,12 @@ export class MultiHopReasoningEngine {
   private async generateReasoningResult(
     query: ReasoningQuery,
     paths: ReasoningPath[],
-    context: any,
+    _context: {
+      startEntities: ReasoningEntity[];
+      targetEntities: ReasoningEntity[];
+      neighborhood: Map<string, ReasoningEntity[]>;
+      relationshipIndex: Map<string, ReasoningRelationship[]>;
+    },
     processingTime: number
   ): Promise<ReasoningResult> {
     const bestPath = paths.length > 0 ? paths[0] : undefined;
@@ -934,7 +968,7 @@ export class MultiHopReasoningEngine {
             ? paths.reduce((sum, p) => sum + p.depth, 0) / paths.length
             : 0,
         averageConfidence,
-        exploredNodes: context.startEntities.length,
+        exploredNodes: _context.startEntities.length,
         exploredRelationships: 0, // Would be tracked during exploration
         processingTime,
       },

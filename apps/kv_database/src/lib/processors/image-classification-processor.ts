@@ -85,7 +85,7 @@ export interface ImageClassificationOptions extends ProcessorOptions {
  */
 export class ImageClassificationProcessor implements ContentProcessor {
   private ocrProcessor: OCRProcessor;
-  private model: any = null; // Placeholder for ML model
+  private model = null; // Placeholder for ML model
 
   constructor() {
     this.ocrProcessor = new OCRProcessor();
@@ -108,7 +108,7 @@ export class ImageClassificationProcessor implements ContentProcessor {
       } = options;
 
       // Initialize OCR result
-      let ocrResult: any = { text: "", confidence: 0 };
+      let ocrResult = { text: "", confidence: 0 };
 
       // Step 1: OCR Text Extraction (if enabled)
       if (enableOCR) {
@@ -243,7 +243,7 @@ export class ImageClassificationProcessor implements ContentProcessor {
       modelPreference: string;
     }
   ): Promise<SceneDescription> {
-    const startTime = Date.now();
+    const _startTime = Date.now();
 
     try {
       // For now, we'll implement a rule-based classifier that analyzes image properties
@@ -302,7 +302,7 @@ export class ImageClassificationProcessor implements ContentProcessor {
    * Generate scene description based on image analysis
    */
   private generateSceneDescription(
-    analysis: any,
+    analysis,
     options: { maxObjects: number; includeVisualFeatures: boolean }
   ): SceneDescription {
     // Rule-based scene classification
@@ -476,7 +476,7 @@ export class ImageClassificationProcessor implements ContentProcessor {
    * Combine OCR and scene description results
    */
   private combineResults(
-    ocrResult: any,
+    ocrResult,
     sceneDescription: SceneDescription | null
   ): ImageClassificationResult {
     const ocrText = ocrResult.text || "";
@@ -563,7 +563,11 @@ Features: ${Object.values(sceneDescription.visualFeatures).join(", ")}`;
     // 2. Classify each frame
     // 3. Return frames with high scene change scores
 
-    const { frameInterval = 5, maxFrames = 10, quality = "medium" } = options;
+    const {
+      frameInterval: _frameInterval = 5,
+      maxFrames: _maxFrames = 10,
+      quality: _quality = "medium",
+    } = options;
 
     // Mock implementation
     const keyFrames = [
@@ -635,7 +639,7 @@ Features: ${Object.values(sceneDescription.visualFeatures).join(", ")}`;
   /**
    * Configure classification model
    */
-  async configureModel(modelName: string, options: any = {}): Promise<boolean> {
+  async configureModel(modelName: string, _options = {}): Promise<boolean> {
     // TODO: Implement model configuration and loading
     console.log(`Configuring model: ${modelName}`);
     return true;

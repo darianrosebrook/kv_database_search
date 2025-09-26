@@ -580,8 +580,8 @@ export class DictionaryService {
    */
   private async findExactMatch(
     name: string,
-    type: EntityType,
-    context?: string
+    _type: EntityType,
+    _context?: string
   ): Promise<EntityCanonicalizationResult | null> {
     try {
       const result = await this.db.query(
@@ -624,10 +624,10 @@ export class DictionaryService {
   private async findFuzzyMatch(
     name: string,
     aliases: string[],
-    type: EntityType,
-    context?: string
+    _type: EntityType,
+    _context?: string
   ): Promise<EntityCanonicalizationResult | null> {
-    const searchTerms = [name, ...aliases];
+    const _searchTerms = [name, ...aliases];
 
     try {
       const result = await this.db.query(
@@ -945,10 +945,10 @@ export class DictionaryService {
    * Clean up expired cache entries
    */
   private cleanupCache(): void {
-    const now = Date.now();
+    const _now = Date.now();
     let cleanupCount = 0;
 
-    for (const [key, result] of this.cache.entries()) {
+    for (const [key, _result] of this.cache.entries()) {
       // Simple expiration check - could be enhanced with timestamps
       if (this.cache.size > this.maxCacheSize * 0.8) {
         this.cache.delete(key);
@@ -1001,7 +1001,7 @@ export class DictionaryService {
   private matchesContext(
     term: string,
     context: string,
-    source: DictionarySourceType
+    _source: DictionarySourceType
   ): boolean {
     // Simple context matching - could be enhanced with NLP
     const lowerTerm = term.toLowerCase();

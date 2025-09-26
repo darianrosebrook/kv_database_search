@@ -24,7 +24,7 @@ interface PerformanceResult {
 }
 
 class PerformanceBudgetValidator {
-  private workingSpec: any;
+  private workingSpec;
   private budgets: PerformanceBudget;
 
   constructor() {
@@ -55,7 +55,7 @@ class PerformanceBudgetValidator {
       const lines = content.split("\n");
       let inNonFunctional = false;
       let inPerfSection = false;
-      const perfData: any = {};
+      const perfData = {};
 
       for (const line of lines) {
         const trimmed = line.trim();

@@ -1,0 +1,27 @@
+// Generated tokens for ResultCard component
+.result-card {
+  // Color tokens
+  --result-card-background: var(--semantic-color-background-elevated);
+  --result-card-border: var(--semantic-color-border-subtle);
+  --result-card-hover-background: var(--semantic-color-background-hover);
+  --result-card-selected-background: var(--semantic-color-background-highlight);
+  --result-card-selected-border: var(--semantic-color-border-focus);
+
+  // Spacing tokens
+  --result-card-padding: var(--semantic-spacing-padding-card);
+  --result-card-margin: var(--core-spacing-size-04);
+  --result-card-gap: var(--core-spacing-size-04);
+
+  // Typography tokens
+  --result-card-title-size: var(--semantic-typography-heading-05);
+  --result-card-title-weight: var(--semantic-typography-font-weight-semibold);
+  --result-card-text-size: var(--semantic-typography-body-default-font-size);
+  --result-card-text-weight: var(--semantic-typography-font-weight-regular);
+
+  // Border radius tokens
+  --result-card-border-radius: var(--semantic-shape-radius-medium);
+
+  // Shadow tokens
+  --result-card-shadow: var(--semantic-elevation-default);
+  --result-card-hover-shadow: var(--semantic-elevation-surface-raised);
+}

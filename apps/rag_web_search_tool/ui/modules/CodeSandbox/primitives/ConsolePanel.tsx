@@ -5,7 +5,7 @@ export type LogEntry = {
   level: 'log' | 'warn' | 'error' | 'info' | 'debug';
   message: string;
   timestamp: number;
-  args?: any[];
+  args?[];
   stack?: string;
 };
 
@@ -95,7 +95,7 @@ export function ConsolePanel({
     (
       level: LogEntry['level'],
       message: string,
-      args?: any[],
+      args?[],
       stack?: string
     ) => {
       const entry: LogEntry = {
@@ -119,39 +119,39 @@ export function ConsolePanel({
     if (!isCapturing) return;
 
     const win = resolveTargetWindow();
-    if (!win || !(win as any).console) return;
+    if (!win || !(win ).console) return;
 
     const originalMethods = {
-      log: (win as any).console.log,
-      warn: (win as any).console.warn,
-      error: (win as any).console.error,
-      info: (win as any).console.info,
-      debug: (win as any).console.debug,
+      log: (win ).console.log,
+      warn: (win ).console.warn,
+      error: (win ).console.error,
+      info: (win ).console.info,
+      debug: (win ).console.debug,
     };
 
-    (win as any).console.log = (...args: any[]) => {
-      originalMethods.log.apply((win as any).console, args);
+    (win ).console.log = (...args[]) => {
+      originalMethods.log.apply((win ).console, args);
       addLogEntry('log', args.join(' '), args);
     };
 
-    (win as any).console.warn = (...args: any[]) => {
-      originalMethods.warn.apply((win as any).console, args);
+    (win ).console.warn = (...args[]) => {
+      originalMethods.warn.apply((win ).console, args);
       addLogEntry('warn', args.join(' '), args);
     };
 
-    (win as any).console.error = (...args: any[]) => {
-      originalMethods.error.apply((win as any).console, args);
+    (win ).console.error = (...args[]) => {
+      originalMethods.error.apply((win ).console, args);
       const stack = args.find((arg) => arg instanceof Error)?.stack;
       addLogEntry('error', args.join(' '), args, stack);
     };
 
-    (win as any).console.info = (...args: any[]) => {
-      originalMethods.info.apply((win as any).console, args);
+    (win ).console.info = (...args[]) => {
+      originalMethods.info.apply((win ).console, args);
       addLogEntry('info', args.join(' '), args);
     };
 
-    (win as any).console.debug = (...args: any[]) => {
-      originalMethods.debug.apply((win as any).console, args);
+    (win ).console.debug = (...args[]) => {
+      originalMethods.debug.apply((win ).console, args);
       addLogEntry('debug', args.join(' '), args);
     };
 
@@ -169,8 +169,8 @@ export function ConsolePanel({
     win.addEventListener('unhandledrejection', handleUnhandledRejection);
 
     return () => {
-      if ((win as any).console) {
-        Object.assign((win as any).console, originalMethods);
+      if ((win ).console) {
+        Object.assign((win ).console, originalMethods);
       }
       win.removeEventListener('error', handleError);
       win.removeEventListener('unhandledrejection', handleUnhandledRejection);

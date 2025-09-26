@@ -1,11 +1,11 @@
-import { Pool, PoolClient } from "pg";
+import { Pool } from "pg";
 import { EventEmitter } from "events";
 
 export interface MetricValue {
   timestamp: Date;
   value: number;
   labels: Record<string, string>;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface Alert {
@@ -17,7 +17,7 @@ export interface Alert {
   triggeredAt: Date;
   resolvedAt?: Date;
   condition: AlertCondition;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   notifications: NotificationRecord[];
 }
 
@@ -39,12 +39,12 @@ export interface AlertRule {
   enabled: boolean;
   notifications: NotificationChannel[];
   suppressionRules: SuppressionRule[];
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface NotificationChannel {
   type: "email" | "slack" | "webhook" | "pagerduty" | "console";
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   enabled: boolean;
 }
 
@@ -71,7 +71,7 @@ export interface HealthCheck {
   lastCheck: Date;
   responseTime: number;
   error?: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface SystemMetrics {
@@ -145,7 +145,7 @@ export interface PerformanceProfile {
   startTime: Date;
   endTime?: Date;
   duration?: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   stackTrace?: string[];
   resourceUsage?: {
     cpu: number;
@@ -196,7 +196,7 @@ export class MonitoringSystem extends EventEmitter {
     name: string,
     value: number,
     labels: Record<string, string> = {},
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): void {
     const metric: MetricValue = {
       timestamp: new Date(),
@@ -234,7 +234,7 @@ export class MonitoringSystem extends EventEmitter {
       name: string;
       value: number;
       labels?: Record<string, string>;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     }>
   ): void {
     for (const metric of metrics) {
@@ -373,7 +373,7 @@ export class MonitoringSystem extends EventEmitter {
       status: "healthy" | "degraded" | "unhealthy";
       responseTime: number;
       error?: string;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     }>
   ): void {
     // Store the check function and run it periodically
@@ -473,7 +473,10 @@ export class MonitoringSystem extends EventEmitter {
   /**
    * Start performance profiling
    */
-  startProfile(operation: string, metadata: Record<string, any> = {}): string {
+  startProfile(
+    operation: string,
+    metadata: Record<string, unknown> = {}
+  ): string {
     const profileId = `${operation}_${Date.now()}_${Math.random()
       .toString(36)
       .substring(7)}`;
@@ -493,7 +496,7 @@ export class MonitoringSystem extends EventEmitter {
    */
   endProfile(
     profileId: string,
-    additionalMetadata?: Record<string, any>
+    additionalMetadata?: Record<string, unknown>
   ): PerformanceProfile | null {
     const profile = this.performanceProfiles.get(profileId);
     if (!profile) return null;

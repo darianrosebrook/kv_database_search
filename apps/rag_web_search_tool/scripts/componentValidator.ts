@@ -106,7 +106,7 @@ function extractComponentColorPairs(tokenFilePath: string, componentName: string
 /**
  * Infers component type from name and tokens
  */
-function inferComponentType(componentName: string, tokens: any): keyof typeof COMPONENT_COLOR_PATTERNS {
+function inferComponentType(componentName: string, tokens): keyof typeof COMPONENT_COLOR_PATTERNS {
   const name = componentName.toLowerCase();
   
   if (name.includes('button')) return 'button';
@@ -122,7 +122,7 @@ function inferComponentType(componentName: string, tokens: any): keyof typeof CO
 /**
  * Finds a token value by key (supports nested keys)
  */
-function findTokenValue(tokens: any, key: string): string | null {
+function findTokenValue(tokens, key: string): string | null {
   // Direct key lookup
   if (tokens[key]) return tokens[key];
   
@@ -148,7 +148,7 @@ function findTokenValue(tokens: any, key: string): string | null {
 /**
  * Gets nested object value by dot notation path
  */
-function getNestedValue(obj: any, path: string): any {
+function getNestedValue(obj, path: string) {
   return path.split('.').reduce((current, key) => current?.[key], obj);
 }
 

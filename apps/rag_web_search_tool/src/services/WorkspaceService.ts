@@ -45,7 +45,14 @@ export interface Workspace {
 export interface DataSource {
   id: string;
   name: string;
-  type: "database" | "file_system" | "api" | "web" | "document" | "stream" | "custom";
+  type:
+    | "database"
+    | "file_system"
+    | "api"
+    | "web"
+    | "document"
+    | "stream"
+    | "custom";
   subtype: string;
   format: string;
   protocol: string;
@@ -61,7 +68,7 @@ export interface DataSource {
     path?: string;
     authentication?: {
       type: "basic" | "bearer" | "api_key" | "oauth2" | "none";
-      credentials: Record<string, any>;
+      credentials: Record<string, unknown>;
     };
     retryPolicy?: {
       maxRetries: number;
@@ -77,13 +84,13 @@ export interface DataSource {
     entities: Array<{
       name: string;
       type: string;
-      properties: Record<string, any>;
+      properties: Record<string, unknown>;
     }>;
     relationships: Array<{
       name: string;
       sourceEntity: string;
       targetEntity: string;
-      properties: Record<string, any>;
+      properties: Record<string, unknown>;
     }>;
     constraints: Array<{
       type: "unique" | "required" | "foreign_key" | "index";
@@ -239,7 +246,9 @@ export class WorkspaceService {
     }
   }
 
-  async getWorkspace(identifier: string): Promise<WorkspaceServiceResponse<Workspace>> {
+  async getWorkspace(
+    identifier: string
+  ): Promise<WorkspaceServiceResponse<Workspace>> {
     try {
       const response = await fetch(`${this.baseUrl}/workspaces/${identifier}`);
 
@@ -315,7 +324,9 @@ export class WorkspaceService {
     }
   }
 
-  async deleteWorkspace(identifier: string): Promise<WorkspaceServiceResponse<void>> {
+  async deleteWorkspace(
+    identifier: string
+  ): Promise<WorkspaceServiceResponse<void>> {
     try {
       const response = await fetch(`${this.baseUrl}/workspaces/${identifier}`, {
         method: "DELETE",
@@ -347,13 +358,16 @@ export class WorkspaceService {
     dataSource: Omit<DataSource, "id" | "metadata">
   ): Promise<WorkspaceServiceResponse<DataSource>> {
     try {
-      const response = await fetch(`${this.baseUrl}/workspaces/${workspaceName}/datasources`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dataSource),
-      });
+      const response = await fetch(
+        `${this.baseUrl}/workspaces/${workspaceName}/datasources`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dataSource),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to add data source: ${response.statusText}`);
@@ -443,16 +457,21 @@ export class WorkspaceService {
     mapping: Omit<EntityMapping, "id" | "createdAt" | "createdBy">
   ): Promise<WorkspaceServiceResponse<EntityMapping>> {
     try {
-      const response = await fetch(`${this.baseUrl}/workspaces/${workspaceName}/mappings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(mapping),
-      });
+      const response = await fetch(
+        `${this.baseUrl}/workspaces/${workspaceName}/mappings`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(mapping),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`Failed to create entity mapping: ${response.statusText}`);
+        throw new Error(
+          `Failed to create entity mapping: ${response.statusText}`
+        );
       }
 
       const data = await response.json();
@@ -476,7 +495,9 @@ export class WorkspaceService {
   ): Promise<WorkspaceServiceResponse<EntityResolutionResult>> {
     try {
       const response = await fetch(
-        `${this.baseUrl}/workspaces/${workspaceName}/resolve/${encodeURIComponent(entityText)}`
+        `${
+          this.baseUrl
+        }/workspaces/${workspaceName}/resolve/${encodeURIComponent(entityText)}`
       );
 
       if (!response.ok) {
@@ -518,7 +539,9 @@ export class WorkspaceService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to search across workspaces: ${response.statusText}`);
+        throw new Error(
+          `Failed to search across workspaces: ${response.statusText}`
+        );
       }
 
       const data = await response.json();
@@ -543,10 +566,14 @@ export class WorkspaceService {
     workspaceName: string
   ): Promise<WorkspaceServiceResponse<Workspace["statistics"]>> {
     try {
-      const response = await fetch(`${this.baseUrl}/workspaces/${workspaceName}/statistics`);
+      const response = await fetch(
+        `${this.baseUrl}/workspaces/${workspaceName}/statistics`
+      );
 
       if (!response.ok) {
-        throw new Error(`Failed to get workspace statistics: ${response.statusText}`);
+        throw new Error(
+          `Failed to get workspace statistics: ${response.statusText}`
+        );
       }
 
       const data = await response.json();
@@ -570,7 +597,9 @@ export class WorkspaceService {
       const response = await fetch(`${this.baseUrl}/health`);
 
       if (!response.ok) {
-        throw new Error(`Failed to get workspace health: ${response.statusText}`);
+        throw new Error(
+          `Failed to get workspace health: ${response.statusText}`
+        );
       }
 
       const data = await response.json();

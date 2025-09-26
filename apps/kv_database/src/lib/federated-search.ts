@@ -55,6 +55,13 @@ export interface SystemStatus {
   recoveryTime?: Date;
 }
 
+export type SearchType =
+  | "vector"
+  | "lexical"
+  | "hybrid"
+  | "graph"
+  | "multi_modal";
+
 export interface SystemCapabilities {
   searchTypes: SearchType[];
   queryComplexity: "simple" | "medium" | "complex";
@@ -76,7 +83,7 @@ export interface ConnectionConfig {
 
 export interface AuthenticationConfig {
   type: "basic" | "bearer" | "api_key" | "oauth2" | "certificate" | "none";
-  credentials: Record<string, any>;
+  credentials: Record<string, unknown>;
   refreshToken?: string;
   expiryTime?: Date;
 }
@@ -138,7 +145,7 @@ export interface SchemaProperty {
 export interface SchemaConstraint {
   type: "unique" | "foreign_key" | "check" | "not_null";
   field: string;
-  value?: any;
+  value?;
   reference?: string;
 }
 
@@ -219,7 +226,7 @@ export interface QueryFilter {
     | "range"
     | "in"
     | "exists";
-  value: any;
+  value;
   systemSpecific?: boolean;
 }
 
@@ -239,7 +246,7 @@ export interface QueryContext {
   userId?: string;
   sessionId?: string;
   previousQueries?: string[];
-  userPreferences?: Record<string, any>;
+  userPreferences?: Record<string, unknown>;
   intent?: string;
 }
 
@@ -346,11 +353,18 @@ export interface Highlight {
 }
 
 export interface ResultMetadata {
-  relevanceScore: number;
-  freshness: number; // hours since last update
-  authority: number; // source system authority
-  completeness: number; // data completeness score
-  accessLevel: string;
+  // Common metadata for both SearchResult and FederatedSearchResult
+  relevanceScore?: number;
+  freshness?: number; // hours since last update
+  authority?: number; // source system authority
+  completeness?: number; // data completeness score
+  accessLevel?: string;
+
+  // Additional metadata for FederatedSearchResult
+  queryId?: string;
+  executionTime?: number;
+  resultQuality?: number; // 0-1
+  coverage?: number; // percentage of expected systems
 }
 
 export interface ProvenanceInfo {
@@ -364,7 +378,7 @@ export interface ProvenanceInfo {
 
 export interface ConflictInfo {
   field: string;
-  conflictingValues: any[];
+  conflictingValues: string[];
   resolution: string;
   confidence: number;
   resolvedAt: Date;
@@ -398,15 +412,6 @@ export interface QueryPerformance {
   systemsContacted: number;
   systemsFailed: number;
   bytesTransferred: number;
-}
-
-export interface ResultMetadata {
-  queryId: string;
-  executionTime: number;
-  resultQuality: number; // 0-1
-  coverage: number; // percentage of expected systems
-  freshness: number; // hours since last update
-  completeness: number; // 0-1
 }
 
 // ============================================================================
@@ -461,9 +466,17 @@ export interface SystemChange {
   type: "create" | "update" | "delete";
   entityType: string;
   entityId: string;
-  changes: Record<string, any>;
+  changes: Record<string, unknown>;
   timestamp: Date;
   source: string;
+}
+
+export interface SystemQueryResult {
+  systemId: string;
+  results: unknown;
+  success: boolean;
+  executionTime: number;
+  error?: string;
 }
 
 // ============================================================================
@@ -478,7 +491,7 @@ export interface SystemChange {
  * comprehensive provenance tracking.
  */
 export class FederatedSearchSystem {
-  private database: any; // ObsidianDatabase
+  private database; // ObsidianDatabase
   private systemRegistry: SystemRegistry;
   private queryRouter: QueryRouter;
   private resultAggregator: ResultAggregator;
@@ -490,7 +503,7 @@ export class FederatedSearchSystem {
   private readonly defaultTimeoutMs = 30000;
   private readonly maxRetries = 3;
 
-  constructor(database: any) {
+  constructor(database) {
     this.database = database;
     this.systemRegistry = new SystemRegistry(database);
     this.queryRouter = new QueryRouter(this.systemRegistry);
@@ -633,8 +646,8 @@ export class FederatedSearchSystem {
    */
   private async executeParallelQueries(
     query: FederatedQuery,
-    routingResult: any
-  ): Promise<any[]> {
+    routingResult
+  ): Promise<SystemQueryResult[]> {
     const promises = routingResult.selectedSystems.map(
       async (systemId: string) => {
         try {
@@ -743,8 +756,8 @@ export class FederatedSearchSystem {
    */
   private calculatePerformanceMetrics(
     startTime: number,
-    systemResults: any[],
-    routingResult: any
+    systemResults,
+    _routingResult
   ): QueryPerformance {
     const totalTime = Date.now() - startTime;
     const systemTimes: Record<string, number> = {};
@@ -874,7 +887,7 @@ export class FederatedSearchSystem {
   /**
    * Calculate system coverage percentage
    */
-  private calculateSystemCoverage(routingResult: any): number {
+  private calculateSystemCoverage(routingResult): number {
     return (
       (routingResult.selectedSystems.length /
         routingResult.availableSystems.length) *
@@ -922,7 +935,7 @@ export class FederatedSearchSystem {
  * System Registry - Manages federated systems
  */
 class SystemRegistry {
-  constructor(private database: any) {}
+  constructor(private database) {}
 
   async registerSystem(system: FederatedSystem): Promise<void> {
     console.log(`📝 Registering federated system: ${system.name}`);
@@ -934,7 +947,7 @@ class SystemRegistry {
     return [];
   }
 
-  async getSystem(systemId: string): Promise<FederatedSystem> {
+  async getSystem(_systemId: string): Promise<FederatedSystem> {
     // Implementation would query database for specific system
     throw new Error("Not implemented");
   }
@@ -954,7 +967,7 @@ class SystemRegistry {
 class QueryRouter {
   constructor(private systemRegistry: SystemRegistry) {}
 
-  async routeQuery(query: FederatedQuery): Promise<any> {
+  async routeQuery(query: FederatedQuery): Promise {
     const availableSystems = await this.systemRegistry.getAvailableSystems();
     const selectedSystems = availableSystems.filter((system) => {
       // Simple routing logic - in real implementation would be more sophisticated
@@ -974,9 +987,9 @@ class QueryRouter {
  */
 class ResultAggregator {
   async aggregateResults(
-    systemResults: any[],
+    systemResults,
     strategy: AggregationStrategy
-  ): Promise<any> {
+  ): Promise {
     const allResults: SearchResult[] = [];
 
     systemResults.forEach((systemResult) => {
@@ -1005,7 +1018,7 @@ class ResultAggregator {
 
   private deduplicateResults(
     results: SearchResult[],
-    strategy: DeduplicationStrategy
+    _strategy: DeduplicationStrategy
   ): SearchResult[] {
     // Simple deduplication - in real implementation would use ML models
     const uniqueResults = new Map<string, SearchResult>();
@@ -1025,7 +1038,7 @@ class ResultAggregator {
 
   private rankResults(
     results: SearchResult[],
-    strategy: RankingStrategy
+    _strategy: RankingStrategy
   ): SearchResult[] {
     return results.sort((a, b) => b.score - a.score);
   }
@@ -1037,7 +1050,7 @@ class ResultAggregator {
 class ConflictResolver {
   async resolveConflicts(
     results: SearchResult[],
-    strategy: ConflictResolutionStrategy
+    _strategy: ConflictResolutionStrategy
   ): Promise<SearchResult[]> {
     // Simple conflict resolution - in real implementation would be more sophisticated
     const resolvedResults = results.map((result) => ({
@@ -1133,7 +1146,7 @@ class MockSystemAdapter implements SystemAdapter {
     return true;
   }
 
-  async testQuery(query: SearchQuery): Promise<boolean> {
+  async testQuery(_query: SearchQuery): Promise<boolean> {
     return true;
   }
 
@@ -1150,7 +1163,7 @@ class MockSystemAdapter implements SystemAdapter {
   }
 
   async subscribeToChanges(
-    callback: (change: SystemChange) => void
+    _callback: (change: SystemChange) => void
   ): Promise<void> {
     // Mock subscription
   }

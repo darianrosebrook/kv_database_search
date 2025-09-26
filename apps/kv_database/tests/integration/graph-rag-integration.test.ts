@@ -30,7 +30,7 @@ describe("Graph RAG Integration Tests [INV: End-to-end functionality]", () => {
   let database: ObsidianDatabase;
   let embeddings: ObsidianEmbeddingService;
   let ingestionPipeline: MultiModalIngestionPipeline;
-  let knowledgeGraphSystem: any;
+  let knowledgeGraphSystem;
   let searchEngine: HybridSearchEngine;
   let reasoningEngine: MultiHopReasoningEngine;
 

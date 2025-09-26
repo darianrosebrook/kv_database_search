@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
-import styles from './Button.module.scss';
+import React, { useMemo } from "react";
+import styles from "./Button.module.scss";
 
-export type ButtonSize = 'small' | 'medium' | 'large';
-export type ButtonVariant = 'primary' | 'secondary' | 'tertiary';
+export type ButtonSize = "small" | "medium" | "large";
+export type ButtonVariant = "primary" | "secondary" | "tertiary";
 
 interface ButtonBaseProps {
   size?: ButtonSize;
@@ -21,14 +21,14 @@ interface ButtonAsButton
   extends ButtonBaseProps,
     Omit<
       React.ButtonHTMLAttributes<HTMLButtonElement>,
-      'className' | 'type' | 'onClick' | 'disabled'
+      "className" | "type" | "onClick" | "disabled"
     > {
-  as?: 'button';
-  type?: 'button' | 'submit' | 'reset';
+  as?: "button";
+  type?: "button" | "submit" | "reset";
   form?: string;
   autoFocus?: boolean;
   tabIndex?: number;
-  'data-testid'?: string;
+  "data-testid"?: string;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
@@ -36,25 +36,25 @@ interface ButtonAsAnchor
   extends ButtonBaseProps,
     Omit<
       React.AnchorHTMLAttributes<HTMLAnchorElement>,
-      'className' | 'href' | 'onClick'
+      "className" | "href" | "onClick"
     > {
-  as: 'a';
+  as: "a";
   href: string;
   tabIndex?: number;
-  'data-testid'?: string;
+  "data-testid"?: string;
   onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 export type ButtonProps = ButtonAsButton | ButtonAsAnchor;
 
 const Button: React.FC<ButtonProps> = ({
-  as = 'button',
-  size = 'medium',
-  variant = 'primary',
+  as = "button",
+  size = "medium",
+  variant = "primary",
   loading = false,
   disabled = false,
-  className = '',
-  title = '',
+  className = "",
+  title = "",
   ariaLabel,
   ariaExpanded,
   ariaPressed,
@@ -65,18 +65,17 @@ const Button: React.FC<ButtonProps> = ({
   const baseClassName = styles.button;
   const sizeClassName = styles[size];
   const variantClassName = styles[variant];
-  const isLoadingClassName = loading ? styles.isLoading : '';
-  const isDisabledClassName = disabled ? styles.disabled : '';
+  const isLoadingClassName = loading ? styles.isLoading : "";
+  const isDisabledClassName = disabled ? styles.disabled : "";
 
   const childCount = React.Children.count(children);
   const isSingleChild = childCount === 1;
   const hasOnlyIcon =
     isSingleChild &&
     React.isValidElement(children) &&
-    (children.type === 'svg' ||
+    (children.type === "svg" ||
       (children.props &&
-        ((children.props as any)['aria-label'] ||
-          (children.props as any)['data-icon'])));
+        (children.props["aria-label"] || children.props["data-icon"])));
 
   const combinedClassName = useMemo(
     () =>
@@ -89,7 +88,7 @@ const Button: React.FC<ButtonProps> = ({
         className,
       ]
         .filter(Boolean)
-        .join(' '),
+        .join(" "),
     [
       baseClassName,
       sizeClassName,
@@ -101,9 +100,9 @@ const Button: React.FC<ButtonProps> = ({
   );
 
   const ariaProps = {
-    ...(hasOnlyIcon && { 'aria-label': title || ariaLabel }),
-    ...(ariaExpanded !== undefined && { 'aria-expanded': ariaExpanded }),
-    ...(ariaPressed !== undefined && { 'aria-pressed': ariaPressed }),
+    ...(hasOnlyIcon && { "aria-label": title || ariaLabel }),
+    ...(ariaExpanded !== undefined && { "aria-expanded": ariaExpanded }),
+    ...(ariaPressed !== undefined && { "aria-pressed": ariaPressed }),
     ...(role && { role }),
   } as const;
 
@@ -120,12 +119,12 @@ const Button: React.FC<ButtonProps> = ({
     }
 
     if (children == null) return null;
-    if (typeof children === 'string' || typeof children === 'number') {
+    if (typeof children === "string" || typeof children === "number") {
       return <span>{children}</span>;
     }
     return children;
   };
-  if (as === 'a') {
+  if (as === "a") {
     const { href, ...anchorRest } = rest as ButtonAsAnchor;
     return (
       <a

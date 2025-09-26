@@ -27,12 +27,14 @@ function makeRequest(url, options = {}) {
       res.on("data", (chunk) => (data += chunk));
       res.on("end", () => {
         try {
+          console.log("Response:", data);
           resolve({
             status: res.statusCode,
             data: data,
             latency: Date.now() - options.startTime,
           });
         } catch (e) {
+          console.error("Error parsing response:", e);
           resolve({
             status: res.statusCode,
             data,

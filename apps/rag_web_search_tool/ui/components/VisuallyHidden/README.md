@@ -14,7 +14,7 @@ A utility component that hides content visually while keeping it accessible to s
 - **Screen reader accessible**: Content remains in the accessibility tree
 - **Modern technique**: Uses `clip-path` and other modern CSS properties
 - **Focusable variant**: Can reveal content when focused (useful for skip links)
-- **Flexible element**: Can render as any HTML element via `as` prop
+- **Flexible element**: Can render  HTML element via `as` prop
 
 ## Props
 

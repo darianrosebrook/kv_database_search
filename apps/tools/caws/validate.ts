@@ -19,7 +19,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
 
   const validator = new CawsValidator();
-  let result: any;
+  let result;
 
   switch (command) {
     case "working-spec":

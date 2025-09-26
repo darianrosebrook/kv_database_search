@@ -211,7 +211,7 @@ export class EntityExtractor {
       );
 
       // Step 5: Extract relationships between entities
-      const relationships = this.extractRelationships(
+      const relationships = this.extractEntityRelationships(
         disambiguatedEntities,
         preprocessedText.originalText,
         context
@@ -304,7 +304,18 @@ export class EntityExtractor {
   }
 
   /**
-   * Extract relationships between entities - backward compatibility
+   * Extract relationships between entities (async)
+   */
+  async extractRelationships(
+    text: string,
+    entities: ExtractedEntity[],
+    _context?: ExtractionContext
+  ): Promise<EntityRelationship[]> {
+    return this.extractRelationshipsSync(text, entities);
+  }
+
+  /**
+   * Extract relationships between entities (synchronous)
    */
   extractRelationshipsSync(
     text: string,
@@ -341,6 +352,27 @@ export class EntityExtractor {
     return relationships;
   }
 
+  /**
+   * Cluster entities by type and relationships (backward compatibility)
+   */
+  clusterEntities(
+    entities: ExtractedEntity[],
+    _relationships: EntityRelationship[]
+  ): Record<string, ExtractedEntity[]> {
+    const clusters: Record<string, ExtractedEntity[]> = {};
+
+    // Group entities by type
+    entities.forEach((entity) => {
+      const type = entity.type;
+      if (!clusters[type]) {
+        clusters[type] = [];
+      }
+      clusters[type].push(entity);
+    });
+
+    return clusters;
+  }
+
   // ============================================================================
   // PRIVATE HELPER METHODS
   // ============================================================================
@@ -374,7 +406,7 @@ export class EntityExtractor {
     return [];
   }
 
-  private extractRelationships(
+  private extractEntityRelationships(
     _entities: ProcessedEntity[],
     _text: string,
     _context: ExtractionContext

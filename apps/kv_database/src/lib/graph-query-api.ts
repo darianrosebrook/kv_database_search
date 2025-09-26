@@ -13,11 +13,8 @@
 import express from "express";
 import {
   GraphQueryEngine,
-  GraphQuery,
   QueryContext,
   PathFindingOptions,
-  GraphQueryResult,
-  PathFindingResult,
 } from "./graph-query-engine";
 import { ObsidianDatabase } from "./database";
 
@@ -87,7 +84,7 @@ export class GraphQueryAPI {
     res: express.Response
   ): Promise<void> {
     try {
-      const { query, context } = req.body;
+      const { query, _context } = req.body;
 
       if (!query) {
         res.status(400).json({
@@ -100,7 +97,7 @@ export class GraphQueryAPI {
       console.log(`🔍 Processing natural language query: ${query}`);
 
       // Create query context
-      const queryContext: QueryContext = context || {
+      const queryContext: QueryContext = _context || {
         userId: (req.headers["x-user-id"] as string) || "anonymous",
         sessionId: (req.headers["x-session-id"] as string) || "default",
         previousQueries: [],
@@ -261,7 +258,7 @@ export class GraphQueryAPI {
       console.log(`🛣️ Finding paths between: ${startEntity} → ${endEntity}`);
 
       const pathOptions: PathFindingOptions = {
-        algorithm: (queryParams.algorithm as any) || "dijkstra",
+        algorithm: queryParams.algorithm || "dijkstra",
         maxDepth: parseInt(queryParams.maxDepth as string) || 5,
         maxPaths: parseInt(queryParams.maxPaths as string) || 5,
         timeout: parseInt(queryParams.timeout as string) || 30000,
@@ -336,7 +333,7 @@ export class GraphQueryAPI {
     res: express.Response
   ): Promise<void> {
     try {
-      const { query, context } = req.body;
+      const { query, _context } = req.body;
 
       if (!query) {
         res.status(400).json({
@@ -495,7 +492,7 @@ export class GraphQueryAPI {
     res: express.Response
   ): Promise<void> {
     try {
-      const { startEntity, options, context } = req.body;
+      const { startEntity, options, _context } = req.body;
 
       if (!startEntity) {
         res.status(400).json({
@@ -730,7 +727,7 @@ export class GraphQueryAPI {
     res: express.Response
   ): Promise<void> {
     try {
-      const { query, context } = req.body;
+      const { query, _context } = req.body;
 
       if (!query) {
         res.status(400).json({

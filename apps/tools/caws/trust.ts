@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
 
-import * as fs from "fs";
+// import * as fs from "fs";
 import { CawsGateChecker } from "./shared/gate-checker.ts";
-import { GateResult } from "./shared/types.ts";
+// import { GateResult } from "./shared/types.ts";
 
 /**
  * CAWS Trust Score Calculator

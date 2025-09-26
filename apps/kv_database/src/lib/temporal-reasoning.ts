@@ -40,7 +40,7 @@ export interface TemporalState {
 }
 
 export interface EntityState {
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
   relationships: TemporalRelationship[];
   status: "active" | "inactive" | "evolving" | "deprecated";
   significance: number;
@@ -172,8 +172,8 @@ export interface ChangePoint {
   significance: number;
   confidence: number;
   description: string;
-  beforeState: Record<string, any>;
-  afterState: Record<string, any>;
+  beforeState: Record<string, unknown>;
+  afterState: Record<string, unknown>;
   metadata: ChangePointMetadata;
 }
 
@@ -194,8 +194,8 @@ export interface EntityEvolution {
     | "merge"
     | "deprecation";
   timestamp: Date;
-  previousState: Record<string, any>;
-  newState: Record<string, any>;
+  previousState: Record<string, unknown>;
+  newState: Record<string, unknown>;
   evolutionFactors: string[];
   impact: EvolutionImpact;
 }
@@ -376,7 +376,7 @@ export interface AnalysisMetadata {
  * evolution tracking using sophisticated statistical and ML algorithms.
  */
 export class TemporalReasoningSystem {
-  private database: any; // ObsidianDatabase
+  private database; // ObsidianDatabase
   private causalityEngine: CausalityDetectionEngine;
   private trendAnalyzer: TrendAnalysisEngine;
   private changeDetector: ChangePointDetector;
@@ -387,7 +387,7 @@ export class TemporalReasoningSystem {
   private readonly maxAnalysisWindow = 2 * 365 * 24 * 60 * 60 * 1000; // 2 years in ms
   private readonly minDataPointsForAnalysis = 10;
 
-  constructor(database: any) {
+  constructor(database) {
     this.database = database;
     this.causalityEngine = new CausalityDetectionEngine(database);
     this.trendAnalyzer = new TrendAnalysisEngine(database);
@@ -574,7 +574,7 @@ export class TemporalReasoningSystem {
           executionTime,
           dataPointsAnalyzed: trendResults.length,
           confidence: this.calculateOverallConfidence(
-            trendResults.map((tr) => ({ confidence: tr.confidence } as any))
+            trendResults.map((tr) => ({ confidence: tr.confidence }))
           ),
           warnings: this.generateTrendWarnings(trendResults, request),
         },
@@ -731,7 +731,7 @@ export class TemporalReasoningSystem {
   /**
    * Calculate overall confidence from analysis results
    */
-  private calculateOverallConfidence(results: any[]): number {
+  private calculateOverallConfidence(results): number {
     if (results.length === 0) return 0;
     return results.reduce((sum, r) => sum + r.confidence, 0) / results.length;
   }
@@ -752,7 +752,7 @@ export class TemporalReasoningSystem {
   /**
    * Generate warnings for causality analysis
    */
-  private generateWarnings(results: CausalityResult[], options: any): string[] {
+  private generateWarnings(results: CausalityResult[], _options): string[] {
     const warnings: string[] = [];
 
     if (results.length === 0) {
@@ -774,7 +774,7 @@ export class TemporalReasoningSystem {
    */
   private generateTrendWarnings(
     results: TrendResult[],
-    request: TrendAnalysisRequest
+    _request: TrendAnalysisRequest
   ): string[] {
     const warnings: string[] = [];
 
@@ -793,7 +793,7 @@ export class TemporalReasoningSystem {
    */
   private generateChangeWarnings(
     changePoints: ChangePoint[],
-    request: ChangeDetectionRequest
+    _request: ChangeDetectionRequest
   ): string[] {
     const warnings: string[] = [];
 
@@ -861,13 +861,13 @@ export class TemporalReasoningSystem {
  * Causality Detection Engine
  */
 class CausalityDetectionEngine {
-  constructor(private database: any) {}
+  constructor(private database) {}
 
   async analyzeCausality(
     sourceEntity: string,
     targetEntity: string,
-    timeWindow: TimeRange,
-    options: any
+    _timeWindow: TimeRange,
+    _options
   ): Promise<CausalityResult> {
     // Placeholder for causality analysis implementation
     // In real implementation, this would use Granger causality, transfer entropy,
@@ -927,14 +927,14 @@ class CausalityDetectionEngine {
  * Trend Analysis Engine
  */
 class TrendAnalysisEngine {
-  constructor(private database: any) {}
+  constructor(private database) {}
 
   async analyzeTrend(
     entity1: string,
     entity2: string,
     relationshipType: string,
     timeRange: TimeRange,
-    forecastOptions: any
+    forecastOptions
   ): Promise<TrendAnalysis> {
     // Placeholder for trend analysis implementation
     // In real implementation, this would use ARIMA, Prophet, or other time series models
@@ -979,7 +979,7 @@ class TrendAnalysisEngine {
     return {
       id: `trend_${Date.now()}`,
       relationshipId: `${entity1}_${entity2}_${relationshipType}`,
-      trendDirection: trendDirection as any,
+      trendDirection: trendDirection,
       trendStrength: 0.6 + Math.random() * 0.3,
       forecast,
       seasonality: {
@@ -1016,13 +1016,13 @@ class TrendAnalysisEngine {
  * Change Point Detector
  */
 class ChangePointDetector {
-  constructor(private database: any) {}
+  constructor(private database) {}
 
   async detectChanges(
     entityId: string,
     timeRange: TimeRange,
-    relationshipTypes: string[] = [],
-    options: any
+    _relationshipTypes: string[] = [],
+    _options
   ): Promise<ChangePoint[]> {
     // Placeholder for change point detection implementation
     // In real implementation, this would use Bayesian online change detection,
@@ -1044,7 +1044,7 @@ class ChangePointDetector {
         timestamp,
         changeType: ["abrupt", "gradual", "seasonal", "trend"][
           Math.floor(Math.random() * 4)
-        ] as any,
+        ],
         significance: 0.7 + Math.random() * 0.25,
         confidence: 0.8 + Math.random() * 0.15,
         description: `Significant change in entity ${entityId} behavior`,
@@ -1070,9 +1070,9 @@ class ChangePointDetector {
  * Temporal Query Engine
  */
 class TemporalQueryEngine {
-  constructor(private database: any) {}
+  constructor(private database) {}
 
-  async executeQuery(query: TemporalQuery): Promise<any> {
+  async executeQuery(query: TemporalQuery): Promise {
     // Placeholder for temporal query execution
     // In real implementation, this would parse and execute temporal GraphQL queries
 

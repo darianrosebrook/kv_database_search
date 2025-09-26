@@ -7,7 +7,7 @@ import {
   extractWikilinks,
   extractObsidianTags,
   cleanMarkdown,
-  detectLanguage,
+  // detectLanguage,
   createHash,
 } from "../utils";
 
@@ -27,7 +27,7 @@ export class ObsidianUtils {
     return extractWikilinks(content);
   }
 
-  static parseFrontmatter(content: string): Record<string, any> {
+  static parseFrontmatter(content: string): Record<string, unknown> {
     const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
     const match = content.match(frontmatterRegex);
 
@@ -37,14 +37,11 @@ export class ObsidianUtils {
     }
 
     try {
-      // Extract the body content (everything after the frontmatter)
-      const body = content.substring(match[0].length);
-
       // Simple YAML-like parsing (for now)
-      const frontmatter: Record<string, any> = {};
+      const frontmatter: Record<string, unknown> = {};
       const lines = match[1].split("\n");
       let currentKey = "";
-      let currentValue: any = null;
+      let currentValue = null;
       let isArray = false;
 
       for (let i = 0; i < lines.length; i++) {
@@ -109,7 +106,7 @@ export class ObsidianUtils {
       }
 
       return frontmatter;
-    } catch (error) {
+    } catch {
       // If frontmatter parsing fails, return empty frontmatter
       return {};
     }
@@ -122,7 +119,7 @@ export class ObsidianUtils {
   static determineContentType(
     filePath: string,
     vaultPath: string,
-    frontmatter: Record<string, any>
+    frontmatter: Record<string, unknown>
   ): string {
     // Check frontmatter type first (prioritize explicit type)
     if (frontmatter.type) {

@@ -20,9 +20,9 @@ import { ObsidianEmbeddingService } from "../../src/lib/embeddings.ts";
 import { MultiModalIngestionPipeline } from "../../src/lib/multi-modal-ingest.ts";
 
 describe("Multi-Modal Ingestion CLI", () => {
-  let mockDatabase: any;
-  let mockEmbeddings: any;
-  let mockPipeline: any;
+  let mockDatabase;
+  let mockEmbeddings;
+  let mockPipeline;
   let testDir: string;
 
   beforeEach(() => {
@@ -334,9 +334,9 @@ function matchesTestPattern(filePath: string, pattern: string): boolean {
   return regex.test(filePath);
 }
 
-function parseTestArgs(args: string[]): { filePaths: string[]; options: any } {
+function parseTestArgs(args: string[]): { filePaths: string[]; options } {
   const filePaths: string[] = [];
-  const options: any = {
+  const options = {
     batchSize: 5,
     rateLimitMs: 200,
     skipExisting: true,
@@ -424,7 +424,7 @@ function getTestContentTypeFromExtension(ext: string): string {
 }
 
 async function validateTestIngestion(
-  database: any,
+  database,
   expectedChunks: number
 ): Promise<{ isValid: boolean; errors: string[] }> {
   try {
@@ -436,7 +436,7 @@ async function validateTestIngestion(
     }
 
     const hasMultiModal = sampleChunks.some(
-      (chunk: any) => chunk.meta.multiModalFile !== undefined
+      (chunk) => chunk.meta.multiModalFile !== undefined
     );
 
     if (!hasMultiModal && expectedChunks > 0) {

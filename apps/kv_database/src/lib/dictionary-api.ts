@@ -16,6 +16,23 @@ import express from "express";
 import { DictionaryService } from "./dictionary-service";
 import { ObsidianDatabase } from "./database";
 
+// Service health interface
+interface ServiceHealth {
+  status: "healthy" | "degraded" | "unhealthy";
+  timestamp: Date;
+  version: string;
+  database: {
+    connected: boolean;
+    responseTime: number;
+    lastError?: string;
+  };
+  dictionary: {
+    entries: number;
+    lastUpdate: Date;
+    errorRate: number;
+  };
+}
+
 export class DictionaryAPI {
   private dictionaryService: DictionaryService;
   private router: express.Router;
@@ -98,7 +115,7 @@ export class DictionaryAPI {
   /**
    * Get service health information
    */
-  private async getServiceHealth(): Promise<any> {
+  private async getServiceHealth(): Promise<ServiceHealth> {
     // Simple health check - could be enhanced with detailed diagnostics
     const timestamp = new Date();
 
@@ -217,7 +234,7 @@ export class DictionaryAPI {
 
       // Transform request to match DictionaryService interface
       const canonicalizationRequest = {
-        entities: entities.map((entity: any) => ({
+        entities: entities.map((entity) => ({
           name: entity.name,
           type: entity.type,
           context: entity.context,
@@ -233,7 +250,8 @@ export class DictionaryAPI {
         results,
         metadata: {
           entityCount: entities.length,
-          enhancedCount: results.filter((r) => r.confidence >= 0.7).length,
+          highConfidenceCount: results.filter((r) => r.confidence >= 0.7)
+            .length,
           timestamp: new Date(),
           requestId: req.headers["x-request-id"] || "unknown",
         },

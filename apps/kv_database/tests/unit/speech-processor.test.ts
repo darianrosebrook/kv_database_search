@@ -29,9 +29,9 @@ import { createModel, createRecognizer } from "sherpa-onnx";
 
 describe("SpeechProcessor", () => {
   let processor: SpeechProcessor;
-  let mockModel: any;
-  let mockRecognizer: any;
-  let mockStream: any;
+  let mockModel;
+  let mockRecognizer;
+  let mockStream;
 
   beforeEach(() => {
     processor = new SpeechProcessor();
@@ -52,8 +52,8 @@ describe("SpeechProcessor", () => {
       free: vi.fn(),
     };
 
-    (createModel as any).mockReturnValue(mockModel);
-    (createRecognizer as any).mockReturnValue(mockRecognizer);
+    createModel.mockReturnValue(mockModel);
+    createRecognizer.mockReturnValue(mockRecognizer);
   });
 
   describe("transcribeFromBuffer", () => {
@@ -64,7 +64,7 @@ describe("SpeechProcessor", () => {
 
       // Mock the audio conversion to return valid data
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 
@@ -86,7 +86,7 @@ describe("SpeechProcessor", () => {
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 
@@ -105,7 +105,7 @@ describe("SpeechProcessor", () => {
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 
@@ -123,7 +123,7 @@ describe("SpeechProcessor", () => {
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 
@@ -164,7 +164,7 @@ describe("SpeechProcessor", () => {
       });
 
       // Mock the audio conversion for this specific test
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         new Float32Array([0.1, 0.2, 0.3])
       );
 
@@ -217,7 +217,7 @@ describe("SpeechProcessor", () => {
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 
@@ -234,7 +234,7 @@ describe("SpeechProcessor", () => {
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 
@@ -251,7 +251,7 @@ describe("SpeechProcessor", () => {
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 
@@ -268,7 +268,7 @@ describe("SpeechProcessor", () => {
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 
@@ -283,12 +283,12 @@ describe("SpeechProcessor", () => {
       mockRecognizer.getResult.mockReturnValue({ text: "test" });
 
       // Clear previous mock calls
-      (createModel as any).mockClear();
-      (createRecognizer as any).mockClear();
+      createModel.mockClear();
+      createRecognizer.mockClear();
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 
@@ -322,7 +322,7 @@ describe("SpeechProcessor", () => {
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 
@@ -342,7 +342,7 @@ describe("SpeechProcessor", () => {
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 
@@ -362,7 +362,7 @@ describe("SpeechProcessor", () => {
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
-      vi.spyOn(processor as any, "convertBufferToAudioData").mockReturnValue(
+      vi.spyOn(processor, "convertBufferToAudioData").mockReturnValue(
         mockAudioData
       );
 

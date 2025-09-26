@@ -5,8 +5,6 @@ import {
   EntityExtractionResult,
   EntityType,
   RelationshipType,
-  ExtractionMethod,
-  EntityMention,
 } from "./entity-extractor.js";
 import { ObsidianEmbeddingService } from "../embeddings.js";
 
@@ -335,33 +333,33 @@ export class KnowledgeGraph {
    */
   private async updateExistingEntity(
     existingEntity: KnowledgeGraphEntity,
-    newEntity: KnowledgeGraphEntity,
+    updatedEntityData: KnowledgeGraphEntity,
     client: PoolClient
   ): Promise<KnowledgeGraphEntity> {
     // Merge aliases
     const mergedAliases = Array.from(
-      new Set([...existingEntity.aliases, ...newEntity.aliases])
+      new Set([...existingEntity.aliases, ...updatedEntityData.aliases])
     );
 
     // Merge source files
     const mergedSourceFiles = Array.from(
-      new Set([...existingEntity.sourceFiles, ...newEntity.sourceFiles])
+      new Set([...existingEntity.sourceFiles, ...updatedEntityData.sourceFiles])
     );
 
     // Merge extraction methods
     const mergedExtractionMethods = Array.from(
       new Set([
         ...existingEntity.extractionMethods,
-        ...newEntity.extractionMethods,
+        ...updatedEntityData.extractionMethods,
       ])
     );
 
     // Update confidence (weighted average)
     const totalOccurrences =
-      existingEntity.occurrenceCount + newEntity.occurrenceCount;
+      existingEntity.occurrenceCount + updatedEntityData.occurrenceCount;
     const updatedConfidence =
       (existingEntity.confidence * existingEntity.occurrenceCount +
-        newEntity.confidence * newEntity.occurrenceCount) /
+        updatedEntityData.confidence * updatedEntityData.occurrenceCount) /
       totalOccurrences;
 
     const query = `
@@ -382,12 +380,12 @@ export class KnowledgeGraph {
       existingEntity.id,
       mergedAliases,
       updatedConfidence,
-      newEntity.occurrenceCount,
+      updatedEntityData.occurrenceCount,
       mergedSourceFiles,
       mergedExtractionMethods,
       JSON.stringify({
         ...existingEntity.metadata,
-        ...newEntity.metadata,
+        ...updatedEntityData.metadata,
       }),
     ];
 
@@ -399,18 +397,18 @@ export class KnowledgeGraph {
    * Merge two entities into one
    */
   private async mergeEntities(
-    newEntity: KnowledgeGraphEntity,
+    entityToMerge: KnowledgeGraphEntity,
     existingEntity: KnowledgeGraphEntity,
     client: PoolClient
   ): Promise<KnowledgeGraphEntity> {
     // Use the entity with higher confidence as the base
     const baseEntity =
-      existingEntity.confidence >= newEntity.confidence
+      existingEntity.confidence >= entityToMerge.confidence
         ? existingEntity
-        : newEntity;
+        : entityToMerge;
     const mergeEntity =
-      existingEntity.confidence >= newEntity.confidence
-        ? newEntity
+      existingEntity.confidence >= entityToMerge.confidence
+        ? entityToMerge
         : existingEntity;
 
     // Merge all properties
@@ -493,7 +491,7 @@ export class KnowledgeGraph {
    */
   private async updateRelationship(
     relationshipId: string,
-    newRelationship: KnowledgeGraphRelationship,
+    updatedRelationshipData: KnowledgeGraphRelationship,
     client: PoolClient
   ): Promise<void> {
     const query = `
@@ -511,12 +509,12 @@ export class KnowledgeGraph {
 
     const values = [
       relationshipId,
-      newRelationship.confidence,
-      newRelationship.strength,
-      newRelationship.cooccurrenceCount,
-      newRelationship.sourceChunkIds,
-      newRelationship.supportingText,
-      JSON.stringify(newRelationship.metadata),
+      updatedRelationshipData.confidence,
+      updatedRelationshipData.strength,
+      updatedRelationshipData.cooccurrenceCount,
+      updatedRelationshipData.sourceChunkIds,
+      updatedRelationshipData.supportingText,
+      JSON.stringify(updatedRelationshipData.metadata),
     ];
 
     await client.query(query, values);
@@ -527,7 +525,7 @@ export class KnowledgeGraph {
    */
   private async createEntityChunkMappings(
     entities: KnowledgeGraphEntity[],
-    extractionMetadata: any,
+    extractionMetadata,
     client: PoolClient
   ): Promise<void> {
     for (const entity of entities) {
@@ -788,7 +786,7 @@ export class KnowledgeGraph {
     });
   }
 
-  private mapEntityFromRow(row: any): KnowledgeGraphEntity {
+  private mapEntityFromRow(row): KnowledgeGraphEntity {
     return {
       id: row.id,
       name: row.name,
@@ -811,7 +809,7 @@ export class KnowledgeGraph {
     };
   }
 
-  private mapRelationshipFromRow(row: any): KnowledgeGraphRelationship {
+  private mapRelationshipFromRow(row): KnowledgeGraphRelationship {
     return {
       id: row.id,
       sourceEntityId: row.source_entity_id,

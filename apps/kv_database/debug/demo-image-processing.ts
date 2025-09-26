@@ -63,11 +63,11 @@ async function demoImageExtraction() {
   return result.links;
 }
 
-async function demoPathResolution(imageLinks: any[]) {
+async function demoPathResolution(imageLinks: string[]) {
   console.log("\n🗺️  PATH RESOLUTION DEMO");
   console.log("=".repeat(50));
 
-  const resolver = new ImagePathResolver("/test-data/vault");
+  const _resolver = new ImagePathResolver("/test-data/vault");
   const imagePaths = imageLinks.map((link) => link.src);
 
   console.log("Resolving paths:");

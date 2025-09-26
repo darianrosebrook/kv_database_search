@@ -22,7 +22,6 @@ import { QualityMetrics, QualityScore } from "../shared/quality-metrics";
 import {
   TextAnalysisUtils,
   DocumentStructure,
-  TextMetrics,
 } from "../shared/text-analysis-utils";
 
 export interface PDFProcessingResult extends ProcessorResult {

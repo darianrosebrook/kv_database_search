@@ -46,7 +46,7 @@ describe("Comprehensive Search Integration Tests", () => {
     });
 
     // Override the embedWithStrategy method for testing
-    (embeddings as any).embedWithStrategy = async (text: string) => ({
+    embeddings.embedWithStrategy = async (text: string) => ({
       embedding: new Array(768).fill(0.1),
       model: { name: "test-model" },
       confidence: 0.9,
@@ -502,7 +502,7 @@ describe("Comprehensive Search Integration Tests", () => {
     it("should handle invalid search modes gracefully", async () => {
       const query = {
         text: "test query",
-        mode: "invalid_mode" as any,
+        mode: "invalid_mode",
       };
 
       await expect(searchService.search(query)).rejects.toThrow();

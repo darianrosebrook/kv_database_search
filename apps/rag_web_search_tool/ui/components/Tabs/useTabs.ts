@@ -1,10 +1,10 @@
-import * as React from 'react';
+import * as React from "react";
 import type {
   TabsActivationMode,
   TabsContextValue,
   TabsValue,
   TabRegistration,
-} from './types';
+} from "./types";
 
 export interface UseTabsOptions {
   defaultValue?: TabsValue;
@@ -20,12 +20,12 @@ export function useTabs(options: UseTabsOptions = {}): TabsContextValue {
     defaultValue = null as unknown as TabsValue,
     value,
     onValueChange,
-    activationMode = 'manual',
+    activationMode = "manual",
     unmountInactive = false,
     idBase = React.useId(),
   } = options;
 
-  const isControlled = typeof value === 'string';
+  const isControlled = typeof value === "string";
   const [internalValue, setInternalValue] = React.useState<TabsValue | null>(
     isControlled ? value! : defaultValue
   );
@@ -43,8 +43,8 @@ export function useTabs(options: UseTabsOptions = {}): TabsContextValue {
         onValueChange?.(nextVal);
       };
       // View Transitions for content swap
-      const d = document as any;
-      if (typeof document !== 'undefined' && d?.startViewTransition) {
+      const d = document;
+      if (typeof document !== "undefined" && d?.startViewTransition) {
         d.startViewTransition(() => doUpdate());
       } else {
         doUpdate();
@@ -90,7 +90,7 @@ export function useTabs(options: UseTabsOptions = {}): TabsContextValue {
     (index: number) => {
       if (index < 0 || index >= tabs.length) return;
       setFocusedIndex(index);
-      if (activationMode === 'auto') {
+      if (activationMode === "auto") {
         const v = tabs[index]?.value;
         if (v) performSelect(v);
       }

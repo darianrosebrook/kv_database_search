@@ -15,11 +15,8 @@ import express from "express";
 import {
   TemporalReasoningSystem,
   CausalityAnalysisRequest,
-  CausalityAnalysisResponse,
   TrendAnalysisRequest,
-  TrendAnalysisResponse,
   ChangeDetectionRequest,
-  ChangeDetectionResponse,
   TemporalQuery,
 } from "./temporal-reasoning";
 import { ObsidianDatabase } from "./database";

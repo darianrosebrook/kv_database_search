@@ -39,7 +39,7 @@ export interface LinkedEntity {
   aliases: string[];
   description?: string;
   types: string[];
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
 }
 
 export interface MLRelationship {
@@ -210,10 +210,10 @@ export type LearningStatus =
  * relationship classification using deep learning models with continuous learning.
  */
 export class MLEntityLinker {
-  private nerModel: any = null; // Placeholder for NER model
-  private linkingModel: any = null; // Placeholder for entity linking model
-  private relationshipModel: any = null; // Placeholder for relationship classification
-  private contextModel: any = null; // Placeholder for contextual analysis
+  private nerModel = null; // Placeholder for NER model
+  private linkingModel = null; // Placeholder for entity linking model
+  private relationshipModel = null; // Placeholder for relationship classification
+  private contextModel = null; // Placeholder for contextual analysis
 
   private modelRegistry: ModelRegistry;
   private feedbackProcessor: FeedbackProcessor;
@@ -385,7 +385,7 @@ export class MLEntityLinker {
    */
   private async preprocessText(
     text: string,
-    language: string
+    _language: string
   ): Promise<string> {
     // Simple preprocessing - could be enhanced with language-specific processing
     return text
@@ -486,8 +486,8 @@ export class MLEntityLinker {
    */
   private async performEntityLinking(
     entity: MLEntity,
-    context: string,
-    options: ExtractionOptions
+    _context: string,
+    _options: ExtractionOptions
   ): Promise<LinkedEntity | null> {
     // Placeholder for entity linking logic
     // In real implementation, this would:
@@ -565,8 +565,8 @@ export class MLEntityLinker {
    */
   private async classifyEntityPair(
     pair: { source: MLEntity; target: MLEntity },
-    context: string,
-    options: ExtractionOptions
+    _context: string,
+    _options: ExtractionOptions
   ): Promise<MLRelationship | null> {
     // Placeholder for relationship classification
     // In real implementation, this would use neural models to classify relationships
@@ -585,8 +585,8 @@ export class MLEntityLinker {
         relationships[Math.floor(Math.random() * relationships.length)],
       object: pair.target.id,
       confidence: 0.76,
-      evidence: [`Context: ${context.substring(0, 100)}...`],
-      context: context,
+      evidence: [`Context: ${_context.substring(0, 100)}...`],
+      context: _context,
       metadata: {
         classificationMethod: "neural",
         modelVersion: "relationship-v1",
@@ -653,7 +653,7 @@ export class MLEntityLinker {
         entities.push({
           id: this.generateEntityId(),
           text: match[0],
-          type: { category: pattern.type as any, confidence: 0.6 },
+          type: { category: pattern.type, confidence: 0.6 },
           confidence: 0.6,
           position: { start: match.index, end: match.index + match[0].length },
           metadata: {
@@ -754,7 +754,7 @@ export class MLEntityLinker {
   /**
    * Get system health status
    */
-  async getHealthStatus(): Promise<any> {
+  async getHealthStatus(): Promise {
     return {
       status: "healthy",
       timestamp: new Date(),
@@ -775,7 +775,7 @@ export class MLEntityLinker {
   /**
    * Get system performance metrics
    */
-  async getPerformanceMetrics(): Promise<any> {
+  async getPerformanceMetrics(): Promise {
     return await this.performanceMonitor.getMetrics();
   }
 }
@@ -788,9 +788,9 @@ export class MLEntityLinker {
  * Model Registry for managing ML models
  */
 class ModelRegistry {
-  private models: Map<string, any> = new Map();
+  private models: Map<string, unknown> = new Map();
 
-  async registerModel(model: any, metadata: any): Promise<string> {
+  async registerModel(model, metadata): Promise<string> {
     const modelId = `model_${Date.now()}_${Math.random()
       .toString(36)
       .substr(2, 9)}`;
@@ -798,11 +798,11 @@ class ModelRegistry {
     return modelId;
   }
 
-  async getModel(modelId: string): Promise<any> {
+  async getModel(modelId: string): Promise {
     return this.models.get(modelId);
   }
 
-  async listModels(): Promise<any[]> {
+  async listModels(): Promise<unknown[]> {
     return Array.from(this.models.entries()).map(([id, model]) => ({
       id,
       status: model.status,
@@ -880,7 +880,7 @@ class FeedbackProcessor {
  * Performance Monitor for tracking system metrics
  */
 class PerformanceMonitor {
-  private metrics: any[] = [];
+  private metrics = [];
 
   recordExtraction(
     processingTime: number,
@@ -896,7 +896,7 @@ class PerformanceMonitor {
     });
   }
 
-  async getMetrics(): Promise<any> {
+  async getMetrics(): Promise {
     const recent = this.metrics.slice(-100); // Last 100 metrics
 
     return {

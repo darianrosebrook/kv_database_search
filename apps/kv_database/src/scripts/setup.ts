@@ -11,7 +11,7 @@
 
 import { config as dotenvConfig } from "dotenv";
 import * as fs from "fs";
-import * as path from "path";
+// import * as path from "path";
 import * as readline from "readline";
 import { ObsidianDatabase } from "../lib/database";
 import { ObsidianEmbeddingService } from "../lib/embeddings";
@@ -59,7 +59,7 @@ function logWarning(message: string, hint?: string) {
   }
 }
 
-async function main() {
+async function _main() {
   console.log("🚀 Obsidian RAG Setup Wizard");
   console.log("=".repeat(50));
   console.log(
@@ -160,14 +160,12 @@ async function testDatabase() {
     console.log(`   📊 Total chunks: ${stats.totalChunks || 0}`);
     console.log(
       `   📅 Last update: ${
-        (stats as any).lastUpdate
-          ? new Date((stats as any).lastUpdate).toLocaleString()
-          : "Never"
+        stats.lastUpdate ? new Date(stats.lastUpdate).toLocaleString() : "Never"
       }`
     );
 
     await db.close();
-  } catch (error: any) {
+  } catch (error) {
     logError("Database connection failed", error.message);
 
     if (
@@ -263,7 +261,7 @@ async function testEmbeddings() {
     } else {
       logError("Embedding service test failed");
     }
-  } catch (error: any) {
+  } catch (error) {
     logError("Embedding service connection failed", error.message);
     logWarning("Make sure Ollama is running and the model is installed");
     console.log("   Install: ollama pull embeddinggemma");

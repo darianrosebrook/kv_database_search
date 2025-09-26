@@ -1,9 +1,9 @@
-import { Node, mergeAttributes } from '@tiptap/core';
-import { ReactNodeViewRenderer } from '@tiptap/react';
-import { TableOfContentsNodeView } from './TableOfContentsNodeView';
+import { Node, mergeAttributes } from "@tiptap/core";
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import { TableOfContentsNodeView } from "./TableOfContentsNodeView";
 
 export interface TableOfContentsOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, unknown>;
   /**
    * Maximum depth of headings to include in TOC
    */
@@ -18,7 +18,7 @@ export interface TableOfContentsOptions {
   tocClass: string;
 }
 
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     tableOfContents: {
       /**
@@ -43,37 +43,37 @@ declare module '@tiptap/core' {
  * @author @darianrosebrook
  */
 export const TableOfContentsExtension = Node.create<TableOfContentsOptions>({
-  name: 'tableOfContents',
+  name: "tableOfContents",
 
   addOptions() {
     return {
       HTMLAttributes: {},
       maxDepth: 3,
       showNumbers: false,
-      tocClass: 'table-of-contents',
+      tocClass: "table-of-contents",
     };
   },
 
-  group: 'block',
+  group: "block",
 
-  content: '',
+  content: "",
 
   addAttributes() {
     return {
       maxDepth: {
         default: this.options.maxDepth,
         parseHTML: (element) =>
-          parseInt(element.getAttribute('data-max-depth') || '3'),
+          parseInt(element.getAttribute("data-max-depth") || "3"),
         renderHTML: (attributes) => ({
-          'data-max-depth': attributes.maxDepth,
+          "data-max-depth": attributes.maxDepth,
         }),
       },
       showNumbers: {
         default: this.options.showNumbers,
         parseHTML: (element) =>
-          element.getAttribute('data-show-numbers') === 'true',
+          element.getAttribute("data-show-numbers") === "true",
         renderHTML: (attributes) => ({
-          'data-show-numbers': attributes.showNumbers,
+          "data-show-numbers": attributes.showNumbers,
         }),
       },
     };
@@ -89,12 +89,12 @@ export const TableOfContentsExtension = Node.create<TableOfContentsOptions>({
 
   renderHTML({ node, HTMLAttributes }) {
     return [
-      'div',
+      "div",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
-        'data-type': 'table-of-contents',
+        "data-type": "table-of-contents",
         class: this.options.tocClass,
-        'data-max-depth': node.attrs.maxDepth,
-        'data-show-numbers': node.attrs.showNumbers,
+        "data-max-depth": node.attrs.maxDepth,
+        "data-show-numbers": node.attrs.showNumbers,
       }),
       0,
     ];
@@ -147,7 +147,7 @@ export const TableOfContentsExtension = Node.create<TableOfContentsOptions>({
 
   addKeyboardShortcuts() {
     return {
-      'Mod-Shift-t': () => this.editor.commands.setTableOfContents(),
+      "Mod-Shift-t": () => this.editor.commands.setTableOfContents(),
     };
   },
 });

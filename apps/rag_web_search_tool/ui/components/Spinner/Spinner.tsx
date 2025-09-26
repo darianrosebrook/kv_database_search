@@ -1,14 +1,14 @@
-'use client';
-import * as React from 'react';
-import styles from './Spinner.module.scss';
+"use client";
+import * as React from "react";
+import styles from "./Spinner.module.scss";
 
-export type SpinnerVariant = 'ring' | 'dots' | 'bars';
+export type SpinnerVariant = "ring" | "dots" | "bars";
 
 export interface SpinnerProps {
   /** Size token key or explicit px (e.g., 16). Default: 'md' */
-  size?: 'xs' | 'sm' | 'md' | 'lg' | number;
+  size?: "xs" | "sm" | "md" | "lg" | number;
   /** Stroke thickness token or px. Default: 'regular' */
-  thickness?: 'hairline' | 'regular' | 'bold' | number;
+  thickness?: "hairline" | "regular" | "bold" | number;
   /** Visual variant */
   variant?: SpinnerVariant;
   /** If decorative only, set ariaHidden; else provide label */
@@ -23,11 +23,11 @@ export interface SpinnerProps {
 }
 
 export const Spinner: React.FC<SpinnerProps> = ({
-  size = 'md',
-  thickness = 'regular',
-  variant = 'ring',
+  size = "md",
+  thickness = "regular",
+  variant = "ring",
   ariaHidden,
-  label = 'Loading',
+  label = "Loading",
   inline = false,
   showAfterMs = 150,
   className,
@@ -42,30 +42,30 @@ export const Spinner: React.FC<SpinnerProps> = ({
 
   const styleVars = React.useMemo(() => {
     const resolvedSize =
-      typeof size === 'number' ? `${size}px` : `var(--spinner-size-${size})`;
+      typeof size === "number" ? `${size}px` : `var(--spinner-size-${size})`;
     const resolvedThickness =
-      typeof thickness === 'number'
+      typeof thickness === "number"
         ? `${thickness}px`
         : `var(--spinner-thickness-${thickness})`;
     return {
-      ['--spinner-size-value' as any]: resolvedSize,
-      ['--spinner-thickness-value' as any]: resolvedThickness,
+      ["--spinner-size-value"]: resolvedSize,
+      ["--spinner-thickness-value"]: resolvedThickness,
     } as React.CSSProperties;
   }, [size, thickness]);
 
   if (!visible) return null;
 
   const a11yProps = ariaHidden
-    ? { 'aria-hidden': true as const }
-    : ({ role: 'status', 'aria-live': 'polite', 'aria-label': label } as const);
+    ? { "aria-hidden": true as const }
+    : ({ role: "status", "aria-live": "polite", "aria-label": label } as const);
 
   const rootClassName = [
     styles.root,
-    inline ? styles.inline : '',
-    className || '',
+    inline ? styles.inline : "",
+    className || "",
   ]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 
   return (
     <span
@@ -79,5 +79,5 @@ export const Spinner: React.FC<SpinnerProps> = ({
   );
 };
 
-Spinner.displayName = 'Spinner';
+Spinner.displayName = "Spinner";
 export default Spinner;

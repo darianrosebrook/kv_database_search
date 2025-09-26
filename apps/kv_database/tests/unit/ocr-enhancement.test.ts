@@ -7,7 +7,7 @@ describe("Enhanced OCR Processor", () => {
   it("should enhance OCR text processing", () => {
     // Test OCR artifact correction
     const rawOcrText = "H e l l o   W o r l d";
-    const enhancedText = (ocrProcessor as any).enhanceOCRText(rawOcrText);
+    const enhancedText = ocrProcessor.enhanceOCRText(rawOcrText);
 
     expect(enhancedText).toBe("Hello World");
   });
@@ -22,7 +22,7 @@ describe("Enhanced OCR Processor", () => {
     ];
 
     for (const artifact of artifacts) {
-      const result = (ocrProcessor as any).enhanceOCRText(artifact.input);
+      const result = ocrProcessor.enhanceOCRText(artifact.input);
       expect(result).toBe(artifact.expected);
     }
   });
@@ -32,14 +32,8 @@ describe("Enhanced OCR Processor", () => {
     const highQualityText = "This is clear, well-structured text.";
     const lowQualityText = "T h i s   i s   b l u r r y   t e x t";
 
-    const highQuality = (ocrProcessor as any).analyzeOCRStructure(
-      highQualityText,
-      85
-    );
-    const lowQuality = (ocrProcessor as any).analyzeOCRStructure(
-      lowQualityText,
-      35
-    );
+    const highQuality = ocrProcessor.analyzeOCRStructure(highQualityText, 85);
+    const lowQuality = ocrProcessor.analyzeOCRStructure(lowQualityText, 35);
 
     expect(highQuality.textQuality).toBe("high");
     expect(lowQuality.textQuality).toBe("low");
@@ -59,10 +53,7 @@ describe("Enhanced OCR Processor", () => {
       2. Second item
     `;
 
-    const structure = (ocrProcessor as any).analyzeOCRStructure(
-      structuredText,
-      75
-    );
+    const structure = ocrProcessor.analyzeOCRStructure(structuredText, 75);
 
     expect(structure.headers).toContain("DOCUMENT TITLE");
     expect(structure.paragraphs).toBeGreaterThan(1);
@@ -75,14 +66,8 @@ describe("Enhanced OCR Processor", () => {
     const emptyText = "";
     const nullText = "\0\0\0"; // Null characters
 
-    const emptyStructure = (ocrProcessor as any).analyzeOCRStructure(
-      emptyText,
-      0
-    );
-    const nullStructure = (ocrProcessor as any).analyzeOCRStructure(
-      nullText,
-      0
-    );
+    const emptyStructure = ocrProcessor.analyzeOCRStructure(emptyText, 0);
+    const nullStructure = ocrProcessor.analyzeOCRStructure(nullText, 0);
 
     expect(emptyStructure.paragraphs).toBe(0);
     expect(nullStructure.paragraphs).toBe(0);

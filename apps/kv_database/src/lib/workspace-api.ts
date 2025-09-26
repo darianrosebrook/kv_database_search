@@ -13,12 +13,12 @@
 import express from "express";
 import {
   WorkspaceManager,
-  Workspace,
+  // Workspace,
   DataSource,
   EntityMapping,
-  SyncResult,
-  EntityResolutionResult,
-  CrossWorkspaceSearchResult,
+  // SyncResult,
+  // EntityResolutionResult,
+  // CrossWorkspaceSearchResult,
 } from "./workspace-manager";
 import { ObsidianDatabase } from "./database";
 

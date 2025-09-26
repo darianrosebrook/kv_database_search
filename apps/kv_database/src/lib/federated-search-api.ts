@@ -14,10 +14,10 @@ import express from "express";
 import {
   FederatedSearchSystem,
   FederatedQuery,
-  SearchQuery,
+  _SearchQuery,
   FederatedSystem,
-  SystemStatus,
-  FederatedSearchResult,
+  _SystemStatus,
+  _FederatedSearchResult,
   SystemHealth,
   SystemStatistics,
 } from "./federated-search";

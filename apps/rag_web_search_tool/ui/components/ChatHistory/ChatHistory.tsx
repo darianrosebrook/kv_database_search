@@ -12,7 +12,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Button } from "../Button";
-import { ScrollArea } from "../../../src/components/ui/scroll-area";
+import { ScrollArea } from "../ScrollArea";
 import { apiService } from "../../../src/lib/api";
 import styles from "./ChatHistory.module.scss";
 

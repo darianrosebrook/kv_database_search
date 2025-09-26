@@ -1,7 +1,7 @@
-import { Node, mergeAttributes } from '@tiptap/core';
+import { Node, mergeAttributes } from "@tiptap/core";
 
 export interface TableOfContentsOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, unknown>;
   maxDepth: number;
   showNumbers: boolean;
   tocClass: string;
@@ -11,35 +11,35 @@ export interface TableOfContentsOptions {
  * Server-safe TableOfContents node (no React NodeView)
  */
 export const TableOfContentsServer = Node.create<TableOfContentsOptions>({
-  name: 'tableOfContents',
+  name: "tableOfContents",
 
   addOptions() {
     return {
       HTMLAttributes: {},
       maxDepth: 3,
       showNumbers: false,
-      tocClass: 'table-of-contents',
+      tocClass: "table-of-contents",
     };
   },
 
-  group: 'block',
+  group: "block",
 
-  content: '',
+  content: "",
 
   addAttributes() {
     return {
       maxDepth: {
         default: this.options.maxDepth,
         parseHTML: (element) =>
-          parseInt(element.getAttribute('data-max-depth') || '3'),
-        renderHTML: (attributes) => ({ 'data-max-depth': attributes.maxDepth }),
+          parseInt(element.getAttribute("data-max-depth") || "3"),
+        renderHTML: (attributes) => ({ "data-max-depth": attributes.maxDepth }),
       },
       showNumbers: {
         default: this.options.showNumbers,
         parseHTML: (element) =>
-          element.getAttribute('data-show-numbers') === 'true',
+          element.getAttribute("data-show-numbers") === "true",
         renderHTML: (attributes) => ({
-          'data-show-numbers': attributes.showNumbers,
+          "data-show-numbers": attributes.showNumbers,
         }),
       },
     };
@@ -56,12 +56,12 @@ export const TableOfContentsServer = Node.create<TableOfContentsOptions>({
   renderHTML({ node, HTMLAttributes }) {
     // Leaf node: do not render a content hole (0). Render an empty container instead.
     return [
-      'div',
+      "div",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
-        'data-type': 'table-of-contents',
+        "data-type": "table-of-contents",
         class: this.options.tocClass,
-        'data-max-depth': node.attrs.maxDepth,
-        'data-show-numbers': node.attrs.showNumbers,
+        "data-max-depth": node.attrs.maxDepth,
+        "data-show-numbers": node.attrs.showNumbers,
       }),
     ];
   },

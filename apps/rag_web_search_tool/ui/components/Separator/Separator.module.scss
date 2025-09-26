@@ -1,0 +1,15 @@
+.separator {
+  background: var(--semantic-color-border-subtle);
+
+  &.horizontal {
+    height: 1px;
+    width: 100%;
+    margin: var(--core-spacing-size-04) 0;
+  }
+
+  &.vertical {
+    width: 1px;
+    height: 100%;
+    margin: 0 var(--core-spacing-size-04);
+  }
+}

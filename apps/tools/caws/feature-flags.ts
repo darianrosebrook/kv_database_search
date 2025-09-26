@@ -10,7 +10,7 @@
  */
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { join, dirname } from "path";
+import { dirname } from "path";
 import { fileURLToPath } from "url";
 
 interface FeatureFlag {
@@ -46,7 +46,7 @@ interface FeatureContext {
   userId?: string;
   userGroups?: string[];
   requestId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -169,16 +169,16 @@ class FeatureFlagService {
    */
   createFlag(flag: Omit<FeatureFlag, "createdAt" | "updatedAt">): FeatureFlag {
     const now = new Date().toISOString();
-    const newFlag: FeatureFlag = {
+    const createdFlag: FeatureFlag = {
       ...flag,
       createdAt: now,
       updatedAt: now,
     };
 
-    this.flags.set(flag.name, newFlag);
+    this.flags.set(flag.name, createdFlag);
     this.saveFlags();
     console.log(`✅ Created feature flag: ${flag.name}`);
-    return newFlag;
+    return createdFlag;
   }
 
   /**

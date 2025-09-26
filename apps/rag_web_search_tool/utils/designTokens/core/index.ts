@@ -5,9 +5,9 @@
  * design tokens across all output formats.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Common types and interfaces
 export interface TokenValue {
@@ -24,8 +24,8 @@ export interface TokenGroup {
 export interface GenerationOptions {
   inputPath: string;
   outputPath: string;
-  format: 'scss' | 'css' | 'js' | 'ts' | 'json';
-  theme?: 'light' | 'dark' | 'auto';
+  format: "scss" | "css" | "js" | "ts" | "json";
+  theme?: "light" | "dark" | "auto";
   prefix?: string;
   banner?: string;
 }
@@ -49,20 +49,20 @@ export interface ValidationResult {
 // Get project paths
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-export const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
+export const PROJECT_ROOT = path.resolve(__dirname, "..", "..", "..");
 
 export const PATHS = {
-  tokens: path.join(PROJECT_ROOT, 'ui', 'designTokens', 'designTokens.json'),
-  coreTokens: path.join(PROJECT_ROOT, 'ui', 'designTokens', 'core.tokens.json'),
+  tokens: path.join(PROJECT_ROOT, "ui", "designTokens", "designTokens.json"),
+  coreTokens: path.join(PROJECT_ROOT, "ui", "designTokens", "core.tokens.json"),
   semanticTokens: path.join(
     PROJECT_ROOT,
-    'ui',
-    'designTokens',
-    'semantic.tokens.json'
+    "ui",
+    "designTokens",
+    "semantic.tokens.json"
   ),
-  outputScss: path.join(PROJECT_ROOT, 'app', 'designTokens.scss'),
-  outputTypes: path.join(PROJECT_ROOT, 'types', 'designTokens.ts'),
-  componentDir: path.join(PROJECT_ROOT, 'ui', 'components'),
+  outputScss: path.join(PROJECT_ROOT, "app", "designTokens.scss"),
+  outputTypes: path.join(PROJECT_ROOT, "types", "designTokens.ts"),
+  componentDir: path.join(PROJECT_ROOT, "ui", "components"),
 } as const;
 
 /**
@@ -77,7 +77,7 @@ export function readTokenFile(filePath: string): TokenGroup | null {
       return null;
     }
 
-    const raw = fs.readFileSync(filePath, 'utf8');
+    const raw = fs.readFileSync(filePath, "utf8");
     const parsed = JSON.parse(raw);
 
     console.log(`[tokens] Loaded: ${path.relative(PROJECT_ROOT, filePath)}`);
@@ -112,10 +112,10 @@ export function writeOutputFile(
     fs.mkdirSync(dir, { recursive: true });
 
     // Write file
-    fs.writeFileSync(filePath, content, 'utf8');
+    fs.writeFileSync(filePath, content, "utf8");
 
     const relativePath = path.relative(PROJECT_ROOT, filePath);
-    const desc = description ? ` (${description})` : '';
+    const desc = description ? ` (${description})` : "";
     console.log(`[tokens] Generated: ${relativePath}${desc}`);
   } catch (error) {
     console.error(
@@ -129,31 +129,31 @@ export function writeOutputFile(
 /**
  * Convert token path to CSS custom property name
  */
-export function tokenPathToCSSVar(tokenPath: string, prefix = '--'): string {
+export function tokenPathToCSSVar(tokenPath: string, prefix = "--"): string {
   return (
     prefix +
     tokenPath
-      .replace(/\./g, '-') // Convert dots to hyphens first
-      .replace(/[A-Z]/g, (m) => '-' + m.toLowerCase()) // Convert camelCase
-      .replace(/[\s_]/g, '-') // Convert spaces and underscores
-      .replace(/[^a-z0-9-]/g, '') // Remove any remaining invalid characters
-      .replace(/-+/g, '-') // Collapse multiple hyphens into one
+      .replace(/\./g, "-") // Convert dots to hyphens first
+      .replace(/[A-Z]/g, (m) => "-" + m.toLowerCase()) // Convert camelCase
+      .replace(/[\s_]/g, "-") // Convert spaces and underscores
+      .replace(/[^a-z0-9-]/g, "") // Remove any remaining invalid characters
+      .replace(/-+/g, "-") // Collapse multiple hyphens into one
   );
 }
 
 /**
  * Extract all token paths from a token tree
  */
-export function extractTokenPaths(obj: TokenGroup, prefix = ''): string[] {
+export function extractTokenPaths(obj: TokenGroup, prefix = ""): string[] {
   const paths: string[] = [];
 
   for (const [key, value] of Object.entries(obj)) {
-    if (key.startsWith('$')) continue; // Skip metadata
+    if (key.startsWith("$")) continue; // Skip metadata
 
     const currentPath = prefix ? `${prefix}.${key}` : key;
 
-    if (value && typeof value === 'object') {
-      if ('$value' in value) {
+    if (value && typeof value === "object") {
+      if ("$value" in value) {
         // This is a token
         paths.push(currentPath);
       } else {
@@ -178,21 +178,21 @@ export function deepMerge<T extends Record<string, any>>(
   const result = { ...target };
 
   for (const [key, value] of Object.entries(source)) {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
       if (
         key in result &&
-        typeof result[key] === 'object' &&
+        typeof result[key] === "object" &&
         !Array.isArray(result[key])
       ) {
-        (result as any)[key] = deepMerge(
+        result[key] = deepMerge(
           result[key] as Record<string, any>,
           value as Record<string, any>
         );
       } else {
-        (result as any)[key] = value;
+        result[key] = value;
       }
     } else {
-      (result as any)[key] = value;
+      result[key] = value;
     }
   }
 
@@ -208,7 +208,7 @@ export function formatCSSBlock(
 ): string {
   const lines = Object.entries(properties)
     .map(([prop, value]) => `  ${prop}: ${value};`)
-    .join('\n');
+    .join("\n");
 
   return `${selector} {\n${lines}\n}`;
 }
@@ -219,7 +219,7 @@ export function formatCSSBlock(
 export function generateBanner(sourcePath?: string): string {
   const source = sourcePath
     ? `\n * Source: ${path.relative(PROJECT_ROOT, sourcePath)}`
-    : '';
+    : "";
   return `/* AUTO-GENERATED: Do not edit directly.${source}\n */`;
 }
 
@@ -234,7 +234,7 @@ export function logSummary(stats: {
 }): void {
   const { totalTokens, referencedTokens, generatedFiles, errors } = stats;
 
-  console.log('\n[tokens] Generation Summary:');
+  console.log("\n[tokens] Generation Summary:");
   if (totalTokens !== undefined) {
     console.log(`  - Total tokens: ${totalTokens}`);
   }

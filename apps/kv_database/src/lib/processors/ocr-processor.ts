@@ -2,7 +2,7 @@ import { createWorker, Worker } from "tesseract.js";
 import { ContentType, ContentMetadata } from "../../types/index";
 import {
   detectLanguage,
-  EnhancedEntityExtractor,
+  EntityExtractor,
   ExtractedEntity,
   EntityRelationship,
 } from "../utils";
@@ -38,10 +38,10 @@ export interface OCRContentMetadata extends ContentMetadata {
 
 export class OCRProcessor implements ContentProcessor {
   private worker: Worker | null = null;
-  private entityExtractor: EnhancedEntityExtractor;
+  private entityExtractor: EntityExtractor;
 
   constructor() {
-    this.entityExtractor = new EnhancedEntityExtractor();
+    this.entityExtractor = new EntityExtractor();
   }
 
   /**
@@ -258,13 +258,13 @@ export class OCRProcessor implements ContentProcessor {
     // Convert buffer to temporary file path for processing
     const tempPath = `/tmp/ocr-${Date.now()}.png`;
     try {
-      require("fs").writeFileSync(tempPath, buffer);
+      fs.writeFileSync(tempPath, buffer);
       return await this.extractFromFile(tempPath, options);
     } finally {
       // Clean up temp file
       try {
-        require("fs").unlinkSync(tempPath);
-      } catch (e) {
+        fs.unlinkSync(tempPath);
+      } catch {
         // Ignore cleanup errors
       }
     }
@@ -275,7 +275,7 @@ export class OCRProcessor implements ContentProcessor {
    */
   async extractFromFile(
     filePath: string,
-    options?: ProcessorOptions
+    _options?: ProcessorOptions
   ): Promise<ProcessorResult> {
     const result = await this.extractTextFromFile(filePath);
     return {
@@ -368,7 +368,7 @@ export class OCRProcessor implements ContentProcessor {
       .filter((block) => block.trim().length > 0).length;
 
     // Detect lists (numbered or bulleted)
-    const listPattern = /^[1-9]+\.|^\*|^\-|^•/m;
+    const listPattern = /^[1-9]+\.|^\*|^-|^•/m;
     hasLists = listPattern.test(text);
 
     // Also check for common OCR list artifacts

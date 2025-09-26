@@ -1,20 +1,20 @@
 /** Headless logic hook for Walkthrough */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import type { WalkthroughStepSpec } from './types';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import type { WalkthroughStepSpec } from "./types";
 
 type PersistedState = { index?: number; completed?: boolean };
 
 const storage = {
   get(key?: string) {
-    if (!key || typeof window === 'undefined') return null;
+    if (!key || typeof window === "undefined") return null;
     try {
-      return JSON.parse(localStorage.getItem(key) || 'null');
+      return JSON.parse(localStorage.getItem(key) || "null");
     } catch {
       return null;
     }
   },
   set(key: string | undefined, value: PersistedState) {
-    if (!key || typeof window === 'undefined') return;
+    if (!key || typeof window === "undefined") return;
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch {
@@ -22,7 +22,7 @@ const storage = {
     }
   },
   remove(key?: string) {
-    if (!key || typeof window === 'undefined') return;
+    if (!key || typeof window === "undefined") return;
     try {
       localStorage.removeItem(key);
     } catch {
@@ -32,8 +32,8 @@ const storage = {
 };
 
 function toElement(target?: string | HTMLElement | null): HTMLElement | null {
-  if (!target || typeof window === 'undefined') return null;
-  if (typeof target === 'string') {
+  if (!target || typeof window === "undefined") return null;
+  if (typeof target === "string") {
     return document.querySelector(target) as HTMLElement | null;
   }
   return target as HTMLElement;
@@ -74,13 +74,13 @@ export function useWalkthrough(opts: UseWalkthroughOptions) {
   } | null;
 
   const [internalIndex, setInternalIndex] = useState<number>(() => {
-    if (typeof index === 'number') return index;
+    if (typeof index === "number") return index;
     if (persisted?.completed) return -1;
-    if (typeof persisted?.index === 'number') return persisted.index;
+    if (typeof persisted?.index === "number") return persisted.index;
     return autoStart ? defaultIndex : -1;
   });
 
-  const isControlled = typeof index === 'number';
+  const isControlled = typeof index === "number";
   const currentIndex = isControlled ? (index as number) : internalIndex;
 
   const steps = useMemo(() => stepsProp, [stepsProp]);
@@ -89,15 +89,15 @@ export function useWalkthrough(opts: UseWalkthroughOptions) {
   const [open, setOpen] = useState<boolean>(() => currentIndex >= 0);
   // Concurrent instance guard (simple global flag)
   const concurrentGuard = React.useMemo(() => {
-    const key = '__walkthrough_open__';
+    const key = "__walkthrough_open__";
     return {
       canOpen: (): boolean => {
-        if (typeof window === 'undefined') return true;
-        return allowConcurrent || !(window as any)[key];
+        if (typeof window === "undefined") return true;
+        return allowConcurrent || !window[key];
       },
       setOpen: (value: boolean) => {
-        if (typeof window === 'undefined') return;
-        (window as any)[key] = value;
+        if (typeof window === "undefined") return;
+        window[key] = value;
       },
     };
   }, [allowConcurrent]);
@@ -177,31 +177,31 @@ export function useWalkthrough(opts: UseWalkthroughOptions) {
   // Resolve anchor whenever step changes or layout possibly changed
   useEffect(() => {
     resolver();
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const onResize = () => resolver();
-    window.addEventListener('resize', onResize);
-    window.addEventListener('scroll', onResize, true);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onResize, true);
     return () => {
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('scroll', onResize, true);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onResize, true);
     };
   }, [resolver]);
 
   // Minimal scroll-into-view on step changes
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     const el = anchorEl;
     if (!el) return;
     // Respect reduced motion; rely on scroll-margin CSS where possible
     const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
+      "(prefers-reduced-motion: reduce)"
     ).matches;
     try {
       el.scrollIntoView({
-        block: 'nearest',
-        inline: 'nearest',
-        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        block: "nearest",
+        inline: "nearest",
+        behavior: prefersReducedMotion ? "auto" : "smooth",
       });
     } catch {
       // noop

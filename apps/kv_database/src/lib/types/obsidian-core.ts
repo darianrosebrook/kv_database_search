@@ -32,7 +32,7 @@ export interface ObsidianDocument {
   content: string;
 
   /** Parsed frontmatter YAML */
-  frontmatter: Record<string, any>;
+  frontmatter: Record<string, unknown>;
 
   /** Document statistics */
   stats: {

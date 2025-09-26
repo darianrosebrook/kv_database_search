@@ -1,12 +1,6 @@
 import { ObsidianDatabase } from "./database";
 import { ObsidianEmbeddingService } from "./embeddings";
-import {
-  detectLanguage,
-  EnhancedEntityExtractor,
-  ExtractedEntity,
-  EntityRelationship,
-  EntityCluster,
-} from "./utils";
+import { detectLanguage, EntityExtractor } from "./utils";
 import {
   SearchResult,
   ObsidianSearchOptions,
@@ -18,7 +12,7 @@ import {
 export class ObsidianSearchService {
   private db: ObsidianDatabase;
   private embeddings: ObsidianEmbeddingService;
-  private entityExtractor: EnhancedEntityExtractor;
+  private entityExtractor: EntityExtractor;
 
   constructor(
     database: ObsidianDatabase,
@@ -26,7 +20,7 @@ export class ObsidianSearchService {
   ) {
     this.db = database;
     this.embeddings = embeddingService;
-    this.entityExtractor = new EnhancedEntityExtractor();
+    this.entityExtractor = new EntityExtractor();
   }
 
   async search(
@@ -164,7 +158,7 @@ export class ObsidianSearchService {
       }
 
       // Generate graph context with enhanced entity extraction
-      const graphContext = await this.generateChunkGraphContext(result, query);
+      const _graphContext = await this.generateChunkGraphContext(result, query);
 
       // Extract entities from the result text
       const entities = this.entityExtractor.extractEntities(result.text);
@@ -219,7 +213,7 @@ export class ObsidianSearchService {
     return Array.from(new Set(highlights)).slice(0, 5); // Dedupe and limit total highlights
   }
 
-  private generateMultiModalInfo(multiModalMeta?: any) {
+  private generateMultiModalInfo(multiModalMeta?) {
     if (!multiModalMeta) return undefined;
 
     // Generate human-readable content type labels and metadata
@@ -367,7 +361,7 @@ export class ObsidianSearchService {
     return labels[contentType] || contentType;
   }
 
-  private extractQualityScore(quality: any): number {
+  private extractQualityScore(quality): number {
     if (typeof quality === "number") return quality;
     if (quality && typeof quality.score === "number") return quality.score;
     if (quality && typeof quality.confidence === "number")
@@ -456,7 +450,7 @@ export class ObsidianSearchService {
   }> {
     const fileTypeCounts = new Map<string, number>();
     const tagCounts = new Map<string, number>();
-    const folderCounts = new Map<string, number>();
+    const _folderCounts = new Map<string, number>();
     const dateCounts = new Map<string, number>();
     const contentTypeCounts = new Map<string, number>();
     const multiModalTypeCounts = new Map<string, number>();

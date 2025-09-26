@@ -4,6 +4,9 @@ import {
   SearchResult,
   DocumentMetadata,
   ChatSession,
+  DocumentVersion,
+  FileChangeMetadata,
+  ProcessingStatus,
   // ChatMessage, // Unused import
 } from "../types/index";
 
@@ -221,21 +224,21 @@ export class DocumentDatabase {
       const vectorLiteral = `'[${queryEmbedding.join(",")}]'`;
 
       // Build query and parameters in sync
-      const whereConditions = [];
-      const params: any[] = [limit];
+      const whereConditions: string[] = [];
+      const params = [limit];
       let paramIndex = 2;
 
       // File type filter
       if (options.fileTypes && options.fileTypes.length > 0) {
         whereConditions.push(`meta->>'contentType' = ANY($${paramIndex})`);
-        params.push(options.fileTypes);
+        params.push(options.fileTypes.length || 0);
         paramIndex++;
       }
 
       // Tags filter
       if (options.tags && options.tags.length > 0) {
         whereConditions.push(`meta->'obsidianFile'->'tags' ?| $${paramIndex}`);
-        params.push(options.tags);
+        params.push(options.tags.length || 0);
         paramIndex++;
       }
 
@@ -245,7 +248,7 @@ export class DocumentDatabase {
           SELECT 1 FROM unnest($${paramIndex}::text[]) AS folder_pattern
           WHERE meta->'obsidianFile'->>'filePath' LIKE '%' || folder_pattern || '%'
         )`);
-        params.push(options.folders);
+        params.push(options.folders.length || 0);
         paramIndex++;
       }
 
@@ -267,14 +270,14 @@ export class DocumentDatabase {
         whereConditions.push(
           `(meta->>'updatedAt')::timestamp >= $${paramIndex}`
         );
-        params.push(options.dateRange.start);
+        params.push(options.dateRange.start.getTime());
         paramIndex++;
       }
       if (options.dateRange?.end) {
         whereConditions.push(
           `(meta->>'updatedAt')::timestamp <= $${paramIndex}`
         );
-        params.push(options.dateRange.end);
+        params.push(options.dateRange.end.getTime());
         paramIndex++;
       }
 
@@ -335,7 +338,7 @@ export class DocumentDatabase {
           this.performanceMetrics.searchLatency.slice(-500);
       }
 
-      return results;
+      return results as SearchResult[];
     } finally {
       client.release();
     }
@@ -552,10 +555,8 @@ export class DocumentDatabase {
           session.updatedAt,
           session.userId || null,
           session.tags || [],
-          (session as any).isPublic || false,
-          (session as any).embedding
-            ? `[((session as any).embedding as number[]).join(",")]`
-            : null,
+          session.isPublic || false,
+          session.embedding ? `[session.embedding.join(",")]` : null,
           session.summary || null,
           session.messageCount,
           session.totalTokens || null,
@@ -721,7 +722,7 @@ export class DocumentDatabase {
     const client = await this.pool.connect();
     try {
       let whereClause = "";
-      let params: any[] = [];
+      let params: string[] = [];
 
       if (userId) {
         whereClause = "WHERE user_id = $1";
@@ -766,7 +767,10 @@ export class DocumentDatabase {
   /**
    * Create a new document version
    */
-  async createDocumentVersion(filePath: string, version: any): Promise<void> {
+  async createDocumentVersion(
+    filePath: string,
+    version: DocumentVersion
+  ): Promise<void> {
     const client = await this.pool.connect();
     try {
       await client.query(
@@ -796,7 +800,10 @@ export class DocumentDatabase {
   /**
    * Update an existing document version
    */
-  async updateDocumentVersion(filePath: string, version: any): Promise<void> {
+  async updateDocumentVersion(
+    filePath: string,
+    version: DocumentVersion
+  ): Promise<void> {
     const client = await this.pool.connect();
     try {
       await client.query(
@@ -831,7 +838,7 @@ export class DocumentDatabase {
   /**
    * Get all versions for a file
    */
-  async getDocumentVersions(filePath: string): Promise<any[]> {
+  async getDocumentVersions(filePath: string): Promise<DocumentVersion[]> {
     const client = await this.pool.connect();
     try {
       const result = await client.query(
@@ -893,7 +900,7 @@ export class DocumentDatabase {
   /**
    * Get file change history
    */
-  async getFileChangeHistory(filePath: string): Promise<any[]> {
+  async getFileChangeHistory(filePath: string): Promise<FileChangeMetadata[]> {
     const client = await this.pool.connect();
     try {
       const result = await client.query(
@@ -960,7 +967,9 @@ export class DocumentDatabase {
   /**
    * Get processing status for a file
    */
-  async getFileProcessingStatus(filePath: string): Promise<any | null> {
+  async getFileProcessingStatus(
+    filePath: string
+  ): Promise<ProcessingStatus | null> {
     const client = await this.pool.connect();
     try {
       const result = await client.query(

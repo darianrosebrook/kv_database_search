@@ -72,13 +72,13 @@ interface ChatInterfaceProps {
     type: "refine_search" | "new_search" | "filter" | "explore";
     label: string;
     query?: string;
-    filters?: any;
+    filters?;
   }>;
   onSuggestedAction?: (action: {
     type: "refine_search" | "new_search" | "filter" | "explore";
     label: string;
     query?: string;
-    filters?: any;
+    filters?;
   }) => void;
   selectedModel?: string;
   currentSession?: ChatSession | null;

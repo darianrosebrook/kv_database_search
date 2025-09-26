@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import React, { ReactNode, useRef } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { gsap } from 'gsap';
-import { SplitText } from 'gsap/SplitText';
-import { useGSAP } from '@gsap/react';
-import { useFontsLoaded } from '@/hooks/useFontsLoaded';
-import styles from './PageTransition.module.scss';
+import React, { ReactNode, useRef } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { gsap } from "gsap";
+import { SplitText } from "gsap/SplitText";
+import { useGSAP } from "@gsap/react";
+import { useFontsLoaded } from "@/hooks/useFontsLoaded";
+import styles from "./PageTransition.module.scss";
 
 // Register GSAP plugins
 gsap.registerPlugin(useGSAP, SplitText);
@@ -16,7 +16,7 @@ interface NavigationLinkProps {
   href: string;
   children: ReactNode;
   className?: string;
-  'aria-label'?: string;
+  "aria-label"?: string;
   onClick?: () => void;
   replace?: boolean;
   /**
@@ -49,7 +49,7 @@ export function NavigationLink({
   href,
   children,
   className,
-  'aria-label': ariaLabel,
+  "aria-label": ariaLabel,
   onClick,
   replace = false,
   enableTransition = true,
@@ -69,7 +69,7 @@ export function NavigationLink({
   const cloneRef = useRef<HTMLSpanElement | null>(null);
 
   // Check if children is a string (required for text animation)
-  const isStringChildren = typeof children === 'string';
+  const isStringChildren = typeof children === "string";
   const shouldAnimateText = enableTextAnimation && isStringChildren;
 
   // Set up GSAP text animation
@@ -84,13 +84,13 @@ export function NavigationLink({
 
       // Split text into characters
       const splitText = new SplitText(textEl, {
-        type: 'chars',
-        charsClass: 'char',
+        type: "chars",
+        charsClass: "char",
       });
 
       const splitClone = new SplitText(cloneEl, {
-        type: 'chars',
-        charsClass: 'char',
+        type: "chars",
+        charsClass: "char",
       });
 
       const originalChars = splitText.chars;
@@ -102,7 +102,7 @@ export function NavigationLink({
 
       const t = gsap.timeline({
         paused: true,
-        defaults: { ease: 'expo.inOut' },
+        defaults: { ease: "expo.inOut" },
       });
 
       t.to(
@@ -126,16 +126,16 @@ export function NavigationLink({
       const onEnter = () => t.play();
       const onLeave = () => t.reverse();
 
-      el.addEventListener('mouseenter', onEnter);
-      el.addEventListener('mouseleave', onLeave);
-      el.addEventListener('focus', onEnter);
-      el.addEventListener('blur', onLeave);
+      el.addEventListener("mouseenter", onEnter);
+      el.addEventListener("mouseleave", onLeave);
+      el.addEventListener("focus", onEnter);
+      el.addEventListener("blur", onLeave);
 
       return () => {
-        el.removeEventListener('mouseenter', onEnter);
-        el.removeEventListener('mouseleave', onLeave);
-        el.removeEventListener('focus', onEnter);
-        el.removeEventListener('blur', onLeave);
+        el.removeEventListener("mouseenter", onEnter);
+        el.removeEventListener("mouseleave", onLeave);
+        el.removeEventListener("focus", onEnter);
+        el.removeEventListener("blur", onLeave);
         splitText.revert();
         splitClone.revert();
       };
@@ -152,19 +152,19 @@ export function NavigationLink({
 
     // Check if View Transitions API is supported
     const supportsViewTransitions =
-      typeof document !== 'undefined' && 'startViewTransition' in document;
+      typeof document !== "undefined" && "startViewTransition" in document;
 
     // Check for reduced motion preference
     const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // Only use view transitions if supported and user hasn't disabled animations
     if (supportsViewTransitions && !prefersReducedMotion) {
       e.preventDefault();
 
       // Start view transition with proper type casting
-      const transition = (document as any).startViewTransition(() => {
+      const transition = document.startViewTransition(() => {
         // Use Next.js router for navigation to maintain client-side routing
         if (replace) {
           router.replace(href);
@@ -183,9 +183,9 @@ export function NavigationLink({
     }
   };
 
-  const linkClasses = [styles.transitionLink, className, isActive && 'active']
+  const linkClasses = [styles.transitionLink, className, isActive && "active"]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 
   // If we're using text animation, wrap the children in the animation structure
   const linkContent = shouldAnimateText ? (
@@ -207,7 +207,7 @@ export function NavigationLink({
       href={href}
       className={linkClasses}
       aria-label={ariaLabel}
-      aria-current={isActive ? 'page' : undefined}
+      aria-current={isActive ? "page" : undefined}
       onClick={handleClick}
       data-transition-duration={transitionDuration}
     >
@@ -223,12 +223,12 @@ export function BreadcrumbNavigationLink({
   href,
   children,
   className,
-  'aria-label': ariaLabel,
+  "aria-label": ariaLabel,
 }: {
   href: string;
   children: ReactNode;
   className?: string;
-  'aria-label'?: string;
+  "aria-label"?: string;
 }) {
   return (
     <NavigationLink

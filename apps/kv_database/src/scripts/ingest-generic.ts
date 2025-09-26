@@ -153,7 +153,7 @@ Examples:
   const [connectionString, rootPath, systemType] = args as [
     string,
     string,
-    any
+    unknown
   ];
 
   // Parse additional options

@@ -46,7 +46,7 @@ export {
 // Phase 2: Search and Reasoning Components
 export { HybridSearchEngine } from "./hybrid-search-engine.js";
 export { MultiHopReasoningEngine } from "./multi-hop-reasoning.js";
-export { ResultRankingService } from "./result-ranking.js";
+export { ResultRankingEngine } from "./result-ranking.js";
 
 // Phase 3: Advanced Features
 export { ProvenanceTracker } from "./provenance-tracker.js";
@@ -90,14 +90,14 @@ export { default as provenanceMigration } from "./migrations/002_create_provenan
  * ```
  */
 export async function createKnowledgeGraphSystem(
-  database: any, // ObsidianDatabase
-  embeddings: any, // ObsidianEmbeddingService
-  config: any = {}
+  database, // ObsidianDatabase
+  embeddings, // ObsidianEmbeddingService
+  _config = {}
 ) {
   // TODO: Implement proper ingestion pipeline creation
   // For now, return a basic structure
-  const pipeline = {} as any;
-  const knowledgeGraph = {} as any;
+  const pipeline = {};
+  const knowledgeGraph = {};
 
   return {
     pipeline,
@@ -116,7 +116,7 @@ export async function createKnowledgeGraphSystem(
       return await knowledgeGraph.validateKnowledgeGraphConsistency();
     },
 
-    async bootstrap(options: any = {}) {
+    async bootstrap(_options = {}) {
       // TODO: Implement bootstrap functionality
       // return await bootstrapKnowledgeGraphFromExistingData(
       //   database,
@@ -151,7 +151,7 @@ export const KnowledgeGraphPresets = {
       batchSize: 5,
       maxConcurrentExtractions: 2,
     },
-  } as any,
+  },
 
   /**
    * Balanced preset - good balance of accuracy and coverage
@@ -171,7 +171,7 @@ export const KnowledgeGraphPresets = {
       batchSize: 10,
       maxConcurrentExtractions: 3,
     },
-  } as any,
+  },
 
   /**
    * High coverage preset - prioritizes recall over precision
@@ -192,7 +192,7 @@ export const KnowledgeGraphPresets = {
       batchSize: 20,
       maxConcurrentExtractions: 5,
     },
-  } as any,
+  },
 
   /**
    * Performance preset - optimized for speed
@@ -213,7 +213,7 @@ export const KnowledgeGraphPresets = {
       batchSize: 50,
       maxConcurrentExtractions: 10,
     },
-  } as any,
+  },
 };
 
 /**
@@ -223,7 +223,9 @@ export const KnowledgeGraphUtils = {
   /**
    * Validate entity extraction configuration
    */
-  validateEntityConfig(config: Partial<EntityExtractionConfig>): boolean {
+  validateEntityConfig(
+    config: Partial<import("./entity-extractor.js").EntityExtractionConfig>
+  ): boolean {
     if (
       config.minEntityConfidence &&
       (config.minEntityConfidence < 0 || config.minEntityConfidence > 1)
@@ -245,7 +247,7 @@ export const KnowledgeGraphUtils = {
    */
   calculateOptimalBatchSize(
     availableMemoryMB: number,
-    avgChunkSizeKB: number
+    _avgChunkSizeKB: number
   ): number {
     // Conservative estimate: 10MB per chunk processing
     const memoryPerChunk = 10;

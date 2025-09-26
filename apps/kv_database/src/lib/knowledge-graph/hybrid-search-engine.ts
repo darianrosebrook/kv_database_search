@@ -1,12 +1,7 @@
 import { Pool, PoolClient } from "pg";
 import { ObsidianEmbeddingService } from "../embeddings.js";
-import { ContentType } from "../types/index.js";
-import {
-  EntityType,
-  RelationshipType,
-  type KnowledgeGraphEntity,
-  type KnowledgeGraphRelationship,
-} from "./entity-extractor.js";
+import { ContentType } from "../../types/index.js";
+import { EntityType, RelationshipType } from "./entity-extractor.js";
 
 export interface SearchQuery {
   text: string;
@@ -441,7 +436,7 @@ export class HybridSearchEngine {
    */
   private async performVectorSearch(
     query: SearchQuery,
-    queryAnalysis: any
+    _queryAnalysis
   ): Promise<SearchResult[]> {
     console.log("🔍 Performing vector similarity search...");
 
@@ -462,20 +457,20 @@ export class HybridSearchEngine {
         WHERE c.embedding IS NOT NULL
       `;
 
-      const queryParams: any[] = [`[${queryEmbedding.embedding.join(",")}]`];
+      const queryParams: string[] = [`[${queryEmbedding.embedding.join(",")}]`];
       let paramIndex = 2;
 
       // Add content type filter
       if (query.filters?.contentTypes?.length) {
         vectorQuery += ` AND c.meta->>'contentType' = ANY($${paramIndex})`;
-        queryParams.push(query.filters.contentTypes);
+        queryParams.push(query.filters.contentTypes.join(","));
         paramIndex++;
       }
 
       // Add source file filter
       if (query.filters?.sourceFiles?.length) {
         vectorQuery += ` AND c.meta->>'sourceFile' = ANY($${paramIndex})`;
-        queryParams.push(query.filters.sourceFiles);
+        queryParams.push(query.filters.sourceFiles.join(","));
         paramIndex++;
       }
 
@@ -491,7 +486,7 @@ export class HybridSearchEngine {
 
       const result = await client.query(vectorQuery, queryParams);
 
-      return result.rows.map((row, index) => ({
+      return result.rows.map((row, _index) => ({
         id: row.id,
         text: row.content,
         score: parseFloat(row.similarity),
@@ -519,7 +514,9 @@ export class HybridSearchEngine {
    */
   private async performGraphSearch(
     query: SearchQuery,
-    queryAnalysis: any
+    queryAnalysis: {
+      entities: EntityReference[];
+    }
   ): Promise<SearchResult[]> {
     if (queryAnalysis.entities.length === 0) {
       console.log("⚠️ No entities found for graph search, skipping...");
@@ -667,8 +664,10 @@ export class HybridSearchEngine {
   private async fuseAndRankResults(
     vectorResults: SearchResult[],
     graphResults: SearchResult[],
-    query: SearchQuery,
-    queryAnalysis: any
+    _query: SearchQuery,
+    _queryAnalysis: {
+      entities: EntityReference[];
+    }
   ): Promise<SearchResult[]> {
     console.log(
       `🔗 Fusing results: ${vectorResults.length} vector + ${graphResults.length} graph`
@@ -683,14 +682,15 @@ export class HybridSearchEngine {
       uniqueResults,
       vectorResults,
       graphResults,
-      query
+      _query,
+      _queryAnalysis
     );
 
     // Populate entities and relationships for each result
     await this.populateResultMetadata(fusedResults);
 
     // Apply final ranking and limit results
-    const maxResults = query.options?.maxResults || 10;
+    const maxResults = _query.options?.maxResults || 10;
     return fusedResults
       .sort((a, b) => b.relevanceScore - a.relevanceScore)
       .slice(0, maxResults);
@@ -703,7 +703,10 @@ export class HybridSearchEngine {
     uniqueResults: SearchResult[],
     vectorResults: SearchResult[],
     graphResults: SearchResult[],
-    query: SearchQuery
+    _query: SearchQuery,
+    _queryAnalysis: {
+      entities: EntityReference[];
+    }
   ): Promise<SearchResult[]> {
     const strategy = this.config.resultFusionStrategy;
 
@@ -729,7 +732,7 @@ export class HybridSearchEngine {
           }
           break;
 
-        case "rank":
+        case "rank": {
           // Rank-based fusion (Reciprocal Rank Fusion)
           const vectorRank = vectorResults.findIndex(
             (vr) => vr.id === result.id
@@ -742,6 +745,7 @@ export class HybridSearchEngine {
 
           result.relevanceScore = rrfScore;
           break;
+        }
 
         case "hybrid":
         default:
@@ -859,10 +863,12 @@ export class HybridSearchEngine {
    */
   private async generateExplanation(
     query: SearchQuery,
-    queryAnalysis: any,
+    queryAnalysis: {
+      entities: EntityReference[];
+    },
     vectorResults: SearchResult[],
     graphResults: SearchResult[],
-    finalResults: SearchResult[],
+    rankedResults: SearchResult[],
     timings: {
       vectorSearchTime: number;
       graphSearchTime: number;
@@ -913,7 +919,7 @@ export class HybridSearchEngine {
     // Step 4: Result fusion
     reasoningSteps.push({
       step: stepCounter++,
-      description: `Applied ${this.config.resultFusionStrategy} fusion strategy to combine and rank ${finalResults.length} results`,
+      description: `Applied ${this.config.resultFusionStrategy} fusion strategy to combine and rank ${rankedResults.length} results`,
       confidence: 0.9,
       evidence: [
         `Vector weight: ${this.config.vectorWeight}`,
@@ -981,8 +987,8 @@ export class HybridSearchEngine {
   /**
    * Update search configuration
    */
-  updateConfig(newConfig: Partial<HybridSearchConfig>): void {
-    this.config = { ...this.config, ...newConfig };
+  updateConfig(configUpdates: Partial<HybridSearchConfig>): void {
+    this.config = { ...this.config, ...configUpdates };
     this.validateConfig();
     console.log("⚙️ Updated hybrid search configuration");
   }

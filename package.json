@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch apps/kv_database/src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/apps/kv_database/src/server.js",
     "server": "tsx apps/kv_database/src/server.ts",
     "server:3001": "PORT=3001 tsx apps/kv_database/src/server.ts",
     "server:3002": "PORT=3002 tsx apps/kv_database/src/server.ts",
@@ -67,6 +67,8 @@
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
+    "@fastify/type-provider-typebox": "^6.0.0",
+    "@sinclair/typebox": "^0.34.41",
     "ajv-formats": "^3.0.1",
     "canvas": "^3.2.0",
     "chokidar": "^4.0.3",
@@ -97,6 +99,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/fluent-ffmpeg": "^2.1.27",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.5.2",
     "@types/node-fetch": "^2.6.13",
     "@types/pg": "^8.15.5",

@@ -2,6 +2,8 @@
 // CORE DATA STRUCTURES
 // =============================================================================
 
+import type { WebSocket } from "ws";
+
 // Re-export all Obsidian-specific types from models
 export type {
   ObsidianDocument,
@@ -26,11 +28,222 @@ export type {
 } from "../lib/obsidian-models";
 
 // =============================================================================
+// DOMAIN TYPES - BRANDED PRIMITIVES & ENUMS
+// =============================================================================
+
+// Branded primitives for stronger semantics
+export type ISODateString = string & { readonly __brand: "iso-date" };
+export type URLString = string & { readonly __brand: "url" };
+export type ModelName = string & { readonly __brand: "model" };
+
+// Chat roles
+export type ChatRole = "system" | "user" | "assistant";
+
+export interface ChatMessage {
+  role: ChatRole;
+  content: string;
+}
+
+// Suggested actions
+export const SuggestedActionTypes = [
+  "refine_search",
+  "new_search",
+  "filter",
+  "explore",
+  "reason",
+  "find_similar",
+] as const;
+
+export type SuggestedActionType = (typeof SuggestedActionTypes)[number];
+
+// Content classification used in search/meta
+export enum ContentType {
+  CODE = "code",
+  TEXT = "text",
+  WEB = "web",
+  CHAT_SESSION = "chat_session",
+  UNKNOWN = "unknown",
+  PDF = "pdf",
+  RASTER_IMAGE = "raster_image",
+  VECTOR_IMAGE = "vector_image",
+  AUDIO = "audio",
+  AUDIO_FILE = "audio_file",
+  VIDEO = "video",
+}
+
+// Filters – NOTE: value can be scalar or array
+export type FilterValue =
+  | string
+  | number
+  | boolean
+  | Array<string | number | boolean>;
+export interface Filter {
+  type: string;
+  value: FilterValue;
+}
+
+// Search result coming from the KB
+export interface SearchResult {
+  id: string;
+  title: string;
+  summary: string;
+  text: string;
+  meta: {
+    contentType: ContentType;
+    section: string;
+    breadcrumbs: string[];
+    uri: URLString;
+  };
+  relevanceScore: number; // keep as score 0..1
+}
+
+export interface ChatRequest {
+  message: string;
+  model?: ModelName;
+  context?: ChatMessage[];
+  searchResults?: SearchResult[];
+  originalQuery?: string;
+  searchMetadata?: {
+    totalResults: number;
+    searchTime: number;
+    filters?: Filter[];
+  };
+}
+
+export interface ChatResponse {
+  response: string;
+  context: ChatMessage[];
+  suggestedActions?: Array<{
+    type: SuggestedActionType;
+    label: string;
+    query?: string;
+    filters?: Filter[];
+  }>;
+  timestamp: ISODateString;
+  model?: ModelName;
+}
+
+export interface ModelsResponse {
+  models: Array<{
+    name: string;
+    size: number;
+    modified_at: ISODateString;
+    details?: {
+      format?: string;
+      family?: string;
+      parameter_size?: string;
+      quantization_level?: string;
+    };
+  }>;
+  error?: string;
+}
+
+// Chat sessions (server view)
+export interface ServerChatSession {
+  id: string;
+  title: string;
+  messages: Array<
+    ChatMessage & { timestamp: ISODateString; model?: ModelName }
+  >;
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
+  model?: ModelName;
+  messageCount: number;
+  topics?: string[];
+  summary?: string;
+}
+
+export interface ChatHistoryResponse {
+  sessions: ServerChatSession[];
+  error?: string;
+}
+
+// Web search
+export type TimeRange = "day" | "week" | "month" | "year" | "all";
+export interface WebSearchRequest {
+  query: string;
+  maxResults?: number;
+  includeSnippets?: boolean;
+  minRelevanceScore?: number;
+  sources?: string[];
+  timeRange?: TimeRange;
+  context?: string[];
+}
+
+export interface WebSearchResponse {
+  query: string;
+  results: Array<{
+    title: string;
+    url: URLString;
+    snippet: string;
+    publishedDate?: ISODateString;
+    source: string;
+    relevanceScore: number;
+  }>;
+  totalFound: number;
+  searchTime: number;
+  error?: string;
+}
+
+// Generic discriminated result for DB/service ops
+export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
+
+// =============================================================================
+// WEBSOCKET TYPES - DISCRIMINATED UNIONS
+// =============================================================================
+
+export type WsEvent =
+  | { type: "fileChange"; data: { path: string }; timestamp: ISODateString }
+  | { type: "batchStart"; data: { batchId: string }; timestamp: ISODateString }
+  | {
+      type: "batchComplete";
+      data: { batchId: string };
+      timestamp: ISODateString;
+    }
+  | {
+      type: "fileProcessed";
+      data: { path: string; chunks: number };
+      timestamp: ISODateString;
+    }
+  | { type: "fileDeleted"; data: { path: string }; timestamp: ISODateString }
+  | { type: "error"; data: { message: string }; timestamp: ISODateString }
+  | {
+      type: "systemStatus";
+      data: { message: string; clientId?: string };
+      timestamp: ISODateString;
+    }
+  | {
+      type: "conflictDetected";
+      data: { path: string; reason: string };
+      timestamp: ISODateString;
+    }
+  | {
+      type: "rollbackComplete";
+      data: { filePath: string; versionId: string; changeSummary?: string };
+      timestamp: ISODateString;
+    };
+
+export type ClientMessage =
+  | { type: "subscribe"; subscriptions?: string[] }
+  | { type: "unsubscribe"; subscriptions?: string[] }
+  | { type: "ping" };
+
+export interface WebSocketClient {
+  ws: WebSocket;
+  subscriptions: string[];
+  lastActivity: Date;
+}
+
+// Ollama response types
+export type OllamaMessage = { role: ChatRole; content: string };
+export type OllamaChatResponse = { message: OllamaMessage };
+
+// =============================================================================
 // MULTI-MODAL CONTENT TYPES
 // =============================================================================
 
-// Content type definitions
-export enum ContentType {
+// Content type definitions (renamed to avoid conflict)
+export enum MultiModalContentType {
   // Text-based
   MARKDOWN = "markdown",
   PLAIN_TEXT = "plain_text",
@@ -154,7 +367,7 @@ export interface ProcessingMetadata {
   processedAt: Date;
   processor: string;
   version: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   processingTime: number;
   success: boolean;
   errors?: string[];
@@ -204,7 +417,7 @@ export interface DocumentVersion {
   parentVersion?: string;
   changeSummary: string;
   changeType: FileChangeMetadata["changeType"];
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   processingMetadata: ProcessingMetadata;
   chunks: number; // number of chunks in this version
 }
@@ -339,7 +552,7 @@ export interface DocumentMetadata {
   obsidianFile?: {
     fileName: string;
     filePath: string;
-    frontmatter: Record<string, any>;
+    frontmatter: Record<string, unknown>;
     wikilinks: string[];
     tags: string[];
     checksum: string;
@@ -360,12 +573,23 @@ export interface DocumentMetadata {
   };
 }
 
-export interface SearchResult {
+export interface LegacySearchResult {
   id: string;
   text: string;
   meta: DocumentMetadata;
   cosineSimilarity: number;
   rank: number;
+  // Additional properties for compatibility
+  documentId: string;
+  score: number;
+  title: string;
+  path: string;
+  content?: string;
+  matches: Array<{
+    start: number;
+    end: number;
+    text: string;
+  }>;
 }
 
 export interface EmbeddingConfig {
@@ -378,7 +602,7 @@ export interface ObsidianFile {
   filePath: string;
   fileName: string;
   content: string;
-  frontmatter: Record<string, any>;
+  frontmatter: Record<string, unknown>;
   wikilinks: string[];
   tags: string[];
   createdAt?: Date;
@@ -454,6 +678,8 @@ export interface SearchRequest {
     start?: string;
     end?: string;
   };
+  includeWebResults?: boolean;
+  includeChatSessions?: boolean;
 }
 
 export interface SearchResponse {
@@ -548,30 +774,30 @@ export interface StatsResponse {
 }
 
 // Chat session types for database storage
-export interface ChatMessage {
+export interface LegacyChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
   timestamp: string;
   model?: string;
   metadata?: {
-    searchResults?: any[];
-    context?: any[];
-    suggestedActions?: any[];
+    searchResults?;
+    context?;
+    suggestedActions?;
   };
 }
 
 export interface ChatSession {
   id: string;
   title: string;
-  messages: ChatMessage[];
+  messages: LegacyChatMessage[];
   model: string;
   createdAt: string;
   updatedAt: string;
   userId?: string; // For multi-user support
   tags?: string[];
   topics?: string[];
-  webResults?: any[];
-  contextDocuments?: any[];
+  webResults?;
+  contextDocuments?;
   chatSessions?: ChatSession[];
   queryConcepts?: string[];
   relatedConcepts?: string[];

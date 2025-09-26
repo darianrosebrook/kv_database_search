@@ -1,20 +1,11 @@
 import { Pool, PoolClient } from "pg";
-import { ContentType } from "../types/index.js";
-import {
-  EntityType,
-  RelationshipType,
-  type KnowledgeGraphEntity,
-  type KnowledgeGraphRelationship,
-} from "./entity-extractor.js";
+// Removed unused imports
 import {
   type SearchResult,
   type SearchMetrics,
   type SearchExplanation,
 } from "./hybrid-search-engine.js";
-import {
-  type ReasoningResult,
-  type ReasoningPath,
-} from "./multi-hop-reasoning.js";
+import { type ReasoningResult } from "./multi-hop-reasoning.js";
 
 export interface ProvenanceRecord {
   id: string;
@@ -28,22 +19,27 @@ export interface ProvenanceRecord {
   dataLineage: DataLineage[];
   qualityMetrics: QualityMetrics;
   auditTrail: AuditEvent[];
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface ProvenanceOperation {
-  type: "search" | "reasoning" | "entity_extraction" | "relationship_inference" | "ranking";
+  type:
+    | "search"
+    | "reasoning"
+    | "entity_extraction"
+    | "relationship_inference"
+    | "ranking";
   subtype?: string;
   version: string;
-  configuration: Record<string, any>;
+  configuration: Record<string, unknown>;
   executionContext: ExecutionContext;
 }
 
 export interface ProvenanceInput {
   query?: string;
   entities?: string[];
-  filters?: Record<string, any>;
-  options?: Record<string, any>;
+  filters?: Record<string, unknown>;
+  options?: Record<string, unknown>;
   sourceFiles?: string[];
   contentHash?: string;
 }
@@ -71,13 +67,18 @@ export interface ProvenanceResult {
 export interface ProcessingStep {
   stepId: string;
   stepName: string;
-  stepType: "preprocessing" | "extraction" | "inference" | "ranking" | "postprocessing";
+  stepType:
+    | "preprocessing"
+    | "extraction"
+    | "inference"
+    | "ranking"
+    | "postprocessing";
   startTime: Date;
   endTime: Date;
   duration: number;
   inputHash: string;
   outputHash: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   algorithmVersion: string;
   success: boolean;
   errorMessage?: string;
@@ -102,15 +103,20 @@ export interface DataSource {
   location: string;
   hash: string;
   timestamp: Date;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface Transformation {
   id: string;
-  type: "extraction" | "normalization" | "enrichment" | "aggregation" | "inference";
+  type:
+    | "extraction"
+    | "normalization"
+    | "enrichment"
+    | "aggregation"
+    | "inference";
   algorithm: string;
   version: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   confidence: number;
   timestamp: Date;
 }
@@ -119,7 +125,7 @@ export interface ExecutionContext {
   environment: string;
   version: string;
   nodeVersion: string;
-  systemInfo: Record<string, any>;
+  systemInfo: Record<string, unknown>;
   resourceUsage: ResourceUsage;
 }
 
@@ -148,7 +154,7 @@ export interface AuditEvent {
   actor: string; // user, system, algorithm
   action: string;
   target: string;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   severity: "low" | "medium" | "high" | "critical";
 }
 
@@ -190,20 +196,25 @@ export interface ExplanationSection {
 
 export interface Evidence {
   id: string;
-  type: "source_document" | "entity_match" | "relationship" | "algorithm_output" | "statistical";
+  type:
+    | "source_document"
+    | "entity_match"
+    | "relationship"
+    | "algorithm_output"
+    | "statistical";
   description: string;
   confidence: number;
   sourceId: string;
   relevance: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface VisualizationSpec {
   id: string;
   type: "graph" | "timeline" | "heatmap" | "flowchart" | "tree";
   title: string;
-  data: any;
-  config: Record<string, any>;
+  data;
+  config: Record<string, unknown>;
   interactivity: boolean;
 }
 
@@ -212,7 +223,7 @@ export interface InteractiveElement {
   type: "drill_down" | "filter" | "expand" | "compare" | "explore";
   label: string;
   action: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
 }
 
 export interface ProvenanceQuery {
@@ -264,7 +275,9 @@ export class ProvenanceTracker {
       await client.query("BEGIN");
 
       // Generate unique ID
-      const provenanceId = `prov_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const provenanceId = `prov_${Date.now()}_${Math.random()
+        .toString(36)
+        .substring(7)}`;
 
       // Build data lineage
       const dataLineage = await this.buildDataLineage(input, client);
@@ -342,7 +355,7 @@ export class ProvenanceTracker {
     options: {
       userId?: string;
       searchType?: string;
-      configuration?: Record<string, any>;
+      configuration?: Record<string, unknown>;
     } = {}
   ): Promise<ProvenanceRecord> {
     const operation: ProvenanceOperation = {
@@ -410,11 +423,18 @@ export class ProvenanceTracker {
       },
     ];
 
-    return this.recordProvenance(sessionId, operation, input, output, processingSteps, {
-      userId: options.userId,
-      generateExplanation: true,
-      explanationComplexity: "detailed",
-    });
+    return this.recordProvenance(
+      sessionId,
+      operation,
+      input,
+      output,
+      processingSteps,
+      {
+        userId: options.userId,
+        generateExplanation: true,
+        explanationComplexity: "detailed",
+      }
+    );
   }
 
   /**
@@ -428,7 +448,7 @@ export class ProvenanceTracker {
     options: {
       userId?: string;
       reasoningType?: string;
-      configuration?: Record<string, any>;
+      configuration?: Record<string, unknown>;
     } = {}
   ): Promise<ProvenanceRecord> {
     const operation: ProvenanceOperation = {
@@ -500,11 +520,18 @@ export class ProvenanceTracker {
       },
     ];
 
-    return this.recordProvenance(sessionId, operation, input, output, processingSteps, {
-      userId: options.userId,
-      generateExplanation: true,
-      explanationComplexity: "technical",
-    });
+    return this.recordProvenance(
+      sessionId,
+      operation,
+      input,
+      output,
+      processingSteps,
+      {
+        userId: options.userId,
+        generateExplanation: true,
+        explanationComplexity: "technical",
+      }
+    );
   }
 
   /**
@@ -523,7 +550,7 @@ export class ProvenanceTracker {
         WHERE 1=1
       `;
 
-      const params: any[] = [];
+      const params = [];
       let paramIndex = 1;
 
       if (query.sessionId) {
@@ -903,7 +930,8 @@ export class ProvenanceTracker {
     this.explanationTemplates.set("search_detailed", {
       id: "search_detailed",
       name: "Detailed Search Explanation",
-      description: "Comprehensive explanation of search results and methodology",
+      description:
+        "Comprehensive explanation of search results and methodology",
       template: `
 # Search Results Explanation
 
@@ -950,7 +978,8 @@ Results were derived from {{sourceCount}} sources with quality score {{qualitySc
     this.explanationTemplates.set("reasoning_technical", {
       id: "reasoning_technical",
       name: "Technical Reasoning Explanation",
-      description: "Technical explanation of reasoning process and logical steps",
+      description:
+        "Technical explanation of reasoning process and logical steps",
       template: `
 # Reasoning Analysis Report
 
@@ -1035,9 +1064,15 @@ Results were derived from {{sourceCount}} sources with quality score {{qualitySc
     const operation = provenance.operation.type;
 
     if (complexity === "simple") {
-      return `Found ${resultCount} results with ${(confidence * 100).toFixed(0)}% confidence using ${operation} analysis.`;
+      return `Found ${resultCount} results with ${(confidence * 100).toFixed(
+        0
+      )}% confidence using ${operation} analysis.`;
     } else {
-      return `Executed ${operation} operation resulting in ${resultCount} results with ${(confidence * 100).toFixed(1)}% confidence. Processing involved ${provenance.processingSteps.length} steps and analyzed ${provenance.dataLineage.length} data sources.`;
+      return `Executed ${operation} operation resulting in ${resultCount} results with ${(
+        confidence * 100
+      ).toFixed(1)}% confidence. Processing involved ${
+        provenance.processingSteps.length
+      } steps and analyzed ${provenance.dataLineage.length} data sources.`;
     }
   }
 
@@ -1071,14 +1106,14 @@ Results were derived from {{sourceCount}} sources with quality score {{qualitySc
   }
 
   private generateVisualizations(
-    provenance: ProvenanceRecord
+    _provenance: ProvenanceRecord
   ): VisualizationSpec[] {
     // Generate appropriate visualizations based on operation type
     return [];
   }
 
   private generateInteractiveElements(
-    provenance: ProvenanceRecord
+    _provenance: ProvenanceRecord
   ): InteractiveElement[] {
     // Generate interactive elements for exploration
     return [];
@@ -1086,7 +1121,7 @@ Results were derived from {{sourceCount}} sources with quality score {{qualitySc
 
   private calculateExplanationConfidence(
     provenance: ProvenanceRecord,
-    sections: ExplanationSection[]
+    _sections: ExplanationSection[]
   ): number {
     // Calculate confidence based on data quality and completeness
     return Math.min(
@@ -1101,33 +1136,40 @@ Results were derived from {{sourceCount}} sources with quality score {{qualitySc
    * Utility methods
    */
   private hashInput(input: ProvenanceInput): string {
-    return Buffer.from(JSON.stringify(input)).toString("base64").substring(0, 16);
+    return Buffer.from(JSON.stringify(input))
+      .toString("base64")
+      .substring(0, 16);
   }
 
   private hashOutput(output: ProvenanceOutput): string {
-    return Buffer.from(JSON.stringify(output)).toString("base64").substring(0, 16);
+    return Buffer.from(JSON.stringify(output))
+      .toString("base64")
+      .substring(0, 16);
   }
 
   private calculateConsistency(results: ProvenanceResult[]): number {
     if (results.length < 2) return 1.0;
-    
+
     const scores = results.map((r) => r.score);
     const mean = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-    const variance = scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length;
-    
+    const variance =
+      scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) /
+      scores.length;
+
     // Lower variance = higher consistency
     return Math.max(0, 1 - variance);
   }
 
   private calculateFreshness(lineage: DataLineage[]): number {
     if (lineage.length === 0) return 0.5;
-    
+
     const now = Date.now();
-    const avgAge = lineage.reduce((sum, item) => {
-      const age = now - item.extractionTimestamp.getTime();
-      return sum + age;
-    }, 0) / lineage.length;
-    
+    const avgAge =
+      lineage.reduce((sum, item) => {
+        const age = now - item.extractionTimestamp.getTime();
+        return sum + age;
+      }, 0) / lineage.length;
+
     // Convert to days and apply exponential decay
     const ageInDays = avgAge / (1000 * 60 * 60 * 24);
     return Math.exp(-ageInDays / 30); // 30-day half-life
@@ -1135,13 +1177,17 @@ Results were derived from {{sourceCount}} sources with quality score {{qualitySc
 
   private calculateCoverage(results: ProvenanceResult[]): number {
     // Simple coverage based on result diversity
-    const uniqueSources = new Set(results.flatMap((r) => r.sources.map((s) => s.id)));
+    const uniqueSources = new Set(
+      results.flatMap((r) => r.sources.map((s) => s.id))
+    );
     return Math.min(uniqueSources.size / 10, 1.0); // Normalize to 10 sources
   }
 
   private calculateReliability(lineage: DataLineage[]): number {
     if (lineage.length === 0) return 0.5;
-    
-    return lineage.reduce((sum, item) => sum + item.qualityScore, 0) / lineage.length;
+
+    return (
+      lineage.reduce((sum, item) => sum + item.qualityScore, 0) / lineage.length
+    );
   }
 }

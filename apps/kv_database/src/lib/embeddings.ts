@@ -361,8 +361,8 @@ export class DocumentEmbeddingService {
     this.cache.clear();
   }
 
-  updateStrategy(newStrategy: Partial<EmbeddingStrategy>): void {
-    this.strategy = { ...this.strategy, ...newStrategy };
+  updateStrategy(strategyUpdate: Partial<EmbeddingStrategy>): void {
+    this.strategy = { ...this.strategy, ...strategyUpdate };
     console.log(`🔄 Updated embedding strategy:`, {
       primary: this.strategy.primaryModel.name,
       fallbacks: this.strategy.fallbackModels.map((m) => m.name),

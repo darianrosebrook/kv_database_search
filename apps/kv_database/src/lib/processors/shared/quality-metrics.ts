@@ -80,8 +80,8 @@ export class QualityMetrics {
    */
   static assessContentQuality(
     text: string,
-    metadata: any = {},
-    processingMetrics?: ProcessingMetrics
+    metadata = {},
+    _processingMetrics?: ProcessingMetrics
   ): QualityScore {
     const issues: string[] = [];
     const recommendations: string[] = [];
@@ -197,7 +197,7 @@ export class QualityMetrics {
   /**
    * Assess content richness (how much useful information is present)
    */
-  private static assessContentRichness(text: string, metadata: any): number {
+  private static assessContentRichness(text: string, metadata): number {
     if (!text) return 0;
 
     let score = 0.5; // Base score
@@ -229,10 +229,7 @@ export class QualityMetrics {
   /**
    * Assess structural integrity of extracted content
    */
-  private static assessStructuralIntegrity(
-    text: string,
-    metadata: any
-  ): number {
+  private static assessStructuralIntegrity(text: string, metadata): number {
     if (!text) return 0;
 
     let score = 1.0;
@@ -272,7 +269,7 @@ export class QualityMetrics {
    */
   static generateQualityReport(
     text: string,
-    metadata: any,
+    metadata,
     processingMetrics?: ProcessingMetrics
   ): {
     quality: QualityScore;

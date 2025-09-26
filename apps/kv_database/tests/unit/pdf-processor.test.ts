@@ -20,7 +20,7 @@ import * as pdfParse from "pdf-parse";
 
 describe("PDFProcessor", () => {
   let processor: PDFProcessor;
-  let mockPdfParse: any;
+  let mockPdfParse;
 
   beforeEach(() => {
     processor = new PDFProcessor();

@@ -27,7 +27,7 @@ export function createMockImageBuffer(): Buffer {
 /**
  * Generate mock PDF data
  */
-export function createMockPDFData(overrides: Partial<any> = {}) {
+export function createMockPDFData(overrides: Partial = {}) {
   return {
     text: "This is mock PDF text content",
     numpages: 3,
@@ -47,7 +47,7 @@ export function createMockPDFData(overrides: Partial<any> = {}) {
 /**
  * Generate mock OCR result
  */
-export function createMockOCRResult(overrides: Partial<any> = {}) {
+export function createMockOCRResult(overrides: Partial = {}) {
   return {
     data: {
       text: "Mock OCR text content",
@@ -71,7 +71,7 @@ export function createMockAudioData(length: number = 1000): Float32Array {
 /**
  * Create mock search result
  */
-export function createMockSearchResult(overrides: Partial<any> = {}) {
+export function createMockSearchResult(overrides: Partial = {}) {
   return {
     id: "test-chunk-1",
     text: "This is a test chunk of content",
@@ -96,7 +96,7 @@ export function createMockSearchResult(overrides: Partial<any> = {}) {
 /**
  * Create mock Obsidian file
  */
-export function createMockObsidianFile(overrides: Partial<any> = {}) {
+export function createMockObsidianFile(overrides: Partial = {}) {
   return {
     filePath: "/path/to/test.md",
     fileName: "test",
@@ -113,7 +113,7 @@ export function createMockObsidianFile(overrides: Partial<any> = {}) {
 /**
  * Create mock database
  */
-export function createMockDatabase(overrides: Partial<any> = {}) {
+export function createMockDatabase(overrides: Partial = {}) {
   return {
     initialize: vi.fn().mockResolvedValue(undefined),
     upsertChunk: vi.fn().mockResolvedValue(undefined),
@@ -144,7 +144,7 @@ export function createMockDatabase(overrides: Partial<any> = {}) {
 /**
  * Create mock embedding service
  */
-export function createMockEmbeddingService(overrides: Partial<any> = {}) {
+export function createMockEmbeddingService(overrides: Partial = {}) {
   return {
     embed: vi.fn().mockResolvedValue(createMockEmbeddings()),
     embedBatch: vi.fn().mockResolvedValue([createMockEmbeddings()]),
@@ -198,7 +198,7 @@ export function mockCrypto() {
 /**
  * Mock file system operations
  */
-export function mockFileSystem(overrides: Partial<any> = {}) {
+export function mockFileSystem(overrides: Partial = {}) {
   const mockFs = {
     readFileSync: vi.fn(),
     writeFileSync: vi.fn(),
@@ -311,7 +311,7 @@ export function mockExternalDependencies() {
 /**
  * Validate that an object has required properties
  */
-export function validateObject(obj: any, requiredProps: string[]): boolean {
+export function validateObject(obj, requiredProps: string[]): boolean {
   return requiredProps.every((prop) => obj.hasOwnProperty(prop));
 }
 
@@ -319,7 +319,7 @@ export function validateObject(obj: any, requiredProps: string[]): boolean {
  * Validate array length
  */
 export function validateArrayLength(
-  arr: any[],
+  arr: unknown[],
   expectedLength: number
 ): boolean {
   return Array.isArray(arr) && arr.length === expectedLength;
@@ -373,7 +373,7 @@ export function createPerformanceSuite(
 /**
  * Type guard for search results
  */
-export function isSearchResult(obj: any): obj is SearchResult {
+export function isSearchResult(obj): obj is SearchResult {
   return (
     obj &&
     typeof obj.id === "string" &&
@@ -387,7 +387,7 @@ export function isSearchResult(obj: any): obj is SearchResult {
 /**
  * Type guard for Obsidian documents
  */
-export function isObsidianDocument(obj: any): obj is ObsidianDocument {
+export function isObsidianDocument(obj): obj is ObsidianDocument {
   return (
     obj &&
     typeof obj.id === "string" &&

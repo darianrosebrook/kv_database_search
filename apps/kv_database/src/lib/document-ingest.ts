@@ -1,6 +1,10 @@
 import { DocumentDatabase } from "./database";
 import { DocumentEmbeddingService } from "./embeddings";
-import { DocumentChunk, DocumentMetadata } from "../types/index";
+import {
+  DocumentChunk,
+  DocumentMetadata,
+  ObsidianFrontmatterSchema,
+} from "../types/index";
 import { ChunkingOptions } from "./types/document-models";
 import {
   DocumentProcessingConfig,
@@ -17,7 +21,7 @@ import {
   generateDeterministicId,
   sleep,
 } from "./utils";
-import { ObsidianDocument, ObsidianFile, Wikilink } from "../types/index";
+import { ObsidianDocument, ObsidianFile } from "../types/index";
 
 export class DocumentIngestionPipeline {
   private db: DocumentDatabase;
@@ -374,11 +378,11 @@ export class DocumentIngestionPipeline {
     // Combine frontmatter tags with content tags (defensive programming)
     const allTags = [...frontmatterTags, ...contentTags];
     const frontmatterTags =
-      frontmatter && (frontmatter as any).tags
-        ? Array.isArray((frontmatter as any).tags)
-          ? (frontmatter as any).tags
-          : typeof (frontmatter as any).tags === "string"
-          ? [(frontmatter as any).tags]
+      frontmatter && frontmatter.tags
+        ? Array.isArray(frontmatter.tags)
+          ? frontmatter.tags
+          : typeof frontmatter.tags === "string"
+          ? [frontmatter.tags]
           : []
         : [];
 
@@ -504,7 +508,7 @@ export class DocumentIngestionPipeline {
     }
 
     // Deduplicate wikilinks and tags
-    sections.forEach((section: any) => {
+    sections.forEach((section) => {
       section.wikilinks = Array.from(new Set(section.wikilinks));
       section.tags = Array.from(new Set(section.tags));
     });
@@ -553,11 +557,11 @@ export class DocumentIngestionPipeline {
         fileName: document.fileName || document.name || "untitled",
         filePath: document.relativePath || document.path || "unknown",
         frontmatter: document.frontmatter,
-        links: document.relationships.links?.map((w: any) => w.target) || [],
-        tags: (document.relationships.tags as any[]) || [],
+        links: document.relationships.links?.map((w) => w.target) || [],
+        tags: document.relationships.tags || [],
         checksum: document.metadata.checksum,
         stats: {
-          wordCount: document.stats.wordCount as any, // TODO: Fix type
+          wordCount: document.stats.wordCount,
           characterCount: document.stats.characterCount,
           lineCount: document.stats.lineCount,
         },
@@ -729,7 +733,7 @@ export class DocumentIngestionPipeline {
   ): DocumentChunk {
     const chunkId = this.generateChunkId(file.fileName, chunkIndex);
 
-    let enhancedText = cleanContent ? cleanMarkdown(text) : text;
+    let processedText = cleanContent ? cleanMarkdown(text) : text;
 
     if (includeContext) {
       // Add context from frontmatter and file structure
@@ -748,13 +752,13 @@ export class DocumentIngestionPipeline {
       }
 
       if (contextParts.length > 0) {
-        enhancedText = `${contextParts.join(" | ")}\n\n${enhancedText}`;
+        processedText = `${contextParts.join(" | ")}\n\n${processedText}`;
       }
     }
 
     return {
       id: chunkId,
-      text: enhancedText,
+      text: processedText,
       meta: {
         ...baseMetadata,
         section,
@@ -776,7 +780,7 @@ export class DocumentIngestionPipeline {
       textPreview: string;
       hasEmbedding: boolean;
       metadataValid: boolean;
-      obsidianMetadata?: any;
+      obsidianMetadata?;
     }>;
   }> {
     const issues: string[] = [];
@@ -785,7 +789,7 @@ export class DocumentIngestionPipeline {
       textPreview: string;
       hasEmbedding: boolean;
       metadataValid: boolean;
-      obsidianMetadata?: any;
+      obsidianMetadata?;
     }> = [];
 
     try {
@@ -841,7 +845,7 @@ export class DocumentIngestionPipeline {
     }
   }
 
-  private validateObsidianMetadata(meta: any): boolean {
+  private validateObsidianMetadata(meta): boolean {
     const required = [
       "uri",
       "section",
@@ -881,7 +885,7 @@ export class DocumentIngestionPipeline {
    */
   private determineContentType(
     filePath: string,
-    frontmatter: Record<string, any>
+    frontmatter: ObsidianFrontmatterSchema
   ): string {
     // Check frontmatter first (highest priority)
     if (frontmatter.type && typeof frontmatter.type === "string") {
@@ -922,7 +926,14 @@ export class DocumentIngestionPipeline {
 }
 
 // Backward compatibility exports
-export interface ObsidianChunkingOptions extends ChunkingOptions {}
+export interface ObsidianChunkingOptions extends ChunkingOptions {
+  // Obsidian-specific chunking options
+  includeFrontmatter?: boolean;
+  includeTags?: boolean;
+  includeWikilinks?: boolean;
+  sectionChunking?: boolean;
+  headingChunking?: boolean;
+}
 
 /**
  * Backward compatibility class for Obsidian-specific usage
@@ -930,14 +941,14 @@ export interface ObsidianChunkingOptions extends ChunkingOptions {}
  */
 export class ObsidianIngestionPipeline extends DocumentIngestionPipeline {
   constructor(
-    database: any, // Using any to avoid circular dependencies
-    embeddingService: any,
+    database, // Using any to avoid circular dependencies
+    embeddingService,
     vaultPath: string
   ) {
     super(database, embeddingService, vaultPath, OBSIDIAN_CONFIG);
   }
 
-  async ingestVault(options: any = {}) {
+  async ingestVault(options = {}) {
     return this.ingestDocuments(options);
   }
 }

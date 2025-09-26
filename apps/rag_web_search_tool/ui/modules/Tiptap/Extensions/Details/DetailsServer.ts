@@ -1,14 +1,14 @@
-import { Node, mergeAttributes } from '@tiptap/core';
+import { Node, mergeAttributes } from "@tiptap/core";
 
 export interface DetailsOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, unknown>;
 }
 
 /**
  * Server-safe Details node (no React NodeView)
  */
 export const DetailsServer = Node.create<DetailsOptions>({
-  name: 'details',
+  name: "details",
 
   addOptions() {
     return {
@@ -16,23 +16,23 @@ export const DetailsServer = Node.create<DetailsOptions>({
     };
   },
 
-  group: 'block',
+  group: "block",
 
-  content: 'block+',
+  content: "block+",
 
   addAttributes() {
     return {
       summary: {
-        default: 'Details',
-        parseHTML: (element) => element.getAttribute('data-summary'),
+        default: "Details",
+        parseHTML: (element) => element.getAttribute("data-summary"),
         renderHTML: (attributes) => {
           if (!attributes.summary) return {};
-          return { 'data-summary': attributes.summary };
+          return { "data-summary": attributes.summary };
         },
       },
       open: {
         default: false,
-        parseHTML: (element) => element.hasAttribute('open'),
+        parseHTML: (element) => element.hasAttribute("open"),
         renderHTML: (attributes) => {
           if (!attributes.open) return {};
           return { open: attributes.open };
@@ -44,21 +44,21 @@ export const DetailsServer = Node.create<DetailsOptions>({
   parseHTML() {
     return [
       {
-        tag: 'details',
+        tag: "details",
       },
     ];
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    const summary = node.attrs.summary || 'Details';
+    const summary = node.attrs.summary || "Details";
     return [
-      'details',
+      "details",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
         open: node.attrs.open,
-        'data-summary': summary,
+        "data-summary": summary,
       }),
-      ['summary', {}, summary],
-      ['div', { class: 'details-content' }, 0],
+      ["summary", {}, summary],
+      ["div", { class: "details-content" }, 0],
     ];
   },
 });

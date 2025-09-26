@@ -120,7 +120,7 @@ export interface SuggestedAction {
   label: string;
   query?: string;
   entityIds?: string[];
-  filters?: any;
+  filters?;
   reasoning?: {
     question: string;
     type: ReasoningType;
@@ -296,7 +296,7 @@ export interface DataSource {
     path?: string;
     authentication?: {
       type: "basic" | "bearer" | "api_key" | "oauth2" | "none";
-      credentials: Record<string, any>;
+      credentials: Record<string, unknown>;
     };
     retryPolicy?: {
       maxRetries: number;
@@ -312,13 +312,13 @@ export interface DataSource {
     entities: Array<{
       name: string;
       type: string;
-      properties: Record<string, any>;
+      properties: Record<string, unknown>;
     }>;
     relationships: Array<{
       name: string;
       sourceEntity: string;
       targetEntity: string;
-      properties: Record<string, any>;
+      properties: Record<string, unknown>;
     }>;
     constraints: Array<{
       type: "unique" | "required" | "foreign_key" | "index";
@@ -383,7 +383,7 @@ export interface ProcessorOptions {
   minConfidence?: number;
   language?: string;
   domain?: string;
-  customProcessing?: Record<string, any>;
+  customProcessing?: Record<string, unknown>;
 }
 
 export interface ContentMetadata {
@@ -396,7 +396,7 @@ export interface ContentMetadata {
   uploadDate: string;
   checksum: string;
   tags: string[];
-  customFields: Record<string, any>;
+  customFields: Record<string, unknown>;
 }
 
 export interface ProcessorResult {
@@ -409,7 +409,7 @@ export interface ProcessorResult {
     text: string;
     start: number;
     end: number;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
   }>;
   entities?: Array<{
     text: string;
@@ -419,12 +419,12 @@ export interface ProcessorResult {
       start: number;
       end: number;
     };
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
   }>;
   images?: Array<{
     url: string;
     description: string;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
   }>;
   audio?: {
     transcription: string;
@@ -436,12 +436,12 @@ export interface ProcessorResult {
     transcription: string;
     duration: number;
     frames: number;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
   };
   structured?: {
     format: string;
-    schema: Record<string, any>;
-    data: Record<string, any>;
+    schema: Record<string, unknown>;
+    data: Record<string, unknown>;
   };
 }
 
@@ -501,21 +501,21 @@ export interface GraphQuery {
     primary: "relationship_discovery" | "path_finding" | "pattern_matching" | "similarity_search" | "recommendation" | "analysis";
     secondary: string[];
     confidence: number;
-    parameters: Record<string, any>;
+    parameters: Record<string, unknown>;
     domain: string;
   };
   graphPatterns: Array<{
     nodes: Array<{
       id: string;
       type: string;
-      properties: Record<string, any>;
-      constraints: Record<string, any>;
+      properties: Record<string, unknown>;
+      constraints: Record<string, unknown>;
     }>;
     edges: Array<{
       source: string;
       target: string;
       type: string;
-      properties: Record<string, any>;
+      properties: Record<string, unknown>;
       direction: "unidirectional" | "bidirectional";
     }>;
     constraints: {
@@ -546,8 +546,8 @@ export interface GraphQuery {
     userId?: string;
     sessionId?: string;
     previousQueries?: string[];
-    userPreferences?: Record<string, any>;
-    domainContext?: Record<string, any>;
+    userPreferences?: Record<string, unknown>;
+    domainContext?: Record<string, unknown>;
   };
   metadata: {
     createdAt: string;
@@ -567,7 +567,7 @@ export interface GraphQueryResult {
       text: string;
       type: string;
       confidence: number;
-      metadata: Record<string, any>;
+      metadata: Record<string, unknown>;
       position: {
         start: number;
         end: number;
@@ -879,8 +879,8 @@ export interface QueryContext {
   userId?: string;
   sessionId?: string;
   previousQueries?: string[];
-  userPreferences?: Record<string, any>;
-  domainContext?: Record<string, any>;
+  userPreferences?: Record<string, unknown>;
+  domainContext?: Record<string, unknown>;
   temporalContext?: {
     timeRange?: {
       start: string;

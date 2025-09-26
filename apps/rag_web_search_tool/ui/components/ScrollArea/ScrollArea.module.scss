@@ -1,0 +1,32 @@
+.scrollArea {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+
+  // Custom scrollbar styling
+  scrollbar-width: thin;
+  scrollbar-color: var(--semantic-color-border-primary) var(--semantic-color-background-secondary);
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--semantic-color-background-secondary);
+    border-radius: var(--semantic-shape-radius-small);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--semantic-color-border-primary);
+    border-radius: var(--semantic-shape-radius-small);
+
+    &:hover {
+      background: var(--semantic-color-border-strong);
+    }
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: var(--semantic-color-background-secondary);
+  }
+}

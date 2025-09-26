@@ -32,8 +32,8 @@ vi.mock("../../src/scripts/ingest", () => ({
 }));
 
 describe("IngestionPipeline", () => {
-  let mockDatabase: any;
-  let mockEmbeddingService: any;
+  let mockDatabase;
+  let mockEmbeddingService;
   let pipeline: IngestionPipeline;
   const vaultPath = "/test/vault";
 
@@ -50,7 +50,7 @@ describe("IngestionPipeline", () => {
     };
 
     // Create a mock constructor for IngestionPipeline
-    pipeline = new (IngestionPipeline as any)(
+    pipeline = new IngestionPipeline(
       mockDatabase,
       mockEmbeddingService,
       vaultPath
@@ -67,15 +67,15 @@ describe("IngestionPipeline", () => {
       };
 
       // Mock fs functions
-      (fs.existsSync as any).mockReturnValue(true);
-      (fs.readdirSync as any).mockReturnValue([
+      fs.existsSync.mockReturnValue(true);
+      fs.readdirSync.mockReturnValue([
         { name: "notes", isDirectory: () => true },
         { name: "document.md", isDirectory: () => false },
         { name: "image.png", isDirectory: () => false },
       ]);
-      (fs.statSync as any).mockReturnValue({ isDirectory: () => false });
+      fs.statSync.mockReturnValue({ isDirectory: () => false });
 
-      const files = await (pipeline as any).discoverFiles(options);
+      const files = await pipeline.discoverFiles(options);
 
       expect(files).toContain("/test/vault/document.md");
       expect(files).toContain("/test/vault/image.png");
@@ -87,15 +87,15 @@ describe("IngestionPipeline", () => {
         excludePatterns: ["**/node_modules/**", "**/temp/**"],
       };
 
-      (fs.existsSync as any).mockReturnValue(true);
-      (fs.readdirSync as any).mockReturnValue([
+      fs.existsSync.mockReturnValue(true);
+      fs.readdirSync.mockReturnValue([
         { name: "node_modules", isDirectory: () => true },
         { name: "temp", isDirectory: () => true },
         { name: "document.md", isDirectory: () => false },
       ]);
-      (fs.statSync as any).mockReturnValue({ isDirectory: () => false });
+      fs.statSync.mockReturnValue({ isDirectory: () => false });
 
-      const files = await (pipeline as any).discoverFiles(options);
+      const files = await pipeline.discoverFiles(options);
 
       expect(files).not.toContain("/test/vault/node_modules");
       expect(files).not.toContain("/test/vault/temp");
@@ -113,7 +113,7 @@ describe("IngestionPipeline", () => {
         "/test/vault/assets/diagram.jpg",
       ];
 
-      const result = (pipeline as any).categorizeFiles(files);
+      const result = pipeline.categorizeFiles(files);
 
       expect(result.markdownFiles).toHaveLength(2);
       expect(result.markdownFiles).toEqual([
@@ -132,22 +132,16 @@ describe("IngestionPipeline", () => {
 
   describe("matchesPattern", () => {
     it("should match simple patterns", () => {
-      const result1 = (pipeline as any).matchesPattern("test.md", "*.md");
-      const result2 = (pipeline as any).matchesPattern("test.txt", "*.md");
+      const result1 = pipeline.matchesPattern("test.md", "*.md");
+      const result2 = pipeline.matchesPattern("test.txt", "*.md");
 
       expect(result1).toBe(true);
       expect(result2).toBe(false);
     });
 
     it("should handle globstar patterns", () => {
-      const result1 = (pipeline as any).matchesPattern(
-        "notes/test.md",
-        "**/*.md"
-      );
-      const result2 = (pipeline as any).matchesPattern(
-        "notes/test.txt",
-        "**/*.md"
-      );
+      const result1 = pipeline.matchesPattern("notes/test.md", "**/*.md");
+      const result2 = pipeline.matchesPattern("notes/test.txt", "**/*.md");
 
       expect(result1).toBe(true);
       expect(result2).toBe(false);
@@ -155,8 +149,8 @@ describe("IngestionPipeline", () => {
 
     it("should handle multiple patterns", () => {
       const patterns = ["*.md", "*.txt"];
-      const result1 = (pipeline as any).matchesPattern("test.md", "*.md");
-      const result2 = (pipeline as any).matchesPattern("test.txt", "*.txt");
+      const result1 = pipeline.matchesPattern("test.md", "*.md");
+      const result2 = pipeline.matchesPattern("test.txt", "*.txt");
 
       expect(result1).toBe(true);
       expect(result2).toBe(true);
@@ -172,16 +166,16 @@ describe("IngestionPipeline", () => {
       };
 
       // Mock file discovery
-      (fs.existsSync as any).mockReturnValue(true);
-      (fs.readdirSync as any).mockReturnValue([
+      fs.existsSync.mockReturnValue(true);
+      fs.readdirSync.mockReturnValue([
         { name: "notes", isDirectory: () => true },
         { name: "document.md", isDirectory: () => false },
         { name: "image.png", isDirectory: () => false },
       ]);
-      (fs.statSync as any).mockReturnValue({ isDirectory: () => false });
+      fs.statSync.mockReturnValue({ isDirectory: () => false });
 
       // Mock the processMarkdownFiles and processOtherFiles methods
-      (pipeline as any).processMarkdownFiles = vi.fn().mockResolvedValue({
+      pipeline.processMarkdownFiles = vi.fn().mockResolvedValue({
         totalFiles: 1,
         processedFiles: 1,
         totalChunks: 3,
@@ -196,7 +190,7 @@ describe("IngestionPipeline", () => {
         },
       });
 
-      (pipeline as any).processOtherFiles = vi.fn().mockResolvedValue({
+      pipeline.processOtherFiles = vi.fn().mockResolvedValue({
         totalFiles: 1,
         processedFiles: 1,
         totalChunks: 1,
@@ -222,14 +216,14 @@ describe("IngestionPipeline", () => {
       };
 
       // Mock file discovery
-      (fs.existsSync as any).mockReturnValue(true);
-      (fs.readdirSync as any).mockReturnValue([
+      fs.existsSync.mockReturnValue(true);
+      fs.readdirSync.mockReturnValue([
         { name: "document.md", isDirectory: () => false },
         { name: "image.png", isDirectory: () => false },
       ]);
 
       // Mock the processMarkdownFiles method (only markdown files processed)
-      (pipeline as any).processMarkdownFiles = vi.fn().mockResolvedValue({
+      pipeline.processMarkdownFiles = vi.fn().mockResolvedValue({
         totalFiles: 1,
         processedFiles: 1,
         totalChunks: 3,
@@ -244,7 +238,7 @@ describe("IngestionPipeline", () => {
         },
       });
 
-      (pipeline as any).processOtherFiles = vi.fn().mockResolvedValue({
+      pipeline.processOtherFiles = vi.fn().mockResolvedValue({
         totalFiles: 1,
         processedFiles: 1,
         totalChunks: 1,
@@ -265,7 +259,7 @@ describe("IngestionPipeline", () => {
     it("should handle empty vault gracefully", async () => {
       const options = { enableImageProcessing: true };
 
-      (fs.existsSync as any).mockReturnValue(false);
+      fs.existsSync.mockReturnValue(false);
 
       const result = await pipeline.ingestVault(options);
 
@@ -277,13 +271,13 @@ describe("IngestionPipeline", () => {
     it("should handle processing errors", async () => {
       const options = { enableImageProcessing: true };
 
-      (fs.existsSync as any).mockReturnValue(true);
-      (fs.readdirSync as any).mockReturnValue([
+      fs.existsSync.mockReturnValue(true);
+      fs.readdirSync.mockReturnValue([
         { name: "document.md", isDirectory: () => false },
       ]);
 
       // Mock processing to throw an error
-      (pipeline as any).processMarkdownFiles = vi
+      pipeline.processMarkdownFiles = vi
         .fn()
         .mockRejectedValue(new Error("Processing failed"));
 

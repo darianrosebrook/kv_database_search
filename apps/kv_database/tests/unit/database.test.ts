@@ -32,23 +32,23 @@ describe("ObsidianDatabase", () => {
   });
 
   it("should have correct table name", () => {
-    expect((db as any).tableName).toBe("obsidian_chunks");
+    expect(db.tableName).toBe("obsidian_chunks");
   });
 
   it("should have correct dimension", () => {
-    expect((db as any).dimension).toBe(768);
+    expect(db.dimension).toBe(768);
   });
 
   it("should have default table name", () => {
-    expect((db as any).tableName).toBe("obsidian_chunks");
+    expect(db.tableName).toBe("obsidian_chunks");
   });
 
   it("should have a pool instance", () => {
-    expect((db as any).pool).toBeDefined();
+    expect(db.pool).toBeDefined();
   });
 
   it("should validate dimension is positive", () => {
-    expect((db as any).dimension).toBeGreaterThan(0);
+    expect(db.dimension).toBeGreaterThan(0);
   });
 
   // Note: Invalid connection string doesn't throw immediately - it's validated on first use
@@ -69,11 +69,11 @@ describe("ObsidianDatabase", () => {
           contentType: "markdown",
           updatedAt: new Date().toISOString(),
         },
-        embedding: null as any,
+        embedding: null,
       };
 
-      await expect(db.upsertChunk(chunk as any)).rejects.toThrow();
-    } catch (error: any) {
+      await expect(db.upsertChunk(chunk)).rejects.toThrow();
+    } catch (error) {
       if (
         error.code === "28000" ||
         error.message?.includes("role") ||
@@ -105,8 +105,8 @@ describe("ObsidianDatabase", () => {
         embedding: [],
       };
 
-      await expect(db.upsertChunk(chunk as any)).rejects.toThrow();
-    } catch (error: any) {
+      await expect(db.upsertChunk(chunk)).rejects.toThrow();
+    } catch (error) {
       if (
         error.code === "28000" ||
         error.message?.includes("role") ||
@@ -138,8 +138,8 @@ describe("ObsidianDatabase", () => {
         embedding: new Array(100).fill(0.1), // Wrong dimension
       };
 
-      await expect(db.upsertChunk(chunk as any)).rejects.toThrow();
-    } catch (error: any) {
+      await expect(db.upsertChunk(chunk)).rejects.toThrow();
+    } catch (error) {
       if (
         error.code === "28000" ||
         error.message?.includes("role") ||
@@ -172,12 +172,12 @@ describe("ObsidianDatabase", () => {
           embedding: new Array(768).fill(0.1),
         };
 
-        await db.upsertChunk(chunk as any);
+        await db.upsertChunk(chunk);
 
         const retrieved = await db.getChunkById("test-insert");
         expect(retrieved).not.toBeNull();
         expect(retrieved!.text).toBe("Insert test");
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -209,7 +209,7 @@ describe("ObsidianDatabase", () => {
           embedding: new Array(768).fill(0.1),
         };
 
-        await db.upsertChunk(chunk as any);
+        await db.upsertChunk(chunk);
 
         // Update the chunk
         const updatedChunk = {
@@ -217,11 +217,11 @@ describe("ObsidianDatabase", () => {
           text: "Updated content",
         };
 
-        await db.upsertChunk(updatedChunk as any);
+        await db.upsertChunk(updatedChunk);
 
         const retrieved = await db.getChunkById("test-update");
         expect(retrieved!.text).toBe("Updated content");
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -252,7 +252,7 @@ describe("ObsidianDatabase", () => {
         embedding: new Array(500).fill(0.1), // Wrong dimension
       };
 
-      await expect(db.upsertChunk(chunk as any)).rejects.toThrow(
+      await expect(db.upsertChunk(chunk)).rejects.toThrow(
         "Embedding dimension mismatch"
       );
     });
@@ -274,7 +274,7 @@ describe("ObsidianDatabase", () => {
         embedding: null,
       };
 
-      await expect(db.upsertChunk(chunk as any)).rejects.toThrow(
+      await expect(db.upsertChunk(chunk)).rejects.toThrow(
         "Embedding dimension mismatch"
       );
     });
@@ -316,7 +316,7 @@ describe("ObsidianDatabase", () => {
           },
         ];
 
-        await db.batchUpsertChunks(chunks as any);
+        await db.batchUpsertChunks(chunks);
 
         const retrieved1 = await db.getChunkById("batch-1");
         const retrieved2 = await db.getChunkById("batch-2");
@@ -325,7 +325,7 @@ describe("ObsidianDatabase", () => {
         expect(retrieved2).not.toBeNull();
         expect(retrieved1!.text).toBe("Batch content 1");
         expect(retrieved2!.text).toBe("Batch content 2");
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -382,9 +382,9 @@ describe("ObsidianDatabase", () => {
         ];
 
         for (const chunk of chunks) {
-          await db.upsertChunk(chunk as any);
+          await db.upsertChunk(chunk);
         }
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -403,7 +403,7 @@ describe("ObsidianDatabase", () => {
         const results = await db.search(new Array(768).fill(0.1), 10);
         expect(results.length).toBeGreaterThan(0);
         expect(results[0].id).toBe("search-1"); // Most similar to query vector
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -424,7 +424,7 @@ describe("ObsidianDatabase", () => {
         });
         expect(results.length).toBe(1);
         expect(results[0].id).toBe("search-1");
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -444,7 +444,7 @@ describe("ObsidianDatabase", () => {
           fileTypes: ["markdown"],
         });
         expect(results.length).toBe(2);
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -464,7 +464,7 @@ describe("ObsidianDatabase", () => {
           folders: ["Tech"],
         });
         expect(results.length).toBe(2);
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -484,7 +484,7 @@ describe("ObsidianDatabase", () => {
           hasWikilinks: true,
         });
         expect(results.length).toBe(1); // Only search-1 has wikilinks
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -510,7 +510,7 @@ describe("ObsidianDatabase", () => {
         const results = await db.search(zeroEmbedding, 5);
         expect(results).toBeDefined();
         expect(Array.isArray(results)).toBe(true);
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -526,8 +526,8 @@ describe("ObsidianDatabase", () => {
 
     it("should handle search with null embedding", async () => {
       try {
-        await expect(db.search(null as any)).rejects.toThrow();
-      } catch (error: any) {
+        await expect(db.search(null)).rejects.toThrow();
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -544,7 +544,7 @@ describe("ObsidianDatabase", () => {
     it("should handle search with empty embedding array", async () => {
       try {
         await expect(db.search([])).rejects.toThrow();
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -566,7 +566,7 @@ describe("ObsidianDatabase", () => {
         }); // Invalid: > 1
         expect(Array.isArray(result)).toBe(true);
         // Should return empty array or handle gracefully
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -588,7 +588,7 @@ describe("ObsidianDatabase", () => {
         }); // Invalid: < 0
         expect(Array.isArray(result)).toBe(true);
         // Should handle gracefully and not crash
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -608,7 +608,7 @@ describe("ObsidianDatabase", () => {
         const result = await db.search(validEmbedding, 1000); // Very large limit
         expect(Array.isArray(result)).toBe(true);
         // Should handle gracefully without timing out
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -630,7 +630,7 @@ describe("ObsidianDatabase", () => {
           folders: [longFolderName],
         });
         expect(Array.isArray(result)).toBe(true);
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -657,7 +657,7 @@ describe("ObsidianDatabase", () => {
           tags: specialTags,
         });
         expect(Array.isArray(result)).toBe(true);
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -681,7 +681,7 @@ describe("ObsidianDatabase", () => {
           },
         });
         expect(Array.isArray(result)).toBe(true);
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -706,7 +706,7 @@ describe("ObsidianDatabase", () => {
         });
         expect(Array.isArray(result)).toBe(true);
         // Should handle gracefully without error
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -755,9 +755,9 @@ describe("ObsidianDatabase", () => {
         };
 
         await expect(
-          db.batchUpsertChunks([validChunk as any, invalidChunk as any])
+          db.batchUpsertChunks([validChunk, invalidChunk])
         ).rejects.toThrow();
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -790,10 +790,10 @@ describe("ObsidianDatabase", () => {
           embedding: new Array(768).fill(0.1),
         };
 
-        await db.upsertChunk(chunk as any);
+        await db.upsertChunk(chunk);
         const retrieved = await db.getChunkById("large-text");
         expect(retrieved?.text).toBe(largeText);
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -816,7 +816,7 @@ describe("ObsidianDatabase", () => {
         expect(stats.totalChunks).toBeGreaterThanOrEqual(0);
         expect(typeof stats.byContentType).toBe("object");
         expect(typeof stats.byFolder).toBe("object");
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -834,7 +834,7 @@ describe("ObsidianDatabase", () => {
       try {
         const stats = await db.getStats();
         expect(stats.totalChunks).toBeGreaterThanOrEqual(0);
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -854,7 +854,7 @@ describe("ObsidianDatabase", () => {
       try {
         const retrieved = await db.getChunkById("non-existent");
         expect(retrieved).toBeNull();
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -874,7 +874,7 @@ describe("ObsidianDatabase", () => {
       try {
         const retrieved = await db.getChunksByFile("empty.md");
         expect(retrieved).toEqual([]);
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||
@@ -893,7 +893,7 @@ describe("ObsidianDatabase", () => {
     it("should handle deleting non-existent file", async () => {
       try {
         await db.deleteChunksByFile("non-existent.md");
-      } catch (error: any) {
+      } catch (error) {
         if (
           error.code === "28000" ||
           error.message?.includes("role") ||

@@ -6,9 +6,9 @@
 import * as fs from "fs";
 import * as path from "path";
 import Ajv from "ajv";
-import { fileURLToPath } from "url";
+// import { fileURLToPath } from "url";
 import yaml from "js-yaml";
-import { ValidationResult } from "./types.ts";
+import { ValidationResult, ContractValidationResult } from "./types.ts";
 import { CawsBaseTool } from "./base-tool.ts";
 
 export class CawsValidator extends CawsBaseTool {
@@ -30,17 +30,23 @@ export class CawsValidator extends CawsBaseTool {
     try {
       // Read the working spec file
       const specContent = fs.readFileSync(specPath, "utf-8");
-      let spec: any;
+      let spec: ContractValidationResult;
 
       // Try to parse as YAML first, then JSON
       try {
-        spec = yaml.load(specContent) as any;
-      } catch (yamlError) {
+        spec = yaml.load(specContent) as ContractValidationResult;
+      } catch {
         try {
-          spec = JSON.parse(specContent);
-        } catch (jsonError) {
+          spec = JSON.parse(specContent) as ContractValidationResult;
+        } catch {
           return {
-            valid: false,
+            passed: false,
+            score: 0,
+            details: {
+              passed: { type: "boolean" },
+              score: { type: "number" },
+              details: { type: "object" },
+            },
             errors: ["Invalid JSON/YAML format in working spec"],
           };
         }
@@ -60,11 +66,17 @@ export class CawsValidator extends CawsBaseTool {
 
       if (!valid) {
         return {
-          valid: false,
+          passed: false,
           errors:
             validate.errors?.map(
               (err) => `${err.instancePath}: ${err.message}`
             ) || [],
+          score: 0,
+          details: {
+            passed: { type: "boolean" },
+            score: { type: "number" },
+            details: { type: "object" },
+          },
         };
       }
 
@@ -97,12 +109,24 @@ export class CawsValidator extends CawsBaseTool {
       }
 
       return {
-        valid: true,
+        passed: true,
+        score: 1,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
         warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {
       return {
-        valid: false,
+        passed: false,
+        score: 0,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
         errors: [`Validation failed: ${error}`],
       };
     }
@@ -131,7 +155,13 @@ export class CawsValidator extends CawsBaseTool {
 
       if (missingFields.length > 0) {
         return {
-          valid: false,
+          passed: false,
+          score: 0,
+          details: {
+            passed: { type: "boolean" },
+            score: { type: "number" },
+            details: { type: "object" },
+          },
           errors: [`Missing required fields: ${missingFields.join(", ")}`],
         };
       }
@@ -148,15 +178,35 @@ export class CawsValidator extends CawsBaseTool {
 
       if (missingResults.length > 0) {
         return {
-          valid: false,
+          passed: false,
+          score: 0,
+          details: {
+            passed: { type: "boolean" },
+            score: { type: "number" },
+            details: { type: "object" },
+          },
           errors: [`Missing numeric results: ${missingResults.join(", ")}`],
         };
       }
 
-      return { valid: true };
+      return {
+        passed: true,
+        score: 1,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
+      };
     } catch (error) {
       return {
-        valid: false,
+        passed: false,
+        score: 0,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
         errors: [`Provenance validation failed: ${error}`],
       };
     }
@@ -184,7 +234,13 @@ export class CawsValidator extends CawsBaseTool {
 
       if (!valid) {
         return {
-          valid: false,
+          passed: false,
+          score: 0,
+          details: {
+            passed: { type: "boolean" },
+            score: { type: "number" },
+            details: { type: "object" },
+          },
           errors:
             validate.errors?.map(
               (err) => `${err.instancePath}: ${err.message}`
@@ -192,10 +248,24 @@ export class CawsValidator extends CawsBaseTool {
         };
       }
 
-      return { valid: true };
+      return {
+        passed: true,
+        score: 1,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
+      };
     } catch (error) {
       return {
-        valid: false,
+        passed: false,
+        score: 0,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
         errors: [`Schema validation failed: ${error}`],
       };
     }
@@ -211,7 +281,7 @@ export class CawsValidator extends CawsBaseTool {
     try {
       // Read YAML file
       const yamlContent = fs.readFileSync(yamlPath, "utf-8");
-      const yamlData = yaml.load(yamlContent) as any;
+      const yamlData = yaml.load(yamlContent);
 
       // Read schema file
       const schemaContent = fs.readFileSync(schemaPath, "utf-8");
@@ -223,7 +293,13 @@ export class CawsValidator extends CawsBaseTool {
 
       if (!valid) {
         return {
-          valid: false,
+          passed: false,
+          score: 0,
+          details: {
+            passed: { type: "boolean" },
+            score: { type: "number" },
+            details: { type: "object" },
+          },
           errors:
             validate.errors?.map(
               (err) => `${err.instancePath}: ${err.message}`
@@ -231,10 +307,24 @@ export class CawsValidator extends CawsBaseTool {
         };
       }
 
-      return { valid: true };
+      return {
+        passed: true,
+        score: 1,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
+      };
     } catch (error) {
       return {
-        valid: false,
+        passed: false,
+        score: 0,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
         errors: [`YAML schema validation failed: ${error}`],
       };
     }
@@ -247,17 +337,37 @@ export class CawsValidator extends CawsBaseTool {
     try {
       if (!fs.existsSync(filePath)) {
         return {
-          valid: false,
+          passed: false,
+          score: 0,
+          details: {
+            passed: { type: "boolean" },
+            score: { type: "number" },
+            details: { type: "object" },
+          },
           errors: [`File not found: ${filePath}`],
         };
       }
 
       // Try to read the file
       fs.accessSync(filePath, fs.constants.R_OK);
-      return { valid: true };
-    } catch (error) {
       return {
-        valid: false,
+        passed: true,
+        score: 1,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
+      };
+    } catch {
+      return {
+        passed: false,
+        score: 0,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
         errors: [`File not readable: ${filePath}`],
       };
     }
@@ -270,17 +380,37 @@ export class CawsValidator extends CawsBaseTool {
     try {
       if (!fs.existsSync(dirPath)) {
         return {
-          valid: false,
+          passed: false,
+          score: 0,
+          details: {
+            passed: { type: "boolean" },
+            score: { type: "number" },
+            details: { type: "object" },
+          },
           errors: [`Directory not found: ${dirPath}`],
         };
       }
 
       // Try to write to the directory
       fs.accessSync(dirPath, fs.constants.W_OK);
-      return { valid: true };
-    } catch (error) {
       return {
-        valid: false,
+        passed: true,
+        score: 1,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
+      };
+    } catch {
+      return {
+        passed: false,
+        score: 0,
+        details: {
+          passed: { type: "boolean" },
+          score: { type: "number" },
+          details: { type: "object" },
+        },
         errors: [`Directory not writable: ${dirPath}`],
       };
     }

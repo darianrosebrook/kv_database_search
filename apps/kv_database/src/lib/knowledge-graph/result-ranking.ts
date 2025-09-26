@@ -1,11 +1,6 @@
 import { Pool, PoolClient } from "pg";
 import { ContentType } from "../types/index.js";
-import {
-  EntityType,
-  RelationshipType,
-  type KnowledgeGraphEntity,
-  type KnowledgeGraphRelationship,
-} from "./entity-extractor.js";
+// Removed unused imports
 import {
   type SearchResult,
   type EntityReference,
@@ -87,7 +82,7 @@ export interface RankingFeatures {
 }
 
 export interface RankingExplanation {
-  finalScore: number;
+  computedScore: number;
   featureScores: RankingFeatures;
   appliedBoosts: Array<{ name: string; value: number; reason: string }>;
   appliedPenalties: Array<{ name: string; value: number; reason: string }>;
@@ -207,7 +202,7 @@ export class ResultRankingEngine {
     queryEntities: EntityReference[] = [],
     options: {
       includeExplanation?: boolean;
-      userContext?: Record<string, any>;
+      userContext?: Record<string, unknown>;
       diversify?: boolean;
     } = {}
   ): Promise<RankedSearchResult[]> {
@@ -233,14 +228,16 @@ export class ResultRankingEngine {
       );
 
       // Phase 3: Apply diversification (if enabled)
-      const finalResults =
+      const finalRankedResults =
         options.diversify && this.config.diversification.enabled
           ? await this.applyDiversification(rankedResults, query)
           : rankedResults;
 
-      console.log(`✅ Ranking complete: ${finalResults.length} results ranked`);
+      console.log(
+        `✅ Ranking complete: ${finalRankedResults.length} results ranked`
+      );
 
-      return finalResults;
+      return finalRankedResults;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -256,7 +253,7 @@ export class ResultRankingEngine {
     results: SearchResult[],
     query: string,
     queryEntities: EntityReference[],
-    userContext?: Record<string, any>
+    userContext?: Record<string, unknown>
   ): Promise<Array<SearchResult & { features: RankingFeatures }>> {
     const client = await this.pool.connect();
 
@@ -293,7 +290,7 @@ export class ResultRankingEngine {
     result: SearchResult,
     query: string,
     queryEntities: EntityReference[],
-    userContext: Record<string, any> = {},
+    userContext: Record<string, unknown> = {},
     client: PoolClient
   ): Promise<RankingFeatures> {
     // 1. Vector similarity (already available)
@@ -446,7 +443,7 @@ export class ResultRankingEngine {
    */
   private async calculateContentQuality(
     result: SearchResult,
-    client: PoolClient
+    _client: PoolClient
   ): Promise<number> {
     let qualityScore = 0.5; // Base score
 
@@ -513,7 +510,7 @@ export class ResultRankingEngine {
   private calculateContextualRelevance(
     result: SearchResult,
     query: string,
-    queryEntities: EntityReference[]
+    _queryEntities: EntityReference[]
   ): number {
     let relevanceScore = 0;
 
@@ -561,7 +558,7 @@ export class ResultRankingEngine {
    */
   private async calculateAuthorityScore(
     sourceFile: string,
-    client: PoolClient
+    _client: PoolClient
   ): Promise<number> {
     // This would typically involve checking source reputation, citation count, etc.
     // For now, we'll use simple heuristics based on file type and name
@@ -591,7 +588,7 @@ export class ResultRankingEngine {
    */
   private calculateUserPreferenceScore(
     result: SearchResult,
-    userContext: Record<string, any>
+    userContext: Record<string, unknown>
   ): number {
     if (!userContext || Object.keys(userContext).length === 0) {
       return 0.5; // Neutral score if no user context
@@ -666,29 +663,29 @@ export class ResultRankingEngine {
       const features = result.features;
 
       // Calculate weighted score
-      let finalScore = 0;
-      finalScore +=
+      let computedScore = 0;
+      computedScore +=
         features.vectorSimilarity * this.config.weights.vectorSimilarity;
-      finalScore +=
+      computedScore +=
         features.entityRelevanceScore * this.config.weights.entityRelevance;
-      finalScore +=
+      computedScore +=
         features.relationshipStrengthScore *
         this.config.weights.relationshipStrength;
-      finalScore +=
+      computedScore +=
         features.contentFreshnessScore * this.config.weights.contentFreshness;
-      finalScore +=
+      computedScore +=
         features.contentQualityScore * this.config.weights.contentQuality;
-      finalScore +=
+      computedScore +=
         features.userPreferenceScore * this.config.weights.userPreference;
-      finalScore +=
+      computedScore +=
         features.contextualRelevanceScore *
         this.config.weights.contextualRelevance;
-      finalScore +=
+      computedScore +=
         features.diversityScore * this.config.weights.diversityScore;
 
       // Apply boosts and penalties
       const { boostedScore, appliedBoosts, appliedPenalties } =
-        this.applyBoostsAndPenalties(finalScore, result, queryEntities);
+        this.applyBoostsAndPenalties(computedScore, result, queryEntities);
 
       // Normalize score
       const normalizedScore = this.normalizeScore(boostedScore);
@@ -809,7 +806,7 @@ export class ResultRankingEngine {
    * Create ranking explanation
    */
   private createRankingExplanation(
-    finalScore: number,
+    computedScore: number,
     features: RankingFeatures,
     appliedBoosts: Array<{ name: string; value: number; reason: string }>,
     appliedPenalties: Array<{ name: string; value: number; reason: string }>
@@ -851,7 +848,7 @@ export class ResultRankingEngine {
     ];
 
     return {
-      finalScore,
+      computedScore,
       featureScores: features,
       appliedBoosts,
       appliedPenalties,
@@ -864,7 +861,7 @@ export class ResultRankingEngine {
    */
   private async applyDiversification(
     rankedResults: RankedSearchResult[],
-    query: string
+    _query: string
   ): Promise<RankedSearchResult[]> {
     if (!this.config.diversification.enabled || rankedResults.length <= 1) {
       return rankedResults;

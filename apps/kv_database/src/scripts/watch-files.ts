@@ -24,7 +24,7 @@ const EMBEDDING_DIMENSION = parseInt(process.env.EMBEDDING_DIMENSION || "768");
 const OBSIDIAN_VAULT_PATH =
   process.env.OBSIDIAN_VAULT_PATH ||
   "/Users/darianrosebrook/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault";
-const WATCHER_ENABLED = process.env.FILE_WATCHER_ENABLED !== "false";
+const _WATCHER_ENABLED = process.env.FILE_WATCHER_ENABLED !== "false";
 const WATCHER_BATCH_SIZE = parseInt(process.env.WATCHER_BATCH_SIZE || "10");
 const WATCHER_DEBOUNCE_MS = parseInt(process.env.WATCHER_DEBOUNCE_MS || "500");
 const WATCHER_BATCH_DELAY_MS = parseInt(
@@ -48,8 +48,15 @@ async function main() {
 
     // Initialize embedding service
     console.log("🔧 Initializing embedding service...");
-    const embeddingService = new ObsidianEmbeddingService({ model: EMBEDDING_MODEL });
-    await embeddingService.initialize();
+    const embeddingService = new ObsidianEmbeddingService({
+      model: EMBEDDING_MODEL,
+      dimension: EMBEDDING_DIMENSION,
+    });
+    const embeddingTest = await embeddingService.testConnection();
+    if (!embeddingTest.success) {
+      throw new Error("Embedding service connection failed");
+    }
+    console.log(`✅ Embedding service ready (${embeddingTest.dimension}d)`);
     console.log("✅ Embedding service initialized");
 
     // Initialize ingestion pipeline

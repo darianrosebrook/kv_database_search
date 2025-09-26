@@ -80,7 +80,7 @@ export class ObsidianFileWatcher extends EventEmitter {
     private embeddings: ObsidianEmbeddingService,
     private ingestionPipeline: MultiModalIngestionPipeline,
     options: FileWatcherOptions,
-    private wsManager?: any // WebSocket manager for real-time notifications
+    private wsManager? // WebSocket manager for real-time notifications
   ) {
     super();
 
@@ -508,7 +508,7 @@ export class ObsidianFileWatcher extends EventEmitter {
     hasConflict: boolean;
     conflictType: "concurrent_edit" | "file_in_use" | "none";
     resolutionStrategy: "skip" | "queue" | "force" | "merge";
-    conflictData?: any;
+    conflictData?;
   }> {
     const filePath = change.path;
 
@@ -542,7 +542,7 @@ export class ObsidianFileWatcher extends EventEmitter {
 
       // Update hash for next comparison
       this.lastFileHashes.set(filePath, currentHash);
-    } catch (_error) {
+    } catch {
       // If we can't read the file, assume conflict
       return {
         hasConflict: true,
@@ -672,11 +672,11 @@ export class ObsidianFileWatcher extends EventEmitter {
           // Still has conflict, re-queue or handle differently
           this.conflictQueue.push(change);
         }
-      } catch (_error) {
+      } catch (error) {
         this.emit("processingError", {
           change,
           error: `Failed to process queued change: ${
-            _error instanceof Error ? _error.message : "Unknown error"
+            error instanceof Error ? error.message : "Unknown error"
           }`,
         });
       }
@@ -772,7 +772,7 @@ export class ObsidianFileWatcher extends EventEmitter {
         const data = JSON.parse(fs.readFileSync(trackingFile, "utf-8"));
         return new Date(data.lastProcessed);
       }
-    } catch (_error) {
+    } catch {
       // Silently fail - file hasn't been processed before
     }
 
@@ -807,7 +807,7 @@ export class ObsidianFileWatcher extends EventEmitter {
       };
 
       await fs.promises.writeFile(trackingFile, JSON.stringify(data, null, 2));
-    } catch (_error) {
+    } catch {
       // Silently fail - tracking is not critical
     }
   }
@@ -826,7 +826,7 @@ export class ObsidianFileWatcher extends EventEmitter {
 
       const batchFile = path.join(batchDir, `${batch.batchId}.json`);
       await fs.promises.writeFile(batchFile, JSON.stringify(batch, null, 2));
-    } catch (_error) {
+    } catch {
       // Silently fail - batch tracking is not critical
     }
   }
@@ -847,7 +847,7 @@ export class ObsidianFileWatcher extends EventEmitter {
       if (fs.existsSync(trackingFile)) {
         await fs.promises.unlink(trackingFile);
       }
-    } catch (_error) {
+    } catch {
       // Silently fail
     }
   }
@@ -875,7 +875,7 @@ export class ObsidianFileWatcher extends EventEmitter {
           await fs.promises.unlink(trackingFile);
         }
       }
-    } catch (_error) {
+    } catch {
       // Silently fail
     }
   }
@@ -897,7 +897,7 @@ export class ObsidianFileWatcher extends EventEmitter {
   /**
    * Handle raw file system events
    */
-  private handleRawEvent(event: string, path: string, details: any): void {
+  private handleRawEvent(event: string, path: string, details): void {
     // Log raw events for debugging
     this.emit("rawEvent", { event, path, details });
   }
@@ -1104,9 +1104,9 @@ export class ObsidianFileWatcher extends EventEmitter {
         success: true,
         message: `Successfully rolled back ${filePath} to version ${targetVersion.versionId}`,
       };
-    } catch (_error) {
+    } catch (error) {
       const errorMessage =
-        _error instanceof Error ? _error.message : "Unknown error";
+        error instanceof Error ? error.message : "Unknown error";
 
       this.emit("rollbackError", {
         filePath,
@@ -1139,7 +1139,7 @@ export class ObsidianFileWatcher extends EventEmitter {
   /**
    * Get available versions for a file
    */
-  async getFileVersions(filePath: string): Promise<any[]> {
+  async getFileVersions(filePath: string): Promise<unknown[]> {
     try {
       const versions = await this.db.getDocumentVersions(filePath);
       return versions.map((v) => ({
@@ -1151,8 +1151,8 @@ export class ObsidianFileWatcher extends EventEmitter {
         changeType: v.changeType,
         chunks: v.chunks,
       }));
-    } catch (_error) {
-      console.error(`Failed to get versions for ${filePath}:`, _error);
+    } catch (error) {
+      console.error(`Failed to get versions for ${filePath}:`, error);
       return [];
     }
   }

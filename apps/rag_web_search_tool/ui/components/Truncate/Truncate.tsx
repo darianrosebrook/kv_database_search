@@ -1,9 +1,9 @@
-'use client';
-import * as React from 'react';
-import styles from './Truncate.module.scss';
+"use client";
+import * as React from "react";
+import styles from "./Truncate.module.scss";
 
 export interface TruncateProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onToggle'> {
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onToggle"> {
   /** Element type to render */
   as?: keyof React.JSX.IntrinsicElements;
   /** Number of lines to show before truncating */
@@ -24,13 +24,13 @@ export interface TruncateProps
 export const Truncate = React.forwardRef<HTMLElement, TruncateProps>(
   (
     {
-      as: Component = 'div',
+      as: Component = "div",
       lines = 1,
       expandable = false,
-      expandText = 'Show more',
-      collapseText = 'Show less',
+      expandText = "Show more",
+      collapseText = "Show less",
       onToggle,
-      className = '',
+      className = "",
       children,
       style,
       ...rest
@@ -62,7 +62,7 @@ export const Truncate = React.forwardRef<HTMLElement, TruncateProps>(
 
     const customStyle: React.CSSProperties = {
       ...style,
-      ['--truncate-lines' as any]: lines,
+      ["--truncate-lines"]: lines,
     };
 
     return React.createElement(
@@ -71,19 +71,19 @@ export const Truncate = React.forwardRef<HTMLElement, TruncateProps>(
         ref: (node: HTMLElement | null) => {
           (contentRef as React.MutableRefObject<HTMLElement | null>).current =
             node;
-          if (typeof ref === 'function') ref(node);
-          else if (ref && 'current' in (ref as any)) {
+          if (typeof ref === "function") ref(node);
+          else if (ref && "current" in ref) {
             (ref as React.MutableRefObject<HTMLElement | null>).current = node;
           }
         },
         className: [
           styles.truncate,
-          isExpanded ? styles.expanded : '',
-          expandable && shouldShowToggle ? styles.expandable : '',
+          isExpanded ? styles.expanded : "",
+          expandable && shouldShowToggle ? styles.expandable : "",
           className,
         ]
           .filter(Boolean)
-          .join(' '),
+          .join(" "),
         style: customStyle,
         ...rest,
       },
@@ -104,5 +104,5 @@ export const Truncate = React.forwardRef<HTMLElement, TruncateProps>(
   }
 );
 
-Truncate.displayName = 'Truncate';
+Truncate.displayName = "Truncate";
 export default Truncate;

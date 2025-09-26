@@ -39,7 +39,7 @@ export interface QueryIntent {
     | "analysis";
   secondary: string[];
   confidence: number;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   domain: string;
 }
 
@@ -81,8 +81,8 @@ export interface NodeType {
 }
 
 export interface NodeProperties {
-  required: Record<string, any>;
-  optional: Record<string, any>;
+  required: Record<string, unknown>;
+  optional: Record<string, unknown>;
   computed: Record<string, string>; // expressions
   semantic: Record<string, string>; // semantic descriptions
 }
@@ -105,7 +105,7 @@ export interface PropertyConstraint {
     | "range"
     | "exists"
     | "not_exists";
-  value: any;
+  value;
   weight: number;
 }
 
@@ -175,7 +175,7 @@ export interface EdgeType {
 export interface EdgeProperties {
   label: string;
   description: string;
-  attributes: Record<string, any>;
+  attributes: Record<string, unknown>;
   temporal: TemporalProperties;
   quantitative: QuantitativeProperties;
 }
@@ -276,7 +276,7 @@ export interface TerminationCondition {
     | "goal_reached"
     | "pattern_matched"
     | "confidence_threshold";
-  value: any;
+  value;
   priority: number;
 }
 
@@ -402,7 +402,7 @@ export interface QueryMetadata {
  * and semantic understanding capabilities.
  */
 export class GraphQueryEngine {
-  private database: any; // ObsidianDatabase
+  private database; // ObsidianDatabase
   private intentClassifier: IntentClassifier;
   private patternMatcher: PatternMatcher;
   private traversalEngine: TraversalEngine;
@@ -414,7 +414,7 @@ export class GraphQueryEngine {
   private readonly defaultTimeout = 30000; // 30 seconds
   private readonly defaultMaxResults = 100;
 
-  constructor(database: any) {
+  constructor(database) {
     this.database = database;
     this.intentClassifier = new IntentClassifier();
     this.patternMatcher = new PatternMatcher();
@@ -706,7 +706,7 @@ export class GraphQueryEngine {
       .substr(2, 9)}`;
   }
 
-  private getDefaultTraversalStrategy(intent: QueryIntent): TraversalStrategy {
+  private getDefaultTraversalStrategy(_intent: QueryIntent): TraversalStrategy {
     return {
       type: "breadth_first",
       parameters: {
@@ -750,7 +750,7 @@ export class GraphQueryEngine {
     };
   }
 
-  private getDefaultQueryConstraints(context: QueryContext): QueryConstraints {
+  private getDefaultQueryConstraints(_context: QueryContext): QueryConstraints {
     return {
       maxResults: this.defaultMaxResults,
       maxDepth: this.defaultMaxDepth,
@@ -809,7 +809,7 @@ export class GraphQueryEngine {
   private createPathFindingPattern(
     startEntity: string,
     endEntity: string,
-    options: PathFindingOptions
+    _options: PathFindingOptions
   ): GraphPattern {
     return {
       id: "path_finding_pattern",
@@ -1044,7 +1044,7 @@ interface GraphQueryResultItem {
   pathLength?: number;
   totalWeight?: number;
   confidence: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 interface GraphQueryExecutionResult {
@@ -1102,7 +1102,7 @@ interface PathFindingResult {
     length: number;
     weight: number;
     confidence: number;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
   }>;
   totalPaths: number;
   performance: {
@@ -1142,9 +1142,9 @@ class IntentClassifier {
 
 class PatternMatcher {
   async parseToPatterns(
-    queryText: string,
-    intent: QueryIntent,
-    context: QueryContext
+    _queryText: string,
+    _intent: QueryIntent,
+    _context: QueryContext
   ): Promise<GraphPattern[]> {
     // Mock pattern parsing
     return [
@@ -1170,9 +1170,9 @@ class PatternMatcher {
 
 class TraversalEngine {
   async executePattern(
-    pattern: GraphPattern,
-    strategy: TraversalStrategy,
-    constraints: QueryConstraints
+    _pattern: GraphPattern,
+    _strategy: TraversalStrategy,
+    _constraints: QueryConstraints
   ): Promise<GraphQueryResultItem[]> {
     // Mock pattern execution
     return [
@@ -1189,7 +1189,7 @@ class TraversalEngine {
 class ResultRanker {
   async rankResults(
     results: GraphQueryExecutionResult,
-    query: GraphQuery
+    _query: GraphQuery
   ): Promise<RankedQueryResults> {
     // Mock result ranking
     return {

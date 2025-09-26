@@ -1,16 +1,6 @@
 import { Pool, PoolClient } from "pg";
-import { ContentType } from "../types/index.js";
-import {
-  EntityType,
-  RelationshipType,
-  type KnowledgeGraphEntity,
-  type KnowledgeGraphRelationship,
-} from "./entity-extractor.js";
-import { type SearchQuery, type SearchResult } from "./hybrid-search-engine.js";
-import {
-  type ReasoningQuery,
-  type ReasoningResult,
-} from "./multi-hop-reasoning.js";
+import { type SearchQuery } from "./hybrid-search-engine.js";
+import { type ReasoningQuery } from "./multi-hop-reasoning.js";
 
 export interface QueryPlan {
   id: string;
@@ -23,7 +13,7 @@ export interface QueryPlan {
   indexRecommendations: IndexRecommendation[];
   parallelizationPlan: ParallelizationPlan;
   resourceRequirements: ResourceRequirements;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface OptimizedQuery {
@@ -72,7 +62,7 @@ export interface FilterCondition {
     | "nin"
     | "like"
     | "exists";
-  value: any;
+  value;
   selectivity: number; // 0-1, estimated selectivity
   cost: number; // Estimated cost to apply
 }
@@ -104,7 +94,7 @@ export interface SubQuery {
   id: string;
   type: "exists" | "not_exists" | "in" | "scalar";
   query: string;
-  parameters: any[];
+  parameters;
   cacheable: boolean;
   estimatedCost: number;
 }
@@ -241,7 +231,7 @@ export interface UserPreferences {
  */
 export class QueryOptimizer {
   private pool: Pool;
-  private queryCache: Map<string, any> = new Map();
+  private queryCache: Map<string, unknown> = new Map();
   private statisticsCache: Map<string, QueryStatistics> = new Map();
   private indexRecommendations: Map<string, IndexRecommendation[]> = new Map();
 
@@ -419,9 +409,9 @@ export class QueryOptimizer {
    */
   async executeOptimizedPlan(
     plan: QueryPlan,
-    executor: (query: any) => Promise<any>
+    executor: (query) => Promise
   ): Promise<{
-    results: any;
+    results;
     actualMetrics: {
       executionTime: number;
       resultCount: number;
@@ -548,7 +538,7 @@ export class QueryOptimizer {
   private async analyzeSearchQuery(
     query: SearchQuery,
     context: OptimizationContext
-  ): Promise<any> {
+  ): Promise {
     return {
       queryType: "search",
       complexity: this.calculateQueryComplexity(query),
@@ -565,8 +555,8 @@ export class QueryOptimizer {
    */
   private async analyzeReasoningQuery(
     query: ReasoningQuery,
-    context: OptimizationContext
-  ): Promise<any> {
+    _context: OptimizationContext
+  ): Promise {
     return {
       queryType: "reasoning",
       complexity: query.maxDepth * query.startEntities.length,
@@ -582,7 +572,7 @@ export class QueryOptimizer {
    * Generate search strategies
    */
   private generateSearchStrategies(
-    analysis: any,
+    _analysis,
     context: OptimizationContext
   ): QueryStrategy[] {
     const strategies: QueryStrategy[] = [];
@@ -637,8 +627,8 @@ export class QueryOptimizer {
    * Generate reasoning strategies
    */
   private generateReasoningStrategies(
-    analysis: any,
-    context: OptimizationContext
+    analysis,
+    _context: OptimizationContext
   ): QueryStrategy[] {
     const strategies: QueryStrategy[] = [];
 
@@ -740,7 +730,7 @@ export class QueryOptimizer {
   private async buildSearchExecutionPlan(
     query: SearchQuery,
     strategy: QueryStrategy,
-    context: OptimizationContext
+    _context: OptimizationContext
   ): Promise<ExecutionStep[]> {
     const steps: ExecutionStep[] = [];
 
@@ -822,8 +812,8 @@ export class QueryOptimizer {
    */
   private async buildReasoningExecutionPlan(
     query: ReasoningQuery,
-    strategy: QueryStrategy,
-    context: OptimizationContext
+    _strategy: QueryStrategy,
+    _context: OptimizationContext
   ): Promise<ExecutionStep[]> {
     const steps: ExecutionStep[] = [];
 
@@ -891,7 +881,7 @@ export class QueryOptimizer {
   /**
    * Utility methods
    */
-  private generateQueryHash(query: any): string {
+  private generateQueryHash(query): string {
     return Buffer.from(JSON.stringify(query))
       .toString("base64")
       .substring(0, 16);
@@ -912,7 +902,7 @@ export class QueryOptimizer {
 
   private async estimateSelectivity(
     query: SearchQuery,
-    context: OptimizationContext
+    _context: OptimizationContext
   ): Promise<number> {
     // Simple selectivity estimation
     let selectivity = 1.0;
@@ -929,8 +919,8 @@ export class QueryOptimizer {
   }
 
   private optimizeFilters(
-    filters: any,
-    context: OptimizationContext
+    _filters,
+    _context: OptimizationContext
   ): OptimizedFilters {
     return {
       preFilters: [], // Filters that can be applied early
@@ -941,8 +931,8 @@ export class QueryOptimizer {
   }
 
   private optimizeOrdering(
-    query: SearchQuery,
-    context: OptimizationContext
+    _query: SearchQuery,
+    _context: OptimizationContext
   ): QueryOrdering[] {
     return [
       {
@@ -954,10 +944,7 @@ export class QueryOptimizer {
     ];
   }
 
-  private optimizeLimits(
-    options: any,
-    context: OptimizationContext
-  ): QueryLimits {
+  private optimizeLimits(options, context: OptimizationContext): QueryLimits {
     return {
       offset: 0,
       limit: options?.maxResults || 20,
@@ -968,7 +955,7 @@ export class QueryOptimizer {
 
   private optimizeReasoningFilters(
     query: ReasoningQuery,
-    context: OptimizationContext
+    _context: OptimizationContext
   ): OptimizedFilters {
     return {
       preFilters: [
@@ -987,8 +974,8 @@ export class QueryOptimizer {
   }
 
   private planReasoningJoins(
-    query: ReasoningQuery,
-    context: OptimizationContext
+    _query: ReasoningQuery,
+    _context: OptimizationContext
   ): QueryJoin[] {
     return [
       {
@@ -996,19 +983,19 @@ export class QueryOptimizer {
         leftTable: "kg_nodes",
         rightTable: "kg_relationships",
         condition: "kg_nodes.id = kg_relationships.source_entity_id",
-        estimatedRows: context.graphSize.relationshipCount,
+        estimatedRows: _context.graphSize.relationshipCount,
         cost: 10.0,
       },
     ];
   }
 
   private identifyOptimizations(
-    analysis: any,
-    context: OptimizationContext
+    _analysis,
+    _context: OptimizationContext
   ): QueryOptimization[] {
     const optimizations: QueryOptimization[] = [];
 
-    if (context.graphSize.nodeCount > 50000) {
+    if (_context.graphSize.nodeCount > 50000) {
       optimizations.push({
         type: "index_hint",
         description: "Use HNSW index for vector similarity",
@@ -1021,8 +1008,8 @@ export class QueryOptimizer {
   }
 
   private identifyReasoningOptimizations(
-    analysis: any,
-    context: OptimizationContext
+    analysis,
+    _context: OptimizationContext
   ): QueryOptimization[] {
     const optimizations: QueryOptimization[] = [];
 
@@ -1066,9 +1053,9 @@ export class QueryOptimizer {
   }
 
   private generateCacheStrategy(
-    query: any,
-    statistics: QueryStatistics | undefined,
-    context: OptimizationContext
+    _query,
+    _statistics: QueryStatistics | undefined,
+    _context: OptimizationContext
   ): CacheStrategy {
     return {
       enabled: true,
@@ -1087,12 +1074,12 @@ export class QueryOptimizer {
   }
 
   private async generateIndexRecommendations(
-    analysis: any,
-    context: OptimizationContext
+    _analysis,
+    _context: OptimizationContext
   ): Promise<IndexRecommendation[]> {
     const recommendations: IndexRecommendation[] = [];
 
-    if (context.graphSize.nodeCount > 10000) {
+    if (_context.graphSize.nodeCount > 10000) {
       recommendations.push({
         table: "kg_relationships",
         columns: ["source_entity_id", "confidence"],
@@ -1181,12 +1168,12 @@ export class QueryOptimizer {
     return this.statisticsCache.get(queryHash);
   }
 
-  private async checkCache(plan: QueryPlan): Promise<any> {
+  private async checkCache(plan: QueryPlan): Promise {
     const cacheKey = plan.metadata.queryHash;
     return this.queryCache.get(cacheKey);
   }
 
-  private async cacheResults(plan: QueryPlan, results: any): Promise<void> {
+  private async cacheResults(plan: QueryPlan, results): Promise<void> {
     const cacheKey = plan.metadata.queryHash;
     this.queryCache.set(cacheKey, results);
 
@@ -1199,7 +1186,7 @@ export class QueryOptimizer {
   private async updateQueryStatistics(
     plan: QueryPlan,
     executionTime: number,
-    results: any
+    results
   ): Promise<void> {
     const queryHash = plan.metadata.queryHash;
     const existing = this.statisticsCache.get(queryHash);
@@ -1242,7 +1229,7 @@ export class QueryOptimizer {
     }
   }
 
-  private serializeContext(context: OptimizationContext): any {
+  private serializeContext(context: OptimizationContext) {
     return {
       graphSize: context.graphSize,
       systemLoad: context.currentLoad,

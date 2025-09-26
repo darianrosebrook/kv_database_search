@@ -167,7 +167,7 @@ private async transcribeWithWhisperCpp(audioPath: string): Promise<Transcription
 import { pipeline } from '@xenova/transformers';
 
 class HuggingFaceTranscriber {
-  private whisperPipeline: any;
+  private whisperPipeline;
   
   async initialize() {
     this.whisperPipeline = await pipeline('automatic-speech-recognition', 'whisper-base');

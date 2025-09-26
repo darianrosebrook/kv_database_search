@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Code, Search, Sparkles, Clipboard } from "lucide-react";
 import { Button } from "../Button";
-import { Textarea } from "../../../src/components/ui/textarea";
-import { Badge } from "../../../src/components/ui/badge";
+import { Textarea } from "../Textarea";
+import { Badge } from "../Badge";
 import styles from "./ChatInput.module.scss";
 
 interface ChatInputProps {
   onSendMessage: (
-    message: string,
+    message: string, // eslint-disable-line no-unused-vars
     options?: {
+      // eslint-disable-line no-unused-vars
       pastedContent?: string;
       queryType?: "component" | "pattern" | "token" | "general";
       autoSearch?: boolean;
@@ -108,12 +109,12 @@ export function ChatInput({
           <div className={styles.pastedContentHeader}>
             <Clipboard className={styles.pastedContentIcon} />
             <span className={styles.pastedContentLabel}>Pasted Content</span>
-            <Badge variant="outline" className={styles.pastedContentBadge}>
+            <Badge variant="default" className={styles.pastedContentBadge}>
               {detectedType}
             </Badge>
             <Button
-              variant="ghost"
-              size="sm"
+              variant="secondary"
+              size="small"
               onClick={() => {
                 setPastedContent("");
                 setDetectedType("general");
@@ -143,7 +144,7 @@ export function ChatInput({
           />
           <Button
             type="submit"
-            size="sm"
+            size="small"
             disabled={(!message.trim() && !pastedContent) || isLoading}
             className={styles.submitButton}
           >
@@ -157,14 +158,11 @@ export function ChatInput({
             {quickActions.map((action) => (
               <Button
                 key={action.label}
-                variant="outline"
-                size="sm"
+                variant="secondary"
+                size="small"
                 onClick={() => {
                   setMessage(action.query);
-                  setTimeout(
-                    () => handleSubmit(new Event("submit") as any),
-                    100
-                  );
+                  setTimeout(() => handleSubmit(new Event("submit")), 100);
                 }}
                 className={styles.quickActionButton}
               >
@@ -188,8 +186,8 @@ export function ChatInput({
               ].map((suggestion) => (
                 <Button
                   key={suggestion}
-                  variant="ghost"
-                  size="sm"
+                  variant="secondary"
+                  size="small"
                   onClick={() => setMessage(suggestion)}
                   className={styles.suggestionButton}
                 >

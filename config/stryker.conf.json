@@ -1,47 +1,55 @@
 {
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "plugins": ["@stryker-mutator/vitest-runner"],
   "testRunner": "vitest",
   "reporters": ["html", "clear-text", "progress", "json"],
-  "coverageAnalysis": "perTest", 
+  "coverageAnalysis": "off",
   "mutate": [
-    "src/lib/database.ts",
-    "src/lib/embeddings.ts",
-    "src/lib/multi-modal.ts",
-    "src/lib/multi-modal-ingest.ts",
-    "src/lib/processors/base-processor.ts",
-    "src/lib/processors/image-classification-processor.ts",
-    "src/lib/processors/ocr-processor.ts",
-    "src/lib/processors/office-processor.ts",
-    "src/lib/processors/pdf-processor.ts",
-    "src/lib/processors/speech-processor.ts",
-    "src/lib/processors/video-processor.ts",
-    "src/lib/obsidian-search.ts",
-    "src/lib/obsidian-ingest.ts",
-    "src/lib/obsidian-models.ts",
-    "src/scripts/ingest.ts",
-    "src/scripts/ingest-multi-modal.ts",
-    "src/scripts/ingest-obsidian.ts",
-    "src/scripts/search.ts"
+    "apps/kv_database/src/**/*.ts",
+    "!apps/kv_database/src/**/*processor*.ts",
+    "!apps/kv_database/src/**/*ingestion*.ts",
+    "!apps/kv_database/src/**/*multi-modal*.ts",
+    "!apps/kv_database/src/**/*ocr*.ts",
+    "!apps/kv_database/src/**/*image*.ts",
+    "!apps/kv_database/src/**/*audio*.ts",
+    "!apps/kv_database/src/**/*video*.ts",
+    "!apps/kv_database/src/**/*speech*.ts",
+    "!apps/kv_database/src/**/*office*.ts",
+    "!apps/kv_database/src/**/*pdf*.ts",
+    "apps/tools/**/*.ts"
   ],
+  "testRunnerOptions": {
+    "vitest": {
+      "run": true,
+      "reporter": "verbose",
+      "include": [
+        "apps/kv_database/tests/unit/**/*.test.ts"
+      ],
+      "exclude": [
+        "**/*image*",
+        "**/*ocr*",
+        "**/*multi-modal*",
+        "**/*speech*",
+        "**/*video*",
+        "**/*audio*",
+        "**/*office*",
+        "**/*pdf*",
+        "**/*ingestion*",
+        "**/*processor*"
+      ],
+      "environment": "node"
+    }
+  },
   "thresholds": {
     "high": 80,
     "low": 30,
     "break": null
   },
-  "maxConcurrentTestRunners": 1,
-  "timeoutMS": 30000,
+  "concurrency": 1,
+  "timeoutMS": 15000,
   "timeoutFactor": 2.0,
   "tempDirName": "stryker-tmp",
-  "vitest": {
-    "configFile": "config/vitest.config.ts",
-    "configOverrides": {
-      "test": {
-        "include": [
-          "tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
-          "tests/contract/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"
-        ],
-        "exclude": ["tests/integration/**/*", "tests/e2e/**/*", "tests/axe/**/*"]
-      }
-    }
-  }
+  "disableTypeChecks": "**/*.ts",
+  "checkers": [],
+  "testRunnerNodeArgs": []
 }

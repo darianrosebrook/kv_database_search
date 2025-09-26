@@ -4,7 +4,7 @@ import * as path from "path";
 import { ContentType, ContentMetadata } from "../../types/index.ts";
 import {
   detectLanguage,
-  EnhancedEntityExtractor,
+  EntityExtractor,
   ExtractedEntity,
   EntityRelationship,
   countWords,
@@ -115,14 +115,14 @@ export interface VideoContentMetadata extends ContentMetadata {
 }
 
 export class VideoProcessor extends BaseContentProcessor {
-  private entityExtractor: EnhancedEntityExtractor;
+  private entityExtractor: EntityExtractor;
   private ocrProcessor: OCRProcessor;
   private audioProcessor: AudioTranscriptionProcessor;
   private tempDir: string;
 
   constructor() {
     super("Video Processor", [ContentType.VIDEO]);
-    this.entityExtractor = new EnhancedEntityExtractor();
+    this.entityExtractor = new EntityExtractor();
     this.ocrProcessor = new OCRProcessor();
     this.audioProcessor = new AudioTranscriptionProcessor();
     this.tempDir = "/tmp/video-processing";
@@ -164,7 +164,7 @@ export class VideoProcessor extends BaseContentProcessor {
             console.log(`✅ FFmpeg configured: ${ffmpegPath}`);
             break;
           }
-        } catch (error) {
+        } catch {
           continue;
         }
       }
@@ -176,11 +176,11 @@ export class VideoProcessor extends BaseContentProcessor {
             console.log(`✅ FFprobe configured: ${ffprobePath}`);
             break;
           }
-        } catch (error) {
+        } catch {
           continue;
         }
       }
-    } catch (error) {
+    } catch {
       console.warn(
         "⚠️ Could not configure FFmpeg paths, using system defaults"
       );
@@ -240,11 +240,11 @@ export class VideoProcessor extends BaseContentProcessor {
                 });
 
               if (audioResult.success) {
-                const audioMeta = audioResult.metadata as any; // AudioTranscriptionMetadata
+                const audioMeta = audioResult.metadata; // AudioTranscriptionMetadata
                 audioTranscription = {
                   text: audioResult.text,
                   hasAudio: true,
-                  segments: audioMeta.segments?.map((seg: any) => ({
+                  segments: audioMeta.segments?.map((seg) => ({
                     start: seg.start,
                     end: seg.end,
                     text: seg.text,
@@ -452,7 +452,7 @@ export class VideoProcessor extends BaseContentProcessor {
   private async extractFrames(
     videoPath: string,
     videoMetadata: VideoMetadata,
-    options?: ProcessorOptions
+    _options?: ProcessorOptions
   ): Promise<ExtractedFrame[]> {
     const frames: ExtractedFrame[] = [];
 
@@ -517,7 +517,7 @@ export class VideoProcessor extends BaseContentProcessor {
    */
   private async processFramesWithOCR(
     frames: ExtractedFrame[],
-    options?: ProcessorOptions
+    _options?: ProcessorOptions
   ): Promise<ExtractedFrame[]> {
     const processedFrames: ExtractedFrame[] = [];
 
@@ -537,7 +537,7 @@ export class VideoProcessor extends BaseContentProcessor {
         const processedFrame: ExtractedFrame = {
           ...frame,
           ocrText: ocrResult.text,
-          ocrConfidence: (ocrResult.metadata as any).confidence || 0,
+          ocrConfidence: ocrResult.metadata.confidence || 0,
           entities,
         };
 
@@ -713,7 +713,7 @@ export class VideoProcessor extends BaseContentProcessor {
     const keyframeTimestamps: number[] = [];
     let previousText = "";
 
-    frames.forEach((frame, index) => {
+    frames.forEach((frame, _index) => {
       const currentText = frame.ocrText || "";
 
       // Detect significant text changes (indicating new content/scene)

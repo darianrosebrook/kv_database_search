@@ -123,8 +123,8 @@ export class ContentProcessorRegistry {
 
     for (const processor of Array.from(this.processors.values())) {
       // Check if processor has an initialize method
-      if (typeof (processor as any).initialize === "function") {
-        initPromises.push((processor as any).initialize());
+      if (typeof processor.initialize === "function") {
+        initPromises.push(processor.initialize());
       }
     }
 
@@ -140,8 +140,8 @@ export class ContentProcessorRegistry {
 
     for (const processor of Array.from(this.processors.values())) {
       // Check if processor has a cleanup method
-      if (typeof (processor as any).cleanup === "function") {
-        cleanupPromises.push((processor as any).cleanup());
+      if (typeof processor.cleanup === "function") {
+        cleanupPromises.push(processor.cleanup());
       }
     }
 

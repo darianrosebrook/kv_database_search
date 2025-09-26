@@ -246,9 +246,177 @@ export interface EntityCluster {
 }
 
 /**
- * Entity Extractor - main implementation with backward compatibility
+ * Basic Entity Extractor for backward compatibility
  */
-export { EntityExtractor } from "./entity-extractor.js";
+export class EntityExtractor {
+  private stopWords = new Set([
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "but",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "with",
+    "by",
+    "this",
+    "that",
+    "these",
+    "those",
+    "i",
+    "you",
+    "he",
+    "she",
+    "it",
+    "we",
+    "they",
+    "me",
+    "him",
+    "her",
+    "us",
+    "them",
+    "my",
+    "your",
+    "his",
+    "its",
+    "our",
+    "their",
+    "is",
+    "am",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "could",
+    "should",
+    "may",
+    "might",
+    "must",
+    "shall",
+    "can",
+    "could",
+    "would",
+    "should",
+    "may",
+    "might",
+    "must",
+    "shall",
+  ]);
+
+  extractEntities(text: string): ExtractedEntity[] {
+    const entities: ExtractedEntity[] = [];
+
+    // Simple regex-based extraction for basic entities
+    const patterns = [
+      {
+        regex: /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g,
+        type: "person",
+        confidence: 0.8,
+      },
+      {
+        regex: /\b[A-Z][a-zA-Z\s&.,]+(?:Inc|Corp|LLC|Company|Ltd)\b/g,
+        type: "organization",
+        confidence: 0.7,
+      },
+      {
+        regex: /\b[A-Z][a-z]+(?:burg|ton|ville|city|town)\b/g,
+        type: "location",
+        confidence: 0.6,
+      },
+    ];
+
+    patterns.forEach(({ regex, type, confidence }) => {
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        const entityText = match[0];
+        if (!this.stopWords.has(entityText.toLowerCase())) {
+          entities.push({
+            text: entityText,
+            type,
+            confidence,
+            position: {
+              start: match.index,
+              end: match.index + entityText.length,
+            },
+            label: entityText,
+          });
+        }
+      }
+    });
+
+    return entities;
+  }
+
+  extractRelationships(
+    text: string,
+    _entities: ExtractedEntity[]
+  ): EntityRelationship[] {
+    const relationships: EntityRelationship[] = [];
+
+    // Simple relationship patterns
+    const patterns = [
+      {
+        regex:
+          /([A-Z][a-z]+ [A-Z][a-z]+) works at ([A-Z][a-zA-Z\s&.,]+(?:Inc|Corp|LLC|Company))/gi,
+        predicate: "works_at",
+        confidence: 0.7,
+      },
+      {
+        regex:
+          /([A-Z][a-z]+) lives in ([A-Z][a-z]+(?:burg|ton|ville|city|town))/gi,
+        predicate: "lives_in",
+        confidence: 0.6,
+      },
+    ];
+
+    patterns.forEach(({ regex, predicate, confidence }) => {
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        relationships.push({
+          sourceEntity: match[1],
+          targetEntity: match[2],
+          type: predicate,
+          confidence,
+        });
+      }
+    });
+
+    return relationships;
+  }
+
+  clusterEntities(
+    entities: ExtractedEntity[],
+    _relationships: EntityRelationship[]
+  ): Record<string, ExtractedEntity[]> {
+    const clusters: Record<string, ExtractedEntity[]> = {};
+
+    // Group entities by type
+    entities.forEach((entity) => {
+      const type = entity.type;
+      if (!clusters[type]) {
+        clusters[type] = [];
+      }
+      clusters[type].push(entity);
+    });
+
+    return clusters;
+  }
+}
 
 /**
  * Clean markdown content for better embedding

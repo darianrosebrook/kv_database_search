@@ -12,7 +12,7 @@ export interface ObsidianSearchResult extends SearchResult {
     filePath: string;
     tags: string[];
     wikilinks: string[];
-    frontmatter: Record<string, any>;
+    frontmatter: Record<string, unknown>;
     relatedFiles?: string[];
     backlinks?: string[];
   };
@@ -22,8 +22,8 @@ export interface ObsidianSearchResult extends SearchResult {
     contentTypeLabel: string;
     mimeType: string;
     checksum: string;
-    quality?: any;
-    processing?: any;
+    quality?;
+    processing?;
     // Content-specific metadata
     duration?: number;
     sampleRate?: number;
@@ -452,7 +452,7 @@ export interface ObsidianFrontmatterSchema {
   priority?: "low" | "medium" | "high";
   project?: string;
   related?: string[];
-  [key: string]: any; // Allow custom fields
+  [key: string]; // Allow custom fields
 }
 
 /**

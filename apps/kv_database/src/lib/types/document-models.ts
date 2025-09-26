@@ -109,7 +109,7 @@ export interface Document {
   content: string;
 
   /** Parsed frontmatter */
-  frontmatter: Record<string, any>;
+  frontmatter: Record<string, unknown>;
 
   /** Document statistics */
   stats: DocumentStats;
@@ -142,13 +142,38 @@ export interface DocumentFile {
   fileName: string;
   filePath: string;
   content: string;
-  frontmatter: Record<string, any>;
+  frontmatter: Record<string, unknown>;
   stats: DocumentStats;
 }
 
 // Backward compatibility - alias the old interfaces to the new ones
-export interface ObsidianDocument extends Document {}
-export interface ObsidianFile extends DocumentFile {}
-export interface Wikilink extends DocumentLink {}
-export interface Backlink extends DocumentBacklink {}
-export interface ObsidianChunkingOptions extends ChunkingOptions {}
+export interface ObsidianDocument extends Document {
+  // Obsidian-specific metadata
+  readonly vaultPath?: string;
+  readonly relativePath: string;
+}
+
+export interface ObsidianFile extends DocumentFile {
+  // Obsidian-specific file properties
+  readonly modifiedTime?: Date;
+  readonly createdTime?: Date;
+}
+
+export interface Wikilink extends DocumentLink {
+  // Obsidian-specific wikilink properties
+  readonly displayText?: string;
+  readonly context?: string;
+}
+
+export interface Backlink extends DocumentBacklink {
+  // Obsidian-specific backlink properties
+  readonly linkType?: "explicit" | "implicit";
+  readonly context?: string;
+}
+
+export interface ObsidianChunkingOptions extends ChunkingOptions {
+  // Obsidian-specific chunking options
+  readonly includeFrontmatter?: boolean;
+  readonly includeTags?: boolean;
+  readonly includeWikilinks?: boolean;
+}

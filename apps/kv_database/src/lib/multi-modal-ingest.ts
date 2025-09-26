@@ -640,7 +640,7 @@ export class MultiModalIngestionPipeline {
   private formatImageAnalysisContent(
     fileName: string,
     combinedContent: string,
-    imageClassification?: any
+    imageClassification?
   ): string {
     let content = `Image Analysis: ${fileName}\n`;
 

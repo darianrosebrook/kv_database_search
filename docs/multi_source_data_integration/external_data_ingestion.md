@@ -57,7 +57,7 @@ interface ApiSourceAdapter {
   auth: AuthConfig;
   rateLimit: RateLimitConfig;
   schema: DataSchema;
-  transform: (data: any) => StandardizedData;
+  transform: (data) => StandardizedData;
 }
 ```
 
@@ -69,7 +69,7 @@ interface DatabaseSourceAdapter {
   connection: ConnectionConfig;
   query: string;
   incrementalField?: string; // For change detection
-  transform: (rows: any[]) => StandardizedData;
+  transform: (rows[]) => StandardizedData;
 }
 ```
 
@@ -81,7 +81,7 @@ interface FileSourceAdapter {
   path: string;
   watchMode: 'poll' | 'fs-watch';
   parseOptions: ParseConfig;
-  transform: (parsed: any) => StandardizedData;
+  transform: (parsed) => StandardizedData;
 }
 ```
 

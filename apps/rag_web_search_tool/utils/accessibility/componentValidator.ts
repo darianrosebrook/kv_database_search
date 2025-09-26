@@ -194,7 +194,7 @@ function extractComponentColorPairs(
  */
 function inferComponentType(
   componentName: string,
-  tokens: any
+  tokens
 ): keyof typeof COMPONENT_COLOR_PATTERNS {
   const name = componentName.toLowerCase();
 
@@ -222,7 +222,7 @@ function inferComponentType(
 /**
  * Finds a token value by key (supports nested keys)
  */
-function findTokenValue(tokens: any, key: string): string | null {
+function findTokenValue(tokens, key: string): string | null {
   // Direct key lookup
   if (tokens[key]) return tokens[key];
 
@@ -248,7 +248,7 @@ function findTokenValue(tokens: any, key: string): string | null {
 /**
  * Gets nested object value by dot notation path
  */
-function getNestedValue(obj: any, path: string): any {
+function getNestedValue(obj, path: string) {
   return path.split(".").reduce((current, key) => current?.[key], obj);
 }
 
@@ -284,10 +284,7 @@ function resolveColorValue(value: string): string {
 /**
  * Extracts common color pairs from tokens
  */
-function extractCommonColorPairs(
-  tokens: any,
-  componentName: string
-): ColorPair[] {
+function extractCommonColorPairs(tokens, componentName: string): ColorPair[] {
   const pairs: ColorPair[] = [];
 
   // Look for color/background combinations

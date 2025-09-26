@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { ContentType, ContentMetadata } from "../../types/index";
 import {
   detectLanguage,
-  EnhancedEntityExtractor,
+  EntityExtractor,
   ExtractedEntity,
   EntityRelationship,
 } from "../utils";
@@ -43,10 +43,10 @@ export interface OfficeContentMetadata extends ContentMetadata {
 }
 
 export class OfficeProcessor implements ContentProcessor {
-  private entityExtractor: EnhancedEntityExtractor;
+  private entityExtractor: EntityExtractor;
 
   constructor() {
-    this.entityExtractor = new EnhancedEntityExtractor();
+    this.entityExtractor = new EntityExtractor();
   }
 
   /**
@@ -378,13 +378,13 @@ export class OfficeProcessor implements ContentProcessor {
     // Convert buffer to temporary file path for processing
     const tempPath = `/tmp/office-${Date.now()}.docx`;
     try {
-      require("fs").writeFileSync(tempPath, buffer);
+      fs.writeFileSync(tempPath, buffer);
       return await this.extractFromFile(tempPath, options);
     } finally {
       // Clean up temp file
       try {
-        require("fs").unlinkSync(tempPath);
-      } catch (e) {
+        fs.unlinkSync(tempPath);
+      } catch {
         // Ignore cleanup errors
       }
     }
@@ -395,7 +395,7 @@ export class OfficeProcessor implements ContentProcessor {
    */
   async extractFromFile(
     filePath: string,
-    options?: ProcessorOptions
+    _options?: ProcessorOptions
   ): Promise<ProcessorResult> {
     const result = await this.extractTextFromFile(
       filePath,
@@ -505,7 +505,7 @@ export class OfficeProcessor implements ContentProcessor {
       /\.(jpg|jpeg|png|gif|bmp|tiff|webp)\b/i.test(text);
 
     // Detect lists (numbered or bulleted)
-    const listPattern = /^[1-9]+\.|^\*|^\-|^•/m;
+    const listPattern = /^[1-9]+\.|^\*|^-|^•/m;
     hasLists = listPattern.test(text);
 
     return { headers, paragraphs, hasTables, hasImages, hasLists };

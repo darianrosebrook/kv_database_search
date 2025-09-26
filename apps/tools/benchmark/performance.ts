@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import { ObsidianDatabase } from "../../src/lib/database.ts";
 import { ObsidianEmbeddingService } from "../../src/lib/embeddings.ts";
-import { ObsidianIngestionService } from "../../src/lib/obsidian-ingest.ts";
+// import { ObsidianIngestionService } from "../../src/lib/obsidian-ingest.ts";
 
 interface BenchmarkResult {
   name: string;
@@ -86,7 +86,7 @@ class PerformanceBenchmark {
     const startTime = performance.now();
 
     for (let i = 0; i < 100; i++) {
-      const query = queries[Math.floor(Math.random() * queries.length)];
+      const _query = queries[Math.floor(Math.random() * queries.length)];
       const queryStart = performance.now();
 
       try {
@@ -187,7 +187,7 @@ class PerformanceBenchmark {
       console.log(`  Testing ${userCount} concurrent users...`);
 
       const startTime = performance.now();
-      const allLatencies: number[] = [];
+      let allLatencies: number[] = [];
 
       // Simulate concurrent users
       const userPromises = Array.from(
@@ -345,7 +345,7 @@ class PerformanceBenchmark {
       global.gc();
     }
 
-    const initialMemory = process.memoryUsage();
+    const _initialMemory = process.memoryUsage();
 
     // Perform intensive operations
     const promises = Array.from({ length: 100 }, async () => {
@@ -360,20 +360,20 @@ class PerformanceBenchmark {
       global.gc();
     }
 
-    const finalMemory = process.memoryUsage();
+    const endMemory = process.memoryUsage();
 
     const result: BenchmarkResult = {
       name: "Memory Usage (100 search operations)",
       duration: 0,
-      memoryUsage: finalMemory,
+      memoryUsage: endMemory,
       success: true,
     };
 
     this.results.push(result);
 
     // Check memory budget
-    const heapUsedMB = finalMemory.heapUsed / 1024 / 1024;
-    const externalMB = finalMemory.external / 1024 / 1024;
+    const heapUsedMB = endMemory.heapUsed / 1024 / 1024;
+    const externalMB = endMemory.external / 1024 / 1024;
 
     if (heapUsedMB > this.budget.memoryUsage.maxHeapMB) {
       console.warn(
@@ -396,7 +396,7 @@ class PerformanceBenchmark {
     category: keyof PerformanceBudget,
     result: BenchmarkResult
   ): void {
-    const budget = this.budget[category] as any;
+    const budget = this.budget[category];
 
     if (category === "searchLatency") {
       if (result.p95Latency && result.p95Latency > budget.p95) {
@@ -563,7 +563,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     );
   }
 
-  const benchmark = new PerformanceBenchmark(PERFORMANCE_BUDGET);
+  const _benchmark = new PerformanceBenchmark(PERFORMANCE_BUDGET);
 
   // For now, we'll create mock services since we need a database connection
   // In a real scenario, this would connect to actual services

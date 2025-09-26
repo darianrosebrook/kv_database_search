@@ -111,7 +111,7 @@ export class TextAnalysisUtils {
     }
 
     // Extract sections (numbered or bulleted items)
-    const sectionPattern = /^(\d+\.|\*|\-|\•)\s+(.+)$/gm;
+    const sectionPattern = /^(\d+\.|\*|-|•)\s+(.+)$/gm;
     let match;
     while ((match = sectionPattern.exec(text)) !== null) {
       sections.push(match[2].trim());
@@ -137,7 +137,7 @@ export class TextAnalysisUtils {
   /**
    * Extract potential titles from text
    */
-  static extractTitle(text: string, metadata?: any): string | undefined {
+  static extractTitle(text: string, metadata?): string | undefined {
     if (metadata?.title) return metadata.title;
 
     if (!text) return undefined;

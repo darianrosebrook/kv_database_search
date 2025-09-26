@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
 import type {
   SectionSpec,
   VirtualProject,
-} from '@/ui/modules/CodeSandbox/types';
-import { DocInteractive } from '@/ui/modules/CodeSandbox/variants/DocInteractive';
+} from "@/ui/modules/CodeSandbox/types";
+import { DocInteractive } from "@/ui/modules/CodeSandbox/variants/DocInteractive";
 import React, {
   createContext,
   useContext,
   useEffect,
   useRef,
   useState,
-} from 'react';
-import styles from './DocLayout.module.scss';
+} from "react";
+import styles from "./DocLayout.module.scss";
 
 export interface DocSection {
   id: string;
@@ -34,7 +34,7 @@ const DocLayoutContext = createContext<DocLayoutContextType | null>(null);
 export const useDocLayout = () => {
   const context = useContext(DocLayoutContext);
   if (!context) {
-    throw new Error('useDocLayout must be used within DocLayoutProvider');
+    throw new Error("useDocLayout must be used within DocLayoutProvider");
   }
   return context;
 };
@@ -48,7 +48,7 @@ export function DocLayoutProvider({
   children,
   sections,
 }: DocLayoutProviderProps) {
-  const [activeSection, setActiveSection] = useState(sections[0]?.id || '');
+  const [activeSection, setActiveSection] = useState(sections[0]?.id || "");
   // Keep activeSection valid when sections prop changes
   useEffect(() => {
     if (!sections.length) return;
@@ -75,7 +75,7 @@ interface DocLayoutProps {
   codeFiles: Record<string, string>;
   sandpackOptions?: {
     template?: string;
-    theme?: 'system' | 'light' | 'dark';
+    theme?: "system" | "light" | "dark";
     options?: {
       showLineNumbers?: boolean;
       showInlineErrors?: boolean;
@@ -95,14 +95,14 @@ export function DocLayout({
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Local theme override for the Sandpack preview: 'system' | 'light' | 'dark'
-  const [previewTheme, setPreviewTheme] = useState<'system' | 'light' | 'dark'>(
+  const [previewTheme, setPreviewTheme] = useState<"system" | "light" | "dark">(
     () =>
-      typeof window !== 'undefined'
-        ? (window.localStorage.getItem('docLayout.previewTheme') as
-            | 'system'
-            | 'light'
-            | 'dark') || 'system'
-        : 'system'
+      typeof window !== "undefined"
+        ? (window.localStorage.getItem("docLayout.previewTheme") as
+            | "system"
+            | "light"
+            | "dark") || "system"
+        : "system"
   );
 
   // Convert DocLayout sections to CodeSandbox SectionSpec format
@@ -123,7 +123,7 @@ export function DocLayout({
       path,
       contents,
     })),
-    entry: Object.keys(codeFiles)[0] || '/App.tsx',
+    entry: Object.keys(codeFiles)[0] || "/App.tsx",
     dependencies: {},
   };
 
@@ -133,16 +133,16 @@ export function DocLayout({
   };
 
   // Handle events from DocInteractive
-  const handleEvent = (event: any) => {
-    if (event.type === 'sectionChange') {
+  const handleEvent = (event) => {
+    if (event.type === "sectionChange") {
       handleSectionChange(event.id);
     }
   };
 
   // Persist local preview theme override
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('docLayout.previewTheme', previewTheme);
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("docLayout.previewTheme", previewTheme);
   }, [previewTheme]);
 
   const {
@@ -151,7 +151,7 @@ export function DocLayout({
       showLineNumbers: true,
       showInlineErrors: true,
       wrapContent: true,
-      editorHeight: '100vh',
+      editorHeight: "100vh",
       readOnly: false,
     },
   } = sandpackOptions;
@@ -173,27 +173,27 @@ export function DocLayout({
               <button
                 type="button"
                 role="radio"
-                aria-checked={previewTheme === 'system'}
-                className={previewTheme === 'system' ? 'active' : ''}
-                onClick={() => setPreviewTheme('system')}
+                aria-checked={previewTheme === "system"}
+                className={previewTheme === "system" ? "active" : ""}
+                onClick={() => setPreviewTheme("system")}
               >
                 System
               </button>
               <button
                 type="button"
                 role="radio"
-                aria-checked={previewTheme === 'light'}
-                className={previewTheme === 'light' ? 'active' : ''}
-                onClick={() => setPreviewTheme('light')}
+                aria-checked={previewTheme === "light"}
+                className={previewTheme === "light" ? "active" : ""}
+                onClick={() => setPreviewTheme("light")}
               >
                 Light
               </button>
               <button
                 type="button"
                 role="radio"
-                aria-checked={previewTheme === 'dark'}
-                className={previewTheme === 'dark' ? 'active' : ''}
-                onClick={() => setPreviewTheme('dark')}
+                aria-checked={previewTheme === "dark"}
+                className={previewTheme === "dark" ? "active" : ""}
+                onClick={() => setPreviewTheme("dark")}
               >
                 Dark
               </button>
@@ -202,13 +202,13 @@ export function DocLayout({
           <DocInteractive
             project={project}
             sections={sectionSpecs}
-            height={options.editorHeight || '100vh'}
+            height={options.editorHeight || "100vh"}
             preview={{
-              runtime: 'iframe',
+              runtime: "iframe",
               theme: theme,
             }}
             editor={{
-              engine: 'sandpack',
+              engine: "sandpack",
               readOnly: options.readOnly,
               showLineNumbers: options.showLineNumbers,
               wrap: options.wrapContent,
@@ -227,12 +227,12 @@ interface DocSectionProps {
   className?: string;
 }
 
-export function DocSection({ id, children, className = '' }: DocSectionProps) {
+export function DocSection({ id, children, className = "" }: DocSectionProps) {
   const { activeSection } = useDocLayout();
   return (
     <section
       data-section-id={id}
-      data-highlighted={activeSection === id ? 'true' : 'false'}
+      data-highlighted={activeSection === id ? "true" : "false"}
       className={`${styles.docSection} ${className}`}
       id={id}
     >
@@ -259,10 +259,10 @@ export function DocNavigation({
           <li key={section.id}>
             <button
               className={`${styles.navItem} ${
-                activeSection === section.id ? styles.active : ''
+                activeSection === section.id ? styles.active : ""
               }`}
               onClick={() => onSectionClick(section.id)}
-              aria-current={activeSection === section.id ? 'true' : undefined}
+              aria-current={activeSection === section.id ? "true" : undefined}
             >
               {section.title}
             </button>

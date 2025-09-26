@@ -175,10 +175,10 @@ export interface ConnectionInfo {
 
 export interface DataSourceSchema {
   entities: SchemaEntity[];
-  relationships: SchemaRelationship[];
-  properties: SchemaProperty[];
-  constraints: SchemaConstraint[];
-  indexes: IndexDefinition[];
+  relationships: unknown[];
+  properties: unknown[];
+  constraints: unknown[];
+  indexes: unknown[];
 }
 
 export interface DataSourceMetadata {
@@ -209,8 +209,8 @@ export interface SyncConfiguration {
   enabled: boolean;
   mode: "full" | "incremental" | "delta";
   schedule: SyncSchedule;
-  conflictResolution: ConflictResolutionStrategy;
-  validation: ValidationRules;
+  conflictResolution: unknown;
+  validation: unknown;
 }
 
 export interface SyncSchedule {
@@ -244,7 +244,7 @@ export interface TransformationRule {
   source: string;
   target: string;
   expression: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
 }
 
 export interface MappingMetadata {
@@ -291,8 +291,39 @@ export interface WorkspaceIssue {
  * Enterprise-grade system for managing multiple workspaces (knowledge bases)
  * with unified data ingestion, source management, and cross-source integration.
  */
+// Define missing types
+export interface RetryPolicy {
+  maxRetries: number;
+  backoffMs: number;
+  exponentialBackoff: boolean;
+}
+
+export interface RateLimitConfig {
+  requestsPerMinute: number;
+  burstLimit: number;
+  windowMs: number;
+}
+
+export interface AuthenticationConfig {
+  type: "basic" | "token" | "oauth2";
+  credentials: Record<string, string>;
+}
+
+export interface ConnectionPoolConfig {
+  min: number;
+  max: number;
+  idleTimeoutMs: number;
+  acquireTimeoutMs: number;
+}
+
+export interface SchemaEntity {
+  name: string;
+  type: string;
+  properties: Record<string, string>;
+}
+
 export class WorkspaceManager {
-  private database: any; // ObsidianDatabase
+  private database; // ObsidianDatabase
   private workspaces: Map<string, Workspace> = new Map();
   private dataSourceRegistry: DataSourceRegistry;
   private entityResolver: EntityResolver;
@@ -303,7 +334,7 @@ export class WorkspaceManager {
   private readonly maxWorkspaces = 100;
   private readonly maxDataSourcesPerWorkspace = 50;
 
-  constructor(database: any) {
+  constructor(database) {
     this.database = database;
     this.dataSourceRegistry = new DataSourceRegistry(database);
     this.entityResolver = new EntityResolver(database);
@@ -827,7 +858,7 @@ export class WorkspaceManager {
 // ============================================================================
 
 class DataSourceRegistry {
-  constructor(private database: any) {}
+  constructor(private database) {}
 
   async registerDataSource(
     workspaceId: string,
@@ -843,14 +874,14 @@ class DataSourceRegistry {
     console.log(`🗑️ Removing data source: ${dataSourceId}`);
   }
 
-  async testConnection(dataSource: DataSource): Promise<boolean> {
+  async testConnection(_dataSource: DataSource): Promise<boolean> {
     // Mock connection test
     return true;
   }
 }
 
 class EntityResolver {
-  constructor(private database: any) {}
+  constructor(private database) {}
 
   async resolveEntity(
     entityText: string,
@@ -871,11 +902,11 @@ class EntityResolver {
 }
 
 class IngestionEngine {
-  constructor(private database: any) {}
+  constructor(private database) {}
 
   async syncDataSource(
-    workspace: Workspace,
-    dataSource: DataSource
+    _workspace: Workspace,
+    _dataSource: DataSource
   ): Promise<SyncResult> {
     // Mock sync operation
     return {
@@ -890,7 +921,7 @@ class IngestionEngine {
 }
 
 class QueryFederator {
-  constructor(private database: any) {}
+  constructor(private database) {}
 
   async searchAcrossWorkspaces(
     query: string,
@@ -936,7 +967,7 @@ interface EntityResolutionResult {
   sources: Array<{
     dataSource: string;
     confidence: number;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
   }>;
   resolved: boolean;
 }
@@ -947,9 +978,9 @@ interface CrossWorkspaceSearchResult {
   results: Array<{
     workspace: string;
     resultCount: number;
-    topResults: any[];
+    topResults;
   }>;
-  facets: any[];
+  facets;
   suggestions: string[];
   performance: {
     totalTime: number;

@@ -1,8 +1,13 @@
 import React from "react";
-import { motion } from "motion/react";
+// import { motion } from "motion/react";
 import ResultCard from "../../../ui/components/ResultCard";
-import type { SearchResult } from "../../../types";
-import type { GraphRagSearchResult } from "../../lib/graph-rag-api";
+import type { SearchResult } from "../../types";
+import type {
+  GraphRagSearchResult,
+  GraphRagEntity,
+  ReasoningResult,
+  GraphRagRelationship,
+} from "../../lib/graph-rag-api";
 
 interface ResultsPanelProps {
   results: SearchResult[];
@@ -17,12 +22,12 @@ interface ResultsPanelProps {
   useGraphRag: boolean;
   graphRagResults: GraphRagSearchResult[];
   selectedGraphRagResult: GraphRagSearchResult | null;
-  reasoningResults: any;
-  allEntities: any[];
+  reasoningResults: ReasoningResult;
+  allEntities: GraphRagEntity[];
   onSelectGraphRagResult: (result: GraphRagSearchResult) => void;
-  onExploreEntity: (entity: any) => void;
-  onExploreRelationship: (relationship: any) => void;
-  onReasonAbout: (entities: any[]) => void;
+  onExploreEntity: (entity: GraphRagEntity) => void;
+  onExploreRelationship: (relationship: GraphRagRelationship) => void;
+  onReasonAbout: (entities: GraphRagEntity[]) => void;
 }
 
 export function ResultsPanel({
@@ -71,19 +76,51 @@ export function ResultsPanel({
             <p className="text-sm mt-2">Try adjusting your search terms</p>
           </div>
         ) : (
-          displayResults.map((result, index) => (
-            <ResultCard
-              key={result.id}
-              result={result}
-              index={index}
-              query={query}
-              isSelected={
-                result.id === (selectedResult?.id || selectedGraphRagResult?.id)
-              }
-              onSelect={useGraphRag ? onSelectGraphRagResult : onSelectResult}
-              onAddToContext={onAddToContext}
-            />
-          ))
+          displayResults.map((result, index) => {
+            // Convert GraphRagSearchResult to SearchResult format for ResultCard
+            const adaptedResult = useGraphRag
+              ? {
+                  id: result.id,
+                  title: result.metadata.sourceFile || "Graph RAG Result",
+                  summary: result.text,
+                  highlights: [result.text.substring(0, 200) + "..."],
+                  confidenceScore: result.score,
+                  rationale: result.explanation || "Graph-based search result",
+                  tags: result.entities.map((e) => e.type).slice(0, 3),
+                  lastUpdated:
+                    result.metadata.updatedAt ||
+                    result.metadata.createdAt ||
+                    new Date().toISOString(),
+                  source: {
+                    type: "documentation" as const,
+                    path: result.metadata.sourceFile || "",
+                    url: result.metadata.url || "#",
+                  },
+                  text: result.text,
+                  meta: {
+                    contentType: result.metadata.contentType,
+                    section: result.metadata.section,
+                    breadcrumbs: result.metadata.breadcrumbs || [],
+                    uri: result.metadata.uri,
+                  },
+                }
+              : result;
+
+            return (
+              <ResultCard
+                key={result.id}
+                result={adaptedResult}
+                index={index}
+                query={query}
+                isSelected={
+                  result.id ===
+                  (selectedResult?.id || selectedGraphRagResult?.id)
+                }
+                onSelect={useGraphRag ? onSelectGraphRagResult : onSelectResult}
+                onAddToContext={onAddToContext}
+              />
+            );
+          })
         )}
       </div>
 

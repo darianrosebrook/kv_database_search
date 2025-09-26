@@ -23,7 +23,7 @@ export class MLEntityAPI {
   private entityLinker: MLEntityLinker;
   private router: express.Router;
 
-  constructor(database: ObsidianDatabase) {
+  constructor(_database: ObsidianDatabase) {
     this.entityLinker = new MLEntityLinker();
     this.router = express.Router();
     this.setupRoutes();
@@ -153,7 +153,7 @@ export class MLEntityAPI {
       );
 
       // Transform entities to MLEntity format
-      const mlEntities: MLEntity[] = entities.map((entity: any) => ({
+      const mlEntities: MLEntity[] = entities.map((entity) => ({
         id: entity.id || this.generateEntityId(),
         text: entity.text,
         type: entity.type,
@@ -231,7 +231,7 @@ export class MLEntityAPI {
       );
 
       // Transform entities to MLEntity format
-      const mlEntities: MLEntity[] = entities.map((entity: any) => ({
+      const _mlEntities: MLEntity[] = entities.map((entity) => ({
         id: entity.id || this.generateEntityId(),
         text: entity.text,
         type: entity.type,
@@ -461,7 +461,7 @@ export class MLEntityAPI {
 
       // Transform feedback to UserFeedback format
       const userFeedback: UserFeedback[] = feedbackData.feedback.map(
-        (item: any) => ({
+        (item) => ({
           id: item.id || this.generateEntityId(),
           sessionId: item.sessionId || "unknown",
           userId: item.userId,

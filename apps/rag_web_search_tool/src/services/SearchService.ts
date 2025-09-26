@@ -128,7 +128,7 @@ export class SearchService {
     const searchResponse = await graphRagApiService.search(query, {
       maxResults: options.maxResults,
       includeExplanation: true,
-      strategy: options.searchStrategy as any,
+      strategy: options.searchStrategy,
       enableRanking: true,
       enableProvenance: false,
     });

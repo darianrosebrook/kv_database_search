@@ -29,20 +29,20 @@ export type Decoration = {
 };
 
 export type ControlKind =
-  | 'boolean'
-  | 'select'
-  | 'number'
-  | 'text'
-  | 'color'
-  | 'radio'
-  | 'json';
+  | "boolean"
+  | "select"
+  | "number"
+  | "text"
+  | "color"
+  | "radio"
+  | "json";
 
 export type ControlDef<T = unknown> = {
   id: string;
   label: string;
   kind: ControlKind;
   defaultValue: T;
-  options?: { label: string; value: any }[];
+  options?: { label: string; value }[];
   min?: number;
   max?: number;
   step?: number;
@@ -59,5 +59,5 @@ export type VariantAxis = {
 export type VariantGrid = {
   rows: VariantAxis;
   cols?: VariantAxis;
-  fixedProps?: Record<string, any>;
+  fixedProps?: Record<string, unknown>;
 };

@@ -1,71 +1,71 @@
-import * as React from 'react';
-import '../styles/responsive.scss';
-import type { ControlDef } from '../types';
+import * as React from "react";
+import "../styles/responsive.scss";
+import type { ControlDef } from "../types";
 
 // Extract style objects to prevent recreation on each render
 const CONTROL_STYLES = {
   container: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: 'var(--codesandbox-gap-sm)',
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "var(--codesandbox-gap-sm)",
   },
   controlRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr auto',
-    gap: 'var(--codesandbox-gap-xs)',
-    alignItems: 'center',
-    marginBottom: 'var(--codesandbox-gap-xs)',
+    display: "grid",
+    gridTemplateColumns: "1fr auto",
+    gap: "var(--codesandbox-gap-xs)",
+    alignItems: "center",
+    marginBottom: "var(--codesandbox-gap-xs)",
   },
   label: {
-    color: 'var(--semantic-color-foreground-secondary)',
-    fontSize: 'var(--semantic-typography-body-small-font-size, 14px)',
+    color: "var(--semantic-color-foreground-secondary)",
+    fontSize: "var(--semantic-typography-body-small-font-size, 14px)",
   },
   numberInput: {
-    width: 'var(--codesandbox-input-width-narrow)',
-    minHeight: 'var(--codesandbox-input-min-height, 32px)',
-    padding: 'var(--codesandbox-padding-xs)',
+    width: "var(--codesandbox-input-width-narrow)",
+    minHeight: "var(--codesandbox-input-min-height, 32px)",
+    padding: "var(--codesandbox-padding-xs)",
   },
   textInput: {
-    width: 'var(--codesandbox-input-width-wide)',
-    minHeight: 'var(--codesandbox-input-min-height, 32px)',
-    padding: 'var(--codesandbox-padding-xs)',
+    width: "var(--codesandbox-input-width-wide)",
+    minHeight: "var(--codesandbox-input-min-height, 32px)",
+    padding: "var(--codesandbox-padding-xs)",
   },
   selectInput: {
-    width: 'var(--codesandbox-input-width-wide)',
-    minHeight: 'var(--codesandbox-input-min-height, 32px)',
-    padding: 'var(--codesandbox-padding-xs)',
+    width: "var(--codesandbox-input-width-wide)",
+    minHeight: "var(--codesandbox-input-min-height, 32px)",
+    padding: "var(--codesandbox-padding-xs)",
   },
   radioGroup: {
-    display: 'flex',
-    gap: 'var(--codesandbox-gap-sm)',
-    flexWrap: 'wrap' as const,
+    display: "flex",
+    gap: "var(--codesandbox-gap-sm)",
+    flexWrap: "wrap" as const,
   },
   radioLabel: {
-    display: 'inline-flex',
-    gap: 'var(--codesandbox-gap-xs)',
-    alignItems: 'center',
-    minHeight: 'var(--codesandbox-button-min-height, 32px)',
+    display: "inline-flex",
+    gap: "var(--codesandbox-gap-xs)",
+    alignItems: "center",
+    minHeight: "var(--codesandbox-button-min-height, 32px)",
   },
   jsonContainer: {
-    marginBottom: 'var(--codesandbox-gap-sm)',
+    marginBottom: "var(--codesandbox-gap-sm)",
   },
   jsonLabel: {
-    color: 'var(--semantic-color-foreground-secondary)',
-    marginBottom: 'var(--codesandbox-gap-xs)',
-    fontSize: 'var(--semantic-typography-body-small-font-size, 14px)',
+    color: "var(--semantic-color-foreground-secondary)",
+    marginBottom: "var(--codesandbox-gap-xs)",
+    fontSize: "var(--semantic-typography-body-small-font-size, 14px)",
   },
   jsonTextarea: {
-    width: '100%',
-    minHeight: '120px',
-    padding: 'var(--codesandbox-padding-sm)',
-    fontSize: 'var(--semantic-typography-font-family-mono, monospace)',
+    width: "100%",
+    minHeight: "120px",
+    padding: "var(--codesandbox-padding-sm)",
+    fontSize: "var(--semantic-typography-font-family-mono, monospace)",
   },
 } as const;
 
 export type PropControlsProps = {
   controls: ControlDef[];
-  values: Record<string, any>;
-  onChange: (values: Record<string, any>) => void;
+  values: Record<string, unknown>;
+  onChange: (values: Record<string, unknown>) => void;
 };
 
 const ControlRow = React.memo(function ControlRow({
@@ -103,7 +103,7 @@ export const PropControls = React.memo(function PropControls({
       {controls.map((c) => {
         const value = values[c.id] ?? c.defaultValue;
         switch (c.kind) {
-          case 'boolean':
+          case "boolean":
             return (
               <ControlRow key={c.id} label={c.label}>
                 <input
@@ -113,7 +113,7 @@ export const PropControls = React.memo(function PropControls({
                 />
               </ControlRow>
             );
-          case 'number':
+          case "number":
             return (
               <ControlRow key={c.id} label={c.label}>
                 <input
@@ -125,39 +125,39 @@ export const PropControls = React.memo(function PropControls({
                   onChange={(e) =>
                     handleSet(
                       c.id,
-                      e.target.value === '' ? '' : Number(e.target.value)
+                      e.target.value === "" ? "" : Number(e.target.value)
                     )
                   }
                   style={CONTROL_STYLES.numberInput}
                 />
               </ControlRow>
             );
-          case 'text':
+          case "text":
             return (
               <ControlRow key={c.id} label={c.label}>
                 <input
                   type="text"
-                  value={String(value ?? '')}
+                  value={String(value ?? "")}
                   onChange={(e) => handleSet(c.id, e.target.value)}
                   style={CONTROL_STYLES.textInput}
                 />
               </ControlRow>
             );
-          case 'color':
+          case "color":
             return (
               <ControlRow key={c.id} label={c.label}>
                 <input
                   type="color"
-                  value={String(value ?? '#000000')}
+                  value={String(value ?? "#000000")}
                   onChange={(e) => handleSet(c.id, e.target.value)}
                 />
               </ControlRow>
             );
-          case 'select':
+          case "select":
             return (
               <ControlRow key={c.id} label={c.label}>
                 <select
-                  value={String(value ?? c.options?.[0]?.value ?? '')}
+                  value={String(value ?? c.options?.[0]?.value ?? "")}
                   onChange={(e) => handleSet(c.id, e.target.value)}
                   style={CONTROL_STYLES.selectInput}
                 >
@@ -169,7 +169,7 @@ export const PropControls = React.memo(function PropControls({
                 </select>
               </ControlRow>
             );
-          case 'radio':
+          case "radio":
             return (
               <div key={c.id} style={CONTROL_STYLES.jsonContainer}>
                 <div style={CONTROL_STYLES.jsonLabel}>{c.label}</div>
@@ -194,7 +194,7 @@ export const PropControls = React.memo(function PropControls({
                 </div>
               </div>
             );
-          case 'json':
+          case "json":
             return (
               <div key={c.id} style={CONTROL_STYLES.jsonContainer}>
                 <div style={CONTROL_STYLES.jsonLabel}>{c.label}</div>
@@ -207,7 +207,7 @@ export const PropControls = React.memo(function PropControls({
                         2
                       );
                     } catch {
-                      return String(value ?? '');
+                      return String(value ?? "");
                     }
                   })()}
                   onChange={(e) => {

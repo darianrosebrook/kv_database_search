@@ -7,7 +7,7 @@ import {
 } from "./base-processor";
 import {
   detectLanguage,
-  EnhancedEntityExtractor,
+  EntityExtractor,
   ExtractedEntity,
   EntityRelationship,
 } from "../utils";
@@ -40,11 +40,11 @@ export interface PDFContentMetadata extends ContentMetadata {
 }
 
 export class PDFProcessor extends BaseContentProcessor {
-  private entityExtractor: EnhancedEntityExtractor;
+  private entityExtractor: EntityExtractor;
 
   constructor() {
     super("PDF Processor", [ContentType.PDF]);
-    this.entityExtractor = new EnhancedEntityExtractor();
+    this.entityExtractor = new EntityExtractor();
   }
 
   /**

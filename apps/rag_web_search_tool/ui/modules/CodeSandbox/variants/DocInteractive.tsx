@@ -1,12 +1,12 @@
-import { useSandpack } from '@codesandbox/sandpack-react';
-import * as React from 'react';
-import { CodeEditor } from '../primitives/CodeEditor';
-import { CodePreview } from '../primitives/CodePreview';
-import { CodeWorkbench } from '../primitives/CodeWorkbench';
-import { ErrorBoundary } from '../primitives/ErrorBoundary';
-import { SectionSync } from '../primitives/SectionSync';
-import '../styles/highlight.scss';
-import type { Decoration, SectionSpec, VirtualProject } from '../types';
+import { useSandpack } from "@codesandbox/sandpack-react";
+import * as React from "react";
+import { CodeEditor } from "../primitives/CodeEditor";
+import { CodePreview } from "../primitives/CodePreview";
+import { CodeWorkbench } from "../primitives/CodeWorkbench";
+import { ErrorBoundary } from "../primitives/ErrorBoundary";
+import { SectionSync } from "../primitives/SectionSync";
+import "../styles/highlight.scss";
+import type { Decoration, SectionSpec, VirtualProject } from "../types";
 
 export type DocInteractiveProps = {
   project: VirtualProject;
@@ -14,13 +14,13 @@ export type DocInteractiveProps = {
   sections: SectionSpec[];
   height?: string | number;
   preview?: {
-    runtime: 'iframe' | 'inline';
-    device?: 'desktop' | 'tablet' | 'phone' | 'none';
-    reducedMotion?: 'system' | 'on' | 'off';
-    theme?: 'system' | 'light' | 'dark' | string;
+    runtime: "iframe" | "inline";
+    device?: "desktop" | "tablet" | "phone" | "none";
+    reducedMotion?: "system" | "on" | "off";
+    theme?: "system" | "light" | "dark" | string;
   };
   editor?: {
-    engine?: 'monaco' | 'codemirror' | 'sandpack';
+    engine?: "monaco" | "codemirror" | "sandpack";
     readOnly?: boolean;
     showLineNumbers?: boolean;
     wrap?: boolean;
@@ -28,17 +28,17 @@ export type DocInteractiveProps = {
   };
   onEvent?: (
     e:
-      | { type: 'sectionChange'; id: string }
-      | { type: 'fileChange'; path: string }
-      | { type: 'compileStart' | 'compileDone' | 'compileError'; payload?: any }
-      | { type: 'previewError'; error: Error }
+      | { type: "sectionChange"; id: string }
+      | { type: "fileChange"; path: string }
+      | { type: "compileStart" | "compileDone" | "compileError"; payload? }
+      | { type: "previewError"; error: Error }
   ) => void;
 };
 
 export function DocInteractive({
   project,
   sections,
-  height = '60dvh',
+  height = "60dvh",
   preview,
   onEvent,
 }: DocInteractiveProps) {
@@ -88,7 +88,7 @@ export function DocInteractive({
     const [start, end] = highlight;
     const list: Array<{ file: string; line: number; className?: string }> = [];
     for (let i = start; i <= end; i++) {
-      list.push({ file: activeFile, line: i, className: 'highlighted-line' });
+      list.push({ file: activeFile, line: i, className: "highlighted-line" });
     }
     return list;
   }, [activeFile, highlight]);
@@ -105,21 +105,21 @@ export function DocInteractive({
   }, [sections, activeFile, highlight]);
 
   React.useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     if (!currentSectionId) return;
     if (window.location.hash.slice(1) === currentSectionId) return;
 
     if (hashUpdateRef.current) window.clearTimeout(hashUpdateRef.current);
     hashUpdateRef.current = window.setTimeout(() => {
       try {
-        window.history.replaceState(null, '', `#${currentSectionId}`);
+        window.history.replaceState(null, "", `#${currentSectionId}`);
       } catch {}
       hashUpdateRef.current = null;
     }, 150);
   }, [currentSectionId]);
 
   const themeClassName =
-    preview?.theme && preview.theme !== 'system' ? preview.theme : undefined;
+    preview?.theme && preview.theme !== "system" ? preview.theme : undefined;
 
   // Create reset keys from project and sections identifiers
   const projectKey = JSON.stringify(project.files.map((f) => f.path).sort());
@@ -129,21 +129,21 @@ export function DocInteractive({
     <ErrorBoundary
       resetKeys={[projectKey, sectionsKey]}
       onError={(error, errorInfo) => {
-        console.error('DocInteractive Error:', error, errorInfo);
-        onEvent?.({ type: 'compileError', payload: { error: error.message } });
+        console.error("DocInteractive Error:", error, errorInfo);
+        onEvent?.({ type: "compileError", payload: { error: error.message } });
       }}
     >
       <CodeWorkbench
         project={project}
         engine="sandpack"
         height={height}
-        themeClassName={`docs-workbench ${themeClassName || ''}`.trim()}
+        themeClassName={`docs-workbench ${themeClassName || ""}`.trim()}
       >
         <div
           style={{
-            display: 'grid',
-            gridTemplateRows: '1fr 1fr',
-            height: '100%',
+            display: "grid",
+            gridTemplateRows: "1fr 1fr",
+            height: "100%",
             minHeight: 320,
           }}
           ref={setRootEl as unknown as React.Ref<HTMLDivElement>}
@@ -153,11 +153,11 @@ export function DocInteractive({
             root={rootEl}
             onActiveSection={React.useCallback(
               (id: string) => {
-                onEvent?.({ type: 'sectionChange', id });
+                onEvent?.({ type: "sectionChange", id });
               },
               [onEvent]
             )}
-            onDecorate={handleDecorate as any}
+            onDecorate={handleDecorate}
           />
           <SectionDriver rootRef={containerRef} activeFile={activeFile} />
           <CodeEditor
@@ -207,7 +207,7 @@ function SectionDriver({
           }
         }, 0);
       } catch (error) {
-        console.warn('Failed to open file in sandpack:', error);
+        console.warn("Failed to open file in sandpack:", error);
       }
     }
   }, [activeFile]);

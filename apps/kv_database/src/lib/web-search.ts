@@ -317,7 +317,7 @@ class GoogleSearchProvider implements WebSearchProvider {
       );
     }
 
-    return (data.items || []).map((item: any) => ({
+    return (data.items || []).map((item) => ({
       title: item.title,
       url: item.link,
       snippet: item.snippet || item.displayLink,
@@ -364,7 +364,7 @@ class SearXNGProvider implements WebSearchProvider {
 
     const data = await response.json();
 
-    return (data.results || []).map((result: any) => ({
+    return (data.results || []).map((result) => ({
       title: result.title,
       url: result.url,
       snippet: result.content,
@@ -414,7 +414,7 @@ class SerperSearchProvider implements WebSearchProvider {
 
     const data = await response.json();
 
-    return (data.organic || []).map((result: any, index: number) => ({
+    return (data.organic || []).map((result, index: number) => ({
       title: result.title,
       url: result.link,
       snippet: result.snippet,
@@ -425,14 +425,14 @@ class SerperSearchProvider implements WebSearchProvider {
   }
 }
 
-class LocalWebCrawler implements WebSearchProvider {
+class _LocalWebCrawler implements WebSearchProvider {
   name = "Local Web Crawler";
   rateLimitDelay = 2000; // Be respectful to websites
   dailyLimit = 500; // Conservative limit for crawling
 
   async search(
-    query: string,
-    options: WebSearchOptions
+    _query: string,
+    _options: WebSearchOptions
   ): Promise<WebSearchResult[]> {
     // This would implement a local web crawler using libraries like:
     // - Playwright for JavaScript rendering

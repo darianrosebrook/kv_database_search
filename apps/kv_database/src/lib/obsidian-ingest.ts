@@ -16,11 +16,10 @@ import {
   // detectLanguage, // Unused import
   generateDeterministicId,
   sleep,
-  determineContentType,
   determineContentTypeFromFrontmatter,
 } from "./utils";
 import { ImageLinkExtractor, ImageLink } from "./image-link-extractor";
-import { ImagePathResolver, ResolvedImagePath } from "./image-path-resolver";
+import { ImagePathResolver } from "./image-path-resolver";
 import { OCRProcessor } from "./processors/ocr-processor";
 import { ImageClassificationProcessor } from "./processors/image-classification-processor";
 
@@ -782,11 +781,11 @@ export class ObsidianIngestionPipeline {
 
     // Combine frontmatter tags with content tags (defensive programming)
     const frontmatterTags =
-      frontmatter && (frontmatter as any).tags
-        ? Array.isArray((frontmatter as any).tags)
-          ? (frontmatter as any).tags
-          : typeof (frontmatter as any).tags === "string"
-          ? [(frontmatter as any).tags]
+      frontmatter && frontmatter.tags
+        ? Array.isArray(frontmatter.tags)
+          ? frontmatter.tags
+          : typeof frontmatter.tags === "string"
+          ? [frontmatter.tags]
           : []
         : [];
 
@@ -912,7 +911,7 @@ export class ObsidianIngestionPipeline {
     }
 
     // Deduplicate wikilinks and tags
-    sections.forEach((section: any) => {
+    sections.forEach((section) => {
       section.wikilinks = Array.from(new Set(section.wikilinks));
       section.tags = Array.from(new Set(section.tags));
     });
@@ -962,12 +961,11 @@ export class ObsidianIngestionPipeline {
         fileName: document.fileName || document.name || "untitled",
         filePath: document.relativePath || document.path || "unknown",
         frontmatter: document.frontmatter,
-        wikilinks:
-          document.relationships.wikilinks?.map((w: any) => w.target) || [],
-        tags: (document.relationships.tags as any[]) || [],
+        wikilinks: document.relationships.wikilinks?.map((w) => w.target) || [],
+        tags: document.relationships.tags || [] || [],
         checksum: document.metadata.checksum,
         stats: {
-          wordCount: document.stats.wordCount as any, // TODO: Fix type
+          wordCount: document.stats.wordCount, // TODO: Fix type
           characterCount: document.stats.characterCount,
           lineCount: document.stats.lineCount,
         },
@@ -1186,7 +1184,7 @@ export class ObsidianIngestionPipeline {
       textPreview: string;
       hasEmbedding: boolean;
       metadataValid: boolean;
-      obsidianMetadata?: any;
+      obsidianMetadata?;
     }>;
   }> {
     const issues: string[] = [];
@@ -1195,7 +1193,7 @@ export class ObsidianIngestionPipeline {
       textPreview: string;
       hasEmbedding: boolean;
       metadataValid: boolean;
-      obsidianMetadata?: any;
+      obsidianMetadata?;
     }> = [];
 
     try {
@@ -1251,7 +1249,7 @@ export class ObsidianIngestionPipeline {
     }
   }
 
-  private validateObsidianMetadata(meta: any): boolean {
+  private validateObsidianMetadata(meta): boolean {
     const required = [
       "uri",
       "section",

@@ -11,8 +11,6 @@ import {
   GraphQLID,
   GraphQLEnumType,
   GraphQLInputObjectType,
-  GraphQLUnionType,
-  GraphQLInterfaceType,
 } from "graphql";
 import { ObsidianEmbeddingService } from "../embeddings.js";
 import { HybridSearchEngine } from "./hybrid-search-engine.js";
@@ -21,12 +19,7 @@ import { ResultRankingService } from "./result-ranking.js";
 import { KnowledgeGraph } from "./knowledge-graph-manager.js";
 import { ProvenanceTracker } from "./provenance-tracker.js";
 import { QueryOptimizer } from "./query-optimizer.js";
-import {
-  EntityType,
-  RelationshipType,
-  type KnowledgeGraphEntity,
-  type KnowledgeGraphRelationship,
-} from "./entity-extractor.js";
+import { EntityType, RelationshipType } from "./entity-extractor.js";
 
 // GraphQL Enums
 const EntityTypeEnum = new GraphQLEnumType({
@@ -587,7 +580,7 @@ const MutationType = new GraphQLObjectType({
         aliases: { type: new GraphQLList(GraphQLString) },
       },
       resolve: async (parent, args, context) => {
-        const updates: any = {};
+        const updates = {};
         if (args.name) updates.name = args.name;
         if (args.description) updates.description = args.description;
         if (args.properties) updates.properties = JSON.parse(args.properties);
@@ -640,7 +633,7 @@ const MutationType = new GraphQLObjectType({
         strength: { type: GraphQLFloat },
       },
       resolve: async (parent, args, context) => {
-        const updates: any = {};
+        const updates = {};
         if (args.properties) updates.properties = JSON.parse(args.properties);
         if (args.confidence !== undefined) updates.confidence = args.confidence;
         if (args.strength !== undefined) updates.strength = args.strength;
@@ -805,7 +798,7 @@ export const setupGraphQLServer = (context: GraphQLContext) => {
 
   return {
     schema,
-    context: (req: any) => ({
+    context: (req) => ({
       ...context,
       sessionId: req.headers["x-session-id"] || req.sessionID,
       userId: req.headers["x-user-id"] || req.user?.id,
@@ -832,7 +825,7 @@ export const optimizeGraphQLQuery = (query: string): string => {
   return query;
 };
 
-export const formatGraphQLError = (error: Error): any => {
+export const formatGraphQLError = (error: Error) => {
   return {
     message: error.message,
     locations: [], // Would include location info

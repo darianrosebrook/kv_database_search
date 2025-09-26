@@ -47,7 +47,7 @@ async function analyzeGraphRAGVideo() {
     });
 
     // Override the embedWithStrategy method for testing
-    (embeddings as any).embedWithStrategy = async (text: string) => ({
+    (embeddings ).embedWithStrategy = async (text: string) => ({
       embedding: new Array(768).fill(0.1),
       model: { name: "test-model" },
       confidence: 0.9,
@@ -193,7 +193,7 @@ async function analyzeGraphRAGVideo() {
 }
 
 // Helper function to analyze Graph RAG concepts in the extracted content
-function analyzeGraphRagConcepts(chunks: any[]) {
+function analyzeGraphRagConcepts(chunks[]) {
   const coreConceptsFound: Array<{
     name: string;
     context: string;
@@ -365,7 +365,7 @@ function removeDuplicateTechnical(
 }
 
 // Generate implementation recommendations based on found concepts
-function generateImplementationRecommendations(concepts: any) {
+function generateImplementationRecommendations(concepts) {
   const recommendations = [];
 
   // Always recommend enhanced semantic search
@@ -406,7 +406,7 @@ function generateImplementationRecommendations(concepts: any) {
       description:
         "Enhance the existing entity extraction to identify more complex relationships and create dynamic knowledge graphs.",
       implementation:
-        "Upgrade EnhancedEntityExtractor with better NLP models and relationship inference algorithms.",
+        "Upgrade EntityExtractor with better NLP models and relationship inference algorithms.",
     });
   }
 

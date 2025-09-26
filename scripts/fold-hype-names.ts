@@ -19,14 +19,14 @@ for (const sf of project.getSourceFiles()) {
       node.getKind() === SyntaxKind.FunctionDeclaration ||
       node.getKind() === SyntaxKind.VariableDeclaration
     ) {
-      // @ts-ignore
+      // @ts-expect-error
       const nameNode = node.getNameNode?.() || node.getName?.();
       const name = nameNode?.getText?.() || "";
       if (name && HYPE.test(name)) {
         const base = name.replace(HYPE, "").replace(/(^_|_$)/g, "");
         if (base && base !== name) {
           // rename symbol safely
-          // @ts-ignore
+          // @ts-expect-error
           const id = node.getNameNode?.();
           if (id?.rename) {
             id.rename(base);

@@ -3,11 +3,9 @@
  * Centralized configuration management for CAWS tools
  */
 
-import * as fs from "fs";
 import * as path from "path";
-import { fileURLToPath } from "url";
 import yaml from "js-yaml";
-import { CawsConfig, CawsConfigSchema } from "./types.ts";
+import { CawsConfig } from "./types.ts";
 import { CawsBaseTool, ToolResult } from "./base-tool.ts";
 
 export class CawsConfigManager extends CawsBaseTool {
@@ -30,7 +28,7 @@ export class CawsConfigManager extends CawsBaseTool {
         this.config = configData as CawsConfig;
         this.validateConfig();
       }
-    } catch (error) {
+    } catch {
       this.logWarning("Failed to load CAWS configuration, using defaults");
       this.config = this.getDefaultConfig();
     }
@@ -246,7 +244,7 @@ export class CawsConfigManager extends CawsBaseTool {
   /**
    * Get gate configuration
    */
-  getGateConfig(gateName: string): any {
+  getGateConfig(gateName: string) {
     const gates = this.getSection("gates");
     return gates?.[gateName] || null;
   }
@@ -254,7 +252,7 @@ export class CawsConfigManager extends CawsBaseTool {
   /**
    * Get tool configuration
    */
-  getToolConfig(toolName: string): any {
+  getToolConfig(toolName: string) {
     const tools = this.getSection("tools");
     return tools?.[toolName] || null;
   }
@@ -278,7 +276,7 @@ export class CawsConfigManager extends CawsBaseTool {
   /**
    * Get logging configuration
    */
-  getLoggingConfig(): any {
+  getLoggingConfig() {
     return this.getSection("logging");
   }
 
@@ -338,7 +336,7 @@ export class CawsConfigManager extends CawsBaseTool {
     try {
       return yaml.dump(this.getConfig(), {
         indent: 2,
-        lineWidth: 80,
+        width: 80,
         noRefs: true,
       });
     } catch (error) {

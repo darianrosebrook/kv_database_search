@@ -4,7 +4,10 @@
  */
 
 import * as path from "path";
-import { CawsBaseTool, ToolResult } from "./base-tool.ts";
+import {
+  CawsBaseTool,
+  // ToolResult
+} from "./base-tool.ts";
 import {
   GateResult,
   GateCheckOptions,
@@ -19,17 +22,20 @@ export class CawsGateChecker extends CawsBaseTool {
     1: {
       min_branch: 0.9,
       min_mutation: 0.7,
+      min_coverage: 0.9,
       requires_contracts: true,
       requires_manual_review: true,
     },
     2: {
       min_branch: 0.8,
       min_mutation: 0.5,
+      min_coverage: 0.8,
       requires_contracts: true,
     },
     3: {
       min_branch: 0.7,
       min_mutation: 0.3,
+      min_coverage: 0.7,
       requires_contracts: false,
     },
   };
@@ -250,7 +256,7 @@ export class CawsGateChecker extends CawsBaseTool {
         if (this.pathExists(provenancePath)) {
           provenance = this.readJsonFile(provenancePath);
         }
-      } catch (e) {
+      } catch {
         // Provenance not available
       }
 
@@ -289,12 +295,12 @@ export class CawsGateChecker extends CawsBaseTool {
       totalScore += perfScore * weights.perf;
       totalWeight += weights.perf;
 
-      const finalScore = totalScore / totalWeight;
+      const trustScore = totalScore / totalWeight;
       const tierPolicy = this.tierPolicies[options.tier];
-      const passed = finalScore >= 0.8;
+      const passed = trustScore >= 0.8;
 
       // Apply tier-specific penalties
-      let adjustedScore = finalScore;
+      let adjustedScore = trustScore;
       if (options.tier <= 2 && !contractResult.passed) {
         adjustedScore *= 0.8; // 20% penalty for missing contracts on high tiers
       }
@@ -310,7 +316,7 @@ export class CawsGateChecker extends CawsBaseTool {
           contracts: contractResult,
           a11y: { score: a11yScore, details: provenance?.results?.a11y },
           perf: { score: perfScore, details: provenance?.results?.perf },
-          raw_score: finalScore,
+          raw_score: trustScore,
           weights,
         },
       };

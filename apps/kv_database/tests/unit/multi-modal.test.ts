@@ -141,7 +141,7 @@ describe("MultiModalContentDetector", () => {
 });
 
 describe("UniversalMetadataExtractor", () => {
-  let mockDetector: any;
+  let mockDetector;
   let extractor: UniversalMetadataExtractor;
 
   beforeEach(() => {
@@ -156,14 +156,14 @@ describe("UniversalMetadataExtractor", () => {
 
     beforeEach(() => {
       // Mock fs.statSync
-      (fs.statSync as any).mockReturnValue({
+      fs.statSync.mockReturnValue({
         size: 100,
         birthtime: new Date("2023-01-01"),
         mtime: new Date("2023-01-02"),
       });
 
       // Mock fs.readFileSync
-      (fs.readFileSync as any).mockReturnValue(Buffer.from("test content"));
+      fs.readFileSync.mockReturnValue(Buffer.from("test content"));
     });
 
     afterEach(() => {
@@ -263,7 +263,7 @@ describe("UniversalMetadataExtractor", () => {
         size: 100,
         birthtime: new Date(),
         mtime: new Date(),
-      } as any);
+      });
     });
 
     afterEach(() => {

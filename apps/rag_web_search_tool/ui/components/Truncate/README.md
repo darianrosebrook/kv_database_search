@@ -13,7 +13,7 @@ A utility component that handles text overflow with ellipsis or expandable conte
 
 - **Flexible truncation**: Single-line or multi-line support
 - **Expandable content**: Optional show more/less functionality
-- **Semantic HTML**: Can render as any HTML element
+- **Semantic HTML**: Can render  HTML element
 - **Responsive**: Adapts to container width and font size changes
 
 ## Props

@@ -7,8 +7,8 @@
 // } from "sherpa-onnx";
 
 // Temporary stubs for testing
-type ModelConfig = any;
-type RecognizerConfig = any;
+type ModelConfig = Record<string, unknown>;
+type RecognizerConfig = Record<string, unknown>;
 const createModel = () => {
   throw new Error("sherpa-onnx not available");
 };
@@ -42,8 +42,8 @@ export interface SpeechContentMetadata extends ContentMetadata {
 }
 
 export class SpeechProcessor implements ContentProcessor {
-  private model: any = null;
-  private recognizer: any = null;
+  private model = null;
+  private recognizer = null;
   private initialized = false;
 
   /**
@@ -317,13 +317,13 @@ export class SpeechProcessor implements ContentProcessor {
     // Convert buffer to temporary file path for processing
     const tempPath = `/tmp/speech-${Date.now()}.wav`;
     try {
-      require("fs").writeFileSync(tempPath, buffer);
+      fs.writeFileSync(tempPath, buffer);
       return await this.extractFromFile(tempPath, options);
     } finally {
       // Clean up temp file
       try {
-        require("fs").unlinkSync(tempPath);
-      } catch (e) {
+        fs.unlinkSync(tempPath);
+      } catch {
         // Ignore cleanup errors
       }
     }
@@ -334,7 +334,7 @@ export class SpeechProcessor implements ContentProcessor {
    */
   async extractFromFile(
     filePath: string,
-    options?: ProcessorOptions
+    _options?: ProcessorOptions
   ): Promise<ProcessorResult> {
     const result = await this.transcribeFromFile(filePath);
     return {

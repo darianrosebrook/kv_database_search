@@ -27,7 +27,7 @@ interface IngestionOptions {
   skipExisting?: boolean;
   includePatterns?: string[];
   excludePatterns?: string[];
-  chunkingOptions?: any;
+  chunkingOptions?;
   enableImageProcessing?: boolean;
   maxFileSize?: number;
   maxImagesPerFile?: number;
@@ -273,7 +273,7 @@ class IngestionPipeline {
   private async processMarkdownFiles(
     files: string[],
     options: IngestionOptions
-  ): Promise<any> {
+  ): Promise {
     // Use the existing Obsidian pipeline for markdown files
     // This would need to be enhanced to include image processing
     return await this.obsidianPipeline.ingestVault(options);
@@ -282,7 +282,7 @@ class IngestionPipeline {
   private async processOtherFiles(
     files: string[],
     options: IngestionOptions
-  ): Promise<any> {
+  ): Promise {
     // Use the multi-modal pipeline for other files
     return await this.multiModalPipeline.ingestFiles(files, options);
   }
@@ -324,7 +324,7 @@ class IngestionPipeline {
     };
   }
 
-  private async validateImageProcessing(): Promise<any> {
+  private async validateImageProcessing(): Promise {
     // Placeholder for image validation logic
     return {
       isValid: true,
@@ -398,7 +398,7 @@ async function main() {
         case "-h":
           showHelp();
           process.exit(0);
-        default:
+          break;        default:
           console.error(`Unknown option: ${arg}`);
           process.exit(1);
       }

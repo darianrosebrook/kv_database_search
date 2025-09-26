@@ -5,24 +5,30 @@ export interface GraphQuery {
   id: string;
   naturalLanguage: string;
   intent: {
-    primary: "relationship_discovery" | "path_finding" | "pattern_matching" | "similarity_search" | "recommendation" | "analysis";
+    primary:
+      | "relationship_discovery"
+      | "path_finding"
+      | "pattern_matching"
+      | "similarity_search"
+      | "recommendation"
+      | "analysis";
     secondary: string[];
     confidence: number;
-    parameters: Record<string, any>;
+    parameters: Record<string, unknown>;
     domain: string;
   };
   graphPatterns: Array<{
     nodes: Array<{
       id: string;
       type: string;
-      properties: Record<string, any>;
-      constraints: Record<string, any>;
+      properties: Record<string, unknown>;
+      constraints: Record<string, unknown>;
     }>;
     edges: Array<{
       source: string;
       target: string;
       type: string;
-      properties: Record<string, any>;
+      properties: Record<string, unknown>;
       direction: "unidirectional" | "bidirectional";
     }>;
     constraints: {
@@ -33,7 +39,13 @@ export interface GraphQuery {
     };
   }>;
   traversalStrategy: {
-    algorithm: "dfs" | "bfs" | "dijkstra" | "astar" | "random_walk" | "pagerank";
+    algorithm:
+      | "dfs"
+      | "bfs"
+      | "dijkstra"
+      | "astar"
+      | "random_walk"
+      | "pagerank";
     maxDepth: number;
     maxNodes: number;
     maxEdges: number;
@@ -53,8 +65,8 @@ export interface GraphQuery {
     userId?: string;
     sessionId?: string;
     previousQueries?: string[];
-    userPreferences?: Record<string, any>;
-    domainContext?: Record<string, any>;
+    userPreferences?: Record<string, unknown>;
+    domainContext?: Record<string, unknown>;
   };
   metadata: {
     createdAt: string;
@@ -74,7 +86,7 @@ export interface GraphQueryResult {
       text: string;
       type: string;
       confidence: number;
-      metadata: Record<string, any>;
+      metadata: Record<string, unknown>;
       position: {
         start: number;
         end: number;
@@ -313,7 +325,10 @@ export interface GraphQueryResult {
     success: boolean;
     warnings: string[];
     suggestions: Array<{
-      type: "query_refinement" | "entity_expansion" | "relationship_exploration";
+      type:
+        | "query_refinement"
+        | "entity_expansion"
+        | "relationship_exploration";
       suggestion: string;
       confidence: number;
     }>;
@@ -386,14 +401,21 @@ export interface QueryContext {
   userId?: string;
   sessionId?: string;
   previousQueries?: string[];
-  userPreferences?: Record<string, any>;
-  domainContext?: Record<string, any>;
+  userPreferences?: Record<string, unknown>;
+  domainContext?: Record<string, unknown>;
   temporalContext?: {
     timeRange?: {
       start: string;
       end: string;
     };
-    granularity?: "second" | "minute" | "hour" | "day" | "week" | "month" | "year";
+    granularity?:
+      | "second"
+      | "minute"
+      | "hour"
+      | "day"
+      | "week"
+      | "month"
+      | "year";
     referenceTime?: string;
   };
   spatialContext?: {
@@ -449,7 +471,11 @@ export class GraphQueryService {
       return data.result;
     } catch (error) {
       console.error("Natural language query failed:", error);
-      throw new Error(`Failed to process natural language query: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to process natural language query: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 
@@ -475,7 +501,11 @@ export class GraphQueryService {
       return data.result;
     } catch (error) {
       console.error("Path finding failed:", error);
-      throw new Error(`Failed to find paths: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to find paths: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 
@@ -521,18 +551,24 @@ export class GraphQueryService {
       return data.result;
     } catch (error) {
       console.error("Pattern analysis failed:", error);
-      throw new Error(`Failed to analyze patterns: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to analyze patterns: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 
   async suggestPatterns(
     partialQuery: string,
     limit: number = 10
-  ): Promise<Array<{
-    pattern: string;
-    confidence: number;
-    description: string;
-  }>> {
+  ): Promise<
+    Array<{
+      pattern: string;
+      confidence: number;
+      description: string;
+    }>
+  > {
     try {
       const response = await fetch(`${this.baseUrl}/patterns/suggest`, {
         method: "GET",
@@ -611,7 +647,11 @@ export class GraphQueryService {
       return data.result;
     } catch (error) {
       console.error("Graph traversal failed:", error);
-      throw new Error(`Failed to traverse graph: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to traverse graph: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 
@@ -627,19 +667,21 @@ export class GraphQueryService {
       direction?: "outbound" | "inbound" | "bidirectional";
       includeMetadata?: boolean;
     } = {}
-  ): Promise<Array<{
-    id: string;
-    text: string;
-    type: string;
-    confidence: number;
-    relationship: {
+  ): Promise<
+    Array<{
+      id: string;
+      text: string;
       type: string;
-      direction: "outbound" | "inbound";
       confidence: number;
-    };
-    distance: number;
-    metadata?: Record<string, any>;
-  }>> {
+      relationship: {
+        type: string;
+        direction: "outbound" | "inbound";
+        confidence: number;
+      };
+      distance: number;
+      metadata?: Record<string, unknown>;
+    }>
+  > {
     try {
       const response = await fetch(`${this.baseUrl}/neighbors/${entityId}`, {
         method: "GET",
@@ -665,12 +707,13 @@ export class GraphQueryService {
   // QUERY OPTIMIZATION
   // ============================================================================
 
-  async optimizeQuery(
-    query: Partial<GraphQuery>
-  ): Promise<{
+  async optimizeQuery(query: Partial<GraphQuery>): Promise<{
     optimizedQuery: GraphQuery;
     optimizations: Array<{
-      type: "cost_reduction" | "performance_improvement" | "accuracy_enhancement";
+      type:
+        | "cost_reduction"
+        | "performance_improvement"
+        | "accuracy_enhancement";
       description: string;
       impact: number;
       applied: boolean;
@@ -699,7 +742,11 @@ export class GraphQueryService {
       return data.result;
     } catch (error) {
       console.error("Query optimization failed:", error);
-      throw new Error(`Failed to optimize query: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to optimize query: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 
@@ -710,21 +757,26 @@ export class GraphQueryService {
   async suggestQueries(
     partialQuery: string,
     context?: QueryContext
-  ): Promise<Array<{
-    query: string;
-    confidence: number;
-    type: "completion" | "expansion" | "refinement" | "alternative";
-    description: string;
-    estimatedComplexity: "low" | "medium" | "high";
-  }>> {
+  ): Promise<
+    Array<{
+      query: string;
+      confidence: number;
+      type: "completion" | "expansion" | "refinement" | "alternative";
+      description: string;
+      estimatedComplexity: "low" | "medium" | "high";
+    }>
+  > {
     try {
-      const response = await fetch(`${this.baseUrl}/suggest/${encodeURIComponent(partialQuery)}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ context }),
-      });
+      const response = await fetch(
+        `${this.baseUrl}/suggest/${encodeURIComponent(partialQuery)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ context }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Query suggestions failed: ${response.statusText}`);
@@ -746,11 +798,14 @@ export class GraphQueryService {
     status: string;
     message: string;
     timestamp: string;
-    components: Record<string, {
-      status: string;
-      message: string;
-      lastCheck: string;
-    }>;
+    components: Record<
+      string,
+      {
+        status: string;
+        message: string;
+        lastCheck: string;
+      }
+    >;
   }> {
     try {
       const response = await fetch(`${this.baseUrl}/health`);
@@ -764,10 +819,10 @@ export class GraphQueryService {
     } catch (error) {
       console.error("Health check failed:", error);
       return {
-        status: 'error',
-        message: 'Graph Query Engine unavailable',
+        status: "error",
+        message: "Graph Query Engine unavailable",
         timestamp: new Date().toISOString(),
-        components: {}
+        components: {},
       };
     }
   }
@@ -803,7 +858,11 @@ export class GraphQueryService {
       return data;
     } catch (error) {
       console.error("Status check failed:", error);
-      throw new Error(`Failed to get system status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to get system status: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 }

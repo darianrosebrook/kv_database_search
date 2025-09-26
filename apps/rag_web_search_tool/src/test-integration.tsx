@@ -4,7 +4,7 @@ import { apiService } from "./lib/api";
 
 export function TestIntegration() {
   const [query, setQuery] = useState("button component");
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,7 +93,7 @@ export function TestIntegration() {
           </div>
 
           <div className="space-y-3">
-            {results.results.map((result: any, index: number) => (
+            {results.results.map((result, index: number) => (
               <div key={result.id} className="border rounded p-4">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-medium">{result.meta.section}</h3>

@@ -56,7 +56,7 @@ async function multiModalSearchExample() {
     console.log(`   Score: ${(result.cosineSimilarity * 100).toFixed(1)}%`);
 
     // Access multi-modal metadata
-    const metadata = (result as any).metadata;
+    const metadata = result.metadata;
     if (metadata) {
       if (metadata.language) {
         console.log(`   Language: ${metadata.language}`);
@@ -219,7 +219,7 @@ export class RobustMultiModalSearch {
     this.searchService = searchService;
   }
 
-  async searchWithFallback(query: string, options: any = {}) {
+  async searchWithFallback(query: string, options = {}) {
     try {
       // Try multi-modal search first
       return await this.searchService.search(query, {
@@ -240,11 +240,7 @@ export class RobustMultiModalSearch {
     }
   }
 
-  async searchWithRetry(
-    query: string,
-    options: any = {},
-    maxRetries: number = 2
-  ) {
+  async searchWithRetry(query: string, options = {}, maxRetries: number = 2) {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -286,7 +282,7 @@ export class MonitoredMultiModalSearch {
     this.searchService = searchService;
   }
 
-  async searchWithMonitoring(query: string, options: any = {}) {
+  async searchWithMonitoring(query: string, options = {}) {
     const startTime = Date.now();
 
     try {

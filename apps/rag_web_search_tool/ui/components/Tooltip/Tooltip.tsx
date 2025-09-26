@@ -2,9 +2,9 @@
  * Tooltip - Non-interactive overlay for labels and descriptions
  * Complements Popover (which is for interactive content)
  */
-'use client';
-import { Placement, TriggerStrategy } from '@/types/ui';
-import { gsap } from 'gsap';
+"use client";
+import { Placement, TriggerStrategy } from "@/types/ui";
+import { gsap } from "gsap";
 import React, {
   forwardRef,
   useCallback,
@@ -12,9 +12,9 @@ import React, {
   useLayoutEffect,
   useRef,
   useState,
-} from 'react';
-import { createPortal } from 'react-dom';
-import styles from './Tooltip.module.scss';
+} from "react";
+import { createPortal } from "react-dom";
+import styles from "./Tooltip.module.scss";
 
 export interface TooltipProps {
   /**
@@ -56,11 +56,11 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
   (
     {
       content,
-      placement = 'auto',
-      trigger = 'hover',
+      placement = "auto",
+      trigger = "hover",
       delay = 500,
       disabled = false,
-      className = '',
+      className = "",
       children,
     },
     forwardedRef
@@ -85,23 +85,23 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
       let left = 0;
 
       switch (placement) {
-        case 'top':
+        case "top":
           top = triggerRect.top - tooltipRect.height - offset;
           left = triggerRect.left + (triggerRect.width - tooltipRect.width) / 2;
           break;
-        case 'bottom':
+        case "bottom":
           top = triggerRect.bottom + offset;
           left = triggerRect.left + (triggerRect.width - tooltipRect.width) / 2;
           break;
-        case 'left':
+        case "left":
           top = triggerRect.top + (triggerRect.height - tooltipRect.height) / 2;
           left = triggerRect.left - tooltipRect.width - offset;
           break;
-        case 'right':
+        case "right":
           top = triggerRect.top + (triggerRect.height - tooltipRect.height) / 2;
           left = triggerRect.right + offset;
           break;
-        case 'auto':
+        case "auto":
         default: {
           // Prefer top placement; flip to bottom if overflow
           let calculatedLeft =
@@ -148,11 +148,11 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
     }, []);
 
     const handleMouseEnter = useCallback(() => {
-      if (trigger === 'hover') showTooltip();
+      if (trigger === "hover") showTooltip();
     }, [trigger, showTooltip]);
 
     const handleMouseLeave = useCallback(() => {
-      if (trigger === 'hover') hideTooltip();
+      if (trigger === "hover") hideTooltip();
     }, [trigger, hideTooltip]);
 
     const handleFocus = useCallback(() => {
@@ -164,7 +164,7 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
     }, [hideTooltip]);
 
     const handleClick = useCallback(() => {
-      if (trigger === 'click') {
+      if (trigger === "click") {
         if (isVisible) {
           hideTooltip();
         } else {
@@ -183,15 +183,15 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
         updatePosition();
 
         // Show animation
-        tooltipElement.style.opacity = '0';
-        tooltipElement.style.transform = 'translateY(-4px) scale(0.95)';
+        tooltipElement.style.opacity = "0";
+        tooltipElement.style.transform = "translateY(-4px) scale(0.95)";
 
         animationRef.current = gsap.to(tooltipElement, {
           duration: 0.15,
           opacity: 1,
           y: 0,
           scale: 1,
-          ease: 'back.out(1.7)',
+          ease: "back.out(1.7)",
         });
       } else {
         // Hide animation
@@ -203,7 +203,7 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
           duration: 0.1,
           opacity: 0,
           scale: 0.95,
-          ease: 'power2.in',
+          ease: "power2.in",
         });
       }
 
@@ -220,12 +220,12 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
 
       const handleUpdate = () => updatePosition();
 
-      window.addEventListener('resize', handleUpdate);
-      window.addEventListener('scroll', handleUpdate);
+      window.addEventListener("resize", handleUpdate);
+      window.addEventListener("scroll", handleUpdate);
 
       return () => {
-        window.removeEventListener('resize', handleUpdate);
-        window.removeEventListener('scroll', handleUpdate);
+        window.removeEventListener("resize", handleUpdate);
+        window.removeEventListener("scroll", handleUpdate);
       };
     }, [isVisible, updatePosition]);
 
@@ -239,52 +239,49 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
     }, []);
 
     // Clone child with event handlers
-    const triggerElement = React.cloneElement(
-      children as React.ReactElement<any>,
-      {
-        ref: (node: HTMLElement | null) => {
-          triggerRef.current = node;
+    const triggerElement = React.cloneElement(children as React.ReactElement, {
+      ref: (node: HTMLElement | null) => {
+        triggerRef.current = node;
 
-          // Handle forwarded ref from child
-          const childRef = (children as any).ref;
-          if (typeof childRef === 'function') {
-            childRef(node);
-          } else if (childRef) {
-            childRef.current = node;
-          }
-        },
-        onMouseEnter: (e: React.MouseEvent) => {
-          (children as any).props?.onMouseEnter?.(e);
-          handleMouseEnter();
-        },
-        onMouseLeave: (e: React.MouseEvent) => {
-          (children as any).props?.onMouseLeave?.(e);
-          handleMouseLeave();
-        },
-        onFocus: (e: React.FocusEvent) => {
-          (children as any).props?.onFocus?.(e);
-          handleFocus();
-        },
-        onBlur: (e: React.FocusEvent) => {
-          (children as any).props?.onBlur?.(e);
-          handleBlur();
-        },
-        onClick: (e: React.MouseEvent) => {
-          (children as any).props?.onClick?.(e);
-          handleClick();
-        },
-        'aria-describedby': isVisible
-          ? tooltipId
-          : (children as any).props?.['aria-describedby'],
-      }
-    );
+        // Handle forwarded ref from child
+        const childRef = children.ref;
+        if (typeof childRef === "function") {
+          childRef(node);
+        } else if (childRef) {
+          childRef.current = node;
+        }
+      },
+      onMouseEnter: (e: React.MouseEvent) => {
+        children.props?.onMouseEnter?.(e);
+        handleMouseEnter();
+      },
+      onMouseLeave: (e: React.MouseEvent) => {
+        children.props?.onMouseLeave?.(e);
+        handleMouseLeave();
+      },
+      onFocus: (e: React.FocusEvent) => {
+        children.props?.onFocus?.(e);
+        handleFocus();
+      },
+      onBlur: (e: React.FocusEvent) => {
+        children.props?.onBlur?.(e);
+        handleBlur();
+      },
+      onClick: (e: React.MouseEvent) => {
+        children.props?.onClick?.(e);
+        handleClick();
+      },
+      "aria-describedby": isVisible
+        ? tooltipId
+        : children.props?.["aria-describedby"],
+    });
 
     const tooltipNode = isVisible && (
       <div
         ref={(node) => {
           tooltipRef.current = node;
           if (forwardedRef) {
-            if (typeof forwardedRef === 'function') {
+            if (typeof forwardedRef === "function") {
               forwardedRef(node);
             } else {
               forwardedRef.current = node;
@@ -295,7 +292,7 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
         role="tooltip"
         className={`${styles.tooltip} ${className}`}
         style={{
-          position: 'fixed',
+          position: "fixed",
           top: `${position.top}px`,
           left: `${position.left}px`,
           zIndex: 9999,
@@ -308,7 +305,7 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
     return (
       <>
         {triggerElement}
-        {typeof document !== 'undefined' && tooltipNode
+        {typeof document !== "undefined" && tooltipNode
           ? createPortal(tooltipNode, document.body)
           : tooltipNode}
       </>
@@ -316,6 +313,6 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
   }
 );
 
-Tooltip.displayName = 'Tooltip';
+Tooltip.displayName = "Tooltip";
 
 export default Tooltip;

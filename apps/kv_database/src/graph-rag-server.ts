@@ -5,7 +5,7 @@ import { Pool } from "pg";
 import {
   HybridSearchEngine,
   MultiHopReasoningEngine,
-  ResultRankingService,
+  ResultRankingEngine,
   KnowledgeGraph,
   // EntityExtractor, // Not used
   ProvenanceTracker,
@@ -14,10 +14,10 @@ import {
   GraphRagApiServer,
   // KnowledgeGraphManager, // Not implemented yet
 } from "./lib/knowledge-graph/index.js";
-import { EmbeddingService } from "./lib/embeddings.js";
+import { ObsidianEmbeddingService } from "./lib/embeddings.js";
 // import { DatabaseService } from "./lib/database.js"; // Not used
 
-const app = express();
+const app: express.Application = express();
 const port = process.env.GRAPH_RAG_PORT || 3002;
 
 // Middleware
@@ -36,14 +36,14 @@ const pool = new Pool({
 // Initialize services
 let hybridSearchEngine: HybridSearchEngine;
 let reasoningEngine: MultiHopReasoningEngine;
-let rankingService: ResultRankingService;
+let rankingService: ResultRankingEngine;
 let knowledgeGraphManager: KnowledgeGraph;
 // let entityExtractor: EntityExtractor; // Not used
 let provenanceTracker: ProvenanceTracker;
 let queryOptimizer: QueryOptimizer;
 let monitoringSystem: MonitoringSystem;
 let graphRagApiServer: GraphRagApiServer;
-let embeddingService: EmbeddingService;
+let embeddingService: ObsidianEmbeddingService;
 // let databaseService: DatabaseService; // Not used
 
 async function initializeServices() {
@@ -51,21 +51,20 @@ async function initializeServices() {
     console.log("🚀 Initializing Graph RAG services...");
 
     // Initialize core services
-    embeddingService = new EmbeddingService();
+    embeddingService = new ObsidianEmbeddingService({
+      model: "text-embedding-ada-002",
+      dimension: 1536,
+    });
     // databaseService = new DatabaseService(pool); // Not used
 
     // Initialize Graph RAG components
-    knowledgeGraphManager = new KnowledgeGraph();
+    knowledgeGraphManager = new KnowledgeGraph(pool, embeddingService);
     // entityExtractor = new EntityExtractor(); // Not used
-    hybridSearchEngine = new HybridSearchEngine(
-      pool,
-      embeddingService,
-      knowledgeGraphManager
-    );
-    reasoningEngine = new MultiHopReasoningEngine(knowledgeGraphManager);
-    rankingService = new ResultRankingService();
+    hybridSearchEngine = new HybridSearchEngine(pool, embeddingService, {});
+    reasoningEngine = new MultiHopReasoningEngine(pool);
+    rankingService = new ResultRankingEngine(pool);
     provenanceTracker = new ProvenanceTracker(pool);
-    queryOptimizer = new QueryOptimizer(pool, knowledgeGraphManager);
+    queryOptimizer = new QueryOptimizer(pool);
     monitoringSystem = new MonitoringSystem(pool);
 
     // Initialize Graph RAG API server
@@ -293,7 +292,7 @@ app.use(
     error: Error | unknown,
     req: express.Request,
     res: express.Response,
-    _callback: express.NextFunction
+    _: Parameters<Parameters<typeof app.use>[0]>[3]
   ) => {
     console.error("Unhandled error:", error);
     res.status(500).json({

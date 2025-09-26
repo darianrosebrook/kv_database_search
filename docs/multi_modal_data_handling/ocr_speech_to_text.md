@@ -494,7 +494,7 @@ class MultiModalMonitor {
     fileType: string,
     processingType: string,
     error: Error,
-    context: any
+    context
   ): void {
     this.logger.error('Multi-modal processing error', {
       fileType,

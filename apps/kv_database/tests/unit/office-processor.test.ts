@@ -39,8 +39,8 @@ import * as fs from "fs";
 
 describe("OfficeProcessor", () => {
   let processor: OfficeProcessor;
-  let mockMammoth: any;
-  let mockXLSX: any;
+  let mockMammoth;
+  let mockXLSX;
 
   beforeEach(() => {
     processor = new OfficeProcessor();
@@ -202,7 +202,7 @@ describe("OfficeProcessor", () => {
   describe("extractTextFromFile", () => {
     it("should read file and process Office document", async () => {
       // Mock fs.readFileSync
-      (fs.readFileSync as any).mockReturnValue(Buffer.from("file content"));
+      fs.readFileSync.mockReturnValue(Buffer.from("file content"));
 
       mockMammoth.mockResolvedValue({
         value: "File content extracted",
@@ -218,7 +218,7 @@ describe("OfficeProcessor", () => {
     });
 
     it("should handle file read errors", async () => {
-      (fs.readFileSync as any).mockImplementation(() => {
+      fs.readFileSync.mockImplementation(() => {
         throw new Error("File not found");
       });
 

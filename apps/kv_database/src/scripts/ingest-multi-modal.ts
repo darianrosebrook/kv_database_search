@@ -40,7 +40,7 @@ Examples:
 
   // Parse arguments
   const filePaths: string[] = [];
-  const options: any = {
+  const options = {
     batchSize: 5,
     rateLimitMs: 200,
     skipExisting: true,

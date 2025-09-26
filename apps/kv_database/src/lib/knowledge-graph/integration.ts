@@ -43,7 +43,7 @@ export class KnowledgeGraphIntegration {
     };
 
     // Get the underlying pool from the database
-    const pool = (this.database as any).pool as Pool;
+    const pool = this.database.pool as Pool;
 
     this.knowledgeGraphPipeline = new KnowledgeGraphPipeline(
       pool,
@@ -72,7 +72,7 @@ export class KnowledgeGraphIntegration {
 
     originalPipeline.ingestFiles = async (
       filePaths: string[],
-      options: any = {}
+      options = {}
     ) => {
       console.log("🔗 Enhanced ingestion with knowledge graph integration");
 
@@ -292,11 +292,11 @@ export class KnowledgeGraphIntegration {
   /**
    * Update configuration
    */
-  updateConfig(newConfig: Partial<KnowledgeGraphIntegrationConfig>): void {
-    this.config = { ...this.config, ...newConfig };
+  updateConfig(configUpdates: Partial<KnowledgeGraphIntegrationConfig>): void {
+    this.config = { ...this.config, ...configUpdates };
 
     // Restart batch processing if interval changed
-    if (newConfig.batchProcessingInterval && this.batchProcessingTimer) {
+    if (configUpdates.batchProcessingInterval && this.batchProcessingTimer) {
       this.stopBatchProcessing();
       if (this.config.enableRealTimeProcessing) {
         this.startBatchProcessing();
@@ -365,7 +365,7 @@ export async function bootstrapKnowledgeGraphFromExistingData(
 }> {
   console.log("🚀 Bootstrapping knowledge graph from existing data");
 
-  const pool = (database as any).pool as Pool;
+  const pool = database.pool as Pool;
   const pipeline = new KnowledgeGraphPipeline(pool, embeddings, {
     processing: {
       batchSize: options.batchSize || 20,

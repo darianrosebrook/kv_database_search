@@ -17,6 +17,8 @@
     "types": ["node"],
     "downlevelIteration": true,
     "allowImportingTsExtensions": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "noEmit": true
   },
   "include": ["apps/kv_database/src/**/*", "apps/tools/**/*"],

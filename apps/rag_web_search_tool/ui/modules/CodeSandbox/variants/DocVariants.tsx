@@ -1,11 +1,11 @@
-import * as React from 'react';
-import { CodePreview } from '../primitives/CodePreview';
-import { CodeWorkbench } from '../primitives/CodeWorkbench';
-import { ErrorBoundary } from '../primitives/ErrorBoundary';
-import { PropControls } from '../primitives/PropControls';
-import { PropsBridge } from '../primitives/PropsBridge';
-import { VariantMatrix } from '../primitives/VariantMatrix';
-import type { ControlDef, VariantGrid, VirtualProject } from '../types';
+import * as React from "react";
+import { CodePreview } from "../primitives/CodePreview";
+import { CodeWorkbench } from "../primitives/CodeWorkbench";
+import { ErrorBoundary } from "../primitives/ErrorBoundary";
+import { PropControls } from "../primitives/PropControls";
+import { PropsBridge } from "../primitives/PropsBridge";
+import { VariantMatrix } from "../primitives/VariantMatrix";
+import type { ControlDef, VariantGrid, VirtualProject } from "../types";
 
 export type DocVariantsProps = {
   project: VirtualProject;
@@ -14,7 +14,7 @@ export type DocVariantsProps = {
   grid: VariantGrid;
   showCodeForSelection?: boolean;
   linkSelectionToURL?: boolean;
-  onSelectionChange?: (props: Record<string, any>) => void;
+  onSelectionChange?: (props: Record<string, unknown>) => void;
   height?: number | string;
 };
 
@@ -23,13 +23,13 @@ export function DocVariants({
   controls,
   grid,
   onSelectionChange,
-  height = '70dvh',
+  height = "70dvh",
   linkSelectionToURL,
 }: DocVariantsProps) {
   const [values, setValues] = React.useState<Record<string, any>>({});
   const timeoutRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
 
-  const handleChange = (next: Record<string, any>) => {
+  const handleChange = (next: Record<string, unknown>) => {
     setValues(next);
     onSelectionChange?.(next);
   };
@@ -37,9 +37,9 @@ export function DocVariants({
   // Initialize from URL query if enabled
   React.useEffect(() => {
     if (!linkSelectionToURL) return;
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    const init: Record<string, any> = {};
+    const init: Record<string, unknown> = {};
     init[grid.rows.id] =
       params.get(grid.rows.id) ?? grid.rows.defaultValue ?? grid.rows.values[0];
     if (grid.cols) {
@@ -54,7 +54,7 @@ export function DocVariants({
   // Reflect selection in URL if enabled (debounced)
   React.useEffect(() => {
     if (!linkSelectionToURL) return;
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     // Clear existing timeout
     if (timeoutRef.current) {
@@ -81,11 +81,13 @@ export function DocVariants({
       }
 
       const queryString = params.toString();
-      const next = `${window.location.pathname}${queryString ? `?${queryString}` : ''}${window.location.hash}`;
+      const next = `${window.location.pathname}${
+        queryString ? `?${queryString}` : ""
+      }${window.location.hash}`;
 
       // Only update if different to avoid unnecessary history entries
       if (next !== window.location.href) {
-        window.history.replaceState(null, '', next);
+        window.history.replaceState(null, "", next);
       }
     }, 150); // 150ms debounce
 
@@ -99,7 +101,7 @@ export function DocVariants({
 
   // Template: render preview using the current props (inline preview only for MVP)
   const template = React.useCallback(
-    (propsForTile: Record<string, any>) => (
+    (propsForTile: Record<string, unknown>) => (
       <CodeWorkbench project={project} engine="sandpack" height="40dvh">
         <PropsBridge values={{ ...values, ...propsForTile }} />
         <CodePreview height="100%" />
@@ -117,12 +119,12 @@ export function DocVariants({
     <ErrorBoundary
       resetKeys={[projectKey, controlsKey, gridKey]}
       onError={(error, errorInfo) => {
-        console.error('DocVariants Error:', error, errorInfo);
+        console.error("DocVariants Error:", error, errorInfo);
         onSelectionChange?.({ error: error.message });
       }}
     >
       <div
-        style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 16 }}
+        style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 16 }}
       >
         <div>
           <PropControls

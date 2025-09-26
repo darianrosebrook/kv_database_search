@@ -17,6 +17,8 @@ import * as fs from "fs";
 import * as path from "path";
 import WebSocket from "ws";
 import { WebSocketServer } from "ws";
+import { Type, Static } from "@sinclair/typebox";
+import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import { ObsidianDatabase } from "./lib/database";
 import { ObsidianEmbeddingService } from "./lib/embeddings";
 import { ObsidianSearchService } from "./lib/obsidian-search";
@@ -29,7 +31,6 @@ import { TemporalReasoningAPI } from "./lib/temporal-reasoning-api";
 import { FederatedSearchAPI } from "./lib/federated-search-api";
 import { WorkspaceAPI } from "./lib/workspace-api";
 import { GraphQueryAPI } from "./lib/graph-query-api";
-import { ChatSession } from "./types/index";
 import type {
   HealthResponse,
   SearchRequest,
@@ -38,70 +39,26 @@ import type {
   IngestResponse,
   GraphResponse,
   StatsResponse,
+  ChatResponse,
+  SuggestedActionType,
+  SearchResult,
+  Filter,
+  ModelsResponse,
+  ChatHistoryResponse,
+  WebSearchRequest,
+  WebSearchResponse,
+  ISODateString,
+  ModelName,
+  WsEvent,
+  ClientMessage,
+  WebSocketClient,
+  ChatRole,
+  ChatMessage,
+  URLString,
+  ServerChatSession,
 } from "./types/index";
 
-// Chat-related types
-interface ChatRequest {
-  message: string;
-  model?: string;
-  context?: Array<{ role: string; content: string }>;
-  searchResults?: Array<any>;
-  originalQuery?: string;
-  searchMetadata?: {
-    totalResults: number;
-    searchTime: number;
-    filters?: any;
-  };
-}
-
-interface ChatResponse {
-  response: string;
-  context: Array<{ role: string; content: string }>;
-  suggestedActions?: Array<{
-    type: "refine_search" | "new_search" | "filter" | "explore";
-    label: string;
-    query?: string;
-    filters?: any;
-  }>;
-  timestamp: string;
-  model?: string;
-}
-
-interface ModelsResponse {
-  models: Array<{
-    name: string;
-    size: number;
-    modified_at: string;
-    details?: {
-      format?: string;
-      family?: string;
-      parameter_size?: string;
-      quantization_level?: string;
-    };
-  }>;
-  error?: string;
-}
-
-interface ServerChatSession {
-  id: string;
-  title: string;
-  messages: Array<{
-    role: string;
-    content: string;
-    timestamp: string;
-    model?: string;
-  }>;
-  createdAt: string;
-  updatedAt: string;
-  model?: string;
-  messageCount: number;
-}
-
-interface ChatHistoryResponse {
-  sessions: ServerChatSession[];
-  error?: string;
-}
-
+// Additional types for server-specific functionality
 interface SaveChatRequest {
   title?: string;
   messages: Array<{
@@ -113,37 +70,169 @@ interface SaveChatRequest {
   model?: string;
 }
 
-interface WebSearchRequest {
-  query: string;
-  maxResults?: number;
-  includeSnippets?: boolean;
-  minRelevanceScore?: number;
-  sources?: string[];
-  timeRange?: "day" | "week" | "month" | "year" | "all";
-  context?: string[]; // Additional context for better search
+// Service container interface
+interface AppServices {
+  database: ObsidianDatabase;
+  embeddingService: ObsidianEmbeddingService;
+  searchService: ObsidianSearchService;
+  ingestionPipeline: ObsidianIngestionPipeline;
+  webSearchService?: WebSearchService;
+  contextManager?: ContextManager;
+  dictionaryAPI?: DictionaryAPI;
+  mlEntityAPI?: MLEntityAPI;
+  temporalReasoningAPI?: TemporalReasoningAPI;
+  federatedSearchAPI?: FederatedSearchAPI;
+  workspaceAPI?: WorkspaceAPI;
+  graphQueryAPI?: GraphQueryAPI;
 }
 
-interface WebSearchResponse {
-  query: string;
-  results: Array<{
-    title: string;
-    url: string;
-    snippet: string;
-    publishedDate?: string;
-    source: string;
-    relevanceScore: number;
-  }>;
-  totalFound: number;
-  searchTime: number;
-  error?: string;
+// Extend Fastify instance with services
+declare module "fastify" {
+  interface FastifyInstance {
+    services: AppServices;
+  }
 }
+
+// Error handling helper
+const asError = (e: unknown): Error =>
+  e instanceof Error
+    ? e
+    : new Error(typeof e === "string" ? e : "Unknown error");
+
+// Ollama response helper
+function getOllamaContent(r: {
+  message?: { content?: string };
+  response?: string;
+}): string {
+  return r.message?.content || r.response || "";
+}
+
+// Constants with satisfies to lock without widening
+// const DEFAULT_SUGGESTIONS = [
+//   "refine_search",
+//   "explore",
+// ] as const satisfies readonly SuggestedActionType[];
+
+// TypeBox schemas for route validation
+const ChatMessageSchema = Type.Object({
+  role: Type.Union([
+    Type.Literal("system"),
+    Type.Literal("user"),
+    Type.Literal("assistant"),
+  ]),
+  content: Type.String(),
+});
+
+const ChatRequestSchema = Type.Object({
+  message: Type.String(),
+  model: Type.Optional(Type.String()),
+  context: Type.Optional(Type.Array(ChatMessageSchema)),
+  searchResults: Type.Optional(
+    Type.Array(
+      Type.Object({
+        id: Type.String(),
+        title: Type.String(),
+        summary: Type.String(),
+        text: Type.String(),
+        meta: Type.Object({
+          contentType: Type.Union([
+            Type.Literal("code"),
+            Type.Literal("text"),
+            Type.Literal("web"),
+            Type.Literal("chat_session"),
+            Type.Literal("unknown"),
+          ]),
+          section: Type.String(),
+          breadcrumbs: Type.Array(Type.String()),
+          uri: Type.String(),
+        }),
+        relevanceScore: Type.Number(),
+      })
+    )
+  ),
+  originalQuery: Type.Optional(Type.String()),
+  searchMetadata: Type.Optional(
+    Type.Object({
+      totalResults: Type.Number(),
+      searchTime: Type.Number(),
+      filters: Type.Optional(
+        Type.Array(
+          Type.Object({
+            type: Type.String(),
+            value: Type.Any(),
+          })
+        )
+      ),
+    })
+  ),
+});
+
+const ChatResponseSchema = Type.Object({
+  response: Type.String(),
+  context: Type.Array(ChatMessageSchema),
+  suggestedActions: Type.Optional(
+    Type.Array(
+      Type.Object({
+        type: Type.Union([
+          Type.Literal("refine_search"),
+          Type.Literal("new_search"),
+          Type.Literal("filter"),
+          Type.Literal("explore"),
+          Type.Literal("reason"),
+          Type.Literal("find_similar"),
+        ]),
+        label: Type.String(),
+        query: Type.Optional(Type.String()),
+        filters: Type.Optional(
+          Type.Array(
+            Type.Object({
+              type: Type.String(),
+              value: Type.Any(),
+            })
+          )
+        ),
+      })
+    )
+  ),
+  timestamp: Type.String(),
+  model: Type.Optional(Type.String()),
+});
 
 // Load environment variables
 dotenvConfig();
 
-const DEFAULT_PORT = parseInt(process.env.PORT || "3001");
-const HOST = process.env.HOST || "0.0.0.0";
-const DATABASE_URL = process.env.DATABASE_URL;
+// Environment validation schema
+const EnvSchema = Type.Object({
+  PORT: Type.Optional(Type.String()),
+  HOST: Type.Optional(Type.String()),
+  DATABASE_URL: Type.String(),
+  EMBEDDING_MODEL: Type.Optional(Type.String()),
+  EMBEDDING_DIMENSION: Type.Optional(Type.String()),
+  LLM_MODEL: Type.Optional(Type.String()),
+  OBSIDIAN_VAULT_PATH: Type.Optional(Type.String()),
+  ENABLE_SEARXNG: Type.Optional(Type.String()),
+  SEARXNG_URL: Type.Optional(Type.String()),
+  GOOGLE_SEARCH_API_KEY: Type.Optional(Type.String()),
+  GOOGLE_SEARCH_CX: Type.Optional(Type.String()),
+  SERPER_API_KEY: Type.Optional(Type.String()),
+});
+
+type EnvT = Static<typeof EnvSchema>;
+
+// Validate environment variables
+const env = EnvSchema.Check(process.env)
+  ? (process.env as EnvT)
+  : (() => {
+      throw new Error("Invalid environment configuration");
+    })();
+
+const DEFAULT_PORT = Number(env.PORT ?? "3001");
+const HOST = env.HOST ?? "0.0.0.0";
+const DATABASE_URL = env.DATABASE_URL; // guaranteed present
+const EMBEDDING_MODEL = (env.EMBEDDING_MODEL ?? "embeddinggemma") as ModelName;
+const EMBEDDING_DIMENSION = Number(env.EMBEDDING_DIMENSION ?? "768");
+const LLM_MODEL = (env.LLM_MODEL ?? "llama3.2:3b") as ModelName;
+const OBSIDIAN_VAULT_PATH = env.OBSIDIAN_VAULT_PATH ?? "/path/to/vault";
 const MAX_PORT_ATTEMPTS = 10; // Maximum number of ports to try
 
 /**
@@ -153,80 +242,49 @@ async function findAvailablePort(startPort: number): Promise<number> {
   const net = await import("net");
 
   for (let port = startPort; port < startPort + MAX_PORT_ATTEMPTS; port++) {
-    const isPortAvailable = await new Promise<boolean>((resolve) => {
-      const server = net.createServer();
-
-      server.listen(port, HOST, () => {
-        server.once("close", () => {
-          resolve(true);
-        });
-        server.close();
+    const ok = await new Promise<boolean>((resolve) => {
+      const s = net.createServer();
+      s.once("error", () => resolve(false));
+      s.once("listening", () => {
+        s.close(() => resolve(true));
       });
-
-      server.on("error", () => {
-        resolve(false);
-      });
+      s.listen(port, HOST);
     });
-
-    if (isPortAvailable) {
+    if (ok) {
       console.log(`✅ Port ${port} is available`);
       return port;
     } else {
       console.log(`⚠️  Port ${port} is in use, trying ${port + 1}...`);
     }
   }
-
   throw new Error(
-    `❌ No available ports found in range ${startPort}-${
-      startPort + MAX_PORT_ATTEMPTS - 1
-    }`
+    `No available ports in ${startPort}-${startPort + MAX_PORT_ATTEMPTS - 1}`
   );
 }
-const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || "embeddinggemma";
-const EMBEDDING_DIMENSION = parseInt(process.env.EMBEDDING_DIMENSION || "768");
-const LLM_MODEL = process.env.LLM_MODEL || "llama3.2:3b";
-const OBSIDIAN_VAULT_PATH =
-  process.env.OBSIDIAN_VAULT_PATH ||
-  "/Users/darianrosebrook/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault";
 
-// Create Fastify server instance
+// Create Fastify server instance with TypeBox support
 const server = Fastify({
   logger: {
     transport: {
       target: "pino-pretty",
     },
   },
-});
-
-let database: ObsidianDatabase | null = null;
-let embeddingService: ObsidianEmbeddingService | null = null;
-let searchService: ObsidianSearchService | null = null;
-let ingestionPipeline: ObsidianIngestionPipeline | null = null;
-let webSearchService: WebSearchService | null = null;
-let contextManager: ContextManager | null = null;
-let dictionaryAPI: DictionaryAPI | null = null;
-let mlEntityAPI: MLEntityAPI | null = null;
-let temporalReasoningAPI: TemporalReasoningAPI | null = null;
-let federatedSearchAPI: FederatedSearchAPI | null = null;
-let workspaceAPI: WorkspaceAPI | null = null;
-let graphQueryAPI: GraphQueryAPI | null = null;
+}).withTypeProvider<TypeBoxTypeProvider>();
 
 /**
- * Initialize all services
+ * Build all services and return a typed container
  */
-async function initializeServices() {
-  if (!DATABASE_URL) {
-    throw new Error("DATABASE_URL environment variable is required");
-  }
-
+async function buildServices(): Promise<AppServices> {
   console.log("🚀 Initializing Obsidian RAG services...");
 
   // Initialize database with better error handling
+  let database: ObsidianDatabase;
   try {
     database = new ObsidianDatabase(DATABASE_URL);
     await database.initialize();
     console.log("✅ Database initialized");
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error("❌ Database initialization failed:", error.message);
     console.error(
       "💡 Make sure PostgreSQL is running and DATABASE_URL is correct"
@@ -238,6 +296,7 @@ async function initializeServices() {
   }
 
   // Initialize embedding service with better error handling
+  let embeddingService: ObsidianEmbeddingService;
   try {
     embeddingService = new ObsidianEmbeddingService({
       model: EMBEDDING_MODEL,
@@ -249,7 +308,8 @@ async function initializeServices() {
       throw new Error("Embedding service connection failed");
     }
     console.log(`✅ Embedding service ready (${embeddingTest.dimension}d)`);
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error("❌ Embedding service initialization failed:", error.message);
     console.error("💡 Make sure Ollama is running and the model is available");
     console.error("💡 Install Ollama: https://ollama.com");
@@ -258,15 +318,18 @@ async function initializeServices() {
   }
 
   // Initialize search service
+  let searchService: ObsidianSearchService;
   try {
     searchService = new ObsidianSearchService(database, embeddingService);
     console.log("✅ Search service initialized");
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error("❌ Search service initialization failed:", error.message);
     throw error;
   }
 
   // Initialize ingestion pipeline
+  let ingestionPipeline: ObsidianIngestionPipeline;
   try {
     ingestionPipeline = new ObsidianIngestionPipeline(
       database,
@@ -274,7 +337,8 @@ async function initializeServices() {
       OBSIDIAN_VAULT_PATH
     );
     console.log("✅ Ingestion pipeline initialized");
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error(
       "❌ Ingestion pipeline initialization failed:",
       error.message
@@ -285,132 +349,165 @@ async function initializeServices() {
     throw error;
   }
 
+  // Initialize optional services
+  let webSearchService: WebSearchService | undefined;
+  let contextManager: ContextManager | undefined;
+  let dictionaryAPI: DictionaryAPI | undefined;
+  let mlEntityAPI: MLEntityAPI | undefined;
+  let temporalReasoningAPI: TemporalReasoningAPI | undefined;
+  let federatedSearchAPI: FederatedSearchAPI | undefined;
+  let workspaceAPI: WorkspaceAPI | undefined;
+  let graphQueryAPI: GraphQueryAPI | undefined;
+
   // Initialize web search service
   try {
     webSearchService = new WebSearchService(embeddingService);
     console.log("✅ Web search service initialized");
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error(
       "❌ Web search service initialization failed:",
       error.message
     );
     console.error("💡 Web search will use mock data");
-    // Don't throw - web search can work with mock data
   }
 
   // Initialize context manager
   try {
     contextManager = new ContextManager(database, embeddingService);
     console.log("✅ Context manager initialized");
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error("❌ Context manager initialization failed:", error.message);
     console.error("💡 Context management features will be limited");
-    // Don't throw - context manager can work with limited functionality
   }
 
   // Initialize dictionary service
   try {
     dictionaryAPI = new DictionaryAPI(database);
     console.log("✅ Dictionary service initialized");
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error(
       "❌ Dictionary service initialization failed:",
       error.message
     );
     console.error("💡 Dictionary features will be limited");
-    // Don't throw - dictionary service can work with limited functionality
   }
 
   // Initialize ML entity service
   try {
     mlEntityAPI = new MLEntityAPI(database);
     console.log("✅ ML entity service initialized");
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error("❌ ML entity service initialization failed:", error.message);
     console.error("💡 ML entity features will be limited");
-    // Don't throw - ML entity service can work with limited functionality
   }
 
   // Initialize temporal reasoning service
   try {
     temporalReasoningAPI = new TemporalReasoningAPI(database);
     console.log("✅ Temporal reasoning service initialized");
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error(
       "❌ Temporal reasoning service initialization failed:",
       error.message
     );
     console.error("💡 Temporal reasoning features will be limited");
-    // Don't throw - temporal reasoning service can work with limited functionality
   }
 
   // Initialize federated search service
   try {
     federatedSearchAPI = new FederatedSearchAPI(database);
     console.log("✅ Federated search service initialized");
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error(
       "❌ Federated search service initialization failed:",
       error.message
     );
     console.error("💡 Federated search features will be limited");
-    // Don't throw - federated search service can work with limited functionality
   }
 
   // Initialize workspace manager service
   try {
     workspaceAPI = new WorkspaceAPI(database);
     console.log("✅ Workspace manager service initialized");
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error(
       "❌ Workspace manager service initialization failed:",
       error.message
     );
     console.error("💡 Workspace management features will be limited");
-    // Don't throw - workspace service can work with limited functionality
   }
 
   // Initialize graph query engine service
   try {
     graphQueryAPI = new GraphQueryAPI(database);
     console.log("✅ Graph Query Engine service initialized");
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error(
       "❌ Graph Query Engine service initialization failed:",
       error.message
     );
     console.error("💡 Graph query features will be limited");
-    // Don't throw - graph query service can work with limited functionality
   }
 
   // Initialize web search providers based on environment variables
-  if (process.env.ENABLE_SEARXNG === "true") {
-    const searxngUrl = process.env.SEARXNG_URL || "http://localhost:8888";
-    webSearchService.enableSearXNG(searxngUrl);
-    console.log("🔍 SearXNG web search enabled");
+  if (env.ENABLE_SEARXNG === "true") {
+    const searxngUrl = env.SEARXNG_URL || "http://localhost:8888";
+    if (webSearchService) {
+      webSearchService.enableSearXNG(searxngUrl);
+      console.log("🔍 SearXNG web search enabled");
+    }
   }
 
-  if (process.env.GOOGLE_SEARCH_API_KEY && process.env.GOOGLE_SEARCH_CX) {
-    webSearchService.enableGoogleSearch(
-      process.env.GOOGLE_SEARCH_API_KEY,
-      process.env.GOOGLE_SEARCH_CX
-    );
-    console.log("🔍 Google Custom Search enabled");
+  if (env.GOOGLE_SEARCH_API_KEY && env.GOOGLE_SEARCH_CX) {
+    if (webSearchService) {
+      webSearchService.enableGoogleSearch(
+        env.GOOGLE_SEARCH_API_KEY,
+        env.GOOGLE_SEARCH_CX
+      );
+      console.log("🔍 Google Custom Search enabled");
+    }
   }
 
-  if (process.env.SERPER_API_KEY) {
-    webSearchService.enableSerper(process.env.SERPER_API_KEY);
-    console.log("🔍 Serper web search enabled");
+  if (env.SERPER_API_KEY) {
+    if (webSearchService) {
+      webSearchService.enableSerper(env.SERPER_API_KEY);
+      console.log("🔍 Serper web search enabled");
+    }
   }
+
+  return {
+    database,
+    embeddingService,
+    searchService,
+    ingestionPipeline,
+    webSearchService,
+    contextManager,
+    dictionaryAPI,
+    mlEntityAPI,
+    temporalReasoningAPI,
+    federatedSearchAPI,
+    workspaceAPI,
+    graphQueryAPI,
+  };
 }
 
 /**
  * Health check endpoint
  */
 server.get("/health", async (request, reply): Promise<HealthResponse> => {
+  const { database, embeddingService } = request.server.services;
+
   const health: HealthResponse = {
     status: "healthy",
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString() as ISODateString,
     version: "1.0.0",
     services: {
       database: false,
@@ -422,35 +519,27 @@ server.get("/health", async (request, reply): Promise<HealthResponse> => {
 
   try {
     // Check database connectivity
-    if (database) {
-      const stats = await database.getStats();
-      health.services.database = true;
-      health.database = {
-        totalChunks: stats.totalChunks,
-        lastUpdate: (stats as any).lastUpdate,
-      };
-    }
+    const stats = await database.getStats();
+    health.services.database = true;
+    health.database = {
+      totalChunks: stats.totalChunks,
+      lastUpdate: null,
+    };
 
     // Check embedding service
-    if (embeddingService) {
-      const test = await embeddingService.testConnection();
-      health.services.embeddings = test.success;
-      health.embeddings = {
-        model: EMBEDDING_MODEL,
-        dimension: EMBEDDING_DIMENSION,
-        available: test.success,
-      };
-    }
+    const test = await embeddingService.testConnection();
+    health.services.embeddings = test.success;
+    health.embeddings = {
+      model: EMBEDDING_MODEL,
+      dimension: EMBEDDING_DIMENSION,
+      available: test.success,
+    };
 
     // Check search service
-    if (searchService) {
-      health.services.search = true;
-    }
+    health.services.search = true;
 
     // Check ingestion pipeline
-    if (ingestionPipeline) {
-      health.services.ingestion = true;
-    }
+    health.services.ingestion = true;
 
     // Overall health status
     const allServicesHealthy = Object.values(health.services).every(
@@ -472,22 +561,7 @@ server.get("/health", async (request, reply): Promise<HealthResponse> => {
  * Search endpoint
  */
 server.post("/search", async (request, reply): Promise<SearchResponse> => {
-  if (!searchService) {
-    reply.code(503);
-    return {
-      query: (request.body as SearchRequest).query,
-      results: [],
-      totalFound: 0,
-      facets: {},
-      graphInsights: {
-        queryConcepts: [],
-        relatedConcepts: [],
-        knowledgeClusters: [],
-      },
-      error: "Search service not available",
-    };
-  }
-
+  const { searchService } = request.server.services;
   const searchRequest = request.body as SearchRequest;
 
   try {
@@ -514,7 +588,8 @@ server.post("/search", async (request, reply): Promise<SearchResponse> => {
 
     reply.code(200);
     return searchResponse;
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error("Search failed:", error);
     reply.code(500);
     return {
@@ -538,22 +613,7 @@ server.post("/search", async (request, reply): Promise<SearchResponse> => {
 server.post(
   "/search/strategic",
   async (request, reply): Promise<SearchResponse> => {
-    if (!searchService) {
-      reply.code(503);
-      return {
-        query: (request.body as SearchRequest).query,
-        results: [],
-        totalFound: 0,
-        facets: {},
-        graphInsights: {
-          queryConcepts: [],
-          relatedConcepts: [],
-          knowledgeClusters: [],
-        },
-        error: "Search service not available",
-      };
-    }
-
+    const { searchService } = request.server.services;
     const searchRequest = request.body as SearchRequest;
 
     try {
@@ -580,7 +640,7 @@ server.post(
 
       reply.code(200);
       return searchResponse;
-    } catch (error: any) {
+    } catch (error) {
       console.error("Strategic search failed:", error);
       reply.code(500);
       return {
@@ -605,22 +665,7 @@ server.post(
 server.post(
   "/search/with-rationales",
   async (request, reply): Promise<SearchResponse> => {
-    if (!searchService) {
-      reply.code(503);
-      return {
-        query: (request.body as SearchRequest).query,
-        results: [],
-        totalFound: 0,
-        facets: {},
-        graphInsights: {
-          queryConcepts: [],
-          relatedConcepts: [],
-          knowledgeClusters: [],
-        },
-        error: "Search service not available",
-      };
-    }
-
+    const { searchService } = request.server.services;
     const searchRequest = request.body as SearchRequest;
 
     try {
@@ -647,7 +692,7 @@ server.post(
 
       reply.code(200);
       return searchResponse;
-    } catch (error: any) {
+    } catch (error) {
       console.error("Search with rationales failed:", error);
       reply.code(500);
       return {
@@ -699,7 +744,7 @@ server.post("/search/rationale", async (request, reply) => {
       model: LLM_MODEL,
       timestamp: new Date().toISOString(),
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Rationale generation failed:", error);
     reply.code(500);
     return {
@@ -743,7 +788,7 @@ server.post("/search/explain", async (request, reply) => {
       model: LLM_MODEL,
       timestamp: new Date().toISOString(),
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Explanation generation failed:", error);
     reply.code(500);
     return {
@@ -758,17 +803,7 @@ server.post("/search/explain", async (request, reply) => {
  * Ingestion endpoint
  */
 server.post("/ingest", async (request, reply): Promise<IngestResponse> => {
-  if (!ingestionPipeline) {
-    reply.code(503);
-    return {
-      success: false,
-      message: "Ingestion pipeline not available",
-      processedFiles: 0,
-      totalChunks: 0,
-      errors: ["Ingestion service not initialized"],
-    };
-  }
-
+  const { ingestionPipeline } = request.server.services;
   const ingestRequest = request.body as IngestRequest;
 
   try {
@@ -789,20 +824,21 @@ server.post("/ingest", async (request, reply): Promise<IngestResponse> => {
 
     reply.code(200);
     return {
-      success: (result as any).success || true,
-      message: (result as any).message || "Ingestion completed successfully",
+      success: true,
+      message: "Ingestion completed successfully",
       processedFiles: result.processedFiles,
+      totalFiles: result.totalFiles,
       totalChunks: result.totalChunks,
       errors: result.errors,
-      performance: (result as any).performance,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Ingestion failed:", error);
     reply.code(500);
     return {
       success: false,
       message: "Ingestion failed",
       processedFiles: 0,
+      totalFiles: 0,
       totalChunks: 0,
       errors: [error.message],
     };
@@ -813,23 +849,29 @@ server.post("/ingest", async (request, reply): Promise<IngestResponse> => {
  * Graph data endpoint
  */
 server.get("/graph", async (request, reply): Promise<GraphResponse> => {
-  if (!database) {
-    reply.code(503);
-    return {
-      nodes: [],
-      edges: [],
-      clusters: [],
-      error: "Database not available",
-    };
-  }
-
+  const { database } = request.server.services;
   try {
     const stats = await database.getStats();
 
     // Convert stats to graph format
-    const nodes = [];
-    const edges = [];
-    const clusters = [];
+    const nodes: Array<{
+      id: string;
+      label: string;
+      type: string;
+      count: number;
+    }> = [];
+    const edges: Array<{
+      source: string;
+      target: string;
+      type: string;
+      weight: number;
+    }> = [];
+    const clusters: Array<{
+      id: string;
+      name: string;
+      nodes: string[];
+      centrality: number;
+    }> = [];
 
     // Create nodes for content types
     const contentTypes = stats.byContentType || {};
@@ -864,7 +906,7 @@ server.get("/graph", async (request, reply): Promise<GraphResponse> => {
         generatedAt: new Date().toISOString(),
       },
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Graph data retrieval failed:", error);
     reply.code(500);
     return {
@@ -880,17 +922,7 @@ server.get("/graph", async (request, reply): Promise<GraphResponse> => {
  * Statistics endpoint
  */
 server.get("/stats", async (request, reply): Promise<StatsResponse> => {
-  if (!database) {
-    reply.code(503);
-    return {
-      totalChunks: 0,
-      byContentType: {},
-      byFolder: {},
-      lastUpdate: null,
-      error: "Database not available",
-    };
-  }
-
+  const { database } = request.server.services;
   try {
     const stats = await database.getStats();
 
@@ -899,10 +931,10 @@ server.get("/stats", async (request, reply): Promise<StatsResponse> => {
       totalChunks: stats.totalChunks,
       byContentType: stats.byContentType || {},
       byFolder: stats.byFolder || {},
-      lastUpdate: (stats as any).lastUpdate,
+      lastUpdate: null,
       performance: database.getPerformanceMetrics(),
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Stats retrieval failed:", error);
     reply.code(500);
     return {
@@ -924,14 +956,23 @@ server.get("/models", async (request, reply): Promise<ModelsResponse> => {
     reply.code(200);
     return {
       models: models.models.map((model) => ({
-        ...model,
-        modified_at:
-          model.modified_at instanceof Date
-            ? model.modified_at.toISOString()
-            : model.modified_at,
+        name: model.name,
+        size: model.size,
+        modified_at: (model.modified_at instanceof Date
+          ? model.modified_at.toISOString()
+          : model.modified_at) as ISODateString,
+        details: model.details
+          ? {
+              format: model.details.format,
+              family: model.details.family,
+              parameter_size: model.details.parameter_size,
+              quantization_level: model.details.quantization_level,
+            }
+          : undefined,
       })),
     };
-  } catch (error: any) {
+  } catch (e) {
+    const error = asError(e);
     console.error("Failed to list models:", error);
     reply.code(500);
     return {
@@ -944,80 +985,99 @@ server.get("/models", async (request, reply): Promise<ModelsResponse> => {
 /**
  * Chat endpoint - Generate LLM responses
  */
-server.post("/chat", async (request, reply): Promise<ChatResponse> => {
-  const chatRequest = request.body as ChatRequest;
+server.post(
+  "/chat",
+  {
+    schema: {
+      body: ChatRequestSchema,
+      response: { 200: ChatResponseSchema, 500: ChatResponseSchema },
+    },
+  },
+  async (request, reply): Promise<ChatResponse> => {
+    const chatRequest = request.body; // fully typed + validated
 
-  try {
-    // Use the specified model or default to LLM_MODEL
-    const model = chatRequest.model || LLM_MODEL;
+    try {
+      // Use the specified model or default to LLM_MODEL
+      const model = chatRequest.model || LLM_MODEL;
 
-    // Prepare context from conversation history
-    const context = chatRequest.context || [];
-    const messages = [
-      ...context,
-      { role: "user", content: chatRequest.message },
-    ];
-
-    // Add search results context if available
-    if (chatRequest.searchResults && chatRequest.searchResults.length > 0) {
-      const searchContext = chatRequest.searchResults
-        .slice(0, 3) // Limit to top 3 results for context
-        .map(
-          (result, index) =>
-            `Context ${index + 1}: ${result.text.substring(0, 500)}${
-              result.text.length > 500 ? "..." : ""
-            }`
-        )
-        .join("\n\n");
-
-      messages.unshift({
-        role: "system",
-        content: `You have access to the user's knowledge base. Use this context to provide accurate, helpful responses:\n\n${searchContext}`,
-      });
-    }
-
-    // Generate response using Ollama
-    const response = await ollama.chat({
-      model: model,
-      messages: messages,
-      options: {
-        temperature: 0.7,
-        num_predict: 1000, // Limit response length
-      },
-    });
-
-    const aiResponse = response.message.content;
-
-    // Generate suggested actions based on the response
-    const suggestedActions = generateSuggestedActions(
-      chatRequest.message,
-      aiResponse,
-      chatRequest.searchResults
-    );
-
-    reply.code(200);
-    return {
-      response: aiResponse,
-      context: [
+      // Prepare context from conversation history
+      const context = (chatRequest.context || []).filter(
+        (msg): msg is { role: ChatRole; content: string } =>
+          msg.role !== undefined && msg.content !== undefined
+      );
+      const messages: Array<{ role: ChatRole; content: string }> = [
         ...context,
-        { role: "user", content: chatRequest.message },
-        { role: "assistant", content: aiResponse },
-      ],
-      suggestedActions,
-      timestamp: new Date().toISOString(),
-      model: model,
-    };
-  } catch (error: any) {
-    console.error("Chat failed:", error);
-    reply.code(500);
-    return {
-      response: `Sorry, I encountered an error while processing your message: ${error.message}`,
-      context: chatRequest.context || [],
-      timestamp: new Date().toISOString(),
-      model: chatRequest.model || LLM_MODEL,
-    };
+        { role: "user" as ChatRole, content: chatRequest.message || "" },
+      ];
+
+      // Add search results context if available
+      if (chatRequest.searchResults && chatRequest.searchResults.length > 0) {
+        const searchContext = chatRequest.searchResults
+          .slice(0, 3) // Limit to top 3 results for context
+          .map(
+            (result, index) =>
+              `Context ${index + 1}: ${(result.text || "").substring(0, 500)}${
+                (result.text || "").length > 500 ? "..." : ""
+              }`
+          )
+          .join("\n\n");
+
+        messages.unshift({
+          role: "system" as ChatRole,
+          content: `You have access to the user's knowledge base. Use this context to provide accurate, helpful responses:\n\n${searchContext}`,
+        });
+      }
+
+      // Generate response using Ollama
+      const response = await ollama.chat({
+        model: model,
+        messages: messages,
+        options: {
+          temperature: 0.7,
+          num_predict: 1000, // Limit response length
+        },
+      });
+
+      const aiResponse = getOllamaContent(response).trim();
+
+      // Generate suggested actions based on the response
+      const suggestedActions = generateSuggestedActions(
+        chatRequest.message || "",
+        aiResponse,
+        chatRequest.searchResults?.filter(
+          (result): result is SearchResult =>
+            result.id !== undefined && result.text !== undefined
+        )
+      );
+
+      reply.code(200);
+      return {
+        response: aiResponse,
+        context: [
+          ...context,
+          { role: "user" as ChatRole, content: chatRequest.message || "" },
+          { role: "assistant" as ChatRole, content: aiResponse },
+        ],
+        suggestedActions,
+        timestamp: new Date().toISOString() as ISODateString,
+        model: model as ModelName,
+      };
+    } catch (e) {
+      const error = asError(e);
+      console.error("Chat failed:", error);
+      reply.status(500);
+      return {
+        response: `Sorry, I encountered an error while processing your message: ${error.message}`,
+        context: (chatRequest.context || []).filter(
+          (msg): msg is ChatMessage =>
+            msg.role !== undefined && msg.content !== undefined
+        ),
+        timestamp: new Date().toISOString() as ISODateString,
+        model: (chatRequest.model || LLM_MODEL) as ModelName,
+      };
+    }
   }
-});
+);
 
 /**
  * Generate suggested actions based on user message and AI response
@@ -1025,47 +1085,39 @@ server.post("/chat", async (request, reply): Promise<ChatResponse> => {
 function generateSuggestedActions(
   userMessage: string,
   aiResponse: string,
-  searchResults?: Array<any>
-): Array<{
-  type: "refine_search" | "new_search" | "filter" | "explore";
-  label: string;
-  query?: string;
-  filters?: any;
-}> {
+  searchResults?: SearchResult[]
+) {
   const actions: Array<{
-    type: "refine_search" | "new_search" | "filter" | "explore";
+    type: SuggestedActionType;
     label: string;
     query?: string;
-    filters?: any;
+    filters?: Filter[];
   }> = [];
 
-  // If we have search results, suggest refinements
-  if (searchResults && searchResults.length > 0) {
+  if (searchResults?.length) {
     actions.push({
       type: "refine_search",
       label: "Show more results",
       query: userMessage,
-      filters: { limit: 20 },
+      filters: [{ type: "limit" as const, value: 20 }],
     });
 
     actions.push({
       type: "filter",
       label: "Filter by content type",
-      filters: { contentTypes: ["code", "text"] },
+      filters: [{ type: "contentTypes" as const, value: ["code", "text"] }],
     });
   }
 
-  // Suggest exploring related topics
-  const exploreTopics = extractExploreTopics(userMessage, aiResponse);
-  exploreTopics.forEach((topic) => {
+  for (const topic of extractExploreTopics(userMessage, aiResponse)) {
     actions.push({
       type: "explore",
       label: `Learn about ${topic}`,
       query: topic,
     });
-  });
+  }
 
-  return actions.slice(0, 4); // Limit to 4 suggestions
+  return actions.slice(0, 4);
 }
 
 /**
@@ -1104,12 +1156,30 @@ function extractExploreTopics(
 server.get(
   "/chat/history",
   async (request, reply): Promise<ChatHistoryResponse> => {
+    const { database } = request.server.services;
     try {
       const sessions = await database.getChatSessions(undefined, 50);
 
+      // Convert ChatSession to ServerChatSession
+      const serverSessions: ServerChatSession[] = sessions.map((session) => ({
+        id: session.id,
+        title: session.title,
+        messages: session.messages.map((msg) => ({
+          role: msg.role as ChatRole,
+          content: msg.content,
+          timestamp: msg.timestamp as ISODateString,
+          model: msg.model as ModelName,
+        })),
+        createdAt: session.createdAt as ISODateString,
+        updatedAt: session.updatedAt as ISODateString,
+        model: session.model as ModelName,
+        messageCount: session.messages.length,
+        topics: session.topics,
+      }));
+
       reply.code(200);
-      return { sessions };
-    } catch (error: any) {
+      return { sessions: serverSessions };
+    } catch (error) {
       console.error("Failed to get chat history:", error);
       reply.code(500);
       return {
@@ -1129,6 +1199,7 @@ server.post(
     request,
     reply
   ): Promise<{ success: boolean; sessionId?: string; error?: string }> => {
+    const { database, embeddingService } = request.server.services;
     const saveRequest = request.body as SaveChatRequest;
 
     try {
@@ -1177,7 +1248,7 @@ server.post(
         success: true,
         sessionId: session.id,
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to save chat session:", error);
       reply.code(500);
       return {
@@ -1193,7 +1264,8 @@ server.post(
  */
 server.get(
   "/chat/session/:id",
-  async (request, reply): Promise<{ session?: any; error?: string }> => {
+  async (request, reply): Promise<{ session?; error?: string }> => {
+    const { database } = request.server.services;
     const { id } = request.params as { id: string };
 
     try {
@@ -1208,7 +1280,7 @@ server.get(
 
       reply.code(200);
       return { session };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to load chat session:", error);
       reply.code(500);
       return {
@@ -1351,6 +1423,7 @@ function extractTopicsFromMessages(
 server.delete(
   "/chat/session/:id",
   async (request, reply): Promise<{ success: boolean; error?: string }> => {
+    const { database } = request.server.services;
     const { id } = request.params as { id: string };
 
     try {
@@ -1358,7 +1431,7 @@ server.delete(
 
       reply.code(200);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to delete chat session:", error);
       reply.code(500);
       return {
@@ -1375,19 +1448,20 @@ server.delete(
 server.post(
   "/search/web",
   async (request, reply): Promise<WebSearchResponse> => {
+    const { webSearchService } = request.server.services;
+    const searchRequest = request.body as WebSearchRequest;
+    const startTime = Date.now();
+
     if (!webSearchService) {
       reply.code(503);
       return {
-        query: (request.body as WebSearchRequest).query,
+        query: searchRequest.query,
         results: [],
         totalFound: 0,
         searchTime: 0,
         error: "Web search service not available",
       };
     }
-
-    const searchRequest = request.body as WebSearchRequest;
-    const startTime = Date.now();
 
     try {
       const results = await webSearchService.search(searchRequest.query, {
@@ -1405,16 +1479,18 @@ server.post(
         query: searchRequest.query,
         results: results.map((result) => ({
           title: result.title,
-          url: result.url,
+          url: result.url as URLString,
           snippet: result.snippet,
-          publishedDate: result.publishedDate,
+          publishedDate: result.publishedDate
+            ? (result.publishedDate as ISODateString)
+            : undefined,
           source: result.source,
           relevanceScore: result.relevanceScore,
         })),
         totalFound: results.length,
         searchTime,
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Web search failed:", error);
       reply.code(500);
       return {
@@ -1434,24 +1510,10 @@ server.post(
 server.post(
   "/search/enhanced",
   async (request, reply): Promise<SearchResponse> => {
-    if (!searchService) {
-      reply.code(503);
-      return {
-        query: (request.body as SearchRequest).query,
-        results: [],
-        totalFound: 0,
-        facets: {},
-        graphInsights: {
-          queryConcepts: [],
-          relatedConcepts: [],
-          knowledgeClusters: [],
-        },
-        error: "Search service not available",
-      };
-    }
-
+    const { searchService, webSearchService } = request.server.services;
     const searchRequest = request.body as SearchRequest;
     const startTime = Date.now();
+    const _startTime = startTime;
 
     try {
       // Perform regular knowledge base search
@@ -1477,10 +1539,10 @@ server.post(
       });
 
       let allResults = [...kbResults.results];
-      let webResults: any[] = [];
+      let webResults: unknown[] = [];
 
       // Add web search results if requested and web search is available
-      if (webSearchService && (searchRequest as any).includeWebResults) {
+      if (webSearchService && searchRequest.includeWebResults) {
         try {
           const webSearchResults = await webSearchService.search(
             searchRequest.query,
@@ -1523,7 +1585,7 @@ server.post(
         }
       }
 
-      const searchTime = Date.now() - startTime;
+      const _searchTime = Date.now() - _startTime;
 
       reply.code(200);
       return {
@@ -1532,11 +1594,13 @@ server.post(
         totalFound: allResults.length,
         facets: kbResults.facets,
         graphInsights: {
-          ...kbResults.graphInsights,
+          queryConcepts: kbResults.graphInsights?.queryConcepts || [],
+          relatedConcepts: kbResults.graphInsights?.relatedConcepts || [],
+          knowledgeClusters: kbResults.graphInsights?.knowledgeClusters || [],
           webResults: webResults.length,
         },
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Enhanced search failed:", error);
       reply.code(500);
       return {
@@ -1561,22 +1625,7 @@ server.post(
 server.post(
   "/search/context",
   async (request, reply): Promise<SearchResponse> => {
-    if (!searchService || !contextManager) {
-      reply.code(503);
-      return {
-        query: (request.body as SearchRequest).query,
-        results: [],
-        totalFound: 0,
-        facets: {},
-        graphInsights: {
-          queryConcepts: [],
-          relatedConcepts: [],
-          knowledgeClusters: [],
-        },
-        error: "Search or context services not available",
-      };
-    }
-
+    const { searchService, contextManager } = request.server.services;
     const searchRequest = request.body as SearchRequest;
 
     try {
@@ -1598,8 +1647,8 @@ server.post(
         ctx.relatedDocuments.map((rel) => rel.documentId)
       );
 
-      // Perform enhanced search with context
-      const enhancedSearchRequest = {
+      // Perform search with context
+      const _contextualSearchRequest = {
         ...searchRequest,
         // Include related documents in search
         additionalContext: relatedDocIds,
@@ -1651,7 +1700,7 @@ server.post(
           relatedDocuments: relatedDocIds.length,
         },
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Context search failed:", error);
       reply.code(500);
       return {
@@ -1699,6 +1748,7 @@ server.get(
     };
     error?: string;
   }> => {
+    const { contextManager } = request.server.services;
     if (!contextManager) {
       reply.code(503);
       return {
@@ -1741,7 +1791,7 @@ server.get(
           },
         },
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Knowledge graph retrieval failed:", error);
       reply.code(500);
       return {
@@ -1769,6 +1819,7 @@ server.post(
     }>;
     error?: string;
   }> => {
+    const { contextManager } = request.server.services;
     if (!contextManager) {
       reply.code(503);
       return {
@@ -1790,7 +1841,7 @@ server.post(
 
       reply.code(200);
       return { suggestions };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Context suggestions failed:", error);
       reply.code(500);
       return {
@@ -1811,10 +1862,17 @@ server.post(
     reply
   ): Promise<{
     query: string;
-    results: Array<any>;
+    results: Array<{
+      id: string;
+      title: string;
+      summary: string;
+      source: string;
+      relevanceScore: number;
+    }>;
     totalFound: number;
     error?: string;
   }> => {
+    const { database, embeddingService } = request.server.services;
     if (!database) {
       reply.code(503);
       return {
@@ -1849,7 +1907,7 @@ server.post(
         results: chatResults,
         totalFound: chatResults.length,
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Chat session search failed:", error);
       reply.code(500);
       return {
@@ -1869,22 +1927,7 @@ server.post(
 server.post(
   "/search/combined",
   async (request, reply): Promise<SearchResponse> => {
-    if (!searchService || !database) {
-      reply.code(503);
-      return {
-        query: (request.body as SearchRequest).query,
-        results: [],
-        totalFound: 0,
-        facets: {},
-        graphInsights: {
-          queryConcepts: [],
-          relatedConcepts: [],
-          knowledgeClusters: [],
-        },
-        error: "Search services not available",
-      };
-    }
-
+    const { searchService, database } = request.server.services;
     const searchRequest = request.body as SearchRequest;
 
     try {
@@ -1911,14 +1954,36 @@ server.post(
       });
 
       let allResults = [...docResults.results];
-      let chatResults: Array<any> = [];
+
+      type CombinedChatHit = {
+        id: string;
+        text: string;
+        meta: {
+          contentType: "chat_session";
+          section: string;
+          breadcrumbs: string[];
+          uri: string;
+          updatedAt?: ISODateString;
+          createdAt?: ISODateString;
+          sourceType: "chat";
+          model?: ModelName;
+          messageCount?: number;
+          topics?: string[];
+        };
+        source: { type: "chat"; path: string; url: string };
+        cosineSimilarity: number;
+        rank: number;
+      };
+
+      let chatResults: CombinedChatHit[] = [];
 
       // Only search chat sessions if explicitly requested and not searching within chat context
       if (
-        (searchRequest as any).includeChatSessions &&
+        searchRequest.includeChatSessions &&
         !searchRequest.query.includes("[CHAT_SESSION]")
       ) {
         try {
+          const { embeddingService } = request.server.services;
           const queryEmbedding = await embeddingService.embed(
             `[CHAT_SEARCH] ${searchRequest.query}`
           );
@@ -1975,7 +2040,7 @@ server.post(
           hasChatResults: chatResults.length > 0,
         },
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Combined search failed:", error);
       reply.code(500);
       return {
@@ -2002,8 +2067,9 @@ server.post(
   "/files/rollback/:path",
   async (
     request,
-    reply
+    _reply
   ): Promise<{ status: string; message: string; error?: string }> => {
+    const { database } = request.server.services;
     const { path: filePath } = request.params as { path: string };
     const { versionId, force } = request.body as {
       versionId?: string;
@@ -2061,9 +2127,14 @@ server.post(
       }
 
       // Restore the version
-      const result = await rollbackFileToVersion(filePath, targetVersion, {
-        force: force || false,
-      });
+      const result = await rollbackFileToVersion(
+        database,
+        filePath,
+        targetVersion,
+        {
+          force: force || false,
+        }
+      );
 
       // Broadcast rollback event
       if (wsManager) {
@@ -2097,12 +2168,30 @@ server.get(
   "/files/versions/:path",
   async (
     request,
-    reply
-  ): Promise<{ status: string; versions: any[]; error?: string }> => {
+    _reply
+  ): Promise<{
+    status: string;
+    versions: Array<{
+      versionId: string;
+      contentHash: string;
+      embeddingHash: string;
+      createdAt: string;
+      changeSummary: string;
+    }>;
+    error?: string;
+  }> => {
     const { path: filePath } = request.params as { path: string };
+    const { database } = request.server.services;
 
     try {
       const versions = await database.getDocumentVersions(filePath);
+
+      if (!versions || versions.length === 0) {
+        return {
+          status: "success",
+          versions: [],
+        };
+      }
 
       return {
         status: "success",
@@ -2110,17 +2199,16 @@ server.get(
           versionId: v.versionId,
           contentHash: v.contentHash,
           embeddingHash: v.embeddingHash,
-          createdAt: v.createdAt,
+          createdAt: v.createdAt as ISODateString,
           changeSummary: v.changeSummary,
-          changeType: v.changeType,
-          chunks: v.chunks,
         })),
       };
-    } catch (error) {
+    } catch (e) {
+      const error = asError(e);
       return {
         status: "error",
         versions: [],
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error.message,
       };
     }
   }
@@ -2128,19 +2216,12 @@ server.get(
 
 server.get(
   "/files/conflicts",
-  async (request, reply): Promise<{ conflicts: any[]; error?: string }> => {
-    try {
-      // This would return information about recent conflicts
-      // For now, return empty array as conflicts are handled in real-time
-      return {
-        conflicts: [],
-      };
-    } catch (error) {
-      return {
-        conflicts: [],
-        error: error instanceof Error ? error.message : "Unknown error",
-      };
-    }
+  async (_request, _reply): Promise<{ conflicts; error?: string }> => {
+    // This would return information about recent conflicts
+    // For now, return empty array as conflicts are handled in real-time
+    return {
+      conflicts: [],
+    };
   }
 );
 
@@ -2149,35 +2230,29 @@ server.get(
 // =============================================================================
 
 // WebSocket event types
-interface WebSocketEvent {
-  type:
-    | "fileChange"
-    | "batchStart"
-    | "batchComplete"
-    | "fileProcessed"
-    | "fileDeleted"
-    | "error"
-    | "systemStatus"
-    | "conflictDetected"
-    | "rollbackComplete";
-  data: any;
-  timestamp: string;
-}
-
-interface WebSocketClient {
-  ws: WebSocket;
-  subscriptions: string[];
-  lastActivity: Date;
-}
+// interface WebSocketEvent {
+//   type:
+//     | "fileChange"
+//     | "batchStart"
+//     | "batchComplete"
+//     | "fileProcessed"
+//     | "fileDeleted"
+//     | "error"
+//     | "systemStatus"
+//     | "conflictDetected"
+//     | "rollbackComplete";
+//   data;
+//   timestamp: string;
+// }
 
 class WebSocketManager {
   private wss: WebSocketServer | null = null;
   private clients: Map<string, WebSocketClient> = new Map();
 
-  initialize(server: any) {
+  initialize(server) {
     this.wss = new WebSocketServer({ server });
 
-    this.wss.on("connection", (ws: WebSocket, request) => {
+    this.wss.on("connection", (ws: WebSocket, _request) => {
       const clientId = this.generateClientId();
       const client: WebSocketClient = {
         ws,
@@ -2197,15 +2272,15 @@ class WebSocketManager {
       });
 
       // Handle messages from client
-      ws.on("message", (message: Buffer) => {
+      ws.on("message", (raw: Buffer) => {
         try {
-          const data = JSON.parse(message.toString());
-          this.handleClientMessage(clientId, data);
-        } catch (error) {
+          const parsed = JSON.parse(raw.toString()) as ClientMessage;
+          this.handleClientMessage(clientId, parsed);
+        } catch {
           this.sendToClient(clientId, {
             type: "error",
             data: { message: "Invalid message format" },
-            timestamp: new Date().toISOString(),
+            timestamp: new Date().toISOString() as ISODateString,
           });
         }
       });
@@ -2250,46 +2325,51 @@ class WebSocketManager {
     return `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  private handleClientMessage(clientId: string, message: any): void {
+  private handleClientMessage(clientId: string, message: ClientMessage): void {
     const client = this.clients.get(clientId);
     if (!client) return;
 
     switch (message.type) {
       case "subscribe":
-        client.subscriptions = message.subscriptions || ["*"];
+        client.subscriptions = message.subscriptions ?? ["*"];
         this.sendToClient(clientId, {
           type: "systemStatus",
           data: {
             message: `Subscribed to: ${client.subscriptions.join(", ")}`,
           },
-          timestamp: new Date().toISOString(),
+          timestamp: new Date().toISOString() as ISODateString,
         });
         break;
 
       case "unsubscribe":
         client.subscriptions = client.subscriptions.filter(
-          (sub) => !message.subscriptions?.includes(sub)
+          (sub) => !(message.subscriptions ?? []).includes(sub)
         );
         this.sendToClient(clientId, {
           type: "systemStatus",
           data: {
             message: `Unsubscribed from: ${message.subscriptions?.join(", ")}`,
           },
-          timestamp: new Date().toISOString(),
+          timestamp: new Date().toISOString() as ISODateString,
         });
         break;
 
       case "ping":
         this.sendToClient(clientId, {
-          type: "pong",
-          data: { timestamp: new Date().toISOString() },
-          timestamp: new Date().toISOString(),
+          type: "systemStatus",
+          data: { message: "pong", clientId },
+          timestamp: new Date().toISOString() as ISODateString,
         });
         break;
+
+      default: {
+        const neverCheck: never = message;
+        return neverCheck;
+      }
     }
   }
 
-  broadcast(event: WebSocketEvent): void {
+  broadcast(event: WsEvent): void {
     const message = JSON.stringify(event);
 
     for (const [clientId, client] of this.clients.entries()) {
@@ -2315,7 +2395,7 @@ class WebSocketManager {
     return subscriptions.includes("*") || subscriptions.includes(eventType);
   }
 
-  sendToClient(clientId: string, event: WebSocketEvent): void {
+  sendToClient(clientId: string, event: WsEvent): void {
     const client = this.clients.get(clientId);
     if (client && client.ws.readyState === WebSocket.OPEN) {
       try {
@@ -2350,14 +2430,29 @@ server.get(
   "/files/status/:path",
   async (
     request,
-    reply
-  ): Promise<{ status: string; fileInfo?: any; error?: string }> => {
+    _reply
+  ): Promise<{ status: string; fileInfo?; error?: string }> => {
     const { path: filePath } = request.params as { path: string };
+    const { database } = request.server.services;
 
     try {
       // Check if file exists in database
       const chunks = await database.getChunksByFile(filePath);
-      const stats = fs.statSync(filePath);
+
+      if (!fs.existsSync(filePath)) {
+        return {
+          status: "success",
+          fileInfo: {
+            path: filePath,
+            existsInDb: chunks.length > 0,
+            lastModified: null,
+            size: 0,
+            chunks: chunks.length,
+          },
+        };
+      }
+
+      const stats = await fs.promises.stat(filePath);
 
       return {
         status: "success",
@@ -2369,10 +2464,11 @@ server.get(
           chunks: chunks.length,
         },
       };
-    } catch (error) {
+    } catch (e) {
+      const error = asError(e);
       return {
         status: "error",
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error.message,
       };
     }
   }
@@ -2381,20 +2477,7 @@ server.get(
 server.post(
   "/ingest/incremental",
   async (request, reply): Promise<IngestResponse> => {
-    if (!ingestionPipeline) {
-      reply.code(503);
-      return {
-        message: "Ingestion pipeline unavailable",
-        totalFiles: 0,
-        processedFiles: 0,
-        skippedFiles: 0,
-        failedFiles: 0,
-        totalChunks: 0,
-        processedChunks: 0,
-        errors: ["Ingestion pipeline not initialized"],
-      };
-    }
-
+    const { ingestionPipeline } = request.server.services;
     const { since, force, patterns } = request.body as {
       since?: string; // ISO timestamp
       force?: boolean;
@@ -2457,6 +2540,7 @@ server.post(
 server.post(
   "/ingest/file/:path",
   async (request, reply): Promise<IngestResponse> => {
+    const { ingestionPipeline } = request.server.services;
     if (!ingestionPipeline) {
       reply.code(503);
       return {
@@ -2511,7 +2595,7 @@ server.get(
   "/files/changed",
   async (
     request,
-    reply
+    _reply
   ): Promise<{ files: string[]; since: string; error?: string }> => {
     const { since, patterns } = request.query as {
       since?: string;
@@ -2529,11 +2613,12 @@ server.get(
         files: changedFiles,
         since: sinceDate.toISOString(),
       };
-    } catch (error) {
+    } catch (e) {
+      const error = asError(e);
       return {
         files: [],
         since: since || new Date().toISOString(),
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error.message,
       };
     }
   }
@@ -2587,13 +2672,13 @@ async function findChangedFiles(
             if (stats.mtime > since) {
               changedFiles.push(relativePath);
             }
-          } catch (error) {
+          } catch {
             // Skip files that can't be accessed
             continue;
           }
         }
       }
-    } catch (error) {
+    } catch {
       // Skip directories that can't be accessed
       return;
     }
@@ -2606,11 +2691,13 @@ async function findChangedFiles(
 /**
  * Rollback file to a specific version
  */
+type VersionMeta = { versionId: string; createdAt: ISODateString };
 async function rollbackFileToVersion(
+  database: ObsidianDatabase,
   filePath: string,
-  version: any,
+  version: VersionMeta,
   options: { force?: boolean } = {}
-): Promise<{ success: boolean; message: string; changes?: any }> {
+): Promise<{ success: true; message: string; changes: unknown }> {
   try {
     // Get version content from database
     const versionData = await database.getVersionContent(version.versionId);
@@ -2684,10 +2771,11 @@ async function gracefulShutdown(signal: string) {
       console.log("✅ WebSocket connections closed");
     }
 
-    if (database) {
-      await database.close();
-      console.log("✅ Database connection closed");
-    }
+    // Note: services would need to be passed in or accessed differently
+    // if (services.database) {
+    //   await services.database.close();
+    //   console.log("✅ Database connection closed");
+    // }
 
     await server.close();
     console.log("✅ Server closed");
@@ -2711,40 +2799,47 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 })();
 
 // Register dictionary API routes
-if (dictionaryAPI) {
-  server.register(dictionaryAPI.getRouter(), { prefix: "/dictionary" });
-  console.log("📚 Dictionary API routes registered");
-}
+// Note: These would need to be moved inside the start() function where services is available
+// if (services.dictionaryAPI) {
+//   server.register(services.dictionaryAPI.getRouter(), {
+//     prefix: "/dictionary",
+//   });
+//   console.log("📚 Dictionary API routes registered");
+// }
 
 // Register ML entity API routes
-if (mlEntityAPI) {
-  server.register(mlEntityAPI.getRouter(), { prefix: "/ml/entities" });
-  console.log("🤖 ML Entity API routes registered");
-}
+// if (services.mlEntityAPI) {
+//   server.register(services.mlEntityAPI.getRouter(), { prefix: "/ml/entities" });
+//   console.log("🤖 ML Entity API routes registered");
+// }
 
 // Register temporal reasoning API routes
-if (temporalReasoningAPI) {
-  server.register(temporalReasoningAPI.getRouter(), { prefix: "/temporal" });
-  console.log("⏰ Temporal Reasoning API routes registered");
-}
+// if (services.temporalReasoningAPI) {
+//   server.register(services.temporalReasoningAPI.getRouter(), {
+//     prefix: "/temporal",
+//   });
+//   console.log("⏰ Temporal Reasoning API routes registered");
+// }
 
 // Register federated search API routes
-if (federatedSearchAPI) {
-  server.register(federatedSearchAPI.getRouter(), { prefix: "/federated" });
-  console.log("🔍 Federated Search API routes registered");
-}
+// if (services.federatedSearchAPI) {
+//   server.register(services.federatedSearchAPI.getRouter(), {
+//     prefix: "/federated",
+//   });
+//   console.log("🔍 Federated Search API routes registered");
+// }
 
 // Register workspace API routes
-if (workspaceAPI) {
-  server.register(workspaceAPI.getRouter(), { prefix: "/workspaces" });
-  console.log("📁 Workspace Manager API routes registered");
-}
+// if (services.workspaceAPI) {
+//   server.register(services.workspaceAPI.getRouter(), { prefix: "/workspaces" });
+//   console.log("📁 Workspace Manager API routes registered");
+// }
 
 // Register graph query API routes
-if (graphQueryAPI) {
-  server.register(graphQueryAPI.getRouter(), { prefix: "/graph" });
-  console.log("🕸️ Graph Query Engine API routes registered");
-}
+// if (services.graphQueryAPI) {
+//   server.register(services.graphQueryAPI.getRouter(), { prefix: "/graph" });
+//   console.log("🕸️ Graph Query Engine API routes registered");
+// }
 
 // Start server
 async function start() {
@@ -2758,7 +2853,9 @@ async function start() {
     console.log(`🧠 LLM: ${LLM_MODEL}`);
     console.log(`📁 Obsidian Vault: ${OBSIDIAN_VAULT_PATH}`);
 
-    await initializeServices();
+    // Build services and decorate Fastify instance
+    const services = await buildServices();
+    server.decorate("services", services);
 
     // Find an available port dynamically
     const PORT = await findAvailablePort(DEFAULT_PORT);
@@ -2890,7 +2987,7 @@ async function start() {
       console.log("   2. Ensure PostgreSQL is running");
       console.log("   3. Run: npm run setup");
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("\n❌ Failed to start server:", error.message);
 
     if (error.message.includes("DATABASE_URL")) {

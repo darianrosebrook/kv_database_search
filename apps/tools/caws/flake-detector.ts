@@ -10,7 +10,7 @@
  */
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { join, dirname } from "path";
+import { dirname } from "path";
 import { fileURLToPath } from "url";
 
 interface TestResult {
@@ -168,7 +168,6 @@ class FlakeDetectionService {
   }
 
   private saveHistory(history: HistoricalTestData): void {
-    const dir = dirname(this.HISTORY_FILE);
     // Ensure directory exists (simple approach)
     writeFileSync(this.HISTORY_FILE, JSON.stringify(history, null, 2));
   }
@@ -244,7 +243,7 @@ class FlakeDetectionService {
 
   private calculateRunVariance(
     testMap: Map<string, TestResult>,
-    suites: TestSuiteResult[]
+    _suites: TestSuiteResult[]
   ): number {
     const totalTests = testMap.size;
     const failedTests = Array.from(testMap.values()).filter(

@@ -176,7 +176,7 @@ For integration tests requiring external services:
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("ComponentName", () => {
-  let component: any;
+  let component;
 
   beforeEach(() => {
     // Setup
@@ -209,7 +209,7 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers
 
 describe("IntegrationTest", () => {
   let postgresContainer: StartedPostgreSqlContainer;
-  let service: any;
+  let service;
 
   beforeEach(async () => {
     // Start dependencies

@@ -468,7 +468,7 @@ describe("OBSIDIAN_CONTENT_TYPES", () => {
   it("should be readonly", () => {
     // TypeScript should prevent modification
     expect(() => {
-      (OBSIDIAN_CONTENT_TYPES as any).push("new-type");
+      OBSIDIAN_CONTENT_TYPES.push("new-type");
     }).toThrow();
   });
 });

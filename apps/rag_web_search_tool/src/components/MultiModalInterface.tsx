@@ -1,6 +1,6 @@
 // Multi-Modal Processing Interface - Comprehensive UI for all content types
-import React, { useState, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Workspace,
   MultiModalProcessingResult,
@@ -9,17 +9,17 @@ import {
   ProcessorOptions,
   WorkspaceServiceResponse,
   DataSource,
-} from '../services/WorkspaceService';
+} from "../services/WorkspaceService";
 import {
   GraphQuery,
   GraphQueryResult,
   PathFindingOptions,
   PatternAnalysisResult,
   QueryContext,
-} from '../services/GraphQueryService';
-import { multiModalService } from '../services/MultiModalService';
-import { workspaceService } from '../services/WorkspaceService';
-import { graphQueryService } from '../services/GraphQueryService';
+} from "../services/GraphQueryService";
+import { multiModalService } from "../services/MultiModalService";
+import { workspaceService } from "../services/WorkspaceService";
+import { graphQueryService } from "../services/GraphQueryService";
 
 interface MultiModalInterfaceProps {
   isOpen: boolean;
@@ -42,23 +42,30 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
   // STATE MANAGEMENT
   // ============================================================================
 
-  const [currentTab, setCurrentTab] = useState<'upload' | 'workspace' | 'graph' | 'settings'>('upload');
+  const [currentTab, setCurrentTab] = useState<
+    "upload" | "workspace" | "graph" | "settings"
+  >("upload");
   const [uploadedFiles, setUploadedFiles] = useState<FileWithPreview[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processingProgress, setProcessingProgress] = useState<Record<string, ProcessingStatus>>({});
-  const [processingResults, setProcessingResults] = useState<Record<string, MultiModalProcessingResult>>({});
+  const [processingProgress, setProcessingProgress] = useState<
+    Record<string, ProcessingStatus>
+  >({});
+  const [processingResults, setProcessingResults] = useState<
+    Record<string, MultiModalProcessingResult>
+  >({});
 
   // Workspace state
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<string>('');
+  const [selectedWorkspace, setSelectedWorkspace] = useState<string>("");
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
-  const [newWorkspaceName, setNewWorkspaceName] = useState('');
-  const [newWorkspaceDescription, setNewWorkspaceDescription] = useState('');
+  const [newWorkspaceName, setNewWorkspaceName] = useState("");
+  const [newWorkspaceDescription, setNewWorkspaceDescription] = useState("");
 
   // Graph Query state
-  const [graphQuery, setGraphQuery] = useState('');
+  const [graphQuery, setGraphQuery] = useState("");
   const [isGraphQuerying, setIsGraphQuerying] = useState(false);
-  const [graphQueryResult, setGraphQueryResult] = useState<GraphQueryResult | null>(null);
+  const [graphQueryResult, setGraphQueryResult] =
+    useState<GraphQueryResult | null>(null);
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
 
   // Settings state
@@ -73,8 +80,8 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
     chunkOverlap: 200,
     maxEntities: 100,
     minConfidence: 0.6,
-    language: 'en',
-    domain: 'general',
+    language: "en",
+    domain: "general",
   });
 
   // UI state
@@ -127,7 +134,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
         setWorkspaces(response.data);
       }
     } catch (error) {
-      console.error('Failed to load workspaces:', error);
+      console.error("Failed to load workspaces:", error);
     }
   };
 
@@ -142,15 +149,17 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
       );
 
       if (response.success) {
-        setSuccessMessage(`Workspace "${newWorkspaceName}" created successfully`);
-        setNewWorkspaceName('');
-        setNewWorkspaceDescription('');
+        setSuccessMessage(
+          `Workspace "${newWorkspaceName}" created successfully`
+        );
+        setNewWorkspaceName("");
+        setNewWorkspaceDescription("");
         loadWorkspaces();
       } else {
-        setError(response.error || 'Failed to create workspace');
+        setError(response.error || "Failed to create workspace");
       }
     } catch (error) {
-      setError('Failed to create workspace');
+      setError("Failed to create workspace");
     } finally {
       setIsCreatingWorkspace(false);
     }
@@ -170,11 +179,11 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
       file.detectedType = contentType;
 
       // Create preview for images
-      if (contentType.type === 'raster_image') {
+      if (contentType.type === "raster_image") {
         const reader = new FileReader();
         reader.onload = (e) => {
           file.preview = e.target?.result as string;
-          setUploadedFiles(prev => [...prev]);
+          setUploadedFiles((prev) => [...prev]);
         };
         reader.readAsDataURL(file);
       }
@@ -182,7 +191,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
       newFiles.push(file);
     }
 
-    setUploadedFiles(prev => [...prev, ...newFiles]);
+    setUploadedFiles((prev) => [...prev, ...newFiles]);
     setError(null);
   }, []);
 
@@ -196,14 +205,17 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    handleFileSelect(e.dataTransfer.files);
-  }, [handleFileSelect]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      handleFileSelect(e.dataTransfer.files);
+    },
+    [handleFileSelect]
+  );
 
   const removeFile = useCallback((index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   // ============================================================================
@@ -216,18 +228,18 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
     for (const fileId of filesToCheck) {
       try {
         const status = await multiModalService.getProcessingStatus(fileId);
-        setProcessingProgress(prev => ({
+        setProcessingProgress((prev) => ({
           ...prev,
           [fileId]: status,
         }));
 
-        if (status.status === 'completed' && status.result) {
-          setProcessingResults(prev => ({
+        if (status.status === "completed" && status.result) {
+          setProcessingResults((prev) => ({
             ...prev,
             [fileId]: {
               fileId,
               fileName: status.fileName,
-              contentType: status.result?.metadata?.type || 'unknown',
+              contentType: status.result?.metadata?.type || "unknown",
               results: [status.result],
               summary: {
                 totalTextLength: status.result.text.length,
@@ -241,7 +253,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               metadata: {
                 uploadedAt: new Date().toISOString(),
                 processedAt: new Date().toISOString(),
-                version: '1.0.0',
+                version: "1.0.0",
                 processorVersions: {},
               },
             },
@@ -250,7 +262,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
           onProcessingComplete?.(processingResults[fileId]);
 
           // Remove from processing
-          setProcessingProgress(prev => {
+          setProcessingProgress((prev) => {
             const updated = { ...prev };
             delete updated[fileId];
             return updated;
@@ -269,26 +281,29 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
     setError(null);
 
     try {
-      const filesToProcess = uploadedFiles.filter(file =>
-        !processingProgress[file.name + file.size]
+      const filesToProcess = uploadedFiles.filter(
+        (file) => !processingProgress[file.name + file.size]
       );
 
       for (const file of filesToProcess) {
-        setProcessingProgress(prev => ({
+        setProcessingProgress((prev) => ({
           ...prev,
           [file.name + file.size]: {
             fileId: file.name + file.size,
             fileName: file.name,
-            status: 'processing',
+            status: "processing",
             progress: 0,
             startedAt: new Date().toISOString(),
           },
         }));
 
         // Process the file
-        const result = await multiModalService.processFile(file, processorOptions);
+        const result = await multiModalService.processFile(
+          file,
+          processorOptions
+        );
 
-        setProcessingResults(prev => ({
+        setProcessingResults((prev) => ({
           ...prev,
           [file.name + file.size]: result,
         }));
@@ -296,12 +311,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
         onProcessingComplete?.(result);
 
         // Update status
-        setProcessingProgress(prev => ({
+        setProcessingProgress((prev) => ({
           ...prev,
           [file.name + file.size]: {
             fileId: file.name + file.size,
             fileName: file.name,
-            status: 'completed',
+            status: "completed",
             progress: 100,
             result: result.results[0],
             completedAt: new Date().toISOString(),
@@ -309,8 +324,8 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
         }));
       }
     } catch (error) {
-      setError('Failed to process files');
-      console.error('Processing error:', error);
+      setError("Failed to process files");
+      console.error("Processing error:", error);
     } finally {
       setIsProcessing(false);
     }
@@ -336,8 +351,8 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
 
       setGraphQueryResult(result);
     } catch (error) {
-      setError('Failed to process graph query');
-      console.error('Graph query error:', error);
+      setError("Failed to process graph query");
+      console.error("Graph query error:", error);
     } finally {
       setIsGraphQuerying(false);
     }
@@ -349,13 +364,13 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
         startEntity,
         endEntity,
         maxDepth: 3,
-        algorithm: 'astar',
+        algorithm: "astar",
       };
 
       const result = await graphQueryService.findPaths(options);
       return result;
     } catch (error) {
-      console.error('Path finding error:', error);
+      console.error("Path finding error:", error);
       return null;
     }
   };
@@ -369,7 +384,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
       const result = await graphQueryService.analyzePatterns(entities, context);
       return result;
     } catch (error) {
-      console.error('Pattern analysis error:', error);
+      console.error("Pattern analysis error:", error);
       return null;
     }
   };
@@ -384,8 +399,8 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
       <div
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           isDragOver
-            ? 'border-primary bg-primary/5'
-            : 'border-border hover:border-primary/50'
+            ? "border-primary bg-primary/5"
+            : "border-border hover:border-primary/50"
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -424,7 +439,9 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
             {uploadedFiles.map((file, index) => (
               <div key={index} className="border rounded-lg p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium truncate">{file.name}</span>
+                  <span className="text-sm font-medium truncate">
+                    {file.name}
+                  </span>
                   <button
                     onClick={() => removeFile(index)}
                     className="text-destructive hover:text-destructive/80"
@@ -462,10 +479,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               <input
                 type="checkbox"
                 checked={processorOptions.enableOCR}
-                onChange={(e) => setProcessorOptions(prev => ({
-                  ...prev,
-                  enableOCR: e.target.checked
-                }))}
+                onChange={(e) =>
+                  setProcessorOptions((prev) => ({
+                    ...prev,
+                    enableOCR: e.target.checked,
+                  }))
+                }
               />
               <span>Enable OCR</span>
             </label>
@@ -473,10 +492,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               <input
                 type="checkbox"
                 checked={processorOptions.enableImageClassification}
-                onChange={(e) => setProcessorOptions(prev => ({
-                  ...prev,
-                  enableImageClassification: e.target.checked
-                }))}
+                onChange={(e) =>
+                  setProcessorOptions((prev) => ({
+                    ...prev,
+                    enableImageClassification: e.target.checked,
+                  }))
+                }
               />
               <span>Image Classification</span>
             </label>
@@ -484,10 +505,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               <input
                 type="checkbox"
                 checked={processorOptions.enableAudioTranscription}
-                onChange={(e) => setProcessorOptions(prev => ({
-                  ...prev,
-                  enableAudioTranscription: e.target.checked
-                }))}
+                onChange={(e) =>
+                  setProcessorOptions((prev) => ({
+                    ...prev,
+                    enableAudioTranscription: e.target.checked,
+                  }))
+                }
               />
               <span>Audio Transcription</span>
             </label>
@@ -497,10 +520,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               <input
                 type="checkbox"
                 checked={processorOptions.enableVideoProcessing}
-                onChange={(e) => setProcessorOptions(prev => ({
-                  ...prev,
-                  enableVideoProcessing: e.target.checked
-                }))}
+                onChange={(e) =>
+                  setProcessorOptions((prev) => ({
+                    ...prev,
+                    enableVideoProcessing: e.target.checked,
+                  }))
+                }
               />
               <span>Video Processing</span>
             </label>
@@ -508,10 +533,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               <input
                 type="checkbox"
                 checked={processorOptions.enableSpeechRecognition}
-                onChange={(e) => setProcessorOptions(prev => ({
-                  ...prev,
-                  enableSpeechRecognition: e.target.checked
-                }))}
+                onChange={(e) =>
+                  setProcessorOptions((prev) => ({
+                    ...prev,
+                    enableSpeechRecognition: e.target.checked,
+                  }))
+                }
               />
               <span>Speech Recognition</span>
             </label>
@@ -519,10 +546,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               <input
                 type="checkbox"
                 checked={processorOptions.extractMetadata}
-                onChange={(e) => setProcessorOptions(prev => ({
-                  ...prev,
-                  extractMetadata: e.target.checked
-                }))}
+                onChange={(e) =>
+                  setProcessorOptions((prev) => ({
+                    ...prev,
+                    extractMetadata: e.target.checked,
+                  }))
+                }
               />
               <span>Extract Metadata</span>
             </label>
@@ -537,7 +566,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
           disabled={uploadedFiles.length === 0 || isProcessing}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {isProcessing ? 'Processing...' : 'Process Files'}
+          {isProcessing ? "Processing..." : "Process Files"}
         </button>
       </div>
     </div>
@@ -554,8 +583,8 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               key={workspace.id}
               className={`border rounded-lg p-4 cursor-pointer transition-colors ${
                 selectedWorkspace === workspace.name
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50"
               }`}
               onClick={() => setSelectedWorkspace(workspace.name)}
             >
@@ -563,7 +592,9 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
                 <div>
                   <h4 className="font-medium">{workspace.name}</h4>
                   {workspace.description && (
-                    <p className="text-sm text-muted-foreground">{workspace.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {workspace.description}
+                    </p>
                   )}
                 </div>
                 <div className="text-right text-sm">
@@ -591,7 +622,9 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Description</label>
+            <label className="block text-sm font-medium mb-2">
+              Description
+            </label>
             <textarea
               value={newWorkspaceDescription}
               onChange={(e) => setNewWorkspaceDescription(e.target.value)}
@@ -605,7 +638,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
             disabled={!newWorkspaceName.trim() || isCreatingWorkspace}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
           >
-            {isCreatingWorkspace ? 'Creating...' : 'Create Workspace'}
+            {isCreatingWorkspace ? "Creating..." : "Create Workspace"}
           </button>
         </div>
       </div>
@@ -631,7 +664,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               disabled={!graphQuery.trim() || isGraphQuerying}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
             >
-              {isGraphQuerying ? 'Querying...' : 'Query Graph'}
+              {isGraphQuerying ? "Querying..." : "Query Graph"}
             </button>
             <select
               value={selectedWorkspace}
@@ -655,23 +688,31 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
           <h3 className="text-lg font-semibold">Results</h3>
           <div className="border rounded-lg p-4 space-y-4">
             <div>
-              <h4 className="font-medium">Entities Found ({graphQueryResult.results.nodes.length})</h4>
+              <h4 className="font-medium">
+                Entities Found ({graphQueryResult.results.nodes.length})
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                {graphQueryResult.results.nodes.slice(0, 10).map((node, index) => (
-                  <div key={index} className="text-sm bg-accent p-2 rounded">
-                    {node.text} ({node.type})
-                  </div>
-                ))}
+                {graphQueryResult.results.nodes
+                  .slice(0, 10)
+                  .map((node, index) => (
+                    <div key={index} className="text-sm bg-accent p-2 rounded">
+                      {node.text} ({node.type})
+                    </div>
+                  ))}
               </div>
             </div>
             <div>
-              <h4 className="font-medium">Relationships ({graphQueryResult.results.edges.length})</h4>
+              <h4 className="font-medium">
+                Relationships ({graphQueryResult.results.edges.length})
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                {graphQueryResult.results.edges.slice(0, 10).map((edge, index) => (
-                  <div key={index} className="text-sm bg-accent p-2 rounded">
-                    {edge.source} → {edge.target} ({edge.type})
-                  </div>
-                ))}
+                {graphQueryResult.results.edges
+                  .slice(0, 10)
+                  .map((edge, index) => (
+                    <div key={index} className="text-sm bg-accent p-2 rounded">
+                      {edge.source} → {edge.target} ({edge.type})
+                    </div>
+                  ))}
               </div>
             </div>
           </div>
@@ -691,10 +732,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               <input
                 type="number"
                 value={processorOptions.chunkSize}
-                onChange={(e) => setProcessorOptions(prev => ({
-                  ...prev,
-                  chunkSize: parseInt(e.target.value)
-                }))}
+                onChange={(e) =>
+                  setProcessorOptions((prev) => ({
+                    ...prev,
+                    chunkSize: parseInt(e.target.value),
+                  }))
+                }
                 className="w-20 px-2 py-1 border border-border rounded"
               />
               <span>Chunk Size</span>
@@ -703,10 +746,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               <input
                 type="number"
                 value={processorOptions.chunkOverlap}
-                onChange={(e) => setProcessorOptions(prev => ({
-                  ...prev,
-                  chunkOverlap: parseInt(e.target.value)
-                }))}
+                onChange={(e) =>
+                  setProcessorOptions((prev) => ({
+                    ...prev,
+                    chunkOverlap: parseInt(e.target.value),
+                  }))
+                }
                 className="w-20 px-2 py-1 border border-border rounded"
               />
               <span>Chunk Overlap</span>
@@ -715,10 +760,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               <input
                 type="number"
                 value={processorOptions.maxEntities}
-                onChange={(e) => setProcessorOptions(prev => ({
-                  ...prev,
-                  maxEntities: parseInt(e.target.value)
-                }))}
+                onChange={(e) =>
+                  setProcessorOptions((prev) => ({
+                    ...prev,
+                    maxEntities: parseInt(e.target.value),
+                  }))
+                }
                 className="w-20 px-2 py-1 border border-border rounded"
               />
               <span>Max Entities</span>
@@ -732,10 +779,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               <input
                 type="number"
                 value={processorOptions.minConfidence}
-                onChange={(e) => setProcessorOptions(prev => ({
-                  ...prev,
-                  minConfidence: parseFloat(e.target.value)
-                }))}
+                onChange={(e) =>
+                  setProcessorOptions((prev) => ({
+                    ...prev,
+                    minConfidence: parseFloat(e.target.value),
+                  }))
+                }
                 step="0.1"
                 min="0"
                 max="1"
@@ -746,10 +795,12 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
             <label className="flex items-center space-x-2">
               <select
                 value={processorOptions.language}
-                onChange={(e) => setProcessorOptions(prev => ({
-                  ...prev,
-                  language: e.target.value
-                }))}
+                onChange={(e) =>
+                  setProcessorOptions((prev) => ({
+                    ...prev,
+                    language: e.target.value,
+                  }))
+                }
                 className="px-3 py-2 border border-border rounded"
               >
                 <option value="en">English</option>
@@ -806,18 +857,18 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
           <div className="border-b border-border">
             <div className="flex">
               {[
-                { id: 'upload', label: 'Upload Files', icon: '📁' },
-                { id: 'workspace', label: 'Workspaces', icon: '🏢' },
-                { id: 'graph', label: 'Graph Query', icon: '🕸️' },
-                { id: 'settings', label: 'Settings', icon: '⚙️' },
+                { id: "upload", label: "Upload Files", icon: "📁" },
+                { id: "workspace", label: "Workspaces", icon: "🏢" },
+                { id: "graph", label: "Graph Query", icon: "🕸️" },
+                { id: "settings", label: "Settings", icon: "⚙️" },
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setCurrentTab(tab.id as any)}
+                  onClick={() => setCurrentTab(tab.id)}
                   className={`flex items-center space-x-2 px-4 py-3 border-b-2 transition-colors ${
                     currentTab === tab.id
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <span>{tab.icon}</span>
@@ -830,7 +881,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
           {/* Content */}
           <div className="p-6 overflow-auto max-h-[calc(100vh-200px)]">
             <AnimatePresence mode="wait">
-              {currentTab === 'upload' && (
+              {currentTab === "upload" && (
                 <motion.div
                   key="upload"
                   initial={{ opacity: 0, x: 20 }}
@@ -840,7 +891,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
                   {renderUploadTab()}
                 </motion.div>
               )}
-              {currentTab === 'workspace' && (
+              {currentTab === "workspace" && (
                 <motion.div
                   key="workspace"
                   initial={{ opacity: 0, x: 20 }}
@@ -850,7 +901,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
                   {renderWorkspaceTab()}
                 </motion.div>
               )}
-              {currentTab === 'graph' && (
+              {currentTab === "graph" && (
                 <motion.div
                   key="graph"
                   initial={{ opacity: 0, x: 20 }}
@@ -860,7 +911,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
                   {renderGraphTab()}
                 </motion.div>
               )}
-              {currentTab === 'settings' && (
+              {currentTab === "settings" && (
                 <motion.div
                   key="settings"
                   initial={{ opacity: 0, x: 20 }}

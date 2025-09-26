@@ -6,12 +6,12 @@ import {
   ExtractionMethod,
   type KnowledgeGraphEntity,
   type KnowledgeGraphRelationship,
-} from "../../src/lib/knowledge-graph/entity-extractor.js";
-import { ContentType } from "../../src/lib/types/index.js";
+} from "../../src/lib/knowledge-graph/entity-extractor.ts";
+import { ContentType } from "../../src/lib/types/index.ts";
 
 // Mock the base entity extractor
-vi.mock("../../src/lib/utils.js", () => ({
-  EnhancedEntityExtractor: vi.fn().mockImplementation(() => ({
+vi.mock("../../src/lib/utils.ts", () => ({
+  EntityExtractor: vi.fn().mockImplementation(() => ({
     extractEntities: vi.fn(),
     extractRelationships: vi.fn(),
   })),
@@ -19,7 +19,7 @@ vi.mock("../../src/lib/utils.js", () => ({
 
 describe("KnowledgeGraphEntityExtractor", () => {
   let extractor: KnowledgeGraphEntityExtractor;
-  let mockBaseExtractor: any;
+  let mockBaseExtractor;
 
   beforeEach(() => {
     extractor = new KnowledgeGraphEntityExtractor({
@@ -29,7 +29,7 @@ describe("KnowledgeGraphEntityExtractor", () => {
     });
 
     // Get the mocked base extractor
-    mockBaseExtractor = (extractor as any).baseExtractor;
+    mockBaseExtractor = extractor.baseExtractor;
   });
 
   describe("Entity Extraction", () => {
@@ -469,7 +469,7 @@ describe("KnowledgeGraphEntityExtractor", () => {
         minRelationshipConfidence: 0.8,
       });
 
-      const mockBaseExtractor = (strictExtractor as any).baseExtractor;
+      const mockBaseExtractor = strictExtractor.baseExtractor;
 
       const mockEntities = [
         {

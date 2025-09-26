@@ -13,18 +13,17 @@ import { ObsidianDatabase } from "./database";
 import { ObsidianEmbeddingService } from "./embeddings";
 import {
   // detectLanguage, // Not used
-  EnhancedEntityExtractor,
-  ExtractedEntity,
+  EntityExtractor,
   EntityRelationship,
   // EntityCluster, // Not used
-} from "./utils";
+} from "./entity-extractor";
 import {
   SearchResult,
   ObsidianSearchOptions,
   ObsidianSearchResult,
+  ExtractedEntity,
   // ObsidianSearchResponse, // Not used
   ContentType,
-  Wikilink,
 } from "../types/index";
 
 // Search interfaces
@@ -106,7 +105,7 @@ export interface SearchOptions extends ObsidianSearchOptions {
   };
 }
 
-export interface SearchResult extends ObsidianSearchResult {
+export interface SemanticSearchResult extends ObsidianSearchResult {
   /** Enhanced scoring breakdown */
   scoring: {
     vector: number;
@@ -229,8 +228,11 @@ export class SemanticSearchEngine {
   /**
    * Analyze and expand the query for better search
    */
-  private async analyzeQuery(query: EnhancedSearchQuery) {
-    const entities = this.entityExtractor.extractEntities(query.text);
+  private async analyzeQuery(query: SearchQuery) {
+    const extractionResult = await this.entityExtractor.extractEntities(
+      query.text
+    );
+    const entities = extractionResult.entities;
     const relationships = this.entityExtractor.extractRelationships(
       query.text,
       entities
@@ -261,7 +263,7 @@ export class SemanticSearchEngine {
   /**
    * Execute search using multiple strategies
    */
-  private async executeMultiStrategySearch(analyzedQuery: any) {
+  private async executeMultiStrategySearch(analyzedQuery) {
     const results: { [strategy: string]: SearchResult[] } = {};
 
     // Vector similarity search
@@ -292,7 +294,7 @@ export class SemanticSearchEngine {
   /**
    * Vector-based similarity search
    */
-  private async vectorSearch(analyzedQuery: any): Promise<SearchResult[]> {
+  private async vectorSearch(analyzedQuery): Promise<SemanticSearchResult[]> {
     const options = analyzedQuery.original.options || {};
 
     return await this.db.search(
@@ -312,8 +314,8 @@ export class SemanticSearchEngine {
   /**
    * Entity-focused search
    */
-  private async entitySearch(analyzedQuery: any): Promise<SearchResult[]> {
-    const entityResults: SearchResult[] = [];
+  private async entitySearch(analyzedQuery): Promise<SemanticSearchResult[]> {
+    const entityResults: SemanticSearchResult[] = [];
 
     for (const entity of analyzedQuery.entities) {
       // Search for documents containing this entity
@@ -330,10 +332,10 @@ export class SemanticSearchEngine {
   /**
    * Graph traversal search using entity relationships
    */
-  private async graphSearch(analyzedQuery: any): Promise<SearchResult[]> {
+  private async graphSearch(analyzedQuery): Promise<SemanticSearchResult[]> {
     // This is a simplified implementation
     // In a full Graph RAG system, this would query a graph database
-    const graphResults: SearchResult[] = [];
+    const graphResults: SemanticSearchResult[] = [];
 
     // For each entity, find related entities and search for those
     for (const entity of analyzedQuery.entities) {
@@ -358,9 +360,11 @@ export class SemanticSearchEngine {
   /**
    * Multi-modal content search
    */
-  private async multiModalSearch(analyzedQuery: any): Promise<SearchResult[]> {
-    const multiModalResults: SearchResult[] = [];
-    const options = analyzedQuery.original.options || {};
+  private async multiModalSearch(
+    analyzedQuery
+  ): Promise<SemanticSearchResult[]> {
+    const multiModalResults: SemanticSearchResult[] = [];
+    const _options = analyzedQuery.original.options || {};
 
     // Search across different content types with type-specific strategies
     const contentTypes = [
@@ -390,9 +394,9 @@ export class SemanticSearchEngine {
    * Fuse results from multiple search strategies
    */
   private async fuseResults(
-    results: { [strategy: string]: SearchResult[] },
-    analyzedQuery: any
-  ): Promise<SearchResult[]> {
+    results: { [strategy: string]: SemanticSearchResult[] },
+    analyzedQuery
+  ): Promise<SemanticSearchResult[]> {
     const fusionOptions = analyzedQuery.original.options?.fusion || {
       algorithm: "weighted",
       componentWeights: {
@@ -409,10 +413,11 @@ export class SemanticSearchEngine {
         return this.reciprocalRankFusion(results);
       case "weighted":
         return this.weightedFusion(results, fusionOptions.componentWeights);
-      default:
+      default: {
         // Simple concatenation with deduplication
         const allResults = Object.values(results).flat();
         return this.deduplicateResults(allResults);
+      }
     }
   }
 
@@ -420,12 +425,15 @@ export class SemanticSearchEngine {
    * Augment results with graph-based insights
    */
   private async augmentWithGraph(
-    results: SearchResult[],
-    analyzedQuery: any
-  ): Promise<EnhancedSearchResult[]> {
+    results: SemanticSearchResult[],
+    analyzedQuery
+  ): Promise<SemanticSearchResult[]> {
     return results.map((result) => {
       // Extract entities from result content
-      const resultEntities = this.entityExtractor.extractEntities(result.text);
+      const resultExtraction = await this.entityExtractor.extractEntities(
+        result.text
+      );
+      const resultEntities = resultExtraction.entities;
       const resultRelationships = this.entityExtractor.extractRelationships(
         result.text,
         resultEntities
@@ -440,9 +448,9 @@ export class SemanticSearchEngine {
 
       return {
         ...result,
-        scoring: this.calculateEnhancedScoring(result, analyzedQuery),
+        scoring: this.calculateScoring(result, analyzedQuery),
         graphContext,
-      } as EnhancedSearchResult;
+      } as SemanticSearchResult;
     });
   }
 
@@ -450,9 +458,9 @@ export class SemanticSearchEngine {
    * Analyze multi-modal content correlations
    */
   private async analyzeMultiModal(
-    results: EnhancedSearchResult[],
-    analyzedQuery: any
-  ): Promise<EnhancedSearchResult[]> {
+    results: SemanticSearchResult[],
+    analyzedQuery
+  ): Promise<SemanticSearchResult[]> {
     return results.map((result) => {
       const multiModalMeta = result.meta.multiModalFile;
 
@@ -483,9 +491,9 @@ export class SemanticSearchEngine {
    * Advanced re-ranking using multiple signals
    */
   private async rerankResults(
-    results: EnhancedSearchResult[],
-    analyzedQuery: any
-  ): Promise<EnhancedSearchResult[]> {
+    results: SemanticSearchResult[],
+    _analyzedQuery
+  ): Promise<SemanticSearchResult[]> {
     // Sort by combined score
     return results.sort((a, b) => b.scoring.combined - a.scoring.combined);
   }
@@ -494,9 +502,9 @@ export class SemanticSearchEngine {
    * Construct knowledge graph from results
    */
   private async constructKnowledgeGraph(
-    results: EnhancedSearchResult[],
-    analyzedQuery: any
-  ): Promise<EnhancedSearchResult[]> {
+    results: SemanticSearchResult[],
+    _analyzedQuery
+  ): Promise<SemanticSearchResult[]> {
     // Build inter-result connections
     for (let i = 0; i < results.length; i++) {
       const currentResult = results[i];
@@ -523,7 +531,7 @@ export class SemanticSearchEngine {
       }
 
       currentResult.knowledgeSegment = {
-        concepts: this.extractKeyConcepts(currentResult),
+        concepts: await this.extractKeyConcepts(currentResult),
         interResultConnections: connections,
       };
     }
@@ -569,7 +577,9 @@ export class SemanticSearchEngine {
     return related;
   }
 
-  private deduplicateResults(results: SearchResult[]): SearchResult[] {
+  private deduplicateResults(
+    results: SemanticSearchResult[]
+  ): SemanticSearchResult[] {
     const seen = new Set<string>();
     return results.filter((result) => {
       if (seen.has(result.id)) {
@@ -581,12 +591,12 @@ export class SemanticSearchEngine {
   }
 
   private reciprocalRankFusion(results: {
-    [strategy: string]: SearchResult[];
-  }): SearchResult[] {
+    [strategy: string]: SemanticSearchResult[];
+  }): SemanticSearchResult[] {
     const scores = new Map<string, number>();
     const k = 60; // RRF parameter
 
-    Object.entries(results).forEach(([strategy, strategyResults]) => {
+    Object.entries(results).forEach(([_strategy, strategyResults]) => {
       strategyResults.forEach((result, index) => {
         const currentScore = scores.get(result.id) || 0;
         const rrfScore = 1 / (k + index + 1);
@@ -595,7 +605,7 @@ export class SemanticSearchEngine {
     });
 
     // Collect unique results and sort by RRF score
-    const uniqueResults = new Map<string, SearchResult>();
+    const uniqueResults = new Map<string, SemanticSearchResult>();
     Object.values(results)
       .flat()
       .forEach((result) => {
@@ -610,9 +620,9 @@ export class SemanticSearchEngine {
   }
 
   private weightedFusion(
-    results: { [strategy: string]: SearchResult[] },
+    results: { [strategy: string]: SemanticSearchResult[] },
     weights: { [strategy: string]: number }
-  ): SearchResult[] {
+  ): SemanticSearchResult[] {
     const scores = new Map<string, number>();
 
     Object.entries(results).forEach(([strategy, strategyResults]) => {
@@ -626,7 +636,7 @@ export class SemanticSearchEngine {
       });
     });
 
-    const uniqueResults = new Map<string, SearchResult>();
+    const uniqueResults = new Map<string, SemanticSearchResult>();
     Object.values(results)
       .flat()
       .forEach((result) => {
@@ -640,11 +650,14 @@ export class SemanticSearchEngine {
     );
   }
 
-  private calculateEnhancedScoring(result: SearchResult, analyzedQuery: any) {
+  private calculateScoring(result: SemanticSearchResult, analyzedQuery) {
     const vectorScore = result.cosineSimilarity || 0;
 
     // Entity overlap score
-    const resultEntities = this.entityExtractor.extractEntities(result.text);
+    const resultExtraction = await this.entityExtractor.extractEntities(
+      result.text
+    );
+    const resultEntities = resultExtraction.entities;
     const entityOverlap = this.calculateEntityOverlap(
       resultEntities,
       analyzedQuery.entities
@@ -692,7 +705,7 @@ export class SemanticSearchEngine {
     return intersection.length / union.size; // Jaccard similarity
   }
 
-  private calculateTemporalScore(result: SearchResult): number {
+  private calculateTemporalScore(result: SemanticSearchResult): number {
     const updatedAt = result.meta.updatedAt;
     if (!updatedAt) return 0.5;
 
@@ -704,7 +717,7 @@ export class SemanticSearchEngine {
     return Math.exp(-daysDiff / 365); // Decay over a year
   }
 
-  private calculateQualityScore(result: SearchResult): number {
+  private calculateQualityScore(result: SemanticSearchResult): number {
     const multiModalMeta = result.meta.multiModalFile;
 
     if (multiModalMeta?.quality?.overallScore) {
@@ -722,9 +735,10 @@ export class SemanticSearchEngine {
     return (lengthScore + densityScore) / 2;
   }
 
-  private calculateGraphScore(result: SearchResult): number {
+  private calculateGraphScore(result: SemanticSearchResult): number {
     // Simplified graph scoring based on entity count and relationships
-    const entities = this.entityExtractor.extractEntities(result.text);
+    const extraction = await this.entityExtractor.extractEntities(result.text);
+    const entities = extraction.entities;
     const relationships = this.entityExtractor.extractRelationships(
       result.text,
       entities
@@ -766,8 +780,8 @@ export class SemanticSearchEngine {
   }
 
   private findCrossModalCorrelations(
-    result: EnhancedSearchResult,
-    analyzedQuery: any
+    result: SemanticSearchResult,
+    _analyzedQuery
   ) {
     const correlations: Array<{
       modality: string;
@@ -799,7 +813,7 @@ export class SemanticSearchEngine {
     return correlations;
   }
 
-  private calculateSemanticConsistency(result: EnhancedSearchResult): number {
+  private calculateSemanticConsistency(result: SemanticSearchResult): number {
     // Simplified consistency calculation
     // In production, this would analyze semantic similarity across extracted content from different modalities
     const multiModalMeta = result.meta.multiModalFile;
@@ -811,12 +825,18 @@ export class SemanticSearchEngine {
   }
 
   private findInterResultConnection(
-    result1: EnhancedSearchResult,
-    result2: EnhancedSearchResult
+    result1: SemanticSearchResult,
+    result2: SemanticSearchResult
   ): { type: string; strength: number } | null {
     // Extract entities from both results
-    const entities1 = this.entityExtractor.extractEntities(result1.text);
-    const entities2 = this.entityExtractor.extractEntities(result2.text);
+    const extraction1 = await this.entityExtractor.extractEntities(
+      result1.text
+    );
+    const extraction2 = await this.entityExtractor.extractEntities(
+      result2.text
+    );
+    const entities1 = extraction1.entities;
+    const entities2 = extraction2.entities;
 
     // Find shared entities
     const sharedEntities = entities1.filter((e1) =>
@@ -846,8 +866,11 @@ export class SemanticSearchEngine {
     return null;
   }
 
-  private extractKeyConcepts(result: EnhancedSearchResult): string[] {
-    const entities = this.entityExtractor.extractEntities(result.text);
+  private async extractKeyConcepts(
+    result: SemanticSearchResult
+  ): Promise<string[]> {
+    const extraction = await this.entityExtractor.extractEntities(result.text);
+    const entities = extraction.entities;
     return entities
       .filter((e) => e.type === "concept" || e.type === "term")
       .map((e) => e.text)

@@ -32,8 +32,8 @@ describe("ImagePathResolver", () => {
       const sourceFilePath = "/test/vault/notes/document.md";
 
       // Mock file exists
-      (fs.statSync as any).mockReturnValue({ size: 1024 });
-      (fs.existsSync as any).mockReturnValue(true);
+      fs.statSync.mockReturnValue({ size: 1024 });
+      fs.existsSync.mockReturnValue(true);
 
       const result = resolver.resolvePaths(imagePaths, sourceFilePath);
 
@@ -54,8 +54,8 @@ describe("ImagePathResolver", () => {
       const sourceFilePath = "/test/vault/notes/document.md";
 
       // Mock file doesn't exist in any location
-      (fs.existsSync as any).mockReturnValue(false);
-      (fs.statSync as any).mockImplementation(() => {
+      fs.existsSync.mockReturnValue(false);
+      fs.statSync.mockImplementation(() => {
         throw new Error("File not found");
       });
 
@@ -71,8 +71,8 @@ describe("ImagePathResolver", () => {
       const sourceFilePath = "/test/vault/notes/document.md";
 
       // Mock file exists at resolved location
-      (fs.statSync as any).mockReturnValue({ size: 2048 });
-      (fs.existsSync as any).mockImplementation((path: string) => {
+      fs.statSync.mockReturnValue({ size: 2048 });
+      fs.existsSync.mockImplementation((path: string) => {
         return path === "/test/vault/notes/images/screenshot.png";
       });
 
@@ -261,10 +261,10 @@ describe("ImagePathResolver", () => {
       const imagePaths = ["screenshot.png"];
 
       // Mock that direct path doesn't exist, but attachments path does
-      (fs.existsSync as any).mockImplementation((path: string) => {
+      fs.existsSync.mockImplementation((path: string) => {
         return path === "/test/vault/attachments/screenshot.png";
       });
-      (fs.statSync as any).mockReturnValue({ size: 1024 });
+      fs.statSync.mockReturnValue({ size: 1024 });
 
       const result = resolver.resolvePaths(imagePaths, sourceFilePath);
 
@@ -279,10 +279,10 @@ describe("ImagePathResolver", () => {
       const imagePaths = ["screenshot.png"];
 
       // Mock that direct path doesn't exist, but assets path does
-      (fs.existsSync as any).mockImplementation((path: string) => {
+      fs.existsSync.mockImplementation((path: string) => {
         return path === "/test/vault/notes/assets/screenshot.png";
       });
-      (fs.statSync as any).mockReturnValue({ size: 1024 });
+      fs.statSync.mockReturnValue({ size: 1024 });
 
       const result = resolver.resolvePaths(imagePaths, sourceFilePath);
 
@@ -316,7 +316,7 @@ describe("ImagePathResolver", () => {
 
       const failed = [{ originalPath: "missing.png", error: "File not found" }];
 
-      const stats = (resolver as any).calculateStats(resolved, failed);
+      const stats = resolver.calculateStats(resolved, failed);
 
       expect(stats.total).toBe(3);
       expect(stats.resolved).toBe(2);

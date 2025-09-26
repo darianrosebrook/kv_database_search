@@ -41,7 +41,7 @@ describe("MultiModalIngestionPipeline Integration", () => {
     });
 
     // Override the embedWithStrategy method for testing
-    (embeddings as any).embedWithStrategy = async () => ({
+    embeddings.embedWithStrategy = async () => ({
       embedding: new Array(768).fill(0.1),
       model: { name: "test-model" },
       confidence: 0.9,

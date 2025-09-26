@@ -41,7 +41,7 @@ describe("Real File Multi-Modal Evaluation", () => {
     });
 
     // Override the embedWithStrategy method for testing
-    (embeddings as any).embedWithStrategy = async (text: string) => ({
+    embeddings.embedWithStrategy = async (text: string) => ({
       embedding: new Array(768).fill(0.1),
       model: { name: "test-model" },
       confidence: 0.9,

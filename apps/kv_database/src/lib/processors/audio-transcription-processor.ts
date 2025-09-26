@@ -4,7 +4,7 @@ import * as path from "path";
 import { ContentType, ContentMetadata } from "../../types/index.ts";
 import {
   detectLanguage,
-  EnhancedEntityExtractor,
+  EntityExtractor,
   ExtractedEntity,
   EntityRelationship,
   countWords,
@@ -67,7 +67,7 @@ export interface AudioTranscriptionOptions extends ProcessorOptions {
 }
 
 export class AudioTranscriptionProcessor extends BaseContentProcessor {
-  private entityExtractor: EnhancedEntityExtractor;
+  private entityExtractor: EntityExtractor;
   private tempDir: string;
 
   constructor() {
@@ -75,7 +75,7 @@ export class AudioTranscriptionProcessor extends BaseContentProcessor {
       ContentType.AUDIO,
       ContentType.AUDIO_FILE,
     ]);
-    this.entityExtractor = new EnhancedEntityExtractor();
+    this.entityExtractor = new EntityExtractor();
     this.tempDir = "/tmp/audio-processing";
 
     // Ensure temp directory exists
@@ -116,7 +116,7 @@ export class AudioTranscriptionProcessor extends BaseContentProcessor {
             break;
           }
         } catch (error) {
-          continue;
+          throw new Error(error);
         }
       }
 
@@ -128,10 +128,10 @@ export class AudioTranscriptionProcessor extends BaseContentProcessor {
             break;
           }
         } catch (error) {
-          continue;
+          throw new Error(error);
         }
       }
-    } catch (error) {
+    } catch {
       console.warn(
         "⚠️ Could not configure FFmpeg paths, using system defaults"
       );
@@ -486,7 +486,7 @@ export class AudioTranscriptionProcessor extends BaseContentProcessor {
   ): TranscriptionSegment[] {
     const segments: TranscriptionSegment[] = [];
     const timestampRegex =
-      /\[(\d{2}):(\d{2}):(\d{2})\.(\d{3}) --> (\d{2}):(\d{2}):(\d{2})\.(\d{3})\]\s*([^\[]*)/g;
+      /\[(\d{2}):(\d{2}):(\d{2})\.(\d{3}) --> (\d{2}):(\d{2}):(\d{2})\.(\d{3})\]\s*([^[]*)/g;
 
     let match;
     while ((match = timestampRegex.exec(transcriptText)) !== null) {
@@ -616,7 +616,7 @@ export class AudioTranscriptionProcessor extends BaseContentProcessor {
    */
   private analyzeTranscriptionQuality(
     segments: TranscriptionSegment[],
-    audioMetadata: AudioMetadata
+    _audioMetadata: AudioMetadata
   ): AudioTranscriptionMetadata["qualityMetrics"] {
     if (segments.length === 0) {
       return {

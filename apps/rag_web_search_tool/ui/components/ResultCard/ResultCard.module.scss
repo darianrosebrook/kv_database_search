@@ -1,60 +1,56 @@
-@import './ResultCard.tokens.generated.scss';
-
-:root {
-  @include vars;
-}
+@use './ResultCard.tokens.generated.scss';
 
 .resultCard {
-  transition: var(--resultCard-container-transition);
-  cursor: var(--resultCard-container-cursor);
-  overflow: var(--resultCard-container-overflow);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  overflow: hidden;
 
   .card {
-    background: var(--resultCard-card-background);
-    border: 1px solid var(--resultCard-card-border);
-    border-radius: var(--resultCard-card-borderRadius);
-    box-shadow: var(--resultCard-card-shadow);
-    transition: var(--resultCard-card-transition);
+    background: var(--result-card-background);
+    border: 1px solid var(--result-card-border);
+    border-radius: var(--result-card-border-radius);
+    box-shadow: var(--result-card-shadow);
+    transition: all 0.2s ease-in-out;
+    padding: var(--result-card-padding);
 
     &:hover {
-      box-shadow: var(--resultCard-cardHover-shadow);
-      border-color: var(--resultCard-cardHover-borderColor);
+      box-shadow: var(--result-card-hover-shadow);
+      border-color: var(--semantic-color-border-focus);
     }
 
     &.selected {
-      border-color: var(--resultCard-cardSelected-borderColor);
-      box-shadow: var(--resultCard-cardSelected-shadow);
-      outline: var(--resultCard-cardSelected-ring);
-      outline-offset: 2px;
+      border-color: var(--semantic-color-border-focus);
+      background: var(--result-card-selected-background);
+      box-shadow: var(--result-card-hover-shadow);
     }
   }
 
   .header {
-    padding-bottom: var(--resultCard-header-paddingBottom);
+    padding-bottom: var(--core-spacing-size-04);
 
     .headerContent {
       display: flex;
       align-items: center;
-      gap: var(--resultCard-headerContent-gap);
+      gap: var(--result-card-gap);
 
       .sourceIcon {
-        font-size: var(--resultCard-sourceIcon-fontSize);
-        flex-shrink: var(--resultCard-sourceIcon-flexShrink);
+        font-size: var(--core-icon-size-md);
+        flex-shrink: 0;
       }
 
       .title {
-        font-weight: var(--resultCard-title-fontWeight);
-        font-size: var(--resultCard-title-fontSize);
-        line-height: var(--resultCard-title-lineHeight);
-        color: var(--resultCard-title-color);
+        font-weight: var(--result-card-title-weight);
+        font-size: var(--result-card-title-size);
+        line-height: var(--semantic-typography-line-height-tight);
+        color: var(--semantic-color-foreground-primary);
         flex: 1;
         min-width: 0;
       }
 
       .badge {
-        margin-left: var(--resultCard-badge-marginLeft);
-        flex-shrink: var(--resultCard-badge-flexShrink);
-        font-size: var(--resultCard-badge-fontSize);
+        margin-left: var(--core-spacing-size-04);
+        flex-shrink: 0;
+        font-size: var(--semantic-typography-caption-01);
       }
     }
   }
@@ -62,236 +58,190 @@
   .metadata {
     display: flex;
     align-items: center;
-    gap: var(--resultCard-metadata-gap);
-    font-size: var(--resultCard-metadata-fontSize);
-    color: var(--resultCard-metadata-color);
-    margin-bottom: var(--resultCard-metadata-marginBottom);
+    gap: var(--result-card-gap);
+    font-size: var(--semantic-typography-caption-01);
+    color: var(--semantic-color-foreground-secondary);
+    margin-bottom: var(--core-spacing-size-04);
 
     .confidenceScore {
       display: flex;
       align-items: center;
-      gap: var(--resultCard-confidenceScore-gap);
-
-      .confidenceIcon {
-        width: var(--resultCard-confidenceIcon-width);
-        height: var(--resultCard-confidenceIcon-height);
-      }
+      gap: var(--core-spacing-size-02);
 
       &.high {
-        color: var(--resultCard-confidenceHigh-color);
+        color: var(--semantic-color-status-success);
       }
 
       &.medium {
-        color: var(--resultCard-confidenceMedium-color);
+        color: var(--semantic-color-status-warning);
       }
 
       &.low {
-        color: var(--resultCard-confidenceLow-color);
+        color: var(--semantic-color-status-danger);
       }
     }
 
     .badgeGroup {
       display: flex;
-      gap: var(--resultCard-badgeGroup-gap);
+      gap: var(--core-spacing-size-02);
     }
 
     .pathText {
-      font-size: var(--resultCard-pathText-fontSize);
-      color: var(--resultCard-pathText-color);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .actionButton {
-      opacity: var(--resultCard-actionButton-opacity);
-      transition: var(--resultCard-actionButton-transition);
-
-      &.visible {
-        opacity: var(--resultCard-actionButtonVisible-opacity);
-      }
+      color: var(--semantic-color-foreground-tertiary);
+      font-size: var(--semantic-typography-caption-02);
     }
   }
 
   .content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--resultCard-content-gap);
-
     .contentPreview {
-      display: flex;
-      flex-direction: column;
-      gap: var(--resultCard-contentPreview-gap);
+      position: relative;
 
       .previewBox {
-        font-size: var(--resultCard-previewBox-fontSize);
-        line-height: var(--resultCard-previewBox-lineHeight);
-        background: var(--resultCard-previewBox-background);
-        padding: var(--resultCard-previewBox-padding);
-        border-radius: var(--resultCard-previewBox-borderRadius);
-        border-left: var(--resultCard-previewBox-borderLeft);
-        position: var(--resultCard-previewBox-position);
+        position: relative;
+        padding: var(--core-spacing-size-04);
+        background: var(--semantic-color-background-secondary);
+        border-radius: var(--semantic-shape-radius-small);
+        border: 1px solid var(--semantic-color-border-subtle);
+      }
 
-        .highlight {
-          background: var(--resultCard-highlight-background);
-          padding: var(--resultCard-highlight-padding);
-          border-radius: var(--resultCard-highlight-borderRadius);
-        }
+      .highlight {
+        background: var(--semantic-color-background-highlight);
+        padding: 2px 4px;
+        border-radius: 2px;
+      }
 
-        .copyButton {
-          position: var(--resultCard-copyButton-position);
-          top: var(--resultCard-copyButton-top);
-          right: var(--resultCard-copyButton-right);
-          opacity: var(--resultCard-copyButton-opacity);
-          transition: var(--resultCard-copyButton-transition);
-          height: var(--resultCard-copyButton-height);
-          width: var(--resultCard-copyButton-width);
-          padding: var(--resultCard-copyButton-padding);
+      .copyButton {
+        position: absolute;
+        top: var(--core-spacing-size-02);
+        right: var(--core-spacing-size-02);
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
 
-          &.visible {
-            opacity: var(--resultCard-copyButtonVisible-opacity);
-          }
-        }
-
-        .copiedIndicator {
-          position: var(--resultCard-copiedIndicator-position);
-          top: var(--resultCard-copiedIndicator-top);
-          right: var(--resultCard-copiedIndicator-right);
-          font-size: var(--resultCard-copiedIndicator-fontSize);
-          color: var(--resultCard-copiedIndicator-color);
-        }
-
-        &:hover .copyButton {
-          opacity: var(--resultCard-copyButtonVisible-opacity);
+        &.visible {
+          opacity: 1;
         }
       }
 
+      .copiedIndicator {
+        position: absolute;
+        top: var(--core-spacing-size-02);
+        right: var(--core-spacing-size-08);
+        background: var(--semantic-color-background-success-subtle);
+        color: var(--semantic-color-foreground-success);
+        padding: 2px 6px;
+        border-radius: var(--semantic-shape-radius-small);
+        font-size: var(--semantic-typography-caption-02);
+      }
+
       .expandButton {
-        margin-top: var(--resultCard-expandButton-marginTop);
-        font-size: var(--resultCard-expandButton-fontSize);
-        height: var(--resultCard-expandButton-height);
+        margin-top: var(--core-spacing-size-04);
+        color: var(--semantic-color-foreground-link);
       }
     }
 
     .separator {
-      background: var(--resultCard-separator-background);
-      height: var(--resultCard-separator-height);
-      width: var(--resultCard-separator-width);
+      height: 1px;
+      background: var(--semantic-color-border-subtle);
+      margin: var(--core-spacing-size-04) 0;
+    }
+
+    .skeleton {
+      display: flex;
+      flex-direction: column;
+      gap: var(--core-spacing-size-02);
+
+      .skeletonLine {
+        height: 16px;
+        background: var(--semantic-color-background-secondary);
+        border-radius: var(--semantic-shape-radius-small);
+      }
     }
 
     .explanation {
-      display: flex;
-      flex-direction: column;
-      gap: var(--resultCard-explanation-gap);
-
       .explanationHeader {
         display: flex;
         align-items: center;
-        gap: var(--resultCard-explanationHeader-gap);
+        gap: var(--core-spacing-size-02);
+        margin-bottom: var(--core-spacing-size-04);
 
         .explanationIcon {
-          width: var(--resultCard-explanationIcon-width);
-          height: var(--resultCard-explanationIcon-height);
-          color: var(--resultCard-explanationIcon-color);
+          color: var(--semantic-color-status-warning);
         }
 
         .explanationTitle {
-          font-size: var(--resultCard-explanationTitle-fontSize);
-          font-weight: var(--resultCard-explanationTitle-fontWeight);
+          font-size: var(--semantic-typography-heading-06);
+          font-weight: var(--semantic-typography-font-weight-medium);
+          color: var(--semantic-color-foreground-primary);
         }
       }
 
       .explanationContent {
-        display: flex;
-        flex-direction: column;
-        gap: var(--resultCard-explanationContent-gap);
-
         .explanationText {
-          font-size: var(--resultCard-explanationText-fontSize);
-          color: var(--resultCard-explanationText-color);
-          line-height: var(--resultCard-explanationText-lineHeight);
+          color: var(--semantic-color-foreground-secondary);
+          line-height: var(--semantic-typography-line-height-loose);
+          margin-bottom: var(--core-spacing-size-04);
         }
 
         .insights {
-          display: flex;
-          flex-direction: column;
-          gap: var(--resultCard-insights-gap);
+          margin-bottom: var(--core-spacing-size-04);
 
           .insightsHeader {
             display: flex;
             align-items: center;
-            gap: var(--resultCard-insightsHeader-gap);
+            gap: var(--core-spacing-size-02);
+            margin-bottom: var(--core-spacing-size-02);
 
             .insightsIcon {
-              width: var(--resultCard-insightsIcon-width);
-              height: var(--resultCard-insightsIcon-height);
-              color: var(--resultCard-insightsIcon-color);
+              color: var(--semantic-color-status-highlight);
             }
 
             .insightsTitle {
-              font-size: var(--resultCard-insightsTitle-fontSize);
-              font-weight: var(--resultCard-insightsTitle-fontWeight);
+              font-weight: var(--semantic-typography-font-weight-medium);
+              color: var(--semantic-color-foreground-primary);
             }
           }
 
           .insightsList {
-            display: flex;
-            flex-direction: column;
-            gap: var(--resultCard-insightsList-gap);
-
             .insightItem {
               display: flex;
-              font-size: var(--resultCard-insightItem-fontSize);
-              color: var(--resultCard-insightItem-color);
-              gap: var(--resultCard-insightItem-gap);
+              align-items: flex-start;
+              gap: var(--core-spacing-size-02);
+              margin-bottom: var(--core-spacing-size-02);
 
               .insightBullet {
-                color: var(--resultCard-insightBullet-color);
-                margin-top: var(--resultCard-insightBullet-marginTop);
+                color: var(--semantic-color-foreground-accent);
+                font-weight: var(--semantic-typography-font-weight-bold);
               }
             }
           }
         }
 
         .actions {
-          display: flex;
-          flex-direction: column;
-          gap: var(--resultCard-actions-gap);
-
           .actionsHeader {
             display: flex;
             align-items: center;
-            gap: var(--resultCard-actionsHeader-gap);
+            gap: var(--core-spacing-size-02);
+            margin-bottom: var(--core-spacing-size-02);
 
             .actionsIcon {
-              width: var(--resultCard-actionsIcon-width);
-              height: var(--resultCard-actionsIcon-height);
-              color: var(--resultCard-actionsIcon-color);
+              color: var(--semantic-color-foreground-info);
             }
 
             .actionsTitle {
-              font-size: var(--resultCard-actionsTitle-fontSize);
-              font-weight: var(--resultCard-actionsTitle-fontWeight);
+              font-weight: var(--semantic-typography-font-weight-medium);
+              color: var(--semantic-color-foreground-primary);
             }
           }
 
           .actionsGrid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--resultCard-actionsGrid-gap);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--core-spacing-size-02);
 
             .actionButton {
-              justify-content: var(--resultCard-actionButton-justifyContent);
-              font-size: var(--resultCard-actionButton-fontSize);
-              height: var(--resultCard-actionButton-height);
-              text-align: var(--resultCard-actionButton-textAlign);
-
-              .actionIcon {
-                width: var(--resultCard-actionIcon-width);
-                height: var(--resultCard-actionIcon-height);
-                margin-right: var(--resultCard-actionIcon-marginRight);
-                flex-shrink: var(--resultCard-actionIcon-flexShrink);
-              }
+              display: flex;
+              align-items: center;
+              gap: var(--core-spacing-size-02);
             }
           }
         }
@@ -300,71 +250,50 @@
   }
 
   .footer {
-    padding-top: var(--resultCard-footer-paddingTop);
-    border-top: var(--resultCard-footer-borderTop);
+    padding: var(--core-spacing-size-04);
+    background: var(--semantic-color-background-secondary);
 
     .footerContent {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: var(--resultCard-footerContent-justifyContent);
 
       .tagGroup {
         display: flex;
-        gap: var(--resultCard-tagGroup-gap);
-        flex: 1;
-        min-width: 0;
+        gap: var(--core-spacing-size-02);
+        flex-wrap: wrap;
 
         .tag {
-          font-size: var(--resultCard-tag-fontSize);
+          font-size: var(--semantic-typography-caption-02);
         }
 
         .tagOverflow {
-          font-size: var(--resultCard-tagOverflow-fontSize);
+          font-size: var(--semantic-typography-caption-02);
+          background: var(--semantic-color-background-tertiary);
         }
       }
 
       .footerMeta {
         display: flex;
         align-items: center;
-        gap: var(--resultCard-footerMeta-gap);
+        gap: var(--core-spacing-size-04);
 
         .lastUpdated {
-          font-size: var(--resultCard-lastUpdated-fontSize);
-          color: var(--resultCard-lastUpdated-color);
+          font-size: var(--semantic-typography-caption-02);
+          color: var(--semantic-color-foreground-tertiary);
         }
 
         .viewButton {
-          height: var(--resultCard-viewButton-height);
-          padding-left: var(--resultCard-viewButton-paddingX);
-          padding-right: var(--resultCard-viewButton-paddingX);
-          font-size: var(--resultCard-viewButton-fontSize);
+          display: flex;
+          align-items: center;
+          gap: var(--core-spacing-size-02);
+          color: var(--semantic-color-foreground-link);
 
-          .viewButtonIcon {
-            width: var(--resultCard-viewButtonIcon-width);
-            height: var(--resultCard-viewButtonIcon-height);
-            margin-right: var(--resultCard-viewButtonIcon-marginRight);
+          &:hover {
+            color: var(--semantic-color-foreground-link-hover);
           }
         }
       }
-    }
-  }
-
-  .skeleton {
-    display: flex;
-    flex-direction: column;
-    gap: var(--resultCard-skeleton-gap);
-
-    .skeletonLine {
-      height: var(--resultCard-skeletonLine-height);
-      background: var(--resultCard-skeletonLine-background);
-      border-radius: var(--resultCard-skeletonLine-borderRadius);
-    }
-  }
-
-  // Group hover states
-  &:hover {
-    .actionButton {
-      opacity: var(--resultCard-actionButtonVisible-opacity);
     }
   }
 }

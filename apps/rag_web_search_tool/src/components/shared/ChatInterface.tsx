@@ -10,18 +10,18 @@ import type { GraphRagEntity } from "../../lib/graph-rag-api";
 interface ChatInterfaceProps {
   initialQuery: string;
   messages: EnhancedMessage[];
-  onSendMessage: (message: string, options?: any) => void;
+  onSendMessage: (message: string, options?) => void;
   isLoading: boolean;
   resultsCount: number;
   selectedModel: string;
-  contextResults: any[];
-  onRemoveContext: (result: any) => void;
+  contextResults;
+  onRemoveContext: (result) => void;
   suggestedActions: SuggestedAction[];
   onSuggestedAction: (action: SuggestedAction) => void;
-  currentSession: any;
+  currentSession;
   useGraphRag: boolean;
   onExploreEntity: (entity: GraphRagEntity) => void;
-  onExploreRelationship: (relationship: any) => void;
+  onExploreRelationship: (relationship) => void;
   onReasonAbout: (entities: GraphRagEntity[]) => void;
 }
 

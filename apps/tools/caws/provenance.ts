@@ -23,7 +23,7 @@ interface ProvenanceManifest {
       provider: boolean;
     };
     a11y?: string;
-    perf?: any;
+    perf?;
   };
   approvals: string[];
 }
@@ -35,7 +35,7 @@ export async function generateProvenance(): Promise<ProvenanceManifest> {
   let commit = "unknown";
   try {
     commit = execSync("git rev-parse HEAD", { encoding: "utf-8" }).trim();
-  } catch (e) {
+  } catch {
     console.warn("Could not get git commit hash");
   }
 
@@ -108,7 +108,7 @@ async function collectTestResults(): Promise<ProvenanceManifest["results"]> {
         cwd: path.join(__dirname, "../.."),
         stdio: "inherit",
       });
-    } catch (e) {
+    } catch {
       console.warn("Test execution failed, proceeding without coverage");
     }
   }
@@ -121,20 +121,20 @@ async function collectTestResults(): Promise<ProvenanceManifest["results"]> {
       coverageData = JSON.parse(fs.readFileSync(coveragePath, "utf-8"));
     } else {
       // Try coverage-final.json (from direct vitest run)
-      const coverageFinalPath = path.join(
+      const coverageAltPath = path.join(
         __dirname,
         "../../coverage/coverage-final.json"
       );
-      if (fs.existsSync(coverageFinalPath)) {
-        const finalCoverage = JSON.parse(
-          fs.readFileSync(coverageFinalPath, "utf-8")
+      if (fs.existsSync(coverageAltPath)) {
+        const altCoverage = JSON.parse(
+          fs.readFileSync(coverageAltPath, "utf-8")
         );
         // Calculate totals from individual file coverage
         let totalBranches = 0,
           coveredBranches = 0,
           totalLines = 0,
           coveredLines = 0;
-        for (const fileData of Object.values(finalCoverage) as any[]) {
+        for (const fileData of Object.values(altCoverage)) {
           if (fileData.b) {
             for (const branchCount of Object.values(fileData.b) as number[]) {
               totalBranches++;
@@ -186,7 +186,7 @@ async function collectTestResults(): Promise<ProvenanceManifest["results"]> {
         cwd: path.join(__dirname, "../.."),
         stdio: "inherit",
       });
-    } catch (e) {
+    } catch {
       console.warn(
         "Mutation testing failed, proceeding without mutation score"
       );
@@ -208,17 +208,12 @@ async function collectTestResults(): Promise<ProvenanceManifest["results"]> {
         let totalNoCoverage = 0;
 
         if (mutation.files) {
-          for (const [fileName, fileData] of Object.entries(
-            mutation.files
-          ) as any[]) {
+          for (const [, fileData] of Object.entries(mutation.files)) {
             if (fileData.mutants) {
-              const statusCounts = fileData.mutants.reduce(
-                (acc: any, mutant: any) => {
-                  acc[mutant.status] = (acc[mutant.status] || 0) + 1;
-                  return acc;
-                },
-                {}
-              );
+              const statusCounts = fileData.mutants.reduce((acc, mutant) => {
+                acc[mutant.status] = (acc[mutant.status] || 0) + 1;
+                return acc;
+              }, {});
 
               totalKilled += statusCounts.Killed || 0;
               totalTimeout += statusCounts.Timeout || 0;
@@ -262,7 +257,7 @@ async function collectTestResults(): Promise<ProvenanceManifest["results"]> {
         cwd: path.join(__dirname, "../.."),
         stdio: "inherit",
       });
-    } catch (e) {
+    } catch {
       console.warn("Contract testing failed");
     }
   }
@@ -288,14 +283,14 @@ async function collectTestResults(): Promise<ProvenanceManifest["results"]> {
           consumer: true,
           provider: true,
         };
-      } catch (e) {
+      } catch {
         results.contracts = {
           consumer: false,
           provider: false,
         };
       }
     }
-  } catch (e) {
+  } catch {
     results.contracts = {
       consumer: false,
       provider: false,

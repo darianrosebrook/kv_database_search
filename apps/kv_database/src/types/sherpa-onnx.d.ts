@@ -33,12 +33,20 @@ declare module "sherpa-onnx" {
   }
 
   // Export functions that might exist in the module
-  function createModel(config: any): any;
-  function createRecognizer(config: any): any;
+  function createModel(config);
+  function createRecognizer(config);
 
   // Export interfaces/types that might exist
-  interface ModelConfig {}
-  interface RecognizerConfig {}
+  interface ModelConfig {
+    modelPath?: string;
+    modelType?: "transducer" | "paraNet";
+  }
+
+  interface RecognizerConfig {
+    modelConfig?: ModelConfig;
+    sampleRate?: number;
+    featureDim?: number;
+  }
 
   export {
     SpeechRecognizer,

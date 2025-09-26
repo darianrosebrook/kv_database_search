@@ -15,11 +15,11 @@ import {
   Eye,
   BookOpen,
 } from "lucide-react";
-import { Badge } from "../../../src/components/ui/badge";
+import { Badge } from "../Badge";
 import { Button } from "../Button";
-import { Card, CardContent, CardHeader } from "../../../src/components/ui/card";
-import { Skeleton } from "../../../src/components/ui/skeleton";
-import { Separator } from "../../../src/components/ui/separator";
+import { Card } from "../Card";
+import { Skeleton } from "../Skeleton";
+import { Separator } from "../Separator";
 import {
   ExplanationService,
   type ResultExplanation,
@@ -164,7 +164,7 @@ export function ResultCard({
         className={`${styles.card} ${isSelected ? styles.selected : ""}`}
         onClick={() => onSelect(result)}
       >
-        <CardHeader className={styles.header}>
+        <Card.Header className={styles.header}>
           <div className={styles.headerContent}>
             <span className={styles.sourceIcon}>
               {getSourceIcon(result.source.type)}
@@ -210,9 +210,9 @@ export function ResultCard({
               <MessageSquare className="w-4 h-4" />
             </Button>
           </div>
-        </CardHeader>
+        </Card.Header>
 
-        <CardContent className={styles.content}>
+        <Card.Content className={styles.content}>
           <div className={styles.contentPreview}>
             <div className={styles.previewBox}>
               <div
@@ -342,7 +342,7 @@ export function ResultCard({
               </motion.div>
             )}
           </AnimatePresence>
-        </CardContent>
+        </Card.Content>
 
         {(result.tags.length > 0 || result.lastUpdated) && (
           <>

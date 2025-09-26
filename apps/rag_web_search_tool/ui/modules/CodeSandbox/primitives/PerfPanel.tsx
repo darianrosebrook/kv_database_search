@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 
 export type PerfPanelProps = {
   targetWindow?: Window;
@@ -23,7 +23,7 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
   const [isRunning, setIsRunning] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [statusAnnouncement, setStatusAnnouncement] =
-    React.useState<string>('');
+    React.useState<string>("");
 
   const renderTimes = React.useRef<number[]>([]);
   const frameCount = React.useRef(0);
@@ -73,7 +73,7 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
   const startMonitoring = React.useCallback(() => {
     setIsRunning(true);
     setError(null);
-    setStatusAnnouncement('Performance monitoring started');
+    setStatusAnnouncement("Performance monitoring started");
     renderTimes.current = [];
     frameCount.current = 0;
     lastFrameTime.current = performance.now();
@@ -89,8 +89,8 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
     const checkMemory = () => {
       try {
         const win = resolveTargetWindow();
-        if ('memory' in win.performance) {
-          const memory = (win.performance as any).memory;
+        if ("memory" in win.performance) {
+          const memory = win.performance.memory;
           setMetrics((prev) => ({
             ...prev,
             memoryEstimate: Math.round(memory.usedJSHeapSize / 1024 / 1024), // MB
@@ -106,7 +106,7 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
 
   const stopMonitoring = React.useCallback(() => {
     setIsRunning(false);
-    setStatusAnnouncement('Performance monitoring stopped');
+    setStatusAnnouncement("Performance monitoring stopped");
     if (animationFrameId.current !== null) {
       cancelAnimationFrame(animationFrameId.current);
     }
@@ -135,12 +135,12 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json',
+      type: "application/json",
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'perf-report.json';
+    a.download = "perf-report.json";
     a.click();
     URL.revokeObjectURL(url);
   }, [metrics, sampleMs]);
@@ -165,9 +165,9 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
   return (
     <div
       style={{
-        border: '1px solid var(--semantic-color-border-subtle)',
-        borderRadius: 'var(--semantic-border-radius-md, 8px)',
-        padding: 'var(--semantic-spacing-md, 12px)',
+        border: "1px solid var(--semantic-color-border-subtle)",
+        borderRadius: "var(--semantic-border-radius-md, 8px)",
+        padding: "var(--semantic-spacing-md, 12px)",
       }}
     >
       {/* Screen reader announcements */}
@@ -176,14 +176,14 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
         aria-atomic="false"
         className="sr-only"
         style={{
-          position: 'absolute',
-          width: '1px',
-          height: '1px',
+          position: "absolute",
+          width: "1px",
+          height: "1px",
           padding: 0,
-          margin: '-1px',
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
+          margin: "-1px",
+          overflow: "hidden",
+          clip: "rect(0, 0, 0, 0)",
+          whiteSpace: "nowrap",
           border: 0,
         }}
       >
@@ -191,41 +191,41 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
       </div>
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           gap: 8,
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
         <strong>Performance</strong>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: "flex", gap: 8 }}>
           <button
             type="button"
             onClick={isRunning ? stopMonitoring : startMonitoring}
             aria-describedby="monitoring-status"
             style={{
               padding:
-                'var(--semantic-spacing-xs, 4px) var(--semantic-spacing-sm, 8px)',
-              borderRadius: 'var(--semantic-border-radius-sm, 6px)',
+                "var(--semantic-spacing-xs, 4px) var(--semantic-spacing-sm, 8px)",
+              borderRadius: "var(--semantic-border-radius-sm, 6px)",
               background: isRunning
-                ? 'var(--semantic-color-background-danger)'
-                : 'var(--semantic-color-background-accent)',
-              color: 'var(--semantic-color-foreground-on-accent)',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--semantic-spacing-xs, 4px)',
+                ? "var(--semantic-color-background-danger)"
+                : "var(--semantic-color-background-accent)",
+              color: "var(--semantic-color-foreground-on-accent)",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--semantic-spacing-xs, 4px)",
             }}
           >
-            <span aria-hidden="true" style={{ fontSize: '12px' }}>
-              {isRunning ? '⏹️' : '▶️'}
+            <span aria-hidden="true" style={{ fontSize: "12px" }}>
+              {isRunning ? "⏹️" : "▶️"}
             </span>
-            {isRunning ? 'Stop' : 'Start'} monitoring
+            {isRunning ? "Stop" : "Start"} monitoring
             <span id="monitoring-status" className="sr-only">
               {isRunning
-                ? 'Currently monitoring performance'
-                : 'Performance monitoring stopped'}
+                ? "Currently monitoring performance"
+                : "Performance monitoring stopped"}
             </span>
           </button>
           <button
@@ -234,12 +234,12 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
             disabled={isRunning}
             style={{
               padding:
-                'var(--semantic-spacing-xs, 4px) var(--semantic-spacing-sm, 8px)',
-              borderRadius: 'var(--semantic-border-radius-sm, 6px)',
-              background: 'var(--semantic-color-background-secondary)',
-              color: 'var(--semantic-color-foreground-primary)',
-              border: 'none',
-              cursor: isRunning ? 'not-allowed' : 'pointer',
+                "var(--semantic-spacing-xs, 4px) var(--semantic-spacing-sm, 8px)",
+              borderRadius: "var(--semantic-border-radius-sm, 6px)",
+              background: "var(--semantic-color-background-secondary)",
+              color: "var(--semantic-color-foreground-primary)",
+              border: "none",
+              cursor: isRunning ? "not-allowed" : "pointer",
               opacity: isRunning ? 0.6 : 1,
             }}
           >
@@ -251,12 +251,12 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
             disabled={metrics.renderCount === 0}
             style={{
               padding:
-                'var(--semantic-spacing-xs, 4px) var(--semantic-spacing-sm, 8px)',
-              borderRadius: 'var(--semantic-border-radius-sm, 6px)',
-              background: 'var(--semantic-color-background-secondary)',
-              color: 'var(--semantic-color-foreground-primary)',
-              border: 'none',
-              cursor: metrics.renderCount === 0 ? 'not-allowed' : 'pointer',
+                "var(--semantic-spacing-xs, 4px) var(--semantic-spacing-sm, 8px)",
+              borderRadius: "var(--semantic-border-radius-sm, 6px)",
+              background: "var(--semantic-color-background-secondary)",
+              color: "var(--semantic-color-foreground-primary)",
+              border: "none",
+              cursor: metrics.renderCount === 0 ? "not-allowed" : "pointer",
               opacity: metrics.renderCount === 0 ? 0.6 : 1,
             }}
           >
@@ -266,7 +266,7 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
       </div>
 
       {error && (
-        <div style={{ color: 'var(--text-danger)', marginTop: 8 }}>
+        <div style={{ color: "var(--text-danger)", marginTop: 8 }}>
           Error: {error}
         </div>
       )}
@@ -274,83 +274,83 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
       <div
         style={{
           marginTop: 12,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
           gap: 12,
         }}
       >
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: "center" }}>
           <div
             style={{
               fontSize: 24,
               fontWeight: 600,
-              color: 'var(--text-accent)',
+              color: "var(--text-accent)",
             }}
           >
             {metrics.renderCount}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
             Renders
           </div>
         </div>
 
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: "center" }}>
           <div
             style={{
               fontSize: 24,
               fontWeight: 600,
-              color: 'var(--text-accent)',
+              color: "var(--text-accent)",
             }}
           >
             {metrics.fps}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
             FPS
           </div>
         </div>
 
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: "center" }}>
           <div
             style={{
               fontSize: 24,
               fontWeight: 600,
-              color: 'var(--text-accent)',
+              color: "var(--text-accent)",
             }}
           >
             {metrics.lastRenderTime}ms
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
             Last render
           </div>
         </div>
 
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: "center" }}>
           <div
             style={{
               fontSize: 24,
               fontWeight: 600,
-              color: 'var(--text-accent)',
+              color: "var(--text-accent)",
             }}
           >
             {metrics.avgRenderTime}ms
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
             Avg render
           </div>
         </div>
 
         {metrics.memoryEstimate !== undefined && (
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: "center" }}>
             <div
               style={{
                 fontSize: 24,
                 fontWeight: 600,
-                color: 'var(--text-accent)',
+                color: "var(--text-accent)",
               }}
             >
               {metrics.memoryEstimate}MB
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
               Memory
             </div>
           </div>
@@ -362,8 +362,8 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
           style={{
             marginTop: 8,
             fontSize: 12,
-            color: 'var(--text-secondary)',
-            textAlign: 'center',
+            color: "var(--text-secondary)",
+            textAlign: "center",
           }}
         >
           Monitoring for {sampleMs / 1000}s...

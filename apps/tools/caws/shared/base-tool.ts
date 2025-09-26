@@ -7,18 +7,19 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import { BufferEncoding } from "buffer";
+// BufferEncoding is available globally in Node.js
+import { CawsConfig } from "./types.ts";
 
 export interface ToolResult {
   success: boolean;
   message: string;
-  data?: any;
+  data?;
   errors?: string[];
   warnings?: string[];
 }
 
 export interface FileOperationOptions {
-  encoding?: BufferEncoding;
+  encoding?: string;
   createDir?: boolean;
   backup?: boolean;
 }
@@ -51,7 +52,7 @@ export abstract class CawsBaseTool {
   /**
    * Safely read a JSON file with error handling
    */
-  protected readJsonFile<T = any>(filePath: string): T | null {
+  protected readJsonFile<T = unknown>(filePath: string): T | null {
     try {
       if (!fs.existsSync(filePath)) {
         return null;
@@ -70,7 +71,7 @@ export abstract class CawsBaseTool {
    */
   protected writeJsonFile(
     filePath: string,
-    data: any,
+    data,
     options: FileOperationOptions = {}
   ): boolean {
     try {
@@ -102,14 +103,14 @@ export abstract class CawsBaseTool {
   /**
    * Safely read a YAML file
    */
-  protected readYamlFile<T = any>(filePath: string): T | null {
+  protected readYamlFile<T = unknown>(filePath: string): T | null {
     try {
       if (!fs.existsSync(filePath)) {
         return null;
       }
 
       const content = fs.readFileSync(filePath, "utf-8");
-      const yaml = require("js-yaml");
+      const yaml = await import("js-yaml");
       return yaml.load(content) as T;
     } catch (error) {
       this.logError(`Failed to read YAML file ${filePath}: ${error}`);
@@ -156,7 +157,7 @@ export abstract class CawsBaseTool {
   /**
    * Load tier policy configuration
    */
-  protected loadTierPolicy(): Record<string, any> | null {
+  protected loadTierPolicy(): Record<string, unknown> | null {
     const policyPath = path.join(
       this.cawsDirectory,
       "policy",
@@ -168,7 +169,7 @@ export abstract class CawsBaseTool {
   /**
    * Load CAWS configuration
    */
-  protected loadCawsConfig(): any | null {
+  protected loadCawsConfig(): CawsConfig | null {
     const configPath = path.join(this.cawsDirectory, "config.json");
     return this.readJsonFile(configPath);
   }
@@ -207,7 +208,7 @@ export abstract class CawsBaseTool {
   protected createResult(
     success: boolean,
     message: string,
-    data?: any,
+    data?,
     errors?: string[],
     warnings?: string[]
   ): ToolResult {
@@ -276,7 +277,7 @@ export abstract class CawsBaseTool {
       process.exit(0);
     } else {
       this.logError(result.message);
-      if (result.errors.length > 0) {
+      if (result.errors && result.errors.length > 0) {
         result.errors.forEach((error) => this.logError(error));
       }
       process.exit(1);

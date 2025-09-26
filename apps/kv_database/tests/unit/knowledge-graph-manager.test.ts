@@ -12,8 +12,8 @@ import {
   type KnowledgeGraphEntity,
   type KnowledgeGraphRelationship,
   type EntityExtractionResult,
-} from "../../src/lib/knowledge-graph/entity-extractor.js";
-import { ContentType } from "../../src/lib/types/index.js";
+} from "../../src/lib/knowledge-graph/entity-extractor.ts";
+import { ContentType } from "../../src/lib/types/index.ts";
 
 // Mock the embedding service
 const mockEmbeddingService = {
@@ -37,7 +37,7 @@ describe("KnowledgeGraph", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    manager = new KnowledgeGraph(mockPool, mockEmbeddingService as any, {
+    manager = new KnowledgeGraph(mockPool, mockEmbeddingService, {
       similarityThreshold: 0.8,
       enableAutoMerge: false,
     });
@@ -634,7 +634,7 @@ describe("KnowledgeGraph", () => {
         .mockResolvedValueOnce({ rows: [] }); // findVectorSimilarMatches
 
       // Act
-      const duplicates = await (manager as any).findDuplicateEntities(
+      const duplicates = await manager.findDuplicateEntities(
         entity,
         mockClient
       );
@@ -698,7 +698,7 @@ describe("KnowledgeGraph", () => {
         .mockResolvedValueOnce({ rows: [] }); // findVectorSimilarMatches
 
       // Act
-      const duplicates = await (manager as any).findDuplicateEntities(
+      const duplicates = await manager.findDuplicateEntities(
         entity,
         mockClient
       );
@@ -711,11 +711,9 @@ describe("KnowledgeGraph", () => {
 
     it("should filter duplicates by similarity threshold [INV: Similarity threshold]", async () => {
       // Arrange
-      const strictManager = new KnowledgeGraph(
-        mockPool,
-        mockEmbeddingService as any,
-        { similarityThreshold: 0.9 }
-      );
+      const strictManager = new KnowledgeGraph(mockPool, mockEmbeddingService, {
+        similarityThreshold: 0.9,
+      });
 
       const entity: KnowledgeGraphEntity = {
         name: "Test Entity",
@@ -767,7 +765,7 @@ describe("KnowledgeGraph", () => {
         .mockResolvedValueOnce({ rows: [] });
 
       // Act
-      const duplicates = await (strictManager as any).findDuplicateEntities(
+      const duplicates = await strictManager.findDuplicateEntities(
         entity,
         mockClient
       );

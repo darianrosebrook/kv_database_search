@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { LoadingSpinner } from './LoadingSpinner';
+import * as React from "react";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 export type A11yPanelProps = {
   /** If provided, runs axe in this window (e.g., the preview iframe window) */
@@ -47,13 +47,13 @@ export function A11yPanel({
   const [isRunning, setIsRunning] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [violations, setViolations] = React.useState<AxeViolation[]>([]);
-  const [announcement, setAnnouncement] = React.useState<string>('');
+  const [announcement, setAnnouncement] = React.useState<string>("");
 
   const resolveTargetWindow = React.useCallback((): Window | null => {
     if (targetWindow) return targetWindow;
     try {
       const iframe =
-        document.querySelector<HTMLIFrameElement>('.sp-preview-iframe');
+        document.querySelector<HTMLIFrameElement>(".sp-preview-iframe");
       return iframe?.contentWindow ?? null;
     } catch {
       return null;
@@ -66,18 +66,18 @@ export function A11yPanel({
     try {
       const win = resolveTargetWindow() ?? window;
       // Dynamic import to avoid SSR/edge issues
-      const axeModule = (await import('axe-core')).default;
+      const axeModule = (await import("axe-core")).default;
       const options =
         runTags && runTags.length
-          ? { runOnly: { type: 'tag', values: runTags } }
+          ? { runOnly: { type: "tag", values: runTags } }
           : undefined;
-      const result = (await axeModule.run(win.document, options as any)) as any;
-      const v: AxeViolation[] = (result?.violations || []).map((vi: any) => ({
+      const result = await axeModule.run(win.document, options);
+      const v: AxeViolation[] = (result?.violations || []).map((vi) => ({
         id: vi.id,
         impact: vi.impact,
         help: vi.help,
         helpUrl: vi.helpUrl,
-        nodes: (vi.nodes || []).map((n: any) => ({
+        nodes: (vi.nodes || []).map((n) => ({
           target: n.target,
           html: n.html,
         })),
@@ -87,23 +87,25 @@ export function A11yPanel({
       // Announce results to screen readers
       const violationCount = v.length;
       if (violationCount === 0) {
-        setAnnouncement('Accessibility check completed. No violations found.');
+        setAnnouncement("Accessibility check completed. No violations found.");
       } else {
         const criticalCount = v.filter(
-          (violation) => violation.impact === 'critical'
+          (violation) => violation.impact === "critical"
         ).length;
         const seriousCount = v.filter(
-          (violation) => violation.impact === 'serious'
+          (violation) => violation.impact === "serious"
         ).length;
         setAnnouncement(
-          `Accessibility check completed. Found ${violationCount} violation${violationCount !== 1 ? 's' : ''}${
-            criticalCount > 0 ? `, including ${criticalCount} critical` : ''
-          }${seriousCount > 0 ? `, ${seriousCount} serious` : ''}.`
+          `Accessibility check completed. Found ${violationCount} violation${
+            violationCount !== 1 ? "s" : ""
+          }${criticalCount > 0 ? `, including ${criticalCount} critical` : ""}${
+            seriousCount > 0 ? `, ${seriousCount} serious` : ""
+          }.`
         );
       }
     } catch (e) {
       const errorMessage =
-        e instanceof Error ? e.message : 'Failed to run accessibility checks';
+        e instanceof Error ? e.message : "Failed to run accessibility checks";
       setError(errorMessage);
       setAnnouncement(`Accessibility check failed: ${errorMessage}`);
     } finally {
@@ -117,12 +119,12 @@ export function A11yPanel({
 
   const exportJson = React.useCallback(() => {
     const blob = new Blob([JSON.stringify({ violations }, null, 2)], {
-      type: 'application/json',
+      type: "application/json",
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'a11y-report.json';
+    a.download = "a11y-report.json";
     a.click();
     URL.revokeObjectURL(url);
   }, [violations]);
@@ -130,9 +132,9 @@ export function A11yPanel({
   return (
     <div
       style={{
-        border: '1px solid var(--semantic-color-border-subtle)',
-        borderRadius: 'var(--semantic-border-radius-md, 8px)',
-        padding: 'var(--semantic-spacing-md, 12px)',
+        border: "1px solid var(--semantic-color-border-subtle)",
+        borderRadius: "var(--semantic-border-radius-md, 8px)",
+        padding: "var(--semantic-spacing-md, 12px)",
       }}
     >
       {/* Screen reader announcements */}
@@ -141,14 +143,14 @@ export function A11yPanel({
         aria-atomic="true"
         className="sr-only"
         style={{
-          position: 'absolute',
-          width: '1px',
-          height: '1px',
+          position: "absolute",
+          width: "1px",
+          height: "1px",
           padding: 0,
-          margin: '-1px',
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
+          margin: "-1px",
+          overflow: "hidden",
+          clip: "rect(0, 0, 0, 0)",
+          whiteSpace: "nowrap",
           border: 0,
         }}
       >
@@ -156,65 +158,65 @@ export function A11yPanel({
       </div>
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           gap: 8,
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
         <strong>Accessibility</strong>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: "flex", gap: 8 }}>
           <button
             type="button"
             onClick={runAxe}
             disabled={isRunning}
             style={{
-              padding: '4px 8px',
+              padding: "4px 8px",
               borderRadius: 6,
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 6,
             }}
           >
             {isRunning && <LoadingSpinner size="small" />}
-            {isRunning ? 'Running…' : 'Run checks'}
+            {isRunning ? "Running…" : "Run checks"}
           </button>
           <button
             type="button"
             onClick={exportJson}
             disabled={!violations.length}
-            style={{ padding: '4px 8px', borderRadius: 6 }}
+            style={{ padding: "4px 8px", borderRadius: 6 }}
           >
             Export JSON
           </button>
         </div>
       </div>
       {error && (
-        <div style={{ color: 'var(--text-danger)', marginTop: 8 }}>
+        <div style={{ color: "var(--text-danger)", marginTop: 8 }}>
           Error: {error}
         </div>
       )}
       <div
-        style={{ marginTop: 8, fontSize: 12, color: 'var(--text-secondary)' }}
+        style={{ marginTop: 8, fontSize: 12, color: "var(--text-secondary)" }}
       >
         {violations.length === 0 && !isRunning
-          ? 'No violations found (or not run yet).'
+          ? "No violations found (or not run yet)."
           : `${violations.length} violation(s)`}
       </div>
       {violations.length > 0 && (
-        <ul style={{ marginTop: 8, display: 'grid', gap: 8 }}>
+        <ul style={{ marginTop: 8, display: "grid", gap: 8 }}>
           {violations.map((v) => (
             <li
               key={v.id}
               style={{
-                border: '1px solid var(--border-subtle)',
+                border: "1px solid var(--border-subtle)",
                 borderRadius: 6,
                 padding: 8,
               }}
             >
               <div style={{ fontWeight: 600 }}>{v.help}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                {v.id} • {v.impact || 'impact n/a'} •{' '}
+              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                {v.id} • {v.impact || "impact n/a"} •{" "}
                 <a href={v.helpUrl} target="_blank" rel="noreferrer">
                   Learn more
                 </a>
@@ -224,16 +226,16 @@ export function A11yPanel({
                   <div
                     key={i}
                     style={{
-                      fontFamily: 'monospace',
+                      fontFamily: "monospace",
                       fontSize: 12,
-                      color: 'var(--text-secondary)',
+                      color: "var(--text-secondary)",
                     }}
                   >
-                    {n.target.join(' ')}
+                    {n.target.join(" ")}
                   </div>
                 ))}
                 {v.nodes.length > 5 && (
-                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
                     +{v.nodes.length - 5} more nodes…
                   </div>
                 )}

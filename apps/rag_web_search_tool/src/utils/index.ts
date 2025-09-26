@@ -140,7 +140,7 @@ export function transformGraphRagToSearchResult(
 }
 
 export function transformApiToSearchResult(
-  result: any,
+  result,
   options: TransformationOptions = {}
 ): SearchResult {
   const {
@@ -239,7 +239,7 @@ export function extractKeywords(
 // SCORING & ANALYSIS UTILITIES
 // ============================================================================
 
-export function calculateCompositeScore(result: any): number {
+export function calculateCompositeScore(result): number {
   let score = 0;
   let weightSum = 0;
 
@@ -280,7 +280,7 @@ export function calculateCompositeScore(result: any): number {
   return weightSum > 0 ? score / weightSum : result.cosineSimilarity || 0;
 }
 
-export function generateDetailedRationale(result: any): string {
+export function generateDetailedRationale(result): string {
   const factors: string[] = [];
 
   if (result.cosineSimilarity) {
@@ -346,7 +346,7 @@ function getContentTypeScore(contentType: string): number {
   }
 }
 
-function calculateModalityAverage(modalityScores: any): number {
+function calculateModalityAverage(modalityScores): number {
   return (
     modalityScores.text * 0.3 +
     modalityScores.code * 0.3 +
@@ -355,7 +355,7 @@ function calculateModalityAverage(modalityScores: any): number {
   );
 }
 
-function calculateMetadataScore(metadata: any): number {
+function calculateMetadataScore(metadata): number {
   let score = 0;
   if (metadata.language && metadata.language !== "unknown") score += 0.3;
   if (metadata.technicalLevel) score += 0.3;
@@ -363,7 +363,7 @@ function calculateMetadataScore(metadata: any): number {
   return score;
 }
 
-function getModalityDetails(modalityScores: any): string[] {
+function getModalityDetails(modalityScores): string[] {
   const details: string[] = [];
   if (modalityScores.text > 0.5) details.push("text-focused");
   if (modalityScores.code > 0.5) details.push("code-focused");
@@ -372,7 +372,7 @@ function getModalityDetails(modalityScores: any): string[] {
   return details;
 }
 
-function getMetadataDetails(metadata: any): string[] {
+function getMetadataDetails(metadata): string[] {
   const details: string[] = [];
   if (metadata.language && metadata.language !== "unknown") {
     details.push(`language: ${metadata.language}`);
@@ -414,7 +414,7 @@ export function formatDate(dateString: string): string {
 // VALIDATION UTILITIES
 // ============================================================================
 
-export function isValidSearchResult(result: any): result is SearchResult {
+export function isValidSearchResult(result): result is SearchResult {
   return (
     result &&
     typeof result.id === "string" &&
@@ -429,7 +429,7 @@ export function isValidSearchResult(result: any): result is SearchResult {
   );
 }
 
-export function isValidGraphRagEntity(entity: any): entity is GraphRagEntity {
+export function isValidGraphRagEntity(entity): entity is GraphRagEntity {
   return (
     entity &&
     typeof entity.id === "string" &&

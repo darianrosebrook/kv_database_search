@@ -1,10 +1,10 @@
-'use client';
-import * as React from 'react';
-import styles from './Divider.module.scss';
+"use client";
+import * as React from "react";
+import styles from "./Divider.module.scss";
 
 export interface DividerProps extends React.HTMLAttributes<HTMLHRElement> {
   /** Visual orientation of the divider */
-  orientation?: 'horizontal' | 'vertical';
+  orientation?: "horizontal" | "vertical";
   /** Semantic role - separator (default) or presentation for purely decorative */
   decorative?: boolean;
   /** Custom thickness/size */
@@ -14,10 +14,10 @@ export interface DividerProps extends React.HTMLAttributes<HTMLHRElement> {
 export const Divider = React.forwardRef<HTMLHRElement, DividerProps>(
   (
     {
-      orientation = 'horizontal',
+      orientation = "horizontal",
       decorative = false,
       thickness,
-      className = '',
+      className = "",
       style,
       ...rest
     },
@@ -26,7 +26,7 @@ export const Divider = React.forwardRef<HTMLHRElement, DividerProps>(
     const customStyle: React.CSSProperties = {
       ...style,
       ...(thickness && {
-        ['--divider-thickness' as any]: thickness,
+        ["--divider-thickness"]: thickness,
       }),
     };
 
@@ -35,8 +35,8 @@ export const Divider = React.forwardRef<HTMLHRElement, DividerProps>(
         ref={ref}
         className={[styles.divider, styles[orientation], className]
           .filter(Boolean)
-          .join(' ')}
-        role={decorative ? 'presentation' : 'separator'}
+          .join(" ")}
+        role={decorative ? "presentation" : "separator"}
         aria-orientation={orientation}
         style={customStyle}
         {...rest}
@@ -45,5 +45,5 @@ export const Divider = React.forwardRef<HTMLHRElement, DividerProps>(
   }
 );
 
-Divider.displayName = 'Divider';
+Divider.displayName = "Divider";
 export default Divider;

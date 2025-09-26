@@ -1,5 +1,5 @@
 /** Headless logic hook for Popover */
-import * as React from 'react';
+import * as React from "react";
 
 export interface UsePopoverOptions {
   /** Initial open state */
@@ -46,21 +46,21 @@ export function usePopover(options: UsePopoverOptions = {}): UsePopoverReturn {
       if (content?.contains(target)) return;
       setIsOpen(false);
     }
-    window.addEventListener('mousedown', handlePointerDown, { capture: true });
+    window.addEventListener("mousedown", handlePointerDown, { capture: true });
     return () =>
-      window.removeEventListener('mousedown', handlePointerDown, {
+      window.removeEventListener("mousedown", handlePointerDown, {
         capture: true,
-      } as any);
+      });
   }, [isOpen, closeOnOutsideClick]);
 
   // Handle Escape key
   React.useEffect(() => {
     if (!isOpen || !closeOnEscape) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setIsOpen(false);
+      if (event.key === "Escape") setIsOpen(false);
     }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen, closeOnEscape]);
 
   return { isOpen, open, close, toggle, triggerRef, contentRef };

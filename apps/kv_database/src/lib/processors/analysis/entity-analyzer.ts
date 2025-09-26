@@ -4,10 +4,10 @@
  */
 
 import {
-  EnhancedEntityExtractor,
+  EntityExtractor,
   ExtractionContext,
   ExtractionResult,
-  EnhancedEntity,
+  _EnhancedEntity,
 } from "../../entity-extractor";
 import { DictionaryService } from "../../dictionary-service";
 import { ExtractedEntity, EntityRelationship } from "../../utils";
@@ -36,18 +36,18 @@ export interface TopicSummary {
 }
 
 export class EntityAnalyzer {
-  private entityExtractor: EnhancedEntityExtractor;
+  private entityExtractor: EntityExtractor;
   private dictionaryService: DictionaryService;
 
   constructor(dictionaryService?: DictionaryService) {
-    this.entityExtractor = new EnhancedEntityExtractor(null as any); // Mock database for now
+    this.entityExtractor = new EntityExtractor(null); // Mock database for now
     this.dictionaryService = dictionaryService || new DictionaryService();
   }
 
   /**
    * Perform comprehensive entity analysis using enhanced NLP techniques
    */
-  async analyzeEntitiesEnhanced(
+  async analyzeEntitiesComprehensive(
     text: string,
     documentId: string = "unknown",
     domain: string = "general"
@@ -80,23 +80,23 @@ export class EntityAnalyzer {
     };
 
     try {
-      // Use enhanced entity extraction
+      // Use comprehensive entity extraction
       const result: ExtractionResult =
         await this.entityExtractor.extractEntities(text, context);
 
-      // Convert enhanced entities to legacy format for backward compatibility
-      const entities: ExtractedEntity[] = result.entities.map((enhanced) => ({
-        text: enhanced.text,
-        type: this.mapEnhancedTypeToLegacy(enhanced.type.primary),
-        confidence: enhanced.confidence,
+      // Convert entities to legacy format for backward compatibility
+      const entities: ExtractedEntity[] = result.entities.map((entity) => ({
+        text: entity.text,
+        type: this.mapEnhancedTypeToLegacy(entity.type.primary),
+        confidence: entity.confidence,
         position: {
-          start: enhanced.position.start,
-          end: enhanced.position.end,
+          start: entity.position.start,
+          end: entity.position.end,
         },
-        label: enhanced.text, // Use text as label
+        label: entity.text, // Use text as label
         aliases: [],
         canonicalForm: undefined,
-        dictionaryEnhanced: false,
+        dictionaryDB: false, // TODO: Rename to follow purpose-first naming
         dictionarySource: undefined,
         dictionaryConfidence: undefined,
         dictionaryReasoning: undefined,
@@ -218,7 +218,7 @@ export class EntityAnalyzer {
   /**
    * Extract primary topics from entities
    */
-  private extractPrimaryTopics(entities: EnhancedEntity[]): string[] {
+  private extractPrimaryTopics(entities: ExtractedEntity[]): string[] {
     const topics = new Map<string, number>();
 
     entities.forEach((entity) => {
@@ -237,7 +237,7 @@ export class EntityAnalyzer {
   /**
    * Extract secondary topics from entities
    */
-  private extractSecondaryTopics(entities: EnhancedEntity[]): string[] {
+  private extractSecondaryTopics(entities: ExtractedEntity[]): string[] {
     const topics = new Map<string, number>();
 
     entities.forEach((entity) => {
@@ -257,8 +257,8 @@ export class EntityAnalyzer {
    * Calculate topic coverage
    */
   private calculateTopicCoverage(
-    entities: EnhancedEntity[],
-    clusters: any[]
+    entities: ExtractedEntity[],
+    clusters
   ): number {
     const clusteredEntities = clusters.reduce(
       (sum, cluster) => sum + cluster.entities.length,
@@ -308,7 +308,7 @@ export class EntityAnalyzer {
     // Extract relationships if requested
     if (includeRelationships && entities.length > 1) {
       // Use enhanced relationship extraction
-      const enhancedEntities: EnhancedEntity[] = entities.map((entity) => ({
+      const processedEntities: ExtractedEntity[] = entities.map((entity) => ({
         id: `entity_${entity.text}`,
         text: entity.text,
         type: {
@@ -377,8 +377,8 @@ export class EntityAnalyzer {
         },
       }));
 
-      const enhancedRelationships = this.entityExtractor.extractRelationships(
-        enhancedEntities,
+      const processedRelationships = this.entityExtractor.extractRelationships(
+        processedEntities,
         text,
         {
           documentId: "unknown",
@@ -398,7 +398,7 @@ export class EntityAnalyzer {
         }
       );
 
-      relationships = enhancedRelationships.map((rel) => ({
+      relationships = processedRelationships.map((rel) => ({
         source: rel.sourceEntity,
         target: rel.targetEntity,
         type: rel.type.category,
@@ -622,7 +622,7 @@ export class EntityAnalyzer {
    */
   private generateTopicSummary(
     entities: ExtractedEntity[],
-    relationships: EntityRelationship[]
+    _relationships: EntityRelationship[]
   ): TopicSummary {
     // Count entity types
     const typeCounts = new Map<string, number>();
@@ -726,16 +726,16 @@ export class EntityAnalyzer {
       `🔍 Enhancing ${entities.length} entities with dictionary data`
     );
 
-    const enhancedEntities = [...entities];
+    const processedEntities = [...entities];
 
-    for (const entity of enhancedEntities) {
+    for (const entity of processedEntities) {
       try {
         // Create canonicalization request
         const canonicalizationRequest = {
           entities: [
             {
               name: entity.label,
-              type: entity.type as any, // Type mapping may need adjustment
+              type: entity.type, // Type mapping may need adjustment
               context,
               aliases: entity.aliases,
             },
@@ -753,7 +753,7 @@ export class EntityAnalyzer {
           // Update entity with dictionary data
           if (result.confidence >= 0.7) {
             entity.canonicalForm = result.canonicalName;
-            entity.dictionaryEnhanced = true;
+            entity.dictionaryDB = true;
             entity.dictionarySource = result.source;
             entity.dictionaryConfidence = result.confidence;
             entity.dictionaryReasoning = result.reasoning;
@@ -782,9 +782,9 @@ export class EntityAnalyzer {
 
     console.log(
       `✅ Enhanced ${
-        enhancedEntities.filter((e) => e.dictionaryEnhanced).length
+        processedEntities.filter((e) => e.dictionaryDB).length
       } entities with dictionary data`
     );
-    return enhancedEntities;
+    return processedEntities;
   }
 }

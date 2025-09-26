@@ -594,7 +594,7 @@ export class WikidataBatchProcessor {
       await client.query(entityQuery, entityValues.flat());
       
       // Insert labels
-      const labelInserts: any[] = [];
+      const labelInserts[] = [];
       for (const entity of entities) {
         for (const label of entity.labels) {
           labelInserts.push([entity.id, label.language, 'label', label.value]);

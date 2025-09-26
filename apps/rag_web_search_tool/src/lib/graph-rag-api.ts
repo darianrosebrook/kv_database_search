@@ -17,7 +17,7 @@ export interface GraphRagEntity {
     | "PRODUCT";
   confidence: number;
   aliases?: string[];
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   contextualRelevance?: number;
 }
 
@@ -208,16 +208,16 @@ export interface ProvenanceRecord {
     type: string;
     subtype?: string;
     version: string;
-    configuration: Record<string, any>;
+    configuration: Record<string, unknown>;
   };
   inputData: {
     query?: string;
     entities?: string[];
-    filters?: Record<string, any>;
-    options?: Record<string, any>;
+    filters?: Record<string, unknown>;
+    options?: Record<string, unknown>;
   };
   outputData: {
-    results: any[];
+    results;
     metrics: Record<string, number>;
     confidence: number;
     explanation?: string;

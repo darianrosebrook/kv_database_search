@@ -18,10 +18,10 @@ vi.mock("fs", () => ({
 }));
 
 describe("MultiModalIngestionPipeline", () => {
-  let mockDatabase: any;
-  let mockEmbeddings: any;
-  let mockContentDetector: any;
-  let mockMetadataExtractor: any;
+  let mockDatabase;
+  let mockEmbeddings;
+  let mockContentDetector;
+  let mockMetadataExtractor;
   let pipeline: MultiModalIngestionPipeline;
 
   beforeEach(() => {
@@ -54,17 +54,17 @@ describe("MultiModalIngestionPipeline", () => {
     pipeline = new MultiModalIngestionPipeline(mockDatabase, mockEmbeddings);
 
     // Override internal dependencies
-    (pipeline as any).contentDetector = mockContentDetector;
-    (pipeline as any).metadataExtractor = mockMetadataExtractor;
+    pipeline.contentDetector = mockContentDetector;
+    pipeline.metadataExtractor = mockMetadataExtractor;
 
     // Mock file system operations
-    (fs.statSync as any).mockReturnValue({
+    fs.statSync.mockReturnValue({
       size: 100,
       birthtime: new Date("2023-01-01"),
       mtime: new Date("2023-01-02"),
     });
 
-    (fs.readFileSync as any).mockReturnValue(Buffer.from("test content"));
+    fs.readFileSync.mockReturnValue(Buffer.from("test content"));
   });
 
   afterEach(() => {
@@ -216,7 +216,7 @@ describe("MultiModalIngestionPipeline", () => {
         size: 100 * 1024 * 1024, // 100MB
         birthtime: new Date(),
         mtime: new Date(),
-      } as any);
+      });
 
       const result = await pipeline.ingestFiles(testFiles, {
         maxFileSize: 50 * 1024 * 1024, // 50MB limit

@@ -1,7 +1,7 @@
-import { Node, mergeAttributes } from '@tiptap/core';
+import { Node, mergeAttributes } from "@tiptap/core";
 
 export interface VideoServerOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, unknown>;
 }
 
 /**
@@ -11,7 +11,7 @@ export interface VideoServerOptions {
  * @author @darianrosebrook
  */
 export const VideoServer = Node.create<VideoServerOptions>({
-  name: 'video',
+  name: "video",
 
   addOptions() {
     return {
@@ -19,7 +19,7 @@ export const VideoServer = Node.create<VideoServerOptions>({
     };
   },
 
-  group: 'block',
+  group: "block",
 
   draggable: true,
 
@@ -27,71 +27,71 @@ export const VideoServer = Node.create<VideoServerOptions>({
     return {
       src: {
         default: null,
-        parseHTML: (el: HTMLElement) => el.getAttribute('src'),
+        parseHTML: (el: HTMLElement) => el.getAttribute("src"),
         renderHTML: (attrs: Record<string, string>) => ({
           src: attrs.src,
         }),
       },
       alt: {
         default: null,
-        parseHTML: (el: HTMLElement) => el.getAttribute('alt'),
+        parseHTML: (el: HTMLElement) => el.getAttribute("alt"),
         renderHTML: (attrs: Record<string, string>) =>
           attrs.alt ? { alt: attrs.alt } : {},
       },
       title: {
         default: null,
-        parseHTML: (el: HTMLElement) => el.getAttribute('title'),
+        parseHTML: (el: HTMLElement) => el.getAttribute("title"),
         renderHTML: (attrs: Record<string, string>) =>
           attrs.title ? { title: attrs.title } : {},
       },
       width: {
         default: null,
-        parseHTML: (el: HTMLElement) => el.getAttribute('width'),
+        parseHTML: (el: HTMLElement) => el.getAttribute("width"),
         renderHTML: (attrs: Record<string, string>) =>
           attrs.width ? { width: attrs.width } : {},
       },
       height: {
         default: null,
-        parseHTML: (el: HTMLElement) => el.getAttribute('height'),
+        parseHTML: (el: HTMLElement) => el.getAttribute("height"),
         renderHTML: (attrs: Record<string, string>) =>
           attrs.height ? { height: attrs.height } : {},
       },
       controls: {
         default: true,
-        parseHTML: (el: HTMLElement) => el.hasAttribute('controls'),
+        parseHTML: (el: HTMLElement) => el.hasAttribute("controls"),
         renderHTML: (attrs: Record<string, boolean>) =>
-          attrs.controls ? { controls: 'true' } : {},
+          attrs.controls ? { controls: "true" } : {},
       },
       autoplay: {
         default: false,
-        parseHTML: (el: HTMLElement) => el.hasAttribute('autoplay'),
+        parseHTML: (el: HTMLElement) => el.hasAttribute("autoplay"),
         renderHTML: (attrs: Record<string, boolean>) =>
-          attrs.autoplay ? { autoplay: 'true' } : {},
+          attrs.autoplay ? { autoplay: "true" } : {},
       },
       loop: {
         default: false,
-        parseHTML: (el: HTMLElement) => el.hasAttribute('loop'),
+        parseHTML: (el: HTMLElement) => el.hasAttribute("loop"),
         renderHTML: (attrs: Record<string, boolean>) =>
-          attrs.loop ? { loop: 'true' } : {},
+          attrs.loop ? { loop: "true" } : {},
       },
       muted: {
         default: false,
-        parseHTML: (el: HTMLElement) => el.hasAttribute('muted'),
+        parseHTML: (el: HTMLElement) => el.hasAttribute("muted"),
         renderHTML: (attrs: Record<string, boolean>) =>
-          attrs.muted ? { muted: 'true' } : {},
+          attrs.muted ? { muted: "true" } : {},
       },
       poster: {
         default: null,
-        parseHTML: (el: HTMLElement) => el.getAttribute('poster'),
+        parseHTML: (el: HTMLElement) => el.getAttribute("poster"),
         renderHTML: (attrs: Record<string, string>) =>
           attrs.poster ? { poster: attrs.poster } : {},
       },
-      'data-align': {
-        default: 'center',
+      "data-align": {
+        default: "center",
         parseHTML: (el: HTMLElement) =>
-          el.getAttribute('data-align') ?? 'center',
+          el.getAttribute("data-align") ?? "center",
         renderHTML: (attrs: Record<string, string>) => ({
-          'data-align': attrs['data-align'],
+          "data-align": attrs["data-align"],
         }),
       },
     };
@@ -100,14 +100,14 @@ export const VideoServer = Node.create<VideoServerOptions>({
   parseHTML() {
     return [
       {
-        tag: 'video',
+        tag: "video",
       },
     ];
   },
 
   renderHTML({ HTMLAttributes }) {
     return [
-      'video',
+      "video",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
     ];
   },
