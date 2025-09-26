@@ -3,31 +3,27 @@
  *
  * Main entry point for all search operations, combining:
  * - Traditional Obsidian search
- * - Enhanced semantic search
+ * - Advanced semantic search
  * - Multi-modal intelligence
  * - Graph-based retrieval
  */
 
 import { ObsidianSearchService } from "./obsidian-search";
 import {
-  EnhancedSemanticSearchEngine,
-  EnhancedSearchQuery,
-  EnhancedSearchResult,
-} from "./enhanced-semantic-search";
+  SemanticSearchEngine,
+  SearchQuery,
+  SearchResult,
+} from "./semantic-search";
 import { ObsidianDatabase } from "./database";
 import { ObsidianEmbeddingService } from "./embeddings";
-import {
-  ObsidianSearchOptions,
-  ObsidianSearchResponse,
-  ContentType,
-} from "../types/index";
+import { ObsidianSearchOptions, ObsidianSearchResponse } from "../types/index";
 
 export interface ComprehensiveSearchQuery {
   /** Search text */
   text: string;
 
   /** Search mode */
-  mode: "basic" | "enhanced" | "graph" | "multi_modal" | "comprehensive";
+  mode: "basic" | "advanced" | "graph" | "multi_modal" | "comprehensive";
 
   /** Options for the search */
   options?: ComprehensiveSearchOptions;
@@ -36,7 +32,7 @@ export interface ComprehensiveSearchQuery {
 export interface ComprehensiveSearchOptions extends ObsidianSearchOptions {
   /** Enable experimental features */
   experimental?: {
-    /** Use graph-enhanced retrieval */
+    /** Use graph retrieval */
     graphRetrieval: boolean;
     /** Use cross-modal search */
     crossModalSearch: boolean;
@@ -70,8 +66,8 @@ export interface ComprehensiveSearchOptions extends ObsidianSearchOptions {
 }
 
 export interface ComprehensiveSearchResponse extends ObsidianSearchResponse {
-  /** Enhanced results with additional insights */
-  enhancedResults?: EnhancedSearchResult[];
+  /** Advanced results with additional insights */
+  advancedResults?: SearchResult[];
 
   /** Search analytics */
   analytics: {
@@ -153,7 +149,7 @@ export interface ComprehensiveSearchResponse extends ObsidianSearchResponse {
 
 export class ComprehensiveSearchService {
   private obsidianSearch: ObsidianSearchService;
-  private enhancedSearch: EnhancedSemanticSearchEngine;
+  private advancedSearch: SemanticSearchEngine;
   private db: ObsidianDatabase;
   private embeddings: ObsidianEmbeddingService;
 
@@ -167,10 +163,7 @@ export class ComprehensiveSearchService {
     this.db = database;
     this.embeddings = embeddingService;
     this.obsidianSearch = new ObsidianSearchService(database, embeddingService);
-    this.enhancedSearch = new EnhancedSemanticSearchEngine(
-      database,
-      embeddingService
-    );
+    this.advancedSearch = new SemanticSearchEngine(database, embeddingService);
   }
 
   /**

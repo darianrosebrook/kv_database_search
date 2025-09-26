@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 /**
- * Demo showcasing enhanced image classification and scene description capabilities
+ * Demo showcasing image classification and scene description capabilities
  */
 
 interface SceneClassificationExample {
@@ -162,7 +162,7 @@ async function demoClassification() {
 
   console.log("\n🚀 READY FOR PRODUCTION");
   console.log("========================");
-  console.log("The enhanced image classification system provides:");
+  console.log("The image classification system provides:");
   console.log("• OCR text extraction (working)");
   console.log("• Scene description framework (implemented)");
   console.log("• Video keyframe analysis (designed)");

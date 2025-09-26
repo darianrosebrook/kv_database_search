@@ -1,6 +1,7 @@
 import js from "@eslint/js";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
+import localRules from "./eslint-rules/index.js";
 
 export default [
   js.configs.recommended,
@@ -45,6 +46,7 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tseslint,
+      local: localRules,
     },
     rules: {
       ...tseslint.configs.recommended.rules,
@@ -55,6 +57,7 @@ export default [
       ],
       "@typescript-eslint/no-explicit-any": "warn",
       "no-undef": "error", // Keep this to catch undefined variables
+      "local/no-hype-identifiers": "error", // Purpose-first naming rule
     },
   },
   {

@@ -314,7 +314,7 @@ export class DictionaryAPI {
     res: express.Response
   ): Promise<void> {
     try {
-      const { terms, relationshipTypes, maxDepth } = req.query;
+      const { terms, relationshipTypes } = req.query;
 
       if (!terms) {
         res.status(400).json({
@@ -325,11 +325,11 @@ export class DictionaryAPI {
       }
 
       const termArray = Array.isArray(terms) ? terms : [terms];
-      const relationshipArray = relationshipTypes
-        ? Array.isArray(relationshipTypes)
-          ? relationshipTypes
-          : [relationshipTypes]
-        : undefined;
+      // const relationshipArray = relationshipTypes
+      //   ? Array.isArray(relationshipTypes)
+      //     ? relationshipTypes
+      //     : [relationshipTypes]
+      //   : undefined; // Not used
 
       console.log(
         `🔗 Getting relationships for terms: ${termArray.join(", ")}`
@@ -369,10 +369,10 @@ export class DictionaryAPI {
       console.log("📚 Getting dictionary sources information");
 
       // Get available sources from database
-      const result = await this.dictionaryService.lookupTerms({
-        terms: ["test"],
-        sources: ["wordnet"],
-      });
+      // const result = await this.dictionaryService.lookupTerms({
+      //   terms: ["test"],
+      //   sources: ["wordnet"],
+      // }); // Not used
 
       // Return source information
       res.json({

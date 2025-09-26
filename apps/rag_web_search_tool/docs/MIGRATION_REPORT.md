@@ -18,8 +18,8 @@
 - **Layer**: Compound (form component)
 - **Impact**: Search functionality with consistent styling
 
-#### **3. EnhancedResultCard**
-- **Location**: `ui/components/EnhancedResultCard/`
+#### **3. ResultCard**
+- **Location**: `ui/components/ResultCard/`
 - **Status**: ✅ **COMPLETE** 
 - **Tokens**: 40+ design tokens mapped (most comprehensive)
 - **Layer**: Compound (data display component)

@@ -5,7 +5,7 @@
 ### **Old Source Files Removed**
 - ✅ `src/components/ChatInterface.tsx` - **DELETED**
 - ✅ `src/components/SearchInput.tsx` - **DELETED** 
-- ✅ `src/components/EnhancedResultCard.tsx` - **DELETED**
+- ✅ `src/components/ResultCard.tsx` - **MIGRATED**
 - ✅ `src/components/ContextChip.tsx` - **DELETED**
 - ✅ `src/components/EnhancedChatInput.tsx` - **DELETED**
 
@@ -30,7 +30,7 @@ ui/components/
 │   ├── README.md
 │   └── index.tsx
 ├── SearchInput/
-├── EnhancedResultCard/
+├── ResultCard/
 ├── ContextChip/
 └── ChatInput/ (formerly EnhancedChatInput)
 ```

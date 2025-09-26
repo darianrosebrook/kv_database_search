@@ -5,10 +5,12 @@
 
 import {
   EnhancedEntityExtractor,
-  ExtractedEntity,
-  EntityRelationship,
-} from "../../utils";
+  ExtractionContext,
+  ExtractionResult,
+  EnhancedEntity,
+} from "../../entity-extractor";
 import { DictionaryService } from "../../dictionary-service";
+import { ExtractedEntity, EntityRelationship } from "../../utils";
 
 export interface EntityAnalysisResult {
   entities: ExtractedEntity[];
@@ -35,13 +37,240 @@ export interface TopicSummary {
 
 export class EntityAnalyzer {
   private entityExtractor: EnhancedEntityExtractor;
+  private dictionaryService: DictionaryService;
 
-  constructor() {
-    this.entityExtractor = new EnhancedEntityExtractor();
+  constructor(dictionaryService?: DictionaryService) {
+    this.entityExtractor = new EnhancedEntityExtractor(null as any); // Mock database for now
+    this.dictionaryService = dictionaryService || new DictionaryService();
   }
 
   /**
-   * Perform comprehensive entity analysis on text
+   * Perform comprehensive entity analysis using enhanced NLP techniques
+   */
+  async analyzeEntitiesEnhanced(
+    text: string,
+    documentId: string = "unknown",
+    domain: string = "general"
+  ): Promise<EntityAnalysisResult> {
+    console.log(
+      `🔍 Performing enhanced entity analysis for document: ${documentId}`
+    );
+
+    // Create extraction context
+    const context: ExtractionContext = {
+      documentId,
+      documentType: "text",
+      domain,
+      language: "en",
+      processingStage: "initial",
+      previousEntities: [],
+      constraints: {
+        maxEntities: 500,
+        minConfidence: 0.6,
+        allowedTypes: [
+          { primary: "person", secondary: [], semantic: [], domain },
+          { primary: "organization", secondary: [], semantic: [], domain },
+          { primary: "location", secondary: [], semantic: [], domain },
+          { primary: "concept", secondary: [], semantic: [], domain },
+        ],
+        forbiddenTypes: [],
+        contextWindow: 100,
+        overlapThreshold: 0.8,
+      },
+    };
+
+    try {
+      // Use enhanced entity extraction
+      const result: ExtractionResult =
+        await this.entityExtractor.extractEntities(text, context);
+
+      // Convert enhanced entities to legacy format for backward compatibility
+      const entities: ExtractedEntity[] = result.entities.map((enhanced) => ({
+        text: enhanced.text,
+        type: this.mapEnhancedTypeToLegacy(enhanced.type.primary),
+        confidence: enhanced.confidence,
+        position: {
+          start: enhanced.position.start,
+          end: enhanced.position.end,
+        },
+        label: enhanced.text, // Use text as label
+        aliases: [],
+        canonicalForm: undefined,
+        dictionaryEnhanced: false,
+        dictionarySource: undefined,
+        dictionaryConfidence: undefined,
+        dictionaryReasoning: undefined,
+      }));
+
+      // Convert enhanced relationships to legacy format
+      const relationships: EntityRelationship[] = result.relationships.map(
+        (rel) => ({
+          source: rel.sourceEntity,
+          target: rel.targetEntity,
+          type: rel.type.category,
+          confidence: rel.confidence,
+          context: rel.context,
+          strength: rel.strength || 0.5,
+          evidence: rel.evidence || [],
+          id: rel.id,
+        })
+      );
+
+      // Convert clusters to legacy format
+      const entityClusters: EntityCluster[] = result.clusters.map(
+        (cluster) => ({
+          id: cluster.id,
+          entities: cluster.entities.map((enhanced) => ({
+            text: enhanced.text,
+            type: this.mapEnhancedTypeToLegacy(enhanced.type.primary),
+            confidence: enhanced.confidence,
+            position: {
+              start: enhanced.position.start,
+              end: enhanced.position.end,
+            },
+            label: enhanced.text,
+          })),
+          centralEntity: cluster.entities[0]
+            ? {
+                text: cluster.entities[0].text,
+                type: this.mapEnhancedTypeToLegacy(
+                  cluster.entities[0].type.primary
+                ),
+                confidence: cluster.entities[0].confidence,
+                position: {
+                  start: cluster.entities[0].position.start,
+                  end: cluster.entities[0].position.end,
+                },
+                label: cluster.entities[0].text,
+              }
+            : {
+                text: "unknown",
+                type: "other",
+                confidence: 0,
+                position: { start: 0, end: 0 },
+                label: "unknown",
+              },
+          coherenceScore: cluster.cohesion,
+          topic: cluster.metadata.domain,
+        })
+      );
+
+      // Generate topic summary
+      const topicSummary: TopicSummary = {
+        primaryTopics: this.extractPrimaryTopics(result.entities),
+        secondaryTopics: this.extractSecondaryTopics(result.entities),
+        confidence: result.quality.entityAccuracy,
+        coverage: this.calculateTopicCoverage(result.entities, result.clusters),
+      };
+
+      const overallConfidence = result.quality.f1Score;
+
+      console.log(
+        `✅ Enhanced entity analysis completed: ${entities.length} entities, ${relationships.length} relationships, ${entityClusters.length} clusters`
+      );
+
+      return {
+        entities,
+        relationships,
+        entityClusters,
+        topicSummary,
+        confidence: overallConfidence,
+      };
+    } catch (error) {
+      console.error("❌ Enhanced entity analysis failed:", error);
+      // Fallback to legacy analysis
+      return this.analyzeEntities(text, {
+        includeRelationships: true,
+        includeClustering: true,
+        includeTopicSummary: true,
+        minConfidence: 0.6,
+        domain,
+      });
+    }
+  }
+
+  /**
+   * Map enhanced entity type to legacy type
+   */
+  private mapEnhancedTypeToLegacy(
+    type: string
+  ): "person" | "organization" | "location" | "concept" | "term" | "other" {
+    switch (type) {
+      case "person":
+        return "person";
+      case "organization":
+        return "organization";
+      case "location":
+        return "location";
+      case "concept":
+        return "concept";
+      case "event":
+        return "concept";
+      case "product":
+        return "concept";
+      case "technology":
+        return "concept";
+      default:
+        return "other";
+    }
+  }
+
+  /**
+   * Extract primary topics from entities
+   */
+  private extractPrimaryTopics(entities: EnhancedEntity[]): string[] {
+    const topics = new Map<string, number>();
+
+    entities.forEach((entity) => {
+      if (entity.type.primary === "concept") {
+        const topic = entity.text.toLowerCase();
+        topics.set(topic, (topics.get(topic) || 0) + 1);
+      }
+    });
+
+    return Array.from(topics.entries())
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([topic]) => topic);
+  }
+
+  /**
+   * Extract secondary topics from entities
+   */
+  private extractSecondaryTopics(entities: EnhancedEntity[]): string[] {
+    const topics = new Map<string, number>();
+
+    entities.forEach((entity) => {
+      if (entity.type.primary !== "concept") {
+        const topic = entity.type.primary;
+        topics.set(topic, (topics.get(topic) || 0) + 1);
+      }
+    });
+
+    return Array.from(topics.entries())
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([topic]) => topic);
+  }
+
+  /**
+   * Calculate topic coverage
+   */
+  private calculateTopicCoverage(
+    entities: EnhancedEntity[],
+    clusters: any[]
+  ): number {
+    const clusteredEntities = clusters.reduce(
+      (sum, cluster) => sum + cluster.entities.length,
+      0
+    );
+    return entities.length > 0
+      ? (clusteredEntities / entities.length) * 100
+      : 0;
+  }
+
+  /**
+   * Perform comprehensive entity analysis on text (legacy method)
    */
   async analyzeEntities(
     text: string,
@@ -78,7 +307,107 @@ export class EntityAnalyzer {
 
     // Extract relationships if requested
     if (includeRelationships && entities.length > 1) {
-      relationships = this.entityExtractor.extractRelationships(text, entities);
+      // Use enhanced relationship extraction
+      const enhancedEntities: EnhancedEntity[] = entities.map((entity) => ({
+        id: `entity_${entity.text}`,
+        text: entity.text,
+        type: {
+          primary: entity.type,
+          secondary: [],
+          semantic: [],
+          domain: options.domain || "general",
+        },
+        subtype: "general",
+        confidence: entity.confidence,
+        position: {
+          start: entity.position.start,
+          end: entity.position.end,
+          line: 0,
+          column: 0,
+          contextWindow: "",
+          documentId: "unknown",
+          section: "",
+        },
+        metadata: {
+          frequency: 1,
+          tfIdf: 0.5,
+          centrality: 0.5,
+          sentiment: {
+            polarity: 0,
+            subjectivity: 0,
+            intensity: 0,
+            emotions: {
+              joy: 0,
+              anger: 0,
+              fear: 0,
+              sadness: 0,
+              surprise: 0,
+              disgust: 0,
+            },
+          },
+          importance: 0.7,
+          novelty: 0.6,
+        },
+        relationships: [],
+        hierarchical: {
+          level: 0,
+          parent: null,
+          children: [],
+          siblings: [],
+          root: entity.text,
+          path: [entity.text],
+          depth: 0,
+        },
+        context: {
+          documentContext: "unknown",
+          sectionContext: "",
+          sentenceContext: "",
+          topicContext: [],
+          coOccurrences: [],
+          discourseRole: "subject",
+        },
+        provenance: {
+          extractor: "entity_analyzer",
+          extractionMethod: "ml-based",
+          confidence: entity.confidence,
+          validationStatus: "unvalidated",
+          validationSources: [],
+          lastUpdated: new Date(),
+          version: 1,
+        },
+      }));
+
+      const enhancedRelationships = this.entityExtractor.extractRelationships(
+        enhancedEntities,
+        text,
+        {
+          documentId: "unknown",
+          documentType: "text",
+          domain: options.domain || "general",
+          language: "en",
+          processingStage: "initial",
+          previousEntities: [],
+          constraints: {
+            maxEntities: 100,
+            minConfidence: 0.6,
+            allowedTypes: [],
+            forbiddenTypes: [],
+            contextWindow: 100,
+            overlapThreshold: 0.8,
+          },
+        }
+      );
+
+      relationships = enhancedRelationships.map((rel) => ({
+        source: rel.sourceEntity,
+        target: rel.targetEntity,
+        type: rel.type.category,
+        confidence: rel.confidence,
+        context: rel.context,
+        strength: rel.strength || 0.5,
+        evidence: rel.evidence || [],
+        id: rel.id,
+      }));
     }
 
     // Perform entity clustering if requested

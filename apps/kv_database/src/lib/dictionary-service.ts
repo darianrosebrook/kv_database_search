@@ -9,8 +9,8 @@
  */
 
 import { ObsidianDatabase } from "./database";
-import * as fs from "fs";
-import * as path from "path";
+// import * as fs from "fs"; // Not used
+// import * as path from "path"; // Not used
 import { createHash } from "crypto";
 
 // ============================================================================

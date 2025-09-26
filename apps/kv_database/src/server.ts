@@ -27,6 +27,7 @@ import { DictionaryAPI } from "./lib/dictionary-api";
 import { MLEntityAPI } from "./lib/ml-entity-api";
 import { TemporalReasoningAPI } from "./lib/temporal-reasoning-api";
 import { FederatedSearchAPI } from "./lib/federated-search-api";
+import { WorkspaceAPI } from "./lib/workspace-api";
 import { ChatSession } from "./types/index";
 import type {
   HealthResponse,
@@ -206,6 +207,7 @@ let dictionaryAPI: DictionaryAPI | null = null;
 let mlEntityAPI: MLEntityAPI | null = null;
 let temporalReasoningAPI: TemporalReasoningAPI | null = null;
 let federatedSearchAPI: FederatedSearchAPI | null = null;
+let workspaceAPI: WorkspaceAPI | null = null;
 
 /**
  * Initialize all services
@@ -351,6 +353,19 @@ async function initializeServices() {
     );
     console.error("💡 Federated search features will be limited");
     // Don't throw - federated search service can work with limited functionality
+  }
+
+  // Initialize workspace manager service
+  try {
+    workspaceAPI = new WorkspaceAPI(database);
+    console.log("✅ Workspace manager service initialized");
+  } catch (error: any) {
+    console.error(
+      "❌ Workspace manager service initialization failed:",
+      error.message
+    );
+    console.error("💡 Workspace management features will be limited");
+    // Don't throw - workspace service can work with limited functionality
   }
 
   // Initialize web search providers based on environment variables
@@ -2704,6 +2719,12 @@ if (federatedSearchAPI) {
   console.log("🔍 Federated Search API routes registered");
 }
 
+// Register workspace API routes
+if (workspaceAPI) {
+  server.register(workspaceAPI.getRouter(), { prefix: "/workspaces" });
+  console.log("📁 Workspace Manager API routes registered");
+}
+
 // Start server
 async function start() {
   try {
@@ -2812,6 +2833,12 @@ async function start() {
     );
     console.log(`🔍 System Health: http://${HOST}:${PORT}/federated/health`);
     console.log(`🔍 System Status: http://${HOST}:${PORT}/federated/status`);
+    console.log(`📁 Workspace Management: http://${HOST}:${PORT}/workspaces/workspaces`);
+    console.log(`📁 Data Sources: http://${HOST}:${PORT}/workspaces/:workspace/datasources`);
+    console.log(`📁 Entity Resolution: http://${HOST}:${PORT}/workspaces/:workspace/resolve/:entity`);
+    console.log(`📁 Cross-Workspace Search: http://${HOST}:${PORT}/workspaces/search`);
+    console.log(`📁 Workspace Health: http://${HOST}:${PORT}/workspaces/health`);
+    console.log(`📁 Workspace Status: http://${HOST}:${PORT}/workspaces/status`);
     console.log("=".repeat(60));
 
     // Log helpful setup instructions if needed

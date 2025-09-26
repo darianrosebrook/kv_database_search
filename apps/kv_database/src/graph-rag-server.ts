@@ -7,7 +7,7 @@ import {
   MultiHopReasoningEngine,
   ResultRankingService,
   KnowledgeGraph,
-  EntityExtractor,
+  // EntityExtractor, // Not used
   ProvenanceTracker,
   QueryOptimizer,
   MonitoringSystem,
@@ -15,7 +15,7 @@ import {
   // KnowledgeGraphManager, // Not implemented yet
 } from "./lib/knowledge-graph/index.js";
 import { EmbeddingService } from "./lib/embeddings.js";
-import { DatabaseService } from "./lib/database.js";
+// import { DatabaseService } from "./lib/database.js"; // Not used
 
 const app = express();
 const port = process.env.GRAPH_RAG_PORT || 3002;
@@ -38,13 +38,13 @@ let hybridSearchEngine: HybridSearchEngine;
 let reasoningEngine: MultiHopReasoningEngine;
 let rankingService: ResultRankingService;
 let knowledgeGraphManager: KnowledgeGraph;
-let entityExtractor: EntityExtractor;
+// let entityExtractor: EntityExtractor; // Not used
 let provenanceTracker: ProvenanceTracker;
 let queryOptimizer: QueryOptimizer;
 let monitoringSystem: MonitoringSystem;
 let graphRagApiServer: GraphRagApiServer;
 let embeddingService: EmbeddingService;
-let databaseService: DatabaseService;
+// let databaseService: DatabaseService; // Not used
 
 async function initializeServices() {
   try {
@@ -52,11 +52,11 @@ async function initializeServices() {
 
     // Initialize core services
     embeddingService = new EmbeddingService();
-    databaseService = new DatabaseService(pool);
+    // databaseService = new DatabaseService(pool); // Not used
 
     // Initialize Graph RAG components
     knowledgeGraphManager = new KnowledgeGraph();
-    entityExtractor = new EntityExtractor();
+    // entityExtractor = new EntityExtractor(); // Not used
     hybridSearchEngine = new HybridSearchEngine(
       pool,
       embeddingService,
@@ -290,10 +290,10 @@ app.get("/api/graph-rag/entities/shortest-path", async (req, res) => {
 // Error handling middleware
 app.use(
   (
-    error: any,
+    error: Error | unknown,
     req: express.Request,
     res: express.Response,
-    next: express.NextFunction
+    _callback: express.NextFunction
   ) => {
     console.error("Unhandled error:", error);
     res.status(500).json({

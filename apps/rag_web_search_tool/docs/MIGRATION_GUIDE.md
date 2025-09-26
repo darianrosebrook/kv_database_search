@@ -24,8 +24,8 @@ This guide outlines the migration from Tailwind-based components to design syste
   - Added component contract and accessibility documentation
   - Follows compound layer pattern
 
-#### EnhancedResultCard
-- **Location**: `ui/components/EnhancedResultCard/`
+#### ResultCard
+- **Location**: `ui/components/ResultCard/`
 - **Status**: ✅ Migrated
 - **Changes**:
   - Extracted all Tailwind classes to SCSS modules
@@ -161,7 +161,7 @@ npm run tokens:build      # Run all token generation steps
 
 ## Next Steps
 
-1. **High Priority**: Migrate `EnhancedResultCard` (removes hardcoded colors)
+1. **High Priority**: Migrate `ResultCard` (removes hardcoded colors)
 2. **Medium Priority**: Migrate remaining chat components
 3. **Low Priority**: Create shared component library exports
 4. **Cleanup**: Remove unused Tailwind dependencies

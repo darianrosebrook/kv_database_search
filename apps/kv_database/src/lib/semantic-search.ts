@@ -12,22 +12,22 @@
 import { ObsidianDatabase } from "./database";
 import { ObsidianEmbeddingService } from "./embeddings";
 import {
-  detectLanguage,
+  // detectLanguage, // Not used
   EnhancedEntityExtractor,
   ExtractedEntity,
   EntityRelationship,
-  EntityCluster,
+  // EntityCluster, // Not used
 } from "./utils";
 import {
   SearchResult,
   ObsidianSearchOptions,
   ObsidianSearchResult,
-  ObsidianSearchResponse,
+  // ObsidianSearchResponse, // Not used
   ContentType,
 } from "../types/index";
 
-// Enhanced search interfaces
-export interface EnhancedSearchQuery {
+// Search interfaces
+export interface SearchQuery {
   /** Primary search text */
   text: string;
 
@@ -45,10 +45,10 @@ export interface EnhancedSearchQuery {
   };
 
   /** Advanced options */
-  options?: EnhancedSearchOptions;
+  options?: SearchOptions;
 }
 
-export interface EnhancedSearchOptions extends ObsidianSearchOptions {
+export interface SearchOptions extends ObsidianSearchOptions {
   /** Cross-modal search settings */
   crossModal?: {
     /** Weight for text-based results */
@@ -105,7 +105,7 @@ export interface EnhancedSearchOptions extends ObsidianSearchOptions {
   };
 }
 
-export interface EnhancedSearchResult extends ObsidianSearchResult {
+export interface SearchResult extends ObsidianSearchResult {
   /** Enhanced scoring breakdown */
   scoring: {
     vector: number;
@@ -157,10 +157,10 @@ export interface EnhancedSearchResult extends ObsidianSearchResult {
   };
 }
 
-export class EnhancedSemanticSearchEngine {
+export class SemanticSearchEngine {
   private db: ObsidianDatabase;
   private embeddings: ObsidianEmbeddingService;
-  private entityExtractor: EnhancedEntityExtractor;
+  private entityExtractor: EntityExtractor;
 
   constructor(
     database: ObsidianDatabase,
@@ -168,16 +168,14 @@ export class EnhancedSemanticSearchEngine {
   ) {
     this.db = database;
     this.embeddings = embeddingService;
-    this.entityExtractor = new EnhancedEntityExtractor();
+    this.entityExtractor = new EntityExtractor();
   }
 
   /**
-   * Main enhanced search entry point
+   * Main search entry point
    */
-  async search(query: EnhancedSearchQuery): Promise<EnhancedSearchResult[]> {
-    console.log(
-      `🧠 Enhanced search: "${query.text}" (strategy: ${query.strategy})`
-    );
+  async search(query: SearchQuery): Promise<SearchResult[]> {
+    console.log(`🧠 Search: "${query.text}" (strategy: ${query.strategy})`);
     const startTime = Date.now();
 
     try {

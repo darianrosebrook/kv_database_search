@@ -39,7 +39,7 @@
 🧩 Input - 0 pairs validated
 🧩 Image - 0 pairs validated
 🧩 Icon - 0 pairs validated
-🧩 EnhancedResultCard - 0 pairs validated
+🧩 ResultCard - 0 pairs validated
 🧩 Field - 0 pairs validated
 🧩 Divider - 0 pairs validated
 🧩 Dialog - 0 pairs validated
