@@ -6,7 +6,7 @@ import {
   UniversalMetadata,
   ContentType,
 } from "./multi-modal";
-import { EnhancedPDFProcessor } from "./processors/enhanced-pdf-processor";
+import { PDFProcessingPipeline } from "./processors/pipelines/pdf-processing-pipeline";
 import { OCRProcessor } from "./processors/ocr-processor";
 import { OfficeProcessor } from "./processors/office-processor";
 import { SpeechProcessor } from "./processors/speech-processor";
@@ -47,7 +47,7 @@ export class MultiModalIngestionPipeline {
   private embeddings: ObsidianEmbeddingService;
   private contentDetector: MultiModalContentDetector;
   private metadataExtractor: UniversalMetadataExtractor;
-  private pdfProcessor: EnhancedPDFProcessor;
+  private pdfProcessor: PDFProcessingPipeline;
   private ocrProcessor: OCRProcessor;
   private officeProcessor: OfficeProcessor;
   private speechProcessor: SpeechProcessor;
@@ -59,7 +59,7 @@ export class MultiModalIngestionPipeline {
     this.db = database;
     this.embeddings = embeddingService;
     this.contentDetector = new MultiModalContentDetector();
-    this.pdfProcessor = new EnhancedPDFProcessor();
+    this.pdfProcessor = new PDFProcessingPipeline();
     this.ocrProcessor = new OCRProcessor();
     this.officeProcessor = new OfficeProcessor();
     this.speechProcessor = new SpeechProcessor();
@@ -412,7 +412,7 @@ export class MultiModalIngestionPipeline {
   ): Promise<DocumentChunk[]> {
     try {
       // Extract text content from PDF using the PDF processor
-      const pdfResult = await this.pdfProcessor.extractTextFromBuffer(buffer);
+      const pdfResult = await this.pdfProcessor.process(buffer);
 
       // If PDF has extractable text, chunk it like regular text
       if (pdfResult.metadata.hasText && pdfResult.text.length > 0) {

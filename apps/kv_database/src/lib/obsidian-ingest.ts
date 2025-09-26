@@ -18,6 +18,10 @@ import {
   sleep,
   determineContentType,
 } from "./utils";
+import { ImageLinkExtractor, ImageLink } from "./image-link-extractor";
+import { ImagePathResolver, ResolvedImagePath } from "./image-path-resolver";
+import { OCRProcessor } from "./processors/ocr-processor";
+import { ImageClassificationProcessor } from "./processors/image-classification-processor";
 
 export interface ObsidianChunkingOptions {
   maxChunkSize?: number;
@@ -27,10 +31,37 @@ export interface ObsidianChunkingOptions {
   cleanContent?: boolean;
 }
 
+export interface ImageProcessingOptions {
+  enableImageProcessing?: boolean;
+  enableImageClassification?: boolean;
+  maxImagesPerFile?: number;
+  maxImageSize?: number;
+  ocrLanguage?: string;
+  imageProcessingTimeout?: number;
+  minClassificationConfidence?: number;
+  maxObjects?: number;
+  includeVisualFeatures?: boolean;
+}
+
+export interface ImageProcessingResult {
+  filesWithImages: number;
+  totalImages: number;
+  processedImages: number;
+  failedImages: number;
+  extractedTextLength: number;
+  averageConfidence: number;
+  sceneDescriptionsGenerated: number;
+  averageClassificationConfidence: number;
+}
+
 export class ObsidianIngestionPipeline {
   private db: ObsidianDatabase;
   private embeddings: ObsidianEmbeddingService;
   private vaultPath: string;
+  private imageLinkExtractor: ImageLinkExtractor;
+  private imagePathResolver: ImagePathResolver;
+  private ocrProcessor: OCRProcessor;
+  private imageClassificationProcessor: ImageClassificationProcessor;
 
   constructor(
     database: ObsidianDatabase,
@@ -40,6 +71,10 @@ export class ObsidianIngestionPipeline {
     this.db = database;
     this.embeddings = embeddingService;
     this.vaultPath = vaultPath;
+    this.imageLinkExtractor = new ImageLinkExtractor();
+    this.imagePathResolver = new ImagePathResolver(vaultPath);
+    this.ocrProcessor = new OCRProcessor();
+    this.imageClassificationProcessor = new ImageClassificationProcessor();
   }
 
   async ingestVault(
@@ -50,6 +85,7 @@ export class ObsidianIngestionPipeline {
       includePatterns?: string[];
       excludePatterns?: string[];
       chunkingOptions?: ObsidianChunkingOptions;
+      imageProcessingOptions?: ImageProcessingOptions;
     } = {}
   ): Promise<{
     totalFiles: number;
@@ -58,6 +94,7 @@ export class ObsidianIngestionPipeline {
     processedChunks: number;
     skippedChunks: number;
     errors: string[];
+    imageStats: ImageProcessingResult;
   }> {
     const {
       batchSize = 5, // Smaller batches for Obsidian files
@@ -72,11 +109,33 @@ export class ObsidianIngestionPipeline {
         "**/assets/**",
       ],
       chunkingOptions = {},
+      imageProcessingOptions = {
+        enableImageProcessing: true,
+        enableImageClassification: true,
+        maxImagesPerFile: 10,
+        maxImageSize: 50 * 1024 * 1024, // 50MB
+        ocrLanguage: "eng",
+        imageProcessingTimeout: 30000, // 30 seconds
+        minClassificationConfidence: 0.5,
+        maxObjects: 5,
+        includeVisualFeatures: true,
+      },
     } = options;
 
     console.log(`🚀 Starting Obsidian vault ingestion: ${this.vaultPath}`);
+    console.log(
+      `🖼️  Image processing: ${
+        imageProcessingOptions.enableImageProcessing ? "ENABLED" : "DISABLED"
+      }`
+    );
 
     try {
+      // Initialize OCR processor if image processing is enabled
+      if (imageProcessingOptions.enableImageProcessing) {
+        console.log("🔧 Initializing OCR processor...");
+        await this.ocrProcessor.initialize();
+      }
+
       // Discover all markdown files
       const markdownFiles = await this.discoverMarkdownFiles(
         includePatterns,
@@ -89,6 +148,16 @@ export class ObsidianIngestionPipeline {
       let processedChunks = 0;
       let skippedChunks = 0;
       const errors: string[] = [];
+
+      // Image processing statistics
+      let filesWithImages = 0;
+      let totalImages = 0;
+      let processedImages = 0;
+      let failedImages = 0;
+      let extractedTextLength = 0;
+      const confidenceScores: number[] = [];
+      let sceneDescriptionsGenerated = 0;
+      const classificationConfidenceScores: number[] = [];
 
       // Process files in batches
       for (let i = 0; i < markdownFiles.length; i += batchSize) {
@@ -103,7 +172,8 @@ export class ObsidianIngestionPipeline {
           const batchResults = await this.processBatch(
             batch,
             skipExisting,
-            chunkingOptions
+            chunkingOptions,
+            imageProcessingOptions
           );
 
           processedFiles += batchResults.processedFiles;
@@ -111,6 +181,25 @@ export class ObsidianIngestionPipeline {
           processedChunks += batchResults.processedChunks;
           skippedChunks += batchResults.skippedChunks;
           errors.push(...batchResults.errors);
+
+          // Accumulate image statistics
+          if (batchResults.imageStats) {
+            filesWithImages += batchResults.imageStats.filesWithImages;
+            totalImages += batchResults.imageStats.totalImages;
+            processedImages += batchResults.imageStats.processedImages;
+            failedImages += batchResults.imageStats.failedImages;
+            extractedTextLength += batchResults.imageStats.extractedTextLength;
+            sceneDescriptionsGenerated +=
+              batchResults.imageStats.sceneDescriptionsGenerated;
+            if (batchResults.imageStats.averageConfidence > 0) {
+              confidenceScores.push(batchResults.imageStats.averageConfidence);
+            }
+            if (batchResults.imageStats.averageClassificationConfidence > 0) {
+              classificationConfidenceScores.push(
+                batchResults.imageStats.averageClassificationConfidence
+              );
+            }
+          }
 
           // Rate limiting
           if (i + batchSize < markdownFiles.length) {
@@ -132,13 +221,66 @@ export class ObsidianIngestionPipeline {
         processedChunks,
         skippedChunks,
         errors,
+        imageStats: {
+          filesWithImages,
+          totalImages,
+          processedImages,
+          failedImages,
+          extractedTextLength,
+          averageConfidence:
+            confidenceScores.length > 0
+              ? confidenceScores.reduce((a, b) => a + b, 0) /
+                confidenceScores.length
+              : 0,
+          sceneDescriptionsGenerated,
+          averageClassificationConfidence:
+            classificationConfidenceScores.length > 0
+              ? classificationConfidenceScores.reduce((a, b) => a + b, 0) /
+                classificationConfidenceScores.length
+              : 0,
+        },
       };
 
       console.log(`✅ Obsidian ingestion complete:`, result);
+
+      // Log image processing results if enabled
+      if (imageProcessingOptions.enableImageProcessing) {
+        console.log(`🖼️  Image processing results:`);
+        console.log(`   Files with images: ${filesWithImages}`);
+        console.log(`   Total images found: ${totalImages}`);
+        console.log(`   Images processed: ${processedImages}`);
+        console.log(`   Images failed: ${failedImages}`);
+        console.log(`   Text extracted: ${extractedTextLength} characters`);
+        console.log(
+          `   Average OCR confidence: ${result.imageStats.averageConfidence.toFixed(
+            1
+          )}%`
+        );
+        if (imageProcessingOptions.enableImageClassification) {
+          console.log(
+            `   Scene descriptions generated: ${sceneDescriptionsGenerated}`
+          );
+          console.log(
+            `   Average classification confidence: ${result.imageStats.averageClassificationConfidence.toFixed(
+              1
+            )}%`
+          );
+        }
+      }
+
       return result;
     } catch (error) {
       console.error(`❌ Obsidian ingestion failed: ${error}`);
       throw new Error(`Obsidian ingestion pipeline failed: ${error}`);
+    } finally {
+      // Cleanup OCR processor if it was initialized
+      if (imageProcessingOptions.enableImageProcessing) {
+        try {
+          await this.ocrProcessor.terminate();
+        } catch (error) {
+          console.warn(`⚠️  OCR processor cleanup failed: ${error}`);
+        }
+      }
     }
   }
 
@@ -262,19 +404,31 @@ export class ObsidianIngestionPipeline {
   private async processBatch(
     filePaths: string[],
     skipExisting: boolean,
-    chunkingOptions: ObsidianChunkingOptions
+    chunkingOptions: ObsidianChunkingOptions,
+    imageProcessingOptions?: ImageProcessingOptions
   ): Promise<{
     processedFiles: number;
     totalChunks: number;
     processedChunks: number;
     skippedChunks: number;
     errors: string[];
+    imageStats?: ImageProcessingResult;
   }> {
     let processedFiles = 0;
     let totalChunks = 0;
     let processedChunks = 0;
     let skippedChunks = 0;
     const errors: string[] = [];
+
+    // Image processing statistics
+    let filesWithImages = 0;
+    let totalImages = 0;
+    let processedImages = 0;
+    let failedImages = 0;
+    let extractedTextLength = 0;
+    const confidenceScores: number[] = [];
+    let sceneDescriptionsGenerated = 0;
+    const classificationConfidenceScores: number[] = [];
 
     for (const filePath of filePaths) {
       try {
@@ -293,9 +447,54 @@ export class ObsidianIngestionPipeline {
           continue;
         }
 
-        // Create chunks from the file
+        // Process embedded images if enabled
+        let imageContent = "";
+        if (imageProcessingOptions?.enableImageProcessing) {
+          try {
+            const imageResult = await this.processEmbeddedImages(
+              obsidianFile,
+              filePath,
+              imageProcessingOptions
+            );
+
+            if (imageResult.images.length > 0) {
+              filesWithImages++;
+              totalImages += imageResult.images.length;
+              processedImages += imageResult.processedImages;
+              failedImages += imageResult.failedImages;
+              extractedTextLength += imageResult.extractedTextLength;
+              confidenceScores.push(...imageResult.confidenceScores);
+              sceneDescriptionsGenerated +=
+                imageResult.sceneDescriptionsGenerated;
+              classificationConfidenceScores.push(
+                ...imageResult.classificationConfidenceScores
+              );
+              imageContent = imageResult.combinedText;
+
+              console.log(
+                `🖼️  Processed ${imageResult.processedImages}/${imageResult.images.length} images from ${obsidianFile.fileName}`
+              );
+            }
+          } catch (error) {
+            console.warn(
+              `⚠️  Image processing failed for ${obsidianFile.fileName}: ${error}`
+            );
+            errors.push(
+              `Image processing failed for ${obsidianFile.fileName}: ${error}`
+            );
+          }
+        }
+
+        // Create chunks from the file (including image content if available)
+        const enhancedFile = {
+          ...obsidianFile,
+          content: imageContent
+            ? `${obsidianFile.content}\n\n## Extracted Image Content\n${imageContent}`
+            : obsidianFile.content,
+        };
+
         const chunks = await this.chunkObsidianFile(
-          obsidianFile,
+          enhancedFile,
           chunkingOptions
         );
         totalChunks += chunks.length;
@@ -354,6 +553,211 @@ export class ObsidianIngestionPipeline {
       processedChunks,
       skippedChunks,
       errors,
+      imageStats: {
+        filesWithImages,
+        totalImages,
+        processedImages,
+        failedImages,
+        extractedTextLength,
+        averageConfidence:
+          confidenceScores.length > 0
+            ? confidenceScores.reduce((a, b) => a + b, 0) /
+              confidenceScores.length
+            : 0,
+        sceneDescriptionsGenerated,
+        averageClassificationConfidence:
+          classificationConfidenceScores.length > 0
+            ? classificationConfidenceScores.reduce((a, b) => a + b, 0) /
+              classificationConfidenceScores.length
+            : 0,
+      },
+    };
+  }
+
+  /**
+   * Process embedded images from a markdown file
+   */
+  private async processEmbeddedImages(
+    obsidianFile: ObsidianDocument,
+    sourceFilePath: string,
+    options: ImageProcessingOptions
+  ): Promise<{
+    images: ImageLink[];
+    processedImages: number;
+    failedImages: number;
+    extractedTextLength: number;
+    confidenceScores: number[];
+    combinedText: string;
+    sceneDescriptionsGenerated: number;
+    classificationConfidenceScores: number[];
+  }> {
+    // Extract image links from content
+    const extractionResult = this.imageLinkExtractor.extractImageLinks(
+      obsidianFile.content
+    );
+    const validImageLinks = this.imageLinkExtractor.filterValidImageLinks(
+      extractionResult.links
+    );
+
+    if (validImageLinks.length === 0) {
+      return {
+        images: [],
+        processedImages: 0,
+        failedImages: 0,
+        extractedTextLength: 0,
+        confidenceScores: [],
+        combinedText: "",
+        sceneDescriptionsGenerated: 0,
+        classificationConfidenceScores: [],
+      };
+    }
+
+    console.log(
+      `🔍 Found ${validImageLinks.length} image links in ${obsidianFile.fileName}`
+    );
+
+    // Resolve image paths
+    const imagePaths = validImageLinks.map((link) => link.src);
+    const resolutionResult = this.imagePathResolver.resolvePaths(
+      imagePaths,
+      sourceFilePath
+    );
+    const validResolvedPaths = this.imagePathResolver.filterValidImages(
+      resolutionResult.resolved
+    );
+
+    if (validResolvedPaths.length === 0) {
+      console.log(
+        `⚠️  No valid image files found for ${obsidianFile.fileName}`
+      );
+      return {
+        images: validImageLinks,
+        processedImages: 0,
+        failedImages: validImageLinks.length,
+        extractedTextLength: 0,
+        confidenceScores: [],
+        combinedText: "",
+        sceneDescriptionsGenerated: 0,
+        classificationConfidenceScores: [],
+      };
+    }
+
+    // Limit number of images per file
+    const imagesToProcess = validResolvedPaths.slice(
+      0,
+      options.maxImagesPerFile || 10
+    );
+
+    let processedImages = 0;
+    let failedImages = 0;
+    let extractedTextLength = 0;
+    const confidenceScores: number[] = [];
+    const extractedTexts: string[] = [];
+    let sceneDescriptionsGenerated = 0;
+    const classificationConfidenceScores: number[] = [];
+
+    // Process each image with OCR
+    for (const resolvedPath of imagesToProcess) {
+      try {
+        console.log(
+          `🖼️  Processing image: ${path.basename(resolvedPath.resolvedPath)}`
+        );
+
+        // Check file size limit
+        if (
+          resolvedPath.size &&
+          resolvedPath.size > (options.maxImageSize || 50 * 1024 * 1024)
+        ) {
+          console.log(
+            `⚠️  Skipping large image: ${path.basename(
+              resolvedPath.resolvedPath
+            )} (${Math.round(resolvedPath.size / 1024 / 1024)}MB)`
+          );
+          failedImages++;
+          continue;
+        }
+
+        // Process with enhanced image classification (includes OCR + scene description)
+        const classificationResult =
+          await this.imageClassificationProcessor.extractFromFile(
+            resolvedPath.resolvedPath,
+            {
+              enableOCR: options.enableImageProcessing,
+              enableClassification: options.enableImageClassification,
+              minClassificationConfidence:
+                options.minClassificationConfidence || 0.5,
+              maxObjects: options.maxObjects || 5,
+              includeVisualFeatures: options.includeVisualFeatures !== false,
+              language: options.ocrLanguage || "eng",
+              confidence: 30, // Minimum OCR confidence threshold
+            }
+          );
+
+        if (
+          classificationResult.success &&
+          classificationResult.text &&
+          classificationResult.text.trim()
+        ) {
+          const cleanText = classificationResult.text.trim();
+          extractedTexts.push(
+            `### Image: ${path.basename(
+              resolvedPath.resolvedPath
+            )}\n${cleanText}`
+          );
+          extractedTextLength += cleanText.length;
+
+          // Track OCR confidence if available
+          if (classificationResult.confidence) {
+            confidenceScores.push(classificationResult.confidence);
+          }
+
+          // Track classification confidence if available
+          if (
+            classificationResult.metadata?.imageClassification?.sceneConfidence
+          ) {
+            classificationConfidenceScores.push(
+              classificationResult.metadata.imageClassification.sceneConfidence
+            );
+            sceneDescriptionsGenerated++;
+          }
+
+          processedImages++;
+          console.log(
+            `✅ Processed ${cleanText.length} characters from ${path.basename(
+              resolvedPath.resolvedPath
+            )} (OCR: ${
+              classificationResult.confidence?.toFixed(1) || 0
+            }%, Scene: ${
+              classificationResult.metadata?.imageClassification?.sceneConfidence?.toFixed(
+                1
+              ) || 0
+            }%)`
+          );
+        } else {
+          console.log(
+            `⚠️  No content extracted from ${path.basename(
+              resolvedPath.resolvedPath
+            )} (success: ${classificationResult.success})`
+          );
+          failedImages++;
+        }
+      } catch (error) {
+        console.error(
+          `❌ Failed to process image ${resolvedPath.resolvedPath}: ${error}`
+        );
+        failedImages++;
+      }
+    }
+
+    return {
+      images: validImageLinks,
+      processedImages,
+      failedImages,
+      extractedTextLength,
+      confidenceScores,
+      combinedText: extractedTexts.join("\n\n"),
+      sceneDescriptionsGenerated,
+      classificationConfidenceScores,
     };
   }
 

@@ -191,8 +191,30 @@ export class ImageClassificationProcessor implements ContentProcessor {
     filePath: string,
     options?: ImageClassificationOptions
   ): Promise<ProcessorResult> {
-    // Implementation would read file and call extractFromBuffer
-    throw new Error("File extraction not implemented yet");
+    try {
+      const fs = await import("fs");
+      const buffer = fs.readFileSync(filePath);
+      return await this.extractFromBuffer(buffer, options);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return {
+        text: `Failed to process image file ${filePath}: ${errorMessage}`,
+        metadata: {
+          type: ContentType.RASTER_IMAGE,
+          language: "unknown",
+          encoding: "unknown",
+        },
+        success: false,
+        processingTime: 0,
+        confidence: 0,
+        features: {
+          hasText: false,
+          hasSceneDescription: false,
+          contentType: ContentType.RASTER_IMAGE,
+        },
+      };
+    }
   }
 
   supportsContentType(contentType: ContentType): boolean {
@@ -221,44 +243,233 @@ export class ImageClassificationProcessor implements ContentProcessor {
       modelPreference: string;
     }
   ): Promise<SceneDescription> {
-    // TODO: Implement actual AI model integration
-    // This is a placeholder that would integrate with:
-    // - Hugging Face Transformers (local models)
-    // - OpenAI Vision API (remote)
-    // - Google Cloud Vision (remote)
-    // - Local ML models via ONNX Runtime
+    const startTime = Date.now();
 
-    const mockSceneDescription: SceneDescription = {
-      description:
-        "This appears to be a meeting room with people sitting around a conference table discussing documents. There are laptops, papers, and coffee cups visible on the table.",
-      confidence: 0.87,
-      objects: [
-        "people",
-        "conference table",
-        "laptops",
-        "documents",
-        "coffee cups",
-        "chairs",
-      ],
-      sceneType: "indoor_meeting",
-      visualFeatures: {
-        colors: ["neutral", "white", "black", "brown"],
-        composition: "centered_group",
-        lighting: "artificial_indoor",
-        style: "professional_documentary",
-      },
-      relationships: [
-        "people_sitting_at_table",
-        "documents_on_table",
-        "laptops_in_use",
-      ],
+    try {
+      // For now, we'll implement a rule-based classifier that analyzes image properties
+      // This can be enhanced with actual ML models later
+      const analysis = await this.analyzeImageContent(buffer);
+
+      // Generate scene description based on analysis
+      const sceneDescription = this.generateSceneDescription(analysis, options);
+
+      // Only return if confidence meets threshold
+      if (sceneDescription.confidence >= options.minConfidence) {
+        return sceneDescription;
+      } else {
+        // Return low-confidence fallback
+        return this.createFallbackDescription();
+      }
+    } catch (error) {
+      console.warn(`Scene classification failed: ${error}`);
+      return this.createFallbackDescription();
+    }
+  }
+
+  /**
+   * Analyze image content using basic image processing
+   */
+  private async analyzeImageContent(buffer: Buffer): Promise<{
+    hasText: boolean;
+    dominantColors: string[];
+    brightness: number;
+    contrast: number;
+    aspectRatio: number;
+    fileSize: number;
+    estimatedComplexity: number;
+  }> {
+    // Basic image analysis without external dependencies
+    // This is a simplified implementation that can be enhanced with actual image processing libraries
+
+    const fileSize = buffer.length;
+
+    // Analyze buffer for basic patterns
+    const hasHighEntropy = this.calculateEntropy(buffer) > 7.0; // Indicates complex content
+    const hasRepeatingPatterns = this.detectRepeatingPatterns(buffer);
+
+    return {
+      hasText: hasHighEntropy && !hasRepeatingPatterns, // Heuristic for text presence
+      dominantColors: this.estimateDominantColors(buffer),
+      brightness: this.estimateBrightness(buffer),
+      contrast: this.estimateContrast(buffer),
+      aspectRatio: 1.0, // Would need image dimensions
+      fileSize,
+      estimatedComplexity: hasHighEntropy ? 0.8 : 0.4,
+    };
+  }
+
+  /**
+   * Generate scene description based on image analysis
+   */
+  private generateSceneDescription(
+    analysis: any,
+    options: { maxObjects: number; includeVisualFeatures: boolean }
+  ): SceneDescription {
+    // Rule-based scene classification
+    let sceneType = "unknown";
+    let description = "Image content detected";
+    let objects: string[] = [];
+    let confidence = 0.5;
+
+    // Classify based on analysis
+    if (analysis.hasText && analysis.estimatedComplexity > 0.7) {
+      sceneType = "document_or_diagram";
+      description =
+        "This appears to be a document, diagram, or image containing text and structured content.";
+      objects = ["text", "structured_content"];
+      confidence = 0.75;
+    } else if (analysis.estimatedComplexity > 0.6) {
+      sceneType = "complex_scene";
+      description =
+        "This appears to be a complex scene with multiple elements, possibly containing people, objects, or detailed visual content.";
+      objects = ["multiple_elements", "detailed_content"];
+      confidence = 0.65;
+    } else if (analysis.brightness > 0.7) {
+      sceneType = "bright_scene";
+      description =
+        "This appears to be a bright image, possibly taken outdoors or in well-lit conditions.";
+      objects = ["bright_elements"];
+      confidence = 0.6;
+    } else {
+      sceneType = "general_image";
+      description =
+        "This appears to be a general image with standard visual content.";
+      objects = ["visual_content"];
+      confidence = 0.5;
+    }
+
+    // Limit objects based on options
+    objects = objects.slice(0, options.maxObjects);
+
+    const visualFeatures = options.includeVisualFeatures
+      ? {
+          colors: analysis.dominantColors,
+          composition:
+            analysis.estimatedComplexity > 0.6 ? "complex" : "simple",
+          lighting:
+            analysis.brightness > 0.7
+              ? "bright"
+              : analysis.brightness < 0.3
+              ? "dark"
+              : "moderate",
+          style: analysis.hasText ? "informational" : "photographic",
+        }
+      : {
+          colors: [],
+          composition: "",
+          lighting: "",
+          style: "",
+        };
+
+    return {
+      description,
+      confidence,
+      objects,
+      sceneType,
+      visualFeatures,
+      relationships:
+        objects.length > 1 ? [`${objects[0]}_with_${objects[1]}`] : [],
       generatedAt: new Date(),
     };
+  }
 
-    // Simulate processing time
-    await new Promise((resolve) => setTimeout(resolve, 100));
+  /**
+   * Create fallback description for failed classification
+   */
+  private createFallbackDescription(): SceneDescription {
+    return {
+      description:
+        "Image content could not be classified with sufficient confidence.",
+      confidence: 0.1,
+      objects: ["unknown_content"],
+      sceneType: "unclassified",
+      visualFeatures: {
+        colors: [],
+        composition: "unknown",
+        lighting: "unknown",
+        style: "unknown",
+      },
+      relationships: [],
+      generatedAt: new Date(),
+    };
+  }
 
-    return mockSceneDescription;
+  /**
+   * Calculate entropy of buffer (measure of randomness/complexity)
+   */
+  private calculateEntropy(buffer: Buffer): number {
+    const frequencies = new Array(256).fill(0);
+
+    // Count byte frequencies
+    for (let i = 0; i < Math.min(buffer.length, 10000); i++) {
+      // Sample first 10KB
+      frequencies[buffer[i]]++;
+    }
+
+    // Calculate entropy
+    let entropy = 0;
+    const sampleSize = Math.min(buffer.length, 10000);
+
+    for (const freq of frequencies) {
+      if (freq > 0) {
+        const probability = freq / sampleSize;
+        entropy -= probability * Math.log2(probability);
+      }
+    }
+
+    return entropy;
+  }
+
+  /**
+   * Detect repeating patterns in buffer
+   */
+  private detectRepeatingPatterns(buffer: Buffer): boolean {
+    // Simple pattern detection - look for repeated sequences
+    const sampleSize = Math.min(buffer.length, 1000);
+    const patterns = new Map<string, number>();
+
+    for (let i = 0; i < sampleSize - 4; i++) {
+      const pattern = buffer.subarray(i, i + 4).toString("hex");
+      patterns.set(pattern, (patterns.get(pattern) || 0) + 1);
+    }
+
+    // If any 4-byte pattern repeats more than 10% of the time, consider it repetitive
+    const maxRepeats = Math.max(...patterns.values());
+    return maxRepeats > sampleSize * 0.1;
+  }
+
+  /**
+   * Estimate dominant colors from buffer
+   */
+  private estimateDominantColors(buffer: Buffer): string[] {
+    // Very basic color estimation based on byte distribution
+    const avgByte = buffer.reduce((sum, byte) => sum + byte, 0) / buffer.length;
+
+    if (avgByte > 200) return ["light", "white"];
+    if (avgByte < 50) return ["dark", "black"];
+    if (avgByte > 150) return ["bright"];
+    return ["neutral", "mixed"];
+  }
+
+  /**
+   * Estimate brightness from buffer
+   */
+  private estimateBrightness(buffer: Buffer): number {
+    const avgByte = buffer.reduce((sum, byte) => sum + byte, 0) / buffer.length;
+    return avgByte / 255; // Normalize to 0-1
+  }
+
+  /**
+   * Estimate contrast from buffer
+   */
+  private estimateContrast(buffer: Buffer): number {
+    // Calculate standard deviation as a measure of contrast
+    const avgByte = buffer.reduce((sum, byte) => sum + byte, 0) / buffer.length;
+    const variance =
+      buffer.reduce((sum, byte) => sum + Math.pow(byte - avgByte, 2), 0) /
+      buffer.length;
+    const stdDev = Math.sqrt(variance);
+    return Math.min(stdDev / 128, 1); // Normalize to 0-1
   }
 
   /**
