@@ -1,0 +1,43 @@
+{
+  "name": "SourceIcon",
+  "layer": "primitive",
+  "tokens": {
+    "root": {
+      "typography": {
+        "size": {
+          "sm": "text.sm",
+          "md": "text.lg", 
+          "lg": "text.xl"
+        }
+      }
+    },
+    "svg": {
+      "stroke": "color.current",
+      "fill": "color.transparent"
+    }
+  },
+  "variants": {
+    "variant": {
+      "emoji": {
+        "display": "inline"
+      },
+      "svg": {
+        "display": "inline-block"
+      }
+    },
+    "size": {
+      "sm": {
+        "dimensions": "16x16",
+        "typography": "text.sm"
+      },
+      "md": {
+        "dimensions": "24x24", 
+        "typography": "text.lg"
+      },
+      "lg": {
+        "dimensions": "32x32",
+        "typography": "text.xl"
+      }
+    }
+  }
+}

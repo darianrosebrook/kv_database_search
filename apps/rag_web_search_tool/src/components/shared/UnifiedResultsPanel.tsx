@@ -13,13 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { KnowledgeGraph } from "../KnowledgeGraph";
 import { ResultCard } from "../ResultCard";
 import { DocumentDetailView } from "../DocumentDetailView";
-import type {
-  SearchResult,
-  SuggestedAction,
-} from "../../types";
+import type { SearchResult, SuggestedAction } from "../../types";
 import type {
   GraphRagSearchResult,
   GraphRagEntity,
@@ -80,18 +78,25 @@ export function UnifiedResultsPanel({
   const [sortBy, setSortBy] = useState<SortOption>("relevance");
   const [filterBy, setFilterBy] = useState<FilterOption>("all");
   const [showDetailView, setShowDetailView] = useState(false);
-  const [activeTab, setActiveTab] = useState<"results" | "entities" | "reasoning">("results");
+  const [activeTab, setActiveTab] = useState<
+    "results" | "entities" | "reasoning"
+  >("results");
 
   // Use Graph RAG results if available, otherwise use traditional results
-  const currentResults = useGraphRag && graphRagResults.length > 0 ? 
-    graphRagResults.map(transformGraphRagToSearchResult) : results;
+  const currentResults =
+    useGraphRag && graphRagResults.length > 0
+      ? graphRagResults.map(transformGraphRagToSearchResult)
+      : results;
 
   // Transform Graph RAG result to SearchResult for compatibility
-  function transformGraphRagToSearchResult(result: GraphRagSearchResult): SearchResult {
+  function transformGraphRagToSearchResult(
+    result: GraphRagSearchResult
+  ): SearchResult {
     return {
       id: result.id,
       title: result.metadata.section || "Document",
-      summary: result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
+      summary:
+        result.text.substring(0, 200) + (result.text.length > 200 ? "..." : ""),
       highlights: [
         result.text.substring(0, 100) + (result.text.length > 100 ? "..." : ""),
         `Source: ${result.metadata.sourceFile}`,
@@ -99,16 +104,21 @@ export function UnifiedResultsPanel({
       ],
       confidenceScore: result.score,
       source: {
-        type: result.metadata.contentType === "code" ? "component" : "documentation",
+        type:
+          result.metadata.contentType === "code"
+            ? "component"
+            : "documentation",
         path: result.metadata.sourceFile,
         url: result.metadata.url || `#${result.id}`,
       },
-      rationale: result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
+      rationale:
+        result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
       tags: [
         result.metadata.contentType,
         ...result.entities.slice(0, 2).map((e) => e.type),
       ],
-      lastUpdated: result.metadata.updatedAt || new Date().toISOString().split("T")[0],
+      lastUpdated:
+        result.metadata.updatedAt || new Date().toISOString().split("T")[0],
     };
   }
 
@@ -127,7 +137,10 @@ export function UnifiedResultsPanel({
         case "relevance":
           return b.confidenceScore - a.confidenceScore;
         case "date":
-          return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
+          return (
+            new Date(b.lastUpdated).getTime() -
+            new Date(a.lastUpdated).getTime()
+          );
         case "title":
           return a.title.localeCompare(b.title);
         case "confidence":
@@ -141,7 +154,7 @@ export function UnifiedResultsPanel({
   // Group entities by type for Graph RAG mode
   const entitiesByType = React.useMemo(() => {
     if (!useGraphRag || !allEntities.length) return {};
-    
+
     return allEntities.reduce((acc, entity) => {
       if (!acc[entity.type]) acc[entity.type] = [];
       acc[entity.type].push(entity);
@@ -151,10 +164,10 @@ export function UnifiedResultsPanel({
 
   const handleResultSelect = (result: SearchResult) => {
     onSelectResult(result);
-    
+
     // If Graph RAG mode and we have a corresponding Graph RAG result, select it too
     if (useGraphRag && onSelectGraphRagResult) {
-      const graphRagResult = graphRagResults.find(gr => gr.id === result.id);
+      const graphRagResult = graphRagResults.find((gr) => gr.id === result.id);
       if (graphRagResult) {
         onSelectGraphRagResult(graphRagResult);
       }
@@ -194,46 +207,43 @@ export function UnifiedResultsPanel({
               {query && ` for "${query}"`}
             </p>
           </div>
-          
+
           {useGraphRag && (
-            <div className="flex gap-1">
-              <button
+            <TabsList className="grid w-auto grid-cols-3">
+              <TabsTrigger
+                value="results"
                 onClick={() => setActiveTab("results")}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
-                  activeTab === "results"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                data-state={activeTab === "results" ? "active" : "inactive"}
               >
                 Results ({processedResults.length})
-              </button>
-              <button
+              </TabsTrigger>
+              <TabsTrigger
+                value="entities"
                 onClick={() => setActiveTab("entities")}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
-                  activeTab === "entities"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                data-state={activeTab === "entities" ? "active" : "inactive"}
               >
                 Entities ({allEntities.length})
-              </button>
-              <button
+              </TabsTrigger>
+              <TabsTrigger
+                value="reasoning"
                 onClick={() => setActiveTab("reasoning")}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
-                  activeTab === "reasoning"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                data-state={activeTab === "reasoning" ? "active" : "inactive"}
               >
-                Reasoning {reasoningResults ? `(${reasoningResults.paths.length})` : "(0)"}
-              </button>
-            </div>
+                Reasoning{" "}
+                {reasoningResults
+                  ? `(${reasoningResults.paths.length})`
+                  : "(0)"}
+              </TabsTrigger>
+            </TabsList>
           )}
         </div>
 
         {/* Controls */}
         <div className="flex items-center gap-2">
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+          <Select
+            value={sortBy}
+            onValueChange={(value) => setSortBy(value as SortOption)}
+          >
             <SelectTrigger className="w-[140px]">
               <ArrowUpDown className="h-4 w-4 mr-2" />
               <SelectValue />
@@ -246,7 +256,10 @@ export function UnifiedResultsPanel({
             </SelectContent>
           </Select>
 
-          <Select value={filterBy} onValueChange={(value) => setFilterBy(value as FilterOption)}>
+          <Select
+            value={filterBy}
+            onValueChange={(value) => setFilterBy(value as FilterOption)}
+          >
             <SelectTrigger className="w-[140px]">
               <Filter className="h-4 w-4 mr-2" />
               <SelectValue />
@@ -282,13 +295,17 @@ export function UnifiedResultsPanel({
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-muted-foreground">
-                  {useGraphRag ? "Searching knowledge graph..." : "Searching..."}
+                  {useGraphRag
+                    ? "Searching knowledge graph..."
+                    : "Searching..."}
                 </p>
               </div>
             ) : processedResults.length === 0 ? (
               <div className="text-center py-8">
                 <FileX className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No results found</h3>
+                <h3 className="text-lg font-medium text-foreground mb-2">
+                  No results found
+                </h3>
                 <p className="text-muted-foreground">
                   Try adjusting your search terms or filters.
                 </p>
@@ -322,7 +339,9 @@ export function UnifiedResultsPanel({
               <div className="space-y-4">
                 {Object.entries(entitiesByType).map(([type, entities]) => (
                   <div key={type} className="space-y-2">
-                    <h3 className="font-medium text-foreground">{type} ({entities.length})</h3>
+                    <h3 className="font-medium text-foreground">
+                      {type} ({entities.length})
+                    </h3>
                     <div className="grid grid-cols-1 gap-2">
                       {entities.map((entity) => (
                         <div
@@ -331,7 +350,9 @@ export function UnifiedResultsPanel({
                         >
                           <div className="flex items-center gap-2">
                             <span
-                              className={`px-2 py-1 text-xs rounded border ${getEntityTypeColor(entity.type)}`}
+                              className={`px-2 py-1 text-xs rounded border ${getEntityTypeColor(
+                                entity.type
+                              )}`}
                             >
                               {entity.type}
                             </span>
@@ -364,7 +385,9 @@ export function UnifiedResultsPanel({
           <ScrollArea className="h-full p-4">
             {!reasoningResults || reasoningResults.paths.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">No reasoning paths found</p>
+                <p className="text-muted-foreground">
+                  No reasoning paths found
+                </p>
                 <p className="text-sm text-muted-foreground mt-2">
                   Select entities to explore their relationships
                 </p>
@@ -375,33 +398,43 @@ export function UnifiedResultsPanel({
                   <h3 className="font-medium mb-2">Reasoning Summary</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-medium">Paths Found:</span> {reasoningResults.paths.length}
+                      <span className="font-medium">Paths Found:</span>{" "}
+                      {reasoningResults.paths.length}
                     </div>
                     <div>
-                      <span className="font-medium">Confidence:</span> {reasoningResults.confidence.toFixed(3)}
+                      <span className="font-medium">Confidence:</span>{" "}
+                      {reasoningResults.confidence.toFixed(3)}
                     </div>
                   </div>
                 </div>
 
                 {reasoningResults.bestPath && (
                   <div className="border-2 border-primary rounded-lg p-4">
-                    <h3 className="font-medium text-primary mb-2">Best Reasoning Path</h3>
+                    <h3 className="font-medium text-primary mb-2">
+                      Best Reasoning Path
+                    </h3>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 flex-wrap">
-                        {reasoningResults.bestPath.entities.map((entity, index) => (
-                          <React.Fragment key={entity.id}>
-                            <span
-                              className={`px-2 py-1 text-xs rounded border cursor-pointer ${getEntityTypeColor(entity.type)}`}
-                              onClick={() => onExploreEntity?.(entity)}
-                              title={`${entity.name} (${entity.type})`}
-                            >
-                              {entity.name}
-                            </span>
-                            {index < reasoningResults.bestPath!.entities.length - 1 && (
-                              <span className="text-muted-foreground">→</span>
-                            )}
-                          </React.Fragment>
-                        ))}
+                        {reasoningResults.bestPath.entities.map(
+                          (entity, index) => (
+                            <React.Fragment key={entity.id}>
+                              <span
+                                className={`px-2 py-1 text-xs rounded border cursor-pointer ${getEntityTypeColor(
+                                  entity.type
+                                )}`}
+                                onClick={() => onExploreEntity?.(entity)}
+                                title={`${entity.name} (${entity.type})`}
+                              >
+                                {entity.name}
+                              </span>
+                              {index <
+                                reasoningResults.bestPath!.entities.length -
+                                  1 && (
+                                <span className="text-muted-foreground">→</span>
+                              )}
+                            </React.Fragment>
+                          )
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {reasoningResults.bestPath.explanation}
@@ -415,14 +448,17 @@ export function UnifiedResultsPanel({
                   {reasoningResults.paths.map((path, index) => (
                     <div key={path.id} className="border rounded-lg p-4">
                       <h4 className="font-medium mb-2">
-                        Path {index + 1} (Confidence: {path.confidence.toFixed(3)}, Depth: {path.depth})
+                        Path {index + 1} (Confidence:{" "}
+                        {path.confidence.toFixed(3)}, Depth: {path.depth})
                       </h4>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           {path.entities.map((entity, entityIndex) => (
                             <React.Fragment key={entity.id}>
                               <span
-                                className={`px-2 py-1 text-xs rounded border cursor-pointer ${getEntityTypeColor(entity.type)}`}
+                                className={`px-2 py-1 text-xs rounded border cursor-pointer ${getEntityTypeColor(
+                                  entity.type
+                                )}`}
                                 onClick={() => onExploreEntity?.(entity)}
                                 title={`${entity.name} (${entity.type})`}
                               >
@@ -435,7 +471,9 @@ export function UnifiedResultsPanel({
                           ))}
                         </div>
                         {path.explanation && (
-                          <p className="text-sm text-muted-foreground">{path.explanation}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {path.explanation}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -451,7 +489,9 @@ export function UnifiedResultsPanel({
       {!useGraphRag && processedResults.length > 0 && (
         <div className="border-t border-border p-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-foreground">Knowledge Graph</h3>
+            <h3 className="text-sm font-medium text-foreground">
+              Knowledge Graph
+            </h3>
             <Button variant="outline" size="sm">
               <BookOpen className="h-4 w-4 mr-2" />
               View Full Graph

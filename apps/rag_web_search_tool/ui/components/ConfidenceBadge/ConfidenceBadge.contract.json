@@ -1,0 +1,26 @@
+{
+  "name": "ConfidenceBadge",
+  "layer": "primitive",
+  "anatomy": ["root", "icon", "text"],
+  "variants": {
+    "variant": ["default", "outline", "secondary"],
+    "size": ["sm", "md", "lg"],
+    "level": ["high", "medium", "low"]
+  },
+  "states": ["default", "with-icon"],
+  "slots": {
+    "icon": { "optional": true }
+  },
+  "a11y": {
+    "role": "status",
+    "labeling": ["title with confidence level and percentage"],
+    "keyboard": [],
+    "apgPattern": "none"
+  },
+  "tokens": {
+    "root": ["text.xs", "text.sm", "text.base"],
+    "colors": ["color.success", "color.warning", "color.error"]
+  },
+  "ssr": { "hydrateOn": "none" },
+  "rtl": { "flipIcon": false }
+}

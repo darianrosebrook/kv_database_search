@@ -20,6 +20,8 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 import { Separator } from "./ui/separator";
+import { SourceIcon } from "../../ui/components/SourceIcon";
+import { ConfidenceBadge } from "../../ui/components/ConfidenceBadge";
 import {
   ExplanationService,
   type ResultExplanation,
@@ -99,75 +101,6 @@ export function ResultCard({
     }
   };
 
-  const getSourceIcon = (type: string) => {
-    const placeHolderSVG = (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect width="24" height="24" fill="white" />
-        <rect
-          x="2"
-          y="2"
-          width="20"
-          height="20"
-          rx="2"
-          stroke="currentColor  "
-          strokeLinecap="round"
-          stroke-dasharray="4 4"
-        />
-        <rect
-          x="19"
-          y="5"
-          width="14"
-          height="14"
-          rx="2"
-          transform="rotate(90 19 5)"
-          stroke="currentColor"
-          strokeLinecap="round"
-          stroke-dasharray="2 4"
-        />
-        <rect
-          x="14"
-          y="10"
-          width="4"
-          height="4"
-          rx="2"
-          transform="rotate(90 14 10)"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-dasharray="2 4"
-        />
-        <path
-          d="M7.75736 8.24264L9.17157 9.65685M14.8284 15.3137L16.2426 16.7279M16.2426 8.24264L14.8284 9.65685M9.52513 14.9602L8.11091 16.3744"
-          stroke="currentColor"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-    switch (type) {
-      case "moc":
-        return placeHolderSVG;
-      case "article":
-        return placeHolderSVG;
-      case "book":
-        return placeHolderSVG;
-      case "conversation":
-        return placeHolderSVG;
-      default:
-        return placeHolderSVG;
-    }
-  };
-
-  const getConfidenceColor = (score: number) => {
-    if (score >= 0.8) return "text-green-600 dark:text-green-400";
-    if (score >= 0.6) return "text-yellow-600 dark:text-yellow-400";
-    return "text-orange-600 dark:text-orange-400";
-  };
-
   const highlightText = (text: string, query: string) => {
     if (!query.trim()) return text;
 
@@ -212,9 +145,11 @@ export function ResultCard({
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg flex-shrink-0">
-                  {getSourceIcon(result.source.type)}
-                </span>
+                <SourceIcon
+                  type={result.source.type}
+                  variant="svg"
+                  className="flex-shrink-0"
+                />
                 <h4 className="font-medium line-clamp-1 text-base">
                   {result.title}
                 </h4>
@@ -229,9 +164,11 @@ export function ResultCard({
               <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
                 <div className="flex items-center gap-1">
                   <Star className="w-3 h-3" />
-                  <span className={getConfidenceColor(result.confidenceScore)}>
-                    {Math.round(result.confidenceScore * 100)}% match
-                  </span>
+                  <ConfidenceBadge
+                    score={result.confidenceScore}
+                    size="sm"
+                    variant="secondary"
+                  />
                 </div>
 
                 <div className="flex gap-1">

@@ -1,0 +1,44 @@
+{
+  "name": "ConfidenceBadge",
+  "layer": "primitive",
+  "tokens": {
+    "root": {
+      "typography": {
+        "size": {
+          "sm": "text.xs",
+          "md": "text.sm",
+          "lg": "text.base"
+        }
+      },
+      "colors": {
+        "high": "color.success",
+        "medium": "color.warning", 
+        "low": "color.error"
+      }
+    }
+  },
+  "variants": {
+    "level": {
+      "high": {
+        "color": "text.success"
+      },
+      "medium": {
+        "color": "text.warning"
+      },
+      "low": {
+        "color": "text.error"
+      }
+    },
+    "size": {
+      "sm": {
+        "typography": "text.xs"
+      },
+      "md": {
+        "typography": "text.sm"
+      },
+      "lg": {
+        "typography": "text.base"
+      }
+    }
+  }
+}

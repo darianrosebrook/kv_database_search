@@ -1,0 +1,23 @@
+{
+  "name": "SourceIcon",
+  "layer": "primitive",
+  "anatomy": ["root"],
+  "variants": {
+    "variant": ["emoji", "svg"],
+    "size": ["sm", "md", "lg"]
+  },
+  "states": ["default"],
+  "slots": {},
+  "a11y": {
+    "role": "img",
+    "labeling": ["aria-label for source type"],
+    "keyboard": [],
+    "apgPattern": "none"
+  },
+  "tokens": {
+    "root": ["text.sm", "text.lg", "text.xl"],
+    "svg": ["color.current"]
+  },
+  "ssr": { "hydrateOn": "none" },
+  "rtl": { "flipIcon": false }
+}

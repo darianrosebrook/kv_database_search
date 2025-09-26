@@ -13,6 +13,8 @@ import {
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
+import { SourceIcon } from "../../ui/components/SourceIcon";
+import { ConfidenceBadge } from "../../ui/components/ConfidenceBadge";
 import { apiService } from "../lib/api";
 import type { SearchResult } from "../types";
 
@@ -129,21 +131,6 @@ export function DocumentDetailView({
     };
   };
 
-  const getSourceIcon = (type: string) => {
-    switch (type) {
-      case "moc":
-        return "🗺️";
-      case "article":
-        return "📝";
-      case "book":
-        return "📚";
-      case "conversation":
-        return "💬";
-      default:
-        return "📄";
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -163,15 +150,13 @@ export function DocumentDetailView({
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex items-center gap-2">
-            <span className="text-lg">{getSourceIcon(result.source.type)}</span>
+            <SourceIcon type={result.source.type} />
             <h3 className="font-semibold line-clamp-1">{result.title}</h3>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-          <Badge variant="outline">
-            {Math.round(result.confidenceScore * 100)}% match
-          </Badge>
+          <ConfidenceBadge score={result.confidenceScore} />
           <span>•</span>
           <span>{result.source.path}</span>
           <span>•</span>

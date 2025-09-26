@@ -1,0 +1,29 @@
+{
+  "name": "MessageBubble",
+  "layer": "compound",
+  "anatomy": ["root", "header", "content", "entities", "reasoning", "provenance"],
+  "variants": {
+    "type": ["user", "assistant", "error", "system"]
+  },
+  "states": ["default", "with-entities", "with-reasoning", "with-provenance"],
+  "slots": {
+    "entities": { "optional": true },
+    "reasoning": { "optional": true },
+    "provenance": { "optional": true }
+  },
+  "a11y": {
+    "role": "article",
+    "labeling": ["aria-label for message type"],
+    "keyboard": [],
+    "apgPattern": "none"
+  },
+  "tokens": {
+    "root": ["surface.primary", "surface.secondary", "surface.destructive", "surface.muted", "radius.lg"],
+    "header": ["text.xs", "spacing.2"],
+    "content": ["text.sm"],
+    "entities": ["spacing.3", "border.divider"],
+    "reasoning": ["spacing.3", "border.divider"]
+  },
+  "ssr": { "hydrateOn": "interaction" },
+  "rtl": { "flipIcon": false }
+}

@@ -1,0 +1,68 @@
+{
+  "name": "MessageBubble",
+  "layer": "compound",
+  "tokens": {
+    "root": {
+      "spacing": {
+        "gap": "spacing.3",
+        "padding": "spacing.3"
+      },
+      "border": {
+        "radius": "radius.lg"
+      }
+    },
+    "header": {
+      "spacing": {
+        "gap": "spacing.2",
+        "marginBottom": "spacing.2"
+      },
+      "typography": {
+        "size": "text.xs"
+      }
+    },
+    "content": {
+      "typography": {
+        "size": "text.sm"
+      }
+    },
+    "entities": {
+      "spacing": {
+        "marginTop": "spacing.3",
+        "paddingTop": "spacing.3",
+        "gap": "spacing.1"
+      },
+      "border": {
+        "top": "border.divider"
+      }
+    },
+    "reasoning": {
+      "spacing": {
+        "marginTop": "spacing.3",
+        "paddingTop": "spacing.3"
+      },
+      "border": {
+        "top": "border.divider"
+      }
+    }
+  },
+  "variants": {
+    "type": {
+      "user": {
+        "background": "surface.primary",
+        "color": "text.on-primary"
+      },
+      "assistant": {
+        "background": "surface.secondary",
+        "color": "text.on-secondary"
+      },
+      "error": {
+        "background": "surface.destructive",
+        "color": "text.on-destructive"
+      },
+      "system": {
+        "background": "surface.muted",
+        "color": "text.muted"
+      }
+    }
+  }
+}
