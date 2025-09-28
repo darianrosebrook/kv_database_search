@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
+import styles from "./MessageBubble.module.scss";
 import type { EnhancedMessage } from "../../../src/types";
 import type {
   GraphRagEntity,
@@ -31,20 +32,12 @@ export function MessageBubble({
       key={message.id}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`flex gap-3 ${
-        message.type === "user" ? "justify-end" : "justify-start"
-      } ${className}`}
+      className={`${className}`}
     >
       <div
-        className={`max-w-[80%] rounded-lg p-3 ${
-          message.type === "user"
-            ? "bg-primary text-primary-foreground"
-            : message.type === "error"
-            ? "bg-destructive text-destructive-foreground"
-            : message.type === "system"
-            ? "bg-muted text-muted-foreground"
-            : "bg-secondary text-secondary-foreground"
-        }`}
+        className={`${styles.messageBubble} ${
+          styles[message.type]
+        } max-w-[80%]`}
       >
         {/* Message Header */}
         <div className="flex items-center gap-2 mb-2">
@@ -53,7 +46,9 @@ export function MessageBubble({
             {message.timestamp.toLocaleTimeString()}
           </span>
           {message.confidence && (
-            <span className="text-xs bg-black/10 px-2 py-1 rounded">
+            <span
+              className={`${styles.confidenceBadge} text-xs bg-black/10 px-2 py-1 rounded`}
+            >
               Confidence: {message.confidence.toFixed(2)}
             </span>
           )}
@@ -65,11 +60,13 @@ export function MessageBubble({
         </div>
 
         {/* Message Content */}
-        <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+        <div className={styles.messageContent}>{message.content}</div>
 
         {/* Graph RAG Enhancements - Entities */}
         {useGraphRag && message.entities && message.entities.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-black/10">
+          <div
+            className={`${styles.entityActions} mt-3 pt-3 border-t border-black/10`}
+          >
             <p className="text-xs opacity-70 mb-2">
               Entities ({message.entities.length}):
             </p>

@@ -223,7 +223,7 @@ export class HybridSearchEngine {
         vectorSearchTime,
         graphTraversalTime: graphSearchTime,
         resultFusionTime: fusionTime,
-        entitiesFound: queryAnalysis.entities.length,
+        entitiesFound: queryAnalysis.entities?.length || 0,
         relationshipsTraversed: queryAnalysis.relationshipsTraversed || 0,
         maxHopsReached: queryAnalysis.maxHopsReached || 0,
       };

@@ -3,6 +3,7 @@
  * Provides similar API to Next.js Link component
  */
 import React from "react";
+import styles from "./NavigationLink.module.scss";
 
 export interface NavigationLinkProps {
   href: string;
@@ -19,7 +20,10 @@ export interface NavigationLinkProps {
   ref?: React.Ref<HTMLAnchorElement>;
 }
 
-export const NavigationLink = React.forwardRef<HTMLAnchorElement, NavigationLinkProps>(
+export const NavigationLink = React.forwardRef<
+  HTMLAnchorElement,
+  NavigationLinkProps
+>(
   (
     { href, children, className, style, target, rel, onClick, ...props },
     ref
@@ -40,7 +44,7 @@ export const NavigationLink = React.forwardRef<HTMLAnchorElement, NavigationLink
     return (
       <a
         href={href}
-        className={className}
+        className={`${styles.navigationLink} ${className || ""}`}
         style={style}
         target={target}
         rel={rel}

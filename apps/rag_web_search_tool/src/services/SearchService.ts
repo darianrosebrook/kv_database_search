@@ -183,7 +183,7 @@ export class SearchService {
         confidenceScore:
           searchResponse.explanation?.qualityMetrics.accuracy || 0.8,
         entitiesFound: entities.length,
-        relationshipsTraversed: searchResponse.metrics.relationshipsTraversed,
+        relationshipsTraversed: searchResponse.metrics?.relationshipsTraversed || 0,
       },
     };
   }

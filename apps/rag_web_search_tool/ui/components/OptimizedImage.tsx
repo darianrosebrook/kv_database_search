@@ -3,6 +3,7 @@
  * Provides similar API to Next.js Image component
  */
 import React from "react";
+import styles from "./OptimizedImage.module.scss";
 
 export interface OptimizedImageProps {
   src: string;
@@ -38,7 +39,9 @@ export const NextImage: React.FC<OptimizedImageProps> = ({
       alt={alt}
       width={width}
       height={height}
-      className={className}
+      className={`${styles.optimizedImage} ${fill ? styles.fill : ""} ${
+        className || ""
+      }`}
       style={style}
       onLoad={onLoad}
       onError={onError}
