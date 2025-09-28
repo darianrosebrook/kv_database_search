@@ -66,10 +66,30 @@ describe("Multi-Modal Ingestion CLI", () => {
     // from the CLI script, but since it's a script file, we're testing
     // the core logic that would be extracted into a testable function
 
-    it.skip("should discover files recursively", () => {
-      // TODO: Fix file system mocking for this test
-      // The fs module mocking interferes with directory traversal
-      expect(true).toBe(true);
+    it("should discover files recursively", () => {
+      // Create a nested directory structure for testing
+      const nestedDir = path.join(testDir, "nested");
+      const deepDir = path.join(nestedDir, "deep");
+
+      fs.mkdirSync(nestedDir, { recursive: true });
+      fs.mkdirSync(deepDir, { recursive: true });
+
+      // Create files at different levels
+      fs.writeFileSync(path.join(testDir, "root.txt"), "root content");
+      fs.writeFileSync(path.join(nestedDir, "nested.txt"), "nested content");
+      fs.writeFileSync(path.join(deepDir, "deep.txt"), "deep content");
+      fs.writeFileSync(path.join(deepDir, "deep.md"), "deep markdown");
+
+      const files = discoverTestFiles(testDir, {
+        includePatterns: ["**/*.txt", "**/*.md"],
+        excludePatterns: [],
+      });
+
+      expect(files).toHaveLength(3);
+      expect(files).toContain(path.join(testDir, "root.txt"));
+      expect(files).toContain(path.join(nestedDir, "nested.txt"));
+      expect(files).toContain(path.join(deepDir, "deep.txt"));
+      expect(files).not.toContain(path.join(deepDir, "deep.md")); // Should be excluded by pattern
     });
 
     it("should respect include patterns", () => {

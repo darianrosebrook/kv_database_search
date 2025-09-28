@@ -3,25 +3,10 @@ import { motion, AnimatePresence } from "motion/react";
 import { History, MessageSquare, Trash2, Plus, Bot, Save } from "lucide-react";
 import { Button } from "../Button";
 import { ScrollArea } from "../ScrollArea";
-// import { apiService } from "../../../src/lib/api";
+import { apiService } from "../../../src/lib/api";
 import styles from "./ChatHistory.module.scss";
 
-interface ChatMessage {
-  role: string;
-  content: string;
-  timestamp: string;
-  model?: string;
-}
-
-interface ChatSession {
-  id: string;
-  title: string;
-  messages: ChatMessage[];
-  createdAt: string;
-  updatedAt: string;
-  model?: string;
-  messageCount: number;
-}
+import type { ChatSession } from "../../../src/types";
 
 interface ChatHistoryProps {
   isOpen: boolean;
@@ -29,6 +14,10 @@ interface ChatHistoryProps {
   onLoadSession: (_session: ChatSession) => void;
   onNewChat: () => void;
   currentSessionId?: string;
+  currentChat?: {
+    messages: Array<{ role: string; content: string }>;
+    model?: string;
+  };
   className?: string;
 }
 
@@ -38,6 +27,7 @@ export function ChatHistory({
   onLoadSession,
   onNewChat,
   currentSessionId,
+  currentChat,
   className,
 }: ChatHistoryProps) {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -54,8 +44,7 @@ export function ChatHistory({
     try {
       setLoading(true);
       setError(null);
-      // TODO: Implement actual API call when backend supports it
-      // const response = await apiService.getChatHistory();
+      const response = await apiService.getChatHistory();
 
       // For now, use mock data
       const mockSessions: ChatSession[] = [
@@ -64,15 +53,17 @@ export function ChatHistory({
           title: "Sample Chat Session",
           messages: [
             {
-              role: "user",
+              id: "1",
+              type: "user",
               content: "Hello, how can you help me?",
-              timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+              timestamp: new Date(Date.now() - 86400000), // 1 day ago
             },
             {
-              role: "assistant",
+              id: "2",
+              type: "assistant",
               content:
                 "I can help you search through your knowledge base and answer questions about your documents.",
-              timestamp: new Date(Date.now() - 86400000).toISOString(),
+              timestamp: new Date(Date.now() - 86400000),
             },
           ],
           createdAt: new Date(Date.now() - 86400000).toISOString(),
@@ -85,15 +76,17 @@ export function ChatHistory({
           title: "Design System Questions",
           messages: [
             {
-              role: "user",
+              id: "3",
+              type: "user",
               content: "What are the main components in the design system?",
-              timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+              timestamp: new Date(Date.now() - 172800000), // 2 days ago
             },
             {
-              role: "assistant",
+              id: "4",
+              type: "assistant",
               content:
                 "The design system includes Button, Input, Modal, Card, and many other components...",
-              timestamp: new Date(Date.now() - 172800000).toISOString(),
+              timestamp: new Date(Date.now() - 172800000),
             },
           ],
           createdAt: new Date(Date.now() - 172800000).toISOString(),
@@ -120,19 +113,36 @@ export function ChatHistory({
 
   const handleDeleteSession = async (sessionId: string) => {
     try {
-      // TODO: Implement actual delete functionality
+      await apiService.deleteChatSession(sessionId);
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
     } catch (err) {
       console.error("Failed to delete session:", err);
+      setError("Failed to delete session");
     }
   };
 
   const handleSaveCurrentChat = async () => {
     try {
-      // TODO: Implement save functionality for current chat
-      console.log("Save current chat");
+      if (!currentChat || currentChat.messages.length === 0) {
+        setError("No chat to save");
+        return;
+      }
+
+      const saveResponse = await apiService.saveChatSession({
+        messages: currentChat.messages,
+        model: currentChat.model,
+      });
+
+      if (saveResponse.success) {
+        // Reload chat history to show the new session
+        await loadChatHistory();
+        console.log("Chat saved successfully");
+      } else {
+        setError(saveResponse.error || "Failed to save chat");
+      }
     } catch (err) {
       console.error("Failed to save chat:", err);
+      setError("Failed to save chat");
     }
   };
 
@@ -158,7 +168,7 @@ export function ChatHistory({
   const getSessionPreview = (session: ChatSession) => {
     const lastUserMessage = [...session.messages]
       .reverse()
-      .find((msg) => msg.role === "user");
+      .find((msg) => msg.type === "user");
 
     return (
       lastUserMessage?.content.substring(0, 60) +

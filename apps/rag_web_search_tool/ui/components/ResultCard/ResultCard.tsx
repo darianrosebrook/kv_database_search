@@ -170,7 +170,7 @@ export function ResultCard({
               {getSourceIcon(result.source.type)}
             </span>
             <h3 className={styles.title}>{result.title}</h3>
-            <Badge variant="secondary" className={styles.badge}>
+            <Badge variant="status" className={styles.badge}>
               {Math.round(result.confidenceScore * 100)}%
             </Badge>
           </div>
@@ -184,11 +184,11 @@ export function ResultCard({
             </div>
 
             <div className={styles.badgeGroup}>
-              <Badge variant="outline" size="sm">
+              <Badge variant="default" size="small">
                 {result.source.type}
               </Badge>
               {result.meta?.section && (
-                <Badge variant="outline" size="sm">
+                <Badge variant="default" size="small">
                   {result.meta.section}
                 </Badge>
               )}
@@ -287,7 +287,7 @@ export function ResultCard({
 
                     <div className={styles.explanationContent}>
                       <p className={styles.explanationText}>
-                        {explanation.reasoning}
+                        {explanation.whyMatches}
                       </p>
 
                       {explanation.keyInsights.length > 0 && (
@@ -309,30 +309,32 @@ export function ResultCard({
                         </div>
                       )}
 
-                      {explanation.suggestedActions.length > 0 && (
+                      {explanation.suggestedFollowUps.length > 0 && (
                         <div className={styles.actions}>
                           <div className={styles.actionsHeader}>
                             <ArrowRight className={styles.actionsIcon} />
                             <span className={styles.actionsTitle}>
-                              Suggested Actions
+                              Suggested Follow-ups
                             </span>
                           </div>
                           <div className={styles.actionsGrid}>
-                            {explanation.suggestedActions.map((action, idx) => (
-                              <Button
-                                key={idx}
-                                variant="outline"
-                                size="sm"
-                                className={styles.actionButton}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Handle action
-                                }}
-                              >
-                                <Search className={styles.actionIcon} />
-                                {action}
-                              </Button>
-                            ))}
+                            {explanation.suggestedFollowUps.map(
+                              (action, idx) => (
+                                <Button
+                                  key={idx}
+                                  variant="outline"
+                                  size="sm"
+                                  className={styles.actionButton}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Handle action
+                                  }}
+                                >
+                                  <Search className={styles.actionIcon} />
+                                  {action}
+                                </Button>
+                              )
+                            )}
                           </div>
                         </div>
                       )}
@@ -353,8 +355,8 @@ export function ResultCard({
                   {result.tags.slice(0, 3).map((tag) => (
                     <Badge
                       key={tag}
-                      variant="secondary"
-                      size="sm"
+                      variant="default"
+                      size="small"
                       className={styles.tag}
                     >
                       {tag}
@@ -362,8 +364,8 @@ export function ResultCard({
                   ))}
                   {result.tags.length > 3 && (
                     <Badge
-                      variant="secondary"
-                      size="sm"
+                      variant="default"
+                      size="small"
                       className={styles.tagOverflow}
                     >
                       +{result.tags.length - 3}

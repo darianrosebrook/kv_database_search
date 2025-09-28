@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { createHash, detectLanguage } from "./utils";
+import { ContentProcessorRegistry } from "./processors/processor-registry";
 import {
   ContentType,
   UniversalMetadata,
@@ -31,12 +32,17 @@ export type {
 
 // Re-export enum as value for use in switch statements etc.
 export { ContentType } from "../types/index";
-import { contentProcessorRegistry } from "./processors/processor-registry-instance";
 
 /**
  * Multi-modal content detector and processor
  */
 export class MultiModalContentDetector {
+  private processorRegistry?: ContentProcessorRegistry; // Will be injected to avoid circular dependency
+
+  constructor(processorRegistry?: ContentProcessorRegistry) {
+    this.processorRegistry = processorRegistry;
+  }
+
   private mimeTypeMap: Map<string, ContentType> = new Map([
     // Text
     ["text/plain", ContentType.PLAIN_TEXT],
@@ -551,14 +557,16 @@ export class UniversalMetadataExtractor {
     };
 
     // Use processor registry to extract type-specific metadata
-    const processorResult = await contentProcessorRegistry.processContent(
-      buffer,
-      typeResult.contentType,
-      { language: typeResult.features.language }
-    );
+    if (this.processorRegistry) {
+      const processorResult = await this.processorRegistry.processContent(
+        buffer,
+        typeResult.contentType,
+        { language: typeResult.features.language }
+      );
 
-    if (processorResult.success) {
-      return processorResult.metadata;
+      if (processorResult.success) {
+        return processorResult.metadata;
+      }
     }
 
     // Fallback to generic processing for unsupported types

@@ -1,34 +1,39 @@
-import React from 'react';
-import { Profile } from '@/types';
-import Avatar from '../Avatar';
-import Link from 'next/link';
-import styles from './ProfileFlag.module.scss';
+/**
+ * Profile flag component
+ */
+import React from "react";
+import { NavigationLink } from "../NavigationLink";
+import styles from "./ProfileFlag.module.scss";
+
 export interface ProfileFlagProps {
-  profile: Profile | null;
+  name: string;
+  avatar?: string;
+  href?: string;
+  className?: string;
 }
 
-const ProfileFlag: React.FC<ProfileFlagProps> = ({ profile }) => {
-  if (!profile) {
-    return null;
-  }
-  const { full_name, avatar_url, username } = profile;
-  const insert = {
-    name: full_name || 'Error',
-    src: avatar_url || null,
-    username: username || '404',
-  };
-  return (
-    <div className={styles.profileFlag}>
-      <Link href={`/${insert.username}`}>
-        <Avatar
-          size="medium"
-          name={insert.name}
-          src={insert.src || undefined}
-        />
-        <small>{insert.name}</small>
-      </Link>
+export const ProfileFlag: React.FC<ProfileFlagProps> = ({
+  name,
+  avatar,
+  href,
+  className = "",
+}) => {
+  const content = (
+    <div className={`${styles.profileFlag} ${className}`}>
+      {avatar && <img src={avatar} alt={name} className={styles.avatar} />}
+      <span className={styles.name}>{name}</span>
     </div>
   );
+
+  if (href) {
+    return (
+      <NavigationLink href={href} className={styles.link}>
+        {content}
+      </NavigationLink>
+    );
+  }
+
+  return content;
 };
 
 export default ProfileFlag;

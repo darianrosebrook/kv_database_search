@@ -195,10 +195,19 @@ export class SpeechProcessor implements ContentProcessor {
   ): Promise<{
     text: string;
     metadata: SpeechContentMetadata;
+    processingTime?: number;
   }> {
     try {
+      const startTime = Date.now();
       const buffer = fs.readFileSync(filePath);
-      return await this.transcribeFromBuffer(buffer, options);
+      const result = await this.transcribeFromBuffer(buffer, options);
+      const processingTime = Date.now() - startTime;
+
+      return {
+        text: result.text,
+        metadata: result.metadata,
+        processingTime,
+      };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -215,6 +224,7 @@ export class SpeechProcessor implements ContentProcessor {
       return {
         text: `Audio File Error: Failed to read file - ${errorMessage}`,
         metadata: contentMetadata,
+        processingTime: 0,
       };
     }
   }
@@ -341,7 +351,7 @@ export class SpeechProcessor implements ContentProcessor {
       text: result.text,
       metadata: result.metadata,
       success: true,
-      processingTime: Date.now() - Date.now(), // TODO: Calculate actual processing time
+      processingTime: result.processingTime || 0,
       confidence: 1, // Speech processing doesn't have confidence scores
     };
   }

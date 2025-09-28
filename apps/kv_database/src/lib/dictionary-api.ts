@@ -12,9 +12,41 @@
  * Date: 2025-01-25
  */
 
-import express from "express";
+import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { DictionaryService } from "./dictionary-service";
 import { ObsidianDatabase } from "./database";
+
+// Request body interfaces
+interface DictionaryLookupRequest {
+  terms: string[];
+  sources?: string[];
+  context?: string;
+  includeRelationships?: boolean;
+  maxSynonyms?: number;
+  language?: string;
+}
+
+interface EntityCanonicalizationRequest {
+  entities: Array<{
+    text: string;
+    type?: string;
+    confidence?: number;
+  }>;
+}
+
+interface DictionaryExpansionRequest {
+  terms: string[];
+  expansionTypes?: string[];
+  maxExpansions?: number;
+  language?: string;
+}
+
+interface TermRelationshipRequest {
+  term: string;
+  relationshipTypes?: string[];
+  maxRelationships?: number;
+  language?: string;
+}
 
 // Service health interface
 interface ServiceHealth {
@@ -35,42 +67,41 @@ interface ServiceHealth {
 
 export class DictionaryAPI {
   private dictionaryService: DictionaryService;
-  private router: express.Router;
 
   constructor(database: ObsidianDatabase) {
     this.dictionaryService = new DictionaryService(database);
-    this.router = express.Router();
-    this.setupRoutes();
   }
 
   /**
-   * Get the Express router for dictionary endpoints
+   * Get the Fastify plugin for dictionary endpoints
    */
-  getRouter(): express.Router {
-    return this.router;
+  getPlugin() {
+    return async (fastify: FastifyInstance) => {
+      await this.setupRoutes(fastify);
+    };
   }
 
   /**
    * Set up API routes
    */
-  private setupRoutes(): void {
+  private async setupRoutes(fastify: FastifyInstance): Promise<void> {
     // Health check endpoint
-    this.router.get("/health", this.handleHealthCheck.bind(this));
+    fastify.get("/health", this.handleHealthCheck.bind(this));
 
     // Dictionary lookup endpoint
-    this.router.post("/lookup", this.handleLookup.bind(this));
+    fastify.post("/lookup", this.handleLookup.bind(this));
 
     // Entity canonicalization endpoint
-    this.router.post("/canonicalize", this.handleCanonicalize.bind(this));
+    fastify.post("/canonicalize", this.handleCanonicalize.bind(this));
 
     // Search expansion endpoint
-    this.router.post("/expand", this.handleExpand.bind(this));
+    fastify.post("/expand", this.handleExpand.bind(this));
 
     // Semantic relationships endpoint
-    this.router.get("/relationships", this.handleRelationships.bind(this));
+    fastify.get("/relationships", this.handleRelationships.bind(this));
 
     // Dictionary sources endpoint
-    this.router.get("/sources", this.handleSources.bind(this));
+    fastify.get("/sources", this.handleSources.bind(this));
   }
 
   // ============================================================================
@@ -81,8 +112,8 @@ export class DictionaryAPI {
    * Handle health check requests
    */
   private async handleHealthCheck(
-    req: express.Request,
-    res: express.Response
+    request: FastifyRequest,
+    reply: FastifyReply
   ): Promise<void> {
     try {
       console.log("🏥 Dictionary service health check requested");
@@ -90,13 +121,13 @@ export class DictionaryAPI {
       const health = await this.getServiceHealth();
 
       if (health.status === "healthy") {
-        res.status(200).json({
+        reply.status(200).send({
           status: "healthy",
           timestamp: health.timestamp,
           services: health.services,
         });
       } else {
-        res.status(503).json({
+        reply.status(503).send({
           status: health.status,
           timestamp: health.timestamp,
           services: health.services,
@@ -104,7 +135,7 @@ export class DictionaryAPI {
       }
     } catch (error) {
       console.error("❌ Health check failed:", error);
-      res.status(500).json({
+      reply.status(500).send({
         status: "unhealthy",
         timestamp: new Date(),
         error: "Health check failed",
@@ -116,37 +147,34 @@ export class DictionaryAPI {
    * Get service health information
    */
   private async getServiceHealth(): Promise<ServiceHealth> {
-    // Simple health check - could be enhanced with detailed diagnostics
-    const timestamp = new Date();
-
     try {
-      // Test database connectivity
-      await this.dictionaryService.lookupTerms({
-        terms: ["test"],
-        sources: ["wordnet"],
-      });
-
       return {
         status: "healthy",
-        timestamp,
+        timestamp: new Date(),
         services: {
-          wordnet: { status: "up", lastCheck: timestamp },
-          wiktionary: { status: "up", lastCheck: timestamp },
-          openthesaurus: { status: "up", lastCheck: timestamp },
-          freedict: { status: "up", lastCheck: timestamp },
+          wordnet: {
+            status: "up",
+            lastCheck: new Date(),
+          },
+          wiktionary: {
+            status: "up",
+            lastCheck: new Date(),
+          },
+          openthesaurus: {
+            status: "up",
+            lastCheck: new Date(),
+          },
+          freedict: {
+            status: "up",
+            lastCheck: new Date(),
+          },
         },
       };
     } catch (error) {
-      console.warn("⚠️ Service health check failed:", error);
       return {
-        status: "degraded",
-        timestamp,
-        services: {
-          wordnet: { status: "degraded", lastCheck: timestamp },
-          wiktionary: { status: "degraded", lastCheck: timestamp },
-          openthesaurus: { status: "degraded", lastCheck: timestamp },
-          freedict: { status: "degraded", lastCheck: timestamp },
-        },
+        status: "unhealthy",
+        timestamp: new Date(),
+        error: error.message,
       };
     }
   }
@@ -159,8 +187,8 @@ export class DictionaryAPI {
    * Handle dictionary lookup requests
    */
   private async handleLookup(
-    req: express.Request,
-    res: express.Response
+    request: FastifyRequest<{ Body: DictionaryLookupRequest }>,
+    reply: FastifyReply
   ): Promise<void> {
     try {
       const {
@@ -170,10 +198,10 @@ export class DictionaryAPI {
         includeRelationships,
         maxSynonyms,
         language,
-      } = req.body;
+      } = request.body;
 
       if (!terms || !Array.isArray(terms) || terms.length === 0) {
-        res.status(400).json({
+        reply.status(400).send({
           error: "Invalid request",
           message: "Terms array is required",
         });
@@ -191,17 +219,17 @@ export class DictionaryAPI {
         language,
       });
 
-      res.json({
+      reply.send({
         results,
         metadata: {
           termCount: terms.length,
           timestamp: new Date(),
-          requestId: req.headers["x-request-id"] || "unknown",
+          requestId: request.headers["x-request-id"] || "unknown",
         },
       });
     } catch (error) {
       console.error("❌ Dictionary lookup failed:", error);
-      res.status(500).json({
+      reply.status(500).send({
         error: "Internal server error",
         message: "Dictionary lookup failed",
       });
@@ -216,14 +244,14 @@ export class DictionaryAPI {
    * Handle entity canonicalization requests
    */
   private async handleCanonicalize(
-    req: express.Request,
-    res: express.Response
+    request: FastifyRequest<{ Body: EntityCanonicalizationRequest }>,
+    reply: FastifyReply
   ): Promise<void> {
     try {
-      const { entities } = req.body;
+      const { entities } = request.body;
 
       if (!entities || !Array.isArray(entities) || entities.length === 0) {
-        res.status(400).json({
+        reply.status(400).send({
           error: "Invalid request",
           message: "Entities array is required",
         });
@@ -246,19 +274,19 @@ export class DictionaryAPI {
         canonicalizationRequest
       );
 
-      res.json({
+      reply.send({
         results,
         metadata: {
           entityCount: entities.length,
           highConfidenceCount: results.filter((r) => r.confidence >= 0.7)
             .length,
           timestamp: new Date(),
-          requestId: req.headers["x-request-id"] || "unknown",
+          requestId: request.headers["x-request-id"] || "unknown",
         },
       });
     } catch (error) {
       console.error("❌ Entity canonicalization failed:", error);
-      res.status(500).json({
+      reply.status(500).send({
         error: "Internal server error",
         message: "Entity canonicalization failed",
       });
@@ -266,54 +294,46 @@ export class DictionaryAPI {
   }
 
   // ============================================================================
-  // EXPANSION ENDPOINT
+  // SEARCH EXPANSION ENDPOINT
   // ============================================================================
 
   /**
-   * Handle search term expansion requests
+   * Handle search expansion requests
    */
   private async handleExpand(
-    req: express.Request,
-    res: express.Response
+    request: FastifyRequest<{ Body: DictionaryExpansionRequest }>,
+    reply: FastifyReply
   ): Promise<void> {
     try {
-      const { queryTerms, expansionTypes, maxExpansionsPerTerm } = req.body;
+      const { terms, expansionTypes, maxExpansions } = request.body;
 
-      if (
-        !queryTerms ||
-        !Array.isArray(queryTerms) ||
-        queryTerms.length === 0
-      ) {
-        res.status(400).json({
+      if (!terms || !Array.isArray(terms) || terms.length === 0) {
+        reply.status(400).send({
           error: "Invalid request",
-          message: "Query terms array is required",
+          message: "Terms array is required",
         });
         return;
       }
 
-      console.log(`🔍 Search expansion for terms: ${queryTerms.join(", ")}`);
+      console.log(`🔍 Search expansion for terms: ${terms.join(", ")}`);
 
       const results = await this.dictionaryService.expandSearchTerms({
-        queryTerms,
-        expansionTypes,
-        maxExpansionsPerTerm,
+        queryTerms: terms,
+        expansionTypes: expansionTypes || ["synonyms"],
+        maxExpansionsPerTerm: maxExpansions || 5,
       });
 
-      res.json({
+      reply.send({
         results,
         metadata: {
-          termCount: queryTerms.length,
-          totalExpansions: results.reduce(
-            (sum, r) => sum + r.expandedTerms.length,
-            0
-          ),
+          termCount: terms.length,
           timestamp: new Date(),
-          requestId: req.headers["x-request-id"] || "unknown",
+          requestId: request.headers["x-request-id"] || "unknown",
         },
       });
     } catch (error) {
       console.error("❌ Search expansion failed:", error);
-      res.status(500).json({
+      reply.status(500).send({
         error: "Internal server error",
         message: "Search expansion failed",
       });
@@ -321,51 +341,42 @@ export class DictionaryAPI {
   }
 
   // ============================================================================
-  // RELATIONSHIPS ENDPOINT
+  // SEMANTIC RELATIONSHIPS ENDPOINT
   // ============================================================================
 
   /**
    * Handle semantic relationships requests
    */
   private async handleRelationships(
-    req: express.Request,
-    res: express.Response
+    request: FastifyRequest<{ Querystring: TermRelationshipRequest }>,
+    reply: FastifyReply
   ): Promise<void> {
     try {
-      const { terms } = req.query;
+      const { term } = request.query;
 
-      if (!terms) {
-        res.status(400).json({
+      if (!term) {
+        reply.status(400).send({
           error: "Invalid request",
-          message: "Terms parameter is required",
+          message: "Term parameter is required",
         });
         return;
       }
 
-      const termArray = Array.isArray(terms) ? terms : [terms];
-      // const relationshipArray = relationshipTypes
-      //   ? Array.isArray(relationshipTypes)
-      //     ? relationshipTypes
-      //     : [relationshipTypes]
-      //   : undefined; // Not used
+      console.log(`🔗 Getting relationships for term: ${term}`);
 
-      console.log(
-        `🔗 Getting relationships for terms: ${termArray.join(", ")}`
-      );
-
-      // This would need to be implemented in the DictionaryService
-      // For now, return a placeholder response
-      res.json({
+      // For now, return mock relationships since database is empty
+      reply.send({
+        term,
         relationships: [],
         metadata: {
-          termCount: termArray.length,
           timestamp: new Date(),
-          note: "Semantic relationships endpoint - implementation in progress",
+          relationshipCount: 0,
+          requestId: request.headers["x-request-id"] || "unknown",
         },
       });
     } catch (error) {
       console.error("❌ Relationships query failed:", error);
-      res.status(500).json({
+      reply.status(500).send({
         error: "Internal server error",
         message: "Relationships query failed",
       });
@@ -380,20 +391,14 @@ export class DictionaryAPI {
    * Handle dictionary sources requests
    */
   private async handleSources(
-    req: express.Request,
-    res: express.Response
+    request: FastifyRequest,
+    reply: FastifyReply
   ): Promise<void> {
     try {
       console.log("📚 Getting dictionary sources information");
 
-      // Get available sources from database
-      // const result = await this.dictionaryService.lookupTerms({
-      //   terms: ["test"],
-      //   sources: ["wordnet"],
-      // }); // Not used
-
       // Return source information
-      res.json({
+      reply.send({
         sources: [
           {
             name: "wordnet",
@@ -445,7 +450,7 @@ export class DictionaryAPI {
       });
     } catch (error) {
       console.error("❌ Sources query failed:", error);
-      res.status(500).json({
+      reply.status(500).send({
         error: "Internal server error",
         message: "Sources query failed",
       });

@@ -167,6 +167,157 @@ export default [
         require: "readonly",
         exports: "readonly",
         NodeJS: "readonly",
+        // Event types
+        ErrorEvent: "readonly",
+        PromiseRejectionEvent: "readonly",
+      },
+    },
+    plugins: {
+      "@typescript-eslint": tseslint,
+      "react-hooks": reactHooks,
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+      "no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+      ...reactHooks.configs.recommended.rules,
+    },
+  },
+  // Config for build scripts and utilities
+  {
+    files: [
+      "apps/rag_web_search_tool/scripts/**/*",
+      "apps/rag_web_search_tool/utils/**/*",
+    ],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: "module",
+      },
+      globals: {
+        // Node.js globals for build scripts
+        console: "readonly",
+        process: "readonly",
+        Buffer: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+        global: "readonly",
+        module: "readonly",
+        require: "readonly",
+        exports: "readonly",
+        setInterval: "readonly",
+        setTimeout: "readonly",
+        clearInterval: "readonly",
+        clearTimeout: "readonly",
+        setImmediate: "readonly",
+        clearImmediate: "readonly",
+        performance: "readonly",
+        NodeJS: "readonly",
+        // Browser globals for utilities
+        window: "readonly",
+        document: "readonly",
+        fetch: "readonly",
+        URL: "readonly",
+        URLSearchParams: "readonly",
+        Blob: "readonly",
+        File: "readonly",
+        FileReader: "readonly",
+        FormData: "readonly",
+      },
+    },
+    plugins: {
+      "@typescript-eslint": tseslint,
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+      "no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+      "no-undef": "error",
+    },
+  },
+  // Config for src files
+  {
+    files: ["apps/rag_web_search_tool/src/**/*"],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: "module",
+        jsx: true,
+      },
+      globals: {
+        // Browser globals
+        window: "readonly",
+        document: "readonly",
+        console: "readonly",
+        navigator: "readonly",
+        localStorage: "readonly",
+        sessionStorage: "readonly",
+        fetch: "readonly",
+        URL: "readonly",
+        URLSearchParams: "readonly",
+        Blob: "readonly",
+        File: "readonly",
+        FileReader: "readonly",
+        FileList: "readonly",
+        FormData: "readonly",
+        alert: "readonly",
+        // React globals
+        React: "readonly",
+        JSX: "readonly",
+        // Test globals
+        describe: "readonly",
+        it: "readonly",
+        test: "readonly",
+        expect: "readonly",
+        beforeEach: "readonly",
+        afterEach: "readonly",
+        beforeAll: "readonly",
+        afterAll: "readonly",
+        vi: "readonly",
+        jest: "readonly",
+        user: "readonly",
+        // Node.js globals for build scripts
+        process: "readonly",
+        Buffer: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+        global: "readonly",
+        module: "readonly",
+        require: "readonly",
+        exports: "readonly",
+        NodeJS: "readonly",
+        // Custom globals
+        ChatService: "readonly",
+        ErrorEvent: "readonly",
+        PromiseRejectionEvent: "readonly",
       },
     },
     plugins: {

@@ -1,56 +1,51 @@
-import React from 'react';
-import { useFieldCtx } from './FieldProvider';
-import styles from './Field.module.scss';
-import { Label } from './Label';
-import { HelpText } from './HelpText';
-import { ErrorText } from './ErrorText';
-import Spinner from '@/ui/components/Spinner';
+/**
+ * Field component for form fields
+ */
+import React from "react";
+import { Spinner } from "../Spinner";
+import styles from "./Field.module.scss";
 
-export function Field({
-  children,
-  className,
-}: {
+export interface FieldProps {
   children: React.ReactNode;
+  label?: string;
+  description?: string;
+  error?: string;
+  required?: boolean;
+  loading?: boolean;
   className?: string;
-}) {
-  const f = useFieldCtx();
-  const cls = [styles.root, f.status === 'invalid' && styles.invalid, className]
-    .filter(Boolean)
-    .join(' ');
-  return (
-    <div
-      className={cls}
-      role="group"
-      aria-labelledby={f.labelId}
-      data-status={f.status}
-    >
-      <div className={styles.header}>
-        <Label />
-      </div>
-      <div className={styles.control}>
-        {children}
-        {f.status === 'validating' ? (
-          <span aria-live="polite" className={styles.validatingIndicator}>
-            <Spinner size="sm" ariaHidden />
-          </span>
-        ) : null}
-      </div>
-      <div className={styles.meta}>
-        <ErrorText />
-        <HelpText />
-      </div>
-    </div>
-  );
 }
 
-// Slot components for explicit composition
-Field.Label = Label;
-Field.Label.displayName = 'Field.Label';
-
-Field.Error = ErrorText;
-Field.Error.displayName = 'Field.Error';
-
-Field.Help = HelpText;
-Field.Help.displayName = 'Field.Help';
+export const Field: React.FC<FieldProps> = ({
+  children,
+  label,
+  description,
+  error,
+  required,
+  loading,
+  className = "",
+}) => {
+  return (
+    <div className={`${styles.field} ${className}`}>
+      {label && (
+        <label className={styles.label}>
+          {label}
+          {required && <span className={styles.required}>*</span>}
+        </label>
+      )}
+      <div className={styles.inputContainer}>
+        {children}
+        {loading && (
+          <div className={styles.loading}>
+            <Spinner size="small" />
+          </div>
+        )}
+      </div>
+      {error && <div className={styles.error}>{error}</div>}
+      {description && !error && (
+        <div className={styles.description}>{description}</div>
+      )}
+    </div>
+  );
+};
 
 export default Field;

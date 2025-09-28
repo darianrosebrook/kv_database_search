@@ -30,7 +30,7 @@ export type DocInteractiveProps = {
     e:
       | { type: "sectionChange"; id: string }
       | { type: "fileChange"; path: string }
-      | { type: "compileStart" | "compileDone" | "compileError"; payload? }
+      | { type: "compileStart" | "compileDone" | "compileError"; payload?: any }
       | { type: "previewError"; error: Error }
   ) => void;
 };

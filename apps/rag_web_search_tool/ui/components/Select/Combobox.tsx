@@ -3,16 +3,16 @@
  * Use SelectProvider with SelectSearch instead.
  * This alias will be removed in a future version.
  */
-import React from 'react';
+import React from "react";
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectSearch,
   SelectOptions,
-} from './Select';
-import { SelectProvider } from './SelectProvider';
-import { Option } from '@/types/ui';
+} from "./Select";
+import { SelectProvider } from "./SelectProvider";
+import type { Option } from "./useSelect";
 
 export interface ComboboxProps {
   /** Options to display */
@@ -20,7 +20,7 @@ export interface ComboboxProps {
   /** Current value */
   value?: Option | null;
   /** Change handler for combobox (single selection only) */
-  onChange: (option: Option | null) => void;
+  onChange: (_option: Option | null) => void;
   /** Placeholder text */
   placeholder?: string;
   /** Additional CSS classes */
@@ -35,7 +35,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
   onChange,
   placeholder,
   className,
-  disabled,
+  disabled: _disabled,
 }) => {
   const handleChange = (selected: Option[] | Option | null) => {
     // For combobox (single selection), extract the single option

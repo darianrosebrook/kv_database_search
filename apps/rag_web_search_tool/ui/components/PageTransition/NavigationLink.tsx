@@ -1,12 +1,12 @@
 "use client";
 
 import React, { ReactNode, useRef } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { NavigationLink } from "../NavigationLink";
+// import { usePathname, useRouter } from "next/navigation";
 import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
-import { useFontsLoaded } from "@/hooks/useFontsLoaded";
+// import { useFontsLoaded } from "@/hooks/useFontsLoaded";
 import styles from "./PageTransition.module.scss";
 
 // Register GSAP plugins
@@ -58,10 +58,10 @@ export function NavigationLink({
   staggerMs = 28,
   animationDurationMs = 400,
 }: NavigationLinkProps) {
-  const pathname = usePathname();
-  const router = useRouter();
+  const pathname = window.location.pathname;
+  // const router = useRouter();
   const isActive = pathname === href;
-  const fontsLoaded = useFontsLoaded();
+  const fontsLoaded = true; // Simplified for now
 
   // Refs for animated text functionality
   const rootRef = useRef<HTMLAnchorElement | null>(null);
@@ -165,11 +165,11 @@ export function NavigationLink({
 
       // Start view transition with proper type casting
       const transition = document.startViewTransition(() => {
-        // Use Next.js router for navigation to maintain client-side routing
+        // Use window.location for navigation
         if (replace) {
-          router.replace(href);
+          window.location.replace(href);
         } else {
-          router.push(href);
+          window.location.href = href;
         }
       });
 
@@ -202,7 +202,7 @@ export function NavigationLink({
   );
 
   return (
-    <Link
+    <NavigationLink
       ref={shouldAnimateText ? rootRef : undefined}
       href={href}
       className={linkClasses}
@@ -212,7 +212,7 @@ export function NavigationLink({
       data-transition-duration={transitionDuration}
     >
       {linkContent}
-    </Link>
+    </NavigationLink>
   );
 }
 

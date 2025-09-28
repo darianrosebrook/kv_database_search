@@ -2,7 +2,7 @@
  * Dialog - Modal and non-modal dialog component
  * Supports both blocking modal dialogs and non-blocking overlays
  */
-'use client';
+"use client";
 import React, {
   useRef,
   useId,
@@ -11,13 +11,24 @@ import React, {
   forwardRef,
   createContext,
   useContext,
-} from 'react';
-import { createPortal } from 'react-dom';
-import { gsap } from 'gsap';
-import { OpenStateProps, DismissibleProps } from '@/types/ui';
-import styles from './Dialog.module.scss';
+} from "react";
+import { createPortal } from "react-dom";
+import { gsap } from "gsap";
+// import { OpenStateProps, DismissibleProps } from '@/types/ui';
+import styles from "./Dialog.module.scss";
 
-export type DialogSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
+export type DialogSize = "sm" | "md" | "lg" | "xl" | "full";
+
+interface OpenStateProps {
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+interface DismissibleProps {
+  dismissible?: boolean;
+  onDismiss?: () => void;
+}
 
 export interface DialogProps extends OpenStateProps, DismissibleProps {
   /**
@@ -72,8 +83,8 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
       defaultOpen = false,
       onOpenChange,
       modal = true,
-      size = 'md',
-      className = '',
+      size = "md",
+      className = "",
       children,
       onClose,
       closeOnBackdropClick = true,
@@ -91,7 +102,7 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
     const previousActiveElement = useRef<HTMLElement | null>(null);
     const animationRef = useRef<gsap.core.Timeline | null>(null);
 
-    const isControlled = typeof open === 'boolean';
+    const isControlled = typeof open === "boolean";
     const [internalOpen, setInternalOpen] = React.useState(defaultOpen);
     const isOpen = isControlled ? open : internalOpen;
 
@@ -102,7 +113,7 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
         setInternalOpen(false);
       }
       onClose?.();
-      onDismiss?.({} as React.MouseEvent<HTMLButtonElement>);
+      onDismiss?.();
     }, [isControlled, onOpenChange, onClose, onDismiss]);
 
     // Focus management
@@ -115,7 +126,7 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
       // Set initial focus
       const focusElement = initialFocus
         ? (document.querySelector(initialFocus) as HTMLElement)
-        : (dialogRef.current?.querySelector('[autofocus]') as HTMLElement) ||
+        : (dialogRef.current?.querySelector("[autofocus]") as HTMLElement) ||
           (dialogRef.current?.querySelector(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
           ) as HTMLElement);
@@ -141,13 +152,13 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
       if (!isOpen) return;
 
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && closeOnEscape) {
+        if (e.key === "Escape" && closeOnEscape) {
           e.preventDefault();
           close();
         }
 
         // Trap focus for modal dialogs
-        if (modal && e.key === 'Tab') {
+        if (modal && e.key === "Tab") {
           const focusableElements = dialogRef.current?.querySelectorAll(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
           );
@@ -173,8 +184,8 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
         }
       };
 
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
     }, [isOpen, modal, closeOnEscape, close]);
 
     // Backdrop click handling
@@ -196,16 +207,16 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
 
       if (isOpen) {
         // Show animation
-        backdropElement.style.opacity = '0';
-        dialogElement.style.opacity = '0';
-        dialogElement.style.transform = 'translateY(-20px) scale(0.95)';
+        backdropElement.style.opacity = "0";
+        dialogElement.style.opacity = "0";
+        dialogElement.style.transform = "translateY(-20px) scale(0.95)";
 
         animationRef.current = gsap
           .timeline()
           .to(backdropElement, {
             duration: 0.2,
             opacity: 1,
-            ease: 'power2.out',
+            ease: "power2.out",
           })
           .to(
             dialogElement,
@@ -214,9 +225,9 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
               opacity: 1,
               y: 0,
               scale: 1,
-              ease: 'back.out(1.7)',
+              ease: "back.out(1.7)",
             },
-            '-=0.1'
+            "-=0.1"
           );
       } else {
         // Hide animation
@@ -231,16 +242,16 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
             opacity: 0,
             y: -10,
             scale: 0.95,
-            ease: 'power2.in',
+            ease: "power2.in",
           })
           .to(
             backdropElement,
             {
               duration: 0.15,
               opacity: 0,
-              ease: 'power2.in',
+              ease: "power2.in",
             },
-            '-=0.1'
+            "-=0.1"
           );
       }
 
@@ -256,7 +267,7 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
       if (!modal || !isOpen) return;
 
       const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
 
       return () => {
         document.body.style.overflow = originalOverflow;
@@ -272,19 +283,19 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
       className,
     ]
       .filter(Boolean)
-      .join(' ');
+      .join(" ");
 
     const dialogNode = (
       <div
         ref={backdropRef}
-        className={`${styles.backdrop} ${modal ? styles.modal : ''}`}
+        className={`${styles.backdrop} ${modal ? styles.modal : ""}`}
         onClick={handleBackdropClick}
       >
         <div
           ref={(node) => {
             dialogRef.current = node;
             if (forwardedRef) {
-              if (typeof forwardedRef === 'function') {
+              if (typeof forwardedRef === "function") {
                 forwardedRef(node);
               } else {
                 forwardedRef.current = node;
@@ -304,54 +315,54 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(
       </div>
     );
 
-    return typeof document !== 'undefined'
+    return typeof document !== "undefined"
       ? createPortal(dialogNode, document.body)
       : dialogNode;
   }
 );
 
-Dialog.displayName = 'Dialog';
+Dialog.displayName = "Dialog";
 
 // Dialog subcomponents
 const Header = ({
   children,
-  className = '',
+  className = "",
 }: {
   children: React.ReactNode;
   className?: string;
 }) => <div className={`${styles.header} ${className}`}>{children}</div>;
-Header.displayName = 'Dialog.Header';
+Header.displayName = "Dialog.Header";
 
 const Title = ({
   children,
-  className = '',
+  className = "",
 }: {
   children: React.ReactNode;
   className?: string;
 }) => <h2 className={`${styles.title} ${className}`}>{children}</h2>;
-Title.displayName = 'Dialog.Title';
+Title.displayName = "Dialog.Title";
 
 const Body = ({
   children,
-  className = '',
+  className = "",
 }: {
   children: React.ReactNode;
   className?: string;
 }) => <div className={`${styles.body} ${className}`}>{children}</div>;
-Body.displayName = 'Dialog.Body';
+Body.displayName = "Dialog.Body";
 
 const Footer = ({
   children,
-  className = '',
+  className = "",
 }: {
   children: React.ReactNode;
   className?: string;
 }) => <div className={`${styles.footer} ${className}`}>{children}</div>;
-Footer.displayName = 'Dialog.Footer';
+Footer.displayName = "Dialog.Footer";
 
 const CloseButton = ({
-  children = '×',
-  className = '',
+  children = "×",
+  className = "",
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
   const context = useContext(DialogContext);
@@ -368,7 +379,7 @@ const CloseButton = ({
     </button>
   );
 };
-CloseButton.displayName = 'Dialog.CloseButton';
+CloseButton.displayName = "Dialog.CloseButton";
 
 // Compound component
 const DialogCompound = Object.assign(Dialog, {

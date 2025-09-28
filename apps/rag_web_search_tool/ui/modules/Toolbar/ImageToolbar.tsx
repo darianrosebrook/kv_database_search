@@ -1,56 +1,60 @@
-import React from 'react';
-import { Editor } from '@tiptap/react';
-import styles from './ImageToolbar.module.scss';
-import Icon from '../../components/Icon';
-import { byPrefixAndName } from '@awesome.me/kit-0ba7f5fefb/icons';
-const faAlignLeft = byPrefixAndName['far']['align-left'];
-const faAlignCenter = byPrefixAndName['far']['align-center'];
-const faAlignRight = byPrefixAndName['far']['align-right'];
+import React from "react";
+import { Editor } from "@tiptap/react";
+import styles from "./ImageToolbar.module.scss";
+import Icon from "../../components/Icon";
+import {
+  faSearch,
+  faDownload,
+  faExpand,
+} from "@fortawesome/free-solid-svg-icons";
+const faAlignLeftIcon = faSearch; // Using search as placeholder
+const faAlignCenterIcon = faDownload; // Using download as placeholder
+const faAlignRightIcon = faExpand; // Using expand as placeholder
 
 type ImageToolbarProps = {
   editor: Editor;
 };
 
 const ImageToolbar: React.FC<ImageToolbarProps> = ({ editor }) => {
-  const setAlignment = (align: 'left' | 'center' | 'right') => {
+  const setAlignment = (align: "left" | "center" | "right") => {
     editor
       .chain()
       .focus()
-      .updateAttributes('image', { 'data-align': align })
+      .updateAttributes("image", { "data-align": align })
       .run();
   };
 
   return (
     <div className={styles.toolbar}>
       <button
-        onClick={() => setAlignment('left')}
+        onClick={() => setAlignment("left")}
         className={
-          editor.isActive('image', { 'data-align': 'left' })
+          editor.isActive("image", { "data-align": "left" })
             ? styles.isActive
-            : ''
+            : ""
         }
       >
-        <Icon icon={faAlignLeft} />
+        <Icon icon={faAlignLeftIcon} />
       </button>
       <button
-        onClick={() => setAlignment('center')}
+        onClick={() => setAlignment("center")}
         className={
-          editor.isActive('image', { 'data-align': 'center' })
+          editor.isActive("image", { "data-align": "center" })
             ? styles.isActive
-            : ''
+            : ""
         }
       >
-        <Icon icon={faAlignCenter} />
+        <Icon icon={faAlignCenterIcon} />
       </button>
       <button
-        onClick={() => setAlignment('right')}
+        onClick={() => setAlignment("right")}
         className={
-          editor.isActive('image', { 'data-align': 'right' })
+          editor.isActive("image", { "data-align": "right" })
             ? styles.isActive
-            : ''
+            : ""
         }
       >
-        <Icon icon={faAlignRight} />
+        <Icon icon={faAlignRightIcon} />
       </button>
     </div>
   );

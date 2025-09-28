@@ -1,7 +1,7 @@
-'use client';
-import { useInteraction } from '@/context';
-import React, { useCallback, useEffect, useRef } from 'react';
-import styles from './SlinkyCursor.module.scss';
+"use client";
+// import { useInteraction } from '@/context';
+import React, { useCallback, useEffect, useRef } from "react";
+import styles from "./SlinkyCursor.module.scss";
 
 export interface CursorSettings {
   size: number;
@@ -15,7 +15,9 @@ const SlinkyCursor: React.FC = () => {
     laziness: 4,
     stiffness: 2,
   });
-  const { mouse, scroll } = useInteraction();
+  // Simplified implementation
+  const mouse = { x: 0, y: 0, isPressed: false };
+  const scroll = { x: 0, y: 0 };
 
   // Refs for position tracking
   const pos = useRef({ x: 0, y: 0 });
@@ -60,8 +62,8 @@ const SlinkyCursor: React.FC = () => {
       const stretchWidth = size + diff(xPos, yPos, xMouse, yMouse) / stiffness;
 
       // Use CSS variables for styling
-      pest.style.setProperty('width', `${stretchWidth}px`);
-      pest.style.setProperty('transform', `rotate(${angleDeg}deg)`);
+      pest.style.setProperty("width", `${stretchWidth}px`);
+      pest.style.setProperty("transform", `rotate(${angleDeg}deg)`);
     }
 
     requestAnimationFrame(animate);
@@ -90,7 +92,7 @@ const SlinkyCursor: React.FC = () => {
     <div
       ref={pestRef}
       className={styles.pest}
-      style={{ position: 'absolute', pointerEvents: 'none' }}
+      style={{ position: "absolute", pointerEvents: "none" }}
     ></div>
   );
 };

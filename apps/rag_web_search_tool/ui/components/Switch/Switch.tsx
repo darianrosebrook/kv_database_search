@@ -30,7 +30,7 @@ export interface SwitchProps
   /**
    * Label content
    */
-  children: ReactNode;
+  children?: ReactNode;
   /**
    * Additional CSS classes
    */

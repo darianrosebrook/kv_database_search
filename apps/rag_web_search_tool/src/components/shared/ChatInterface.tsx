@@ -4,24 +4,24 @@ import { Send, Plus, Trash2, MessageSquare } from "lucide-react";
 import { Button } from "../../../ui/components/Button";
 import { ChatInput } from "../../../ui/components/ChatInput";
 import { MessageBubble } from "../../../ui/components/MessageBubble";
-import type { EnhancedMessage, SuggestedAction } from "../../../types";
+import type { EnhancedMessage, SuggestedAction } from "../../types";
 import type { GraphRagEntity } from "../../lib/graph-rag-api";
 
 interface ChatInterfaceProps {
   initialQuery: string;
   messages: EnhancedMessage[];
-  onSendMessage: (message: string, options?) => void;
+  onSendMessage: (message: string, options?: any) => void;
   isLoading: boolean;
   resultsCount: number;
   selectedModel: string;
-  contextResults;
-  onRemoveContext: (result) => void;
+  contextResults: any[];
+  onRemoveContext: (result: any) => void;
   suggestedActions: SuggestedAction[];
   onSuggestedAction: (action: SuggestedAction) => void;
-  currentSession;
+  currentSession: any;
   useGraphRag: boolean;
   onExploreEntity: (entity: GraphRagEntity) => void;
-  onExploreRelationship: (relationship) => void;
+  onExploreRelationship: (relationship: any) => void;
   onReasonAbout: (entities: GraphRagEntity[]) => void;
 }
 
@@ -175,6 +175,8 @@ export function ChatInterface({
           onChange={setInputMessage}
           onSend={handleSend}
           onKeyPress={handleKeyPress}
+          onSendMessage={onSendMessage}
+          isLoading={isLoading}
           placeholder={
             useGraphRag
               ? "Ask about entities, relationships, or reasoning..."

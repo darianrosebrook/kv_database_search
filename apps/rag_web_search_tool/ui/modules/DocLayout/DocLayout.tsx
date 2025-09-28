@@ -3,8 +3,8 @@
 import type {
   SectionSpec,
   VirtualProject,
-} from "@/ui/modules/CodeSandbox/types";
-import { DocInteractive } from "@/ui/modules/CodeSandbox/variants/DocInteractive";
+} from "../CodeSandbox/types";
+import { DocInteractive } from "../CodeSandbox/variants/DocInteractive";
 import React, {
   createContext,
   useContext,
@@ -133,7 +133,7 @@ export function DocLayout({
   };
 
   // Handle events from DocInteractive
-  const handleEvent = (event) => {
+  const handleEvent = (event: any) => {
     if (event.type === "sectionChange") {
       handleSectionChange(event.id);
     }

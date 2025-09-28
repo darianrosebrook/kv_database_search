@@ -120,7 +120,7 @@ export interface SuggestedAction {
   label: string;
   query?: string;
   entityIds?: string[];
-  filters?;
+  filters?: any;
   reasoning?: {
     question: string;
     type: ReasoningType;
@@ -169,6 +169,7 @@ export interface AppState {
   // UI state
   showTestMode: boolean;
   showChatHistory: boolean;
+  showMultiModalInterface: boolean;
   selectedModel: string;
   currentSession: ChatSession | null;
 
@@ -280,7 +281,14 @@ export interface Workspace {
 export interface DataSource {
   id: string;
   name: string;
-  type: "database" | "file_system" | "api" | "web" | "document" | "stream" | "custom";
+  type:
+    | "database"
+    | "file_system"
+    | "api"
+    | "web"
+    | "document"
+    | "stream"
+    | "custom";
   subtype: string;
   format: string;
   protocol: string;
@@ -348,26 +356,26 @@ export interface EntityMapping {
   createdBy: string;
 }
 
-export interface MultiModalContentType {
-  PDF = "pdf";
-  OFFICE_DOC = "office_document";
-  OFFICE_SHEET = "office_spreadsheet";
-  OFFICE_PRESENTATION = "office_presentation";
-  RASTER_IMAGE = "raster_image";
-  VECTOR_IMAGE = "vector_image";
-  DOCUMENT_IMAGE = "document_image";
-  AUDIO = "audio";
-  AUDIO_FILE = "audio_file";
-  SPEECH = "speech";
-  VIDEO = "video";
-  JSON = "json";
-  XML = "xml";
-  CSV = "csv";
-  MARKDOWN = "markdown";
-  PLAIN_TEXT = "plain_text";
-  RICH_TEXT = "rich_text";
-  BINARY = "binary";
-  UNKNOWN = "unknown";
+export enum MultiModalContentType {
+  PDF = "pdf",
+  OFFICE_DOC = "office_document",
+  OFFICE_SHEET = "office_spreadsheet",
+  OFFICE_PRESENTATION = "office_presentation",
+  RASTER_IMAGE = "raster_image",
+  VECTOR_IMAGE = "vector_image",
+  DOCUMENT_IMAGE = "document_image",
+  AUDIO = "audio",
+  AUDIO_FILE = "audio_file",
+  SPEECH = "speech",
+  VIDEO = "video",
+  JSON = "json",
+  XML = "xml",
+  CSV = "csv",
+  MARKDOWN = "markdown",
+  PLAIN_TEXT = "plain_text",
+  RICH_TEXT = "rich_text",
+  BINARY = "binary",
+  UNKNOWN = "unknown",
 }
 
 export interface ProcessorOptions {
@@ -498,7 +506,13 @@ export interface GraphQuery {
   id: string;
   naturalLanguage: string;
   intent: {
-    primary: "relationship_discovery" | "path_finding" | "pattern_matching" | "similarity_search" | "recommendation" | "analysis";
+    primary:
+      | "relationship_discovery"
+      | "path_finding"
+      | "pattern_matching"
+      | "similarity_search"
+      | "recommendation"
+      | "analysis";
     secondary: string[];
     confidence: number;
     parameters: Record<string, unknown>;
@@ -526,7 +540,13 @@ export interface GraphQuery {
     };
   }>;
   traversalStrategy: {
-    algorithm: "dfs" | "bfs" | "dijkstra" | "astar" | "random_walk" | "pagerank";
+    algorithm:
+      | "dfs"
+      | "bfs"
+      | "dijkstra"
+      | "astar"
+      | "random_walk"
+      | "pagerank";
     maxDepth: number;
     maxNodes: number;
     maxEdges: number;
@@ -806,7 +826,10 @@ export interface GraphQueryResult {
     success: boolean;
     warnings: string[];
     suggestions: Array<{
-      type: "query_refinement" | "entity_expansion" | "relationship_exploration";
+      type:
+        | "query_refinement"
+        | "entity_expansion"
+        | "relationship_exploration";
       suggestion: string;
       confidence: number;
     }>;
@@ -886,7 +909,14 @@ export interface QueryContext {
       start: string;
       end: string;
     };
-    granularity?: "second" | "minute" | "hour" | "day" | "week" | "month" | "year";
+    granularity?:
+      | "second"
+      | "minute"
+      | "hour"
+      | "day"
+      | "week"
+      | "month"
+      | "year";
     referenceTime?: string;
   };
   spatialContext?: {

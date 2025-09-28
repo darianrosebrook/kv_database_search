@@ -99,10 +99,19 @@ export class OfficeProcessor implements ContentProcessor {
   ): Promise<{
     text: string;
     metadata: OfficeContentMetadata;
+    processingTime: number;
   }> {
     try {
+      const startTime = Date.now();
       const buffer = fs.readFileSync(filePath);
-      return await this.extractTextFromBuffer(buffer, contentType);
+      const result = await this.extractTextFromBuffer(buffer, contentType);
+      const processingTime = Date.now() - startTime;
+
+      return {
+        text: result.text,
+        metadata: result.metadata,
+        processingTime,
+      };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -119,6 +128,7 @@ export class OfficeProcessor implements ContentProcessor {
       return {
         text: `Office Document Error: Failed to read file - ${errorMessage}`,
         metadata: contentMetadata,
+        processingTime: 0,
       };
     }
   }
@@ -405,7 +415,7 @@ export class OfficeProcessor implements ContentProcessor {
       text: result.text,
       metadata: result.metadata,
       success: true,
-      processingTime: Date.now() - Date.now(), // TODO: Calculate actual processing time
+      processingTime: result.processingTime,
       confidence: 1, // Office documents don't have confidence scores
     };
   }

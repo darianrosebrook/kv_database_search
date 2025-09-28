@@ -22,6 +22,7 @@ import type {
   EnhancedMessage,
   SuggestedAction,
   SearchOptions,
+  ChatSession,
 } from "./types";
 import type {
   GraphRagSearchResult,
@@ -342,7 +343,7 @@ export default function App() {
     }
   };
 
-  const handleLoadChatSession = (session) => {
+  const handleLoadChatSession = (session: ChatSession) => {
     setCurrentSession(session);
     setMessages(session.messages || []);
   };
@@ -351,7 +352,7 @@ export default function App() {
     resetChat();
   };
 
-  const handleMultiModalProcessingComplete = (result) => {
+  const handleMultiModalProcessingComplete = (result: any) => {
     // Add the processed content to the current search results
     console.log("Multi-modal processing completed:", result);
     // You could add this to the knowledge base or trigger a new search
@@ -494,8 +495,10 @@ export default function App() {
                 transition={{ delay: 0.2 }}
               >
                 <SearchInput
+                  isInitial={!hasSearched}
                   query={query}
                   onQueryChange={setQuery}
+                  onSubmit={handleSearch}
                   onSearch={handleSearch}
                   isLoading={isLoading}
                   placeholder={
@@ -532,8 +535,10 @@ export default function App() {
             <div className="border-b border-border bg-background/95 backdrop-blur-sm">
               <div className="container mx-auto px-4 py-4">
                 <SearchInput
+                  isInitial={!hasSearched}
                   query={query}
                   onQueryChange={setQuery}
+                  onSubmit={handleSearch}
                   onSearch={handleSearch}
                   isLoading={isLoading}
                   placeholder={

@@ -1,5 +1,5 @@
-import React from 'react';
-import { useFieldControl } from './useFieldControl';
+import React from "react";
+import { useFieldControl } from "./useFieldControl";
 
 export interface RadioOption {
   value: string;
@@ -16,11 +16,11 @@ export function RadioGroupAdapter({
   options,
   className,
 }: RadioGroupAdapterProps) {
-  const { controlProps, field } = useFieldControl<HTMLInputElement>();
+  const { controlProps, field } = useFieldControl("radiogroup");
   return (
     <div
       role="radiogroup"
-      aria-labelledby={controlProps['aria-labelledby'] as string}
+      aria-labelledby={controlProps["aria-describedby"] as string}
       className={className}
     >
       {options.map((opt, i) => {
@@ -36,9 +36,8 @@ export function RadioGroupAdapter({
               onChange={(e) =>
                 field.setValue((e.currentTarget as HTMLInputElement).value)
               }
-              aria-describedby={controlProps['aria-describedby'] as string}
-              aria-errormessage={controlProps['aria-errormessage'] as string}
-              aria-invalid={field.errors.length ? true : undefined}
+              aria-describedby={controlProps["aria-describedby"] as string}
+              aria-invalid={controlProps["aria-invalid"] as boolean}
               disabled={opt.disabled || !!controlProps.disabled}
             />
             <label htmlFor={id}>{opt.label}</label>

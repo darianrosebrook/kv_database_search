@@ -6,6 +6,11 @@ import { Badge } from "../Badge";
 import styles from "./ChatInput.module.scss";
 
 interface ChatInputProps {
+  value?: string;
+  onChange?: (value: string) => void;
+  onSend?: () => void;
+  onKeyPress?: (e: React.KeyboardEvent<Element>) => void;
+  disabled?: boolean;
   onSendMessage: (
     _message: string,
     _options?: {
@@ -20,6 +25,11 @@ interface ChatInputProps {
 }
 
 export function ChatInput({
+  value,
+  onChange,
+  onSend,
+  onKeyPress,
+  disabled,
   onSendMessage,
   isLoading,
   placeholder = "Ask about components, paste code, or describe what you need...",
@@ -68,8 +78,7 @@ export function ChatInput({
     }
   }, [message]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitMessage = () => {
     if (message.trim() || pastedContent) {
       onSendMessage(message || "Analyze this content", {
         pastedContent: pastedContent || undefined,
@@ -80,6 +89,11 @@ export function ChatInput({
       setPastedContent("");
       setDetectedType("general");
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitMessage();
   };
 
   const quickActions = [
@@ -161,7 +175,7 @@ export function ChatInput({
                 size="small"
                 onClick={() => {
                   setMessage(action.query);
-                  setTimeout(() => handleSubmit(new Event("submit")), 100);
+                  setTimeout(() => submitMessage(), 100);
                 }}
                 className={styles.quickActionButton}
               >

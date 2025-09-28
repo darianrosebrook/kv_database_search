@@ -11,6 +11,7 @@ import {
   MARKDOWN_CONFIG,
   OBSIDIAN_CONFIG,
 } from "./types/document-config";
+import { ObsidianUtils } from "./types/obsidian-utils";
 import * as fs from "fs";
 import * as path from "path";
 import {
@@ -366,10 +367,8 @@ export class DocumentIngestionPipeline {
     }
 
     // Parse frontmatter and content
-    // TODO: Implement frontmatter parsing or use a different approach
-    const parseResult = { frontmatter: {}, body: content };
-    const frontmatter = parseResult?.frontmatter || {};
-    const body = parseResult?.body || content;
+    const frontmatter = ObsidianUtils.parseFrontmatter(content);
+    const body = content.replace(/^---[\s\S]*?---\n?/, "").trim();
 
     // Extract links and tags using configuration
     const links = extractLinks(body, this.config.linkFormats);

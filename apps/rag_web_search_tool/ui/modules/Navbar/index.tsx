@@ -1,24 +1,30 @@
-'use client';
-import { useReducedMotion, useUser } from '@/context';
-import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
-import Icon from '@/ui/components/Icon';
+"use client";
+import { useReducedMotion, useUser } from "@/context";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
+import Icon from "@/ui/components/Icon";
 // import { AnimatedLink } from '@/ui/components/Links/Links';
-import { byPrefixAndName } from '@awesome.me/kit-0ba7f5fefb/icons';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useState } from 'react';
-import Avatar from '../../components/Avatar';
-import Button from '../../components/Button';
-import Popover from '../../components/Popover/Popover';
-import ToggleSwitch from '../../components/ToggleSwitch';
-import styles from './index.module.css';
-import Logo from './logo';
+import {
+  faBars,
+  faUser,
+  faList,
+  faArrowRight,
+  faChartLine,
+} from "@fortawesome/free-solid-svg-icons";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useCallback, useEffect, useState } from "react";
+import Avatar from "../../components/Avatar";
+import Button from "../../components/Button";
+import Popover from "../../components/Popover/Popover";
+import ToggleSwitch from "../../components/ToggleSwitch";
+import styles from "./index.module.css";
+import Logo from "./logo";
 
-const faBars = byPrefixAndName['far']['bars'];
-const faUser = byPrefixAndName['far']['user'];
-const faList = byPrefixAndName['far']['list'];
-const faArrowRight = byPrefixAndName['far']['arrow-right'];
-const faChartLine = byPrefixAndName['far']['chart-line'];
+const faBarsIcon = faBars;
+const faUserIcon = faUser;
+const faListIcon = faList;
+const faArrowRightIcon = faArrowRight;
+const faChartLineIcon = faChartLine;
 
 type NavbarProps = {
   pages: { name: string; path: string; admin: boolean }[] | null;
@@ -27,7 +33,7 @@ type NavbarProps = {
 export default function Navbar({ pages = [] }: NavbarProps) {
   const { user, profile, loading } = useUser();
   const [slider, setSlider] = useState(false);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState("dark");
   const pathname = usePathname();
   const router = useRouter();
   const { isEnabled: performanceEnabled, togglePerformanceMonitor } =
@@ -35,28 +41,28 @@ export default function Navbar({ pages = [] }: NavbarProps) {
   const slideInOut = useCallback(() => {
     document.documentElement.animate(
       [
-        { opacity: 1, transform: 'translatex(0)' },
-        { opacity: 0.0, transform: 'translatex(-35%)' },
+        { opacity: 1, transform: "translatex(0)" },
+        { opacity: 0.0, transform: "translatex(-35%)" },
       ],
       {
         duration: 500,
-        easing: 'cubic-bezier(0.8, 0, 0.15, 1)',
-        fill: 'forwards',
-        pseudoElement: '::view-transition-old(main)',
+        easing: "cubic-bezier(0.8, 0, 0.15, 1)",
+        fill: "forwards",
+        pseudoElement: "::view-transition-old(main)",
       }
     );
     document.documentElement.animate(
       [
         // { opacity: 0, clipPath: "polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)" },
         // { opacity: 1, clipPath: "polygon(0% 100%, 100% 100%, 100% 0%, 0% 0%)" },
-        { opacity: 0, transform: 'translatex(35%)' },
-        { opacity: 1, transform: 'translatex(0)' },
+        { opacity: 0, transform: "translatex(35%)" },
+        { opacity: 1, transform: "translatex(0)" },
       ],
       {
         duration: 500,
-        easing: 'cubic-bezier(0.8, 0, 0.176, 1)',
-        fill: 'forwards',
-        pseudoElement: '::view-transition-new(main)',
+        easing: "cubic-bezier(0.8, 0, 0.176, 1)",
+        fill: "forwards",
+        pseudoElement: "::view-transition-new(main)",
       }
     );
   }, []);
@@ -79,7 +85,7 @@ export default function Navbar({ pages = [] }: NavbarProps) {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const enabled = e.target.checked;
       setSlider(enabled);
-      const body = document.querySelector('body');
+      const body = document.querySelector("body");
       if (enabled && body) {
         body.classList.add(theme);
       } else if (body) {
@@ -90,17 +96,17 @@ export default function Navbar({ pages = [] }: NavbarProps) {
   );
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     const prefersColorSchemeDarkQuery = window?.matchMedia(
-      '(prefers-color-scheme: dark)'
+      "(prefers-color-scheme: dark)"
     );
-    const body = document.querySelector('body');
+    const body = document.querySelector("body");
     if (prefersColorSchemeDarkQuery.matches) {
-      setTheme('light');
+      setTheme("light");
     }
     prefersColorSchemeDarkQuery.onchange = (e) => {
       setSlider(false);
-      setTheme(e.matches ? 'light' : 'dark');
+      setTheme(e.matches ? "light" : "dark");
       if (body) {
         body.classList.remove(theme);
       }
@@ -123,7 +129,7 @@ export default function Navbar({ pages = [] }: NavbarProps) {
               <li key={page.name}>
                 <Link
                   href={`/${page.path}`}
-                  className={pathname === page.path ? styles.active : ''}
+                  className={pathname === page.path ? styles.active : ""}
                   onClick={(e: React.MouseEvent<HTMLAnchorElement>) =>
                     hanldeRouteChange(e, `/${page.path}`)
                   }
@@ -136,7 +142,7 @@ export default function Navbar({ pages = [] }: NavbarProps) {
             <Popover>
               <Popover.Trigger>
                 <Button variant="tertiary" size="small">
-                  <Icon icon={faBars} />
+                  <Icon icon={faBarsIcon} />
                 </Button>
               </Popover.Trigger>
               <Popover.Content>
@@ -159,7 +165,7 @@ export default function Navbar({ pages = [] }: NavbarProps) {
                       Use {theme} theme
                     </ToggleSwitch>
                   </li>
-                  {process.env.NODE_ENV === 'development' && (
+                  {process.env.NODE_ENV === "development" && (
                     <li>
                       <ToggleSwitch
                         checked={performanceEnabled}
@@ -189,7 +195,7 @@ export default function Navbar({ pages = [] }: NavbarProps) {
                         profile?.full_name ||
                         user.user_metadata?.full_name ||
                         user.email ||
-                        'User'
+                        "User"
                       }
                       size="large"
                     />
@@ -200,24 +206,24 @@ export default function Navbar({ pages = [] }: NavbarProps) {
                     <li>
                       <Link
                         onClick={(e: React.MouseEvent<HTMLAnchorElement>) =>
-                          hanldeRouteChange(e, '/dashboard/profile')
+                          hanldeRouteChange(e, "/dashboard/profile")
                         }
                         className="menuItem"
                         href="/dashboard/profile"
                       >
-                        <Icon icon={faUser} />
+                        <Icon icon={faUserIcon} />
                         Account
                       </Link>
                     </li>
                     <li>
                       <Link
                         onClick={(e: React.MouseEvent<HTMLAnchorElement>) =>
-                          hanldeRouteChange(e, '/dashboard')
+                          hanldeRouteChange(e, "/dashboard")
                         }
                         className="menuItem"
                         href="/dashboard"
                       >
-                        <Icon icon={faList} />
+                        <Icon icon={faListIcon} />
                         Dashboard
                       </Link>
                     </li>
@@ -228,7 +234,7 @@ export default function Navbar({ pages = [] }: NavbarProps) {
                     variant="secondary"
                     size="small"
                   >
-                    <Icon icon={faArrowRight} />
+                    <Icon icon={faArrowRightIcon} />
                     Logout
                   </Button>
                 </Popover.Content>

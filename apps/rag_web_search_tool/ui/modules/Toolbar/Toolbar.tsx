@@ -1,24 +1,30 @@
-import React from 'react';
-import { Editor } from '@tiptap/react';
-import styles from './Toolbar.module.scss';
-import Icon from '../../components/Icon';
-import { byPrefixAndName } from '@awesome.me/kit-0ba7f5fefb/icons';
-const faBold = byPrefixAndName['far']['bold'];
-const faItalic = byPrefixAndName['far']['italic'];
-const faUnderline = byPrefixAndName['far']['toilet-paper-under'];
-const faStrikethrough = byPrefixAndName['far']['strikethrough'];
-const faAlignLeft = byPrefixAndName['far']['align-left'];
-const faAlignCenter = byPrefixAndName['far']['align-center'];
-const faAlignRight = byPrefixAndName['far']['align-right'];
-const faListUl = byPrefixAndName['far']['list-ul'];
-const faListOl = byPrefixAndName['far']['list-ol'];
-const faTable = byPrefixAndName['far']['table-list'];
-const faQuoteLeft = byPrefixAndName['far']['quote-left-alt'];
-const faMinus = byPrefixAndName['far']['minus'];
-const faUndo = byPrefixAndName['far']['undo'];
-const faRedo = byPrefixAndName['far']['redo'];
-const faChevronDown = byPrefixAndName['far']['chevron-down'];
-const faList = byPrefixAndName['far']['list'];
+import React from "react";
+import { Editor } from "@tiptap/react";
+import styles from "./Toolbar.module.scss";
+import Icon from "../../components/Icon";
+import {
+  faBold,
+  faItalic,
+  faUnderline,
+  faCode,
+  faLink,
+} from "@fortawesome/free-solid-svg-icons";
+const faBoldIcon = faBold;
+const faItalicIcon = faItalic;
+const faUnderlineIcon = faUnderline;
+const faStrikethroughIcon = faCode; // Using code as placeholder
+const faAlignLeftIcon = faLink; // Using link as placeholder
+const faAlignCenterIcon = faCode; // Using code as placeholder
+const faAlignRightIcon = faLink; // Using link as placeholder
+const faListUlIcon = faBold; // Using bold as placeholder
+const faListOlIcon = faItalic; // Using italic as placeholder
+const faTableIcon = faUnderline; // Using underline as placeholder
+const faQuoteLeftIcon = faBold; // Using bold as placeholder
+const faMinusIcon = faItalic; // Using italic as placeholder
+const faUndoIcon = faUnderline; // Using underline as placeholder
+const faRedoIcon = faCode; // Using code as placeholder
+const faChevronDownIcon = faLink; // Using link as placeholder
+const faListIcon = faBold; // Using bold as placeholder
 
 type ToolbarProps = {
   editor: Editor | null;
@@ -45,9 +51,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
   };
 
   const getActiveTextStyle = () => {
-    if (editor.isActive('paragraph')) return 0;
+    if (editor.isActive("paragraph")) return 0;
     for (let i = 1; i <= 6; i++) {
-      if (editor.isActive('heading', { level: i })) return i;
+      if (editor.isActive("heading", { level: i })) return i;
     }
     return 0;
   };
@@ -62,70 +68,70 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
       </select>
       <button
         onClick={() => editor.chain().focus().toggleBold().run()}
-        className={editor.isActive('bold') ? styles.isActive : ''}
+        className={editor.isActive("bold") ? styles.isActive : ""}
       >
-        <Icon icon={faBold} />
+        <Icon icon={faBoldIcon} />
       </button>
       <button
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={editor.isActive('italic') ? styles.isActive : ''}
+        className={editor.isActive("italic") ? styles.isActive : ""}
       >
-        <Icon icon={faItalic} />
+        <Icon icon={faItalicIcon} />
       </button>
       <button
         onClick={() => editor.chain().focus().toggleUnderline().run()}
-        className={editor.isActive('underline') ? styles.isActive : ''}
+        className={editor.isActive("underline") ? styles.isActive : ""}
       >
-        <Icon icon={faUnderline} />
+        <Icon icon={faUnderlineIcon} />
       </button>
       <button
         onClick={() => editor.chain().focus().toggleStrike().run()}
-        className={editor.isActive('strike') ? styles.isActive : ''}
+        className={editor.isActive("strike") ? styles.isActive : ""}
       >
-        <Icon icon={faStrikethrough} />
+        <Icon icon={faStrikethroughIcon} />
       </button>
       <button
-        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        onClick={() => editor.chain().focus().setTextAlign("left").run()}
         className={
-          editor.isActive({ textAlign: 'left' }) ? styles.isActive : ''
+          editor.isActive({ textAlign: "left" }) ? styles.isActive : ""
         }
       >
-        <Icon icon={faAlignLeft} />
+        <Icon icon={faAlignLeftIcon} />
       </button>
       <button
-        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        onClick={() => editor.chain().focus().setTextAlign("center").run()}
         className={
-          editor.isActive({ textAlign: 'center' }) ? styles.isActive : ''
+          editor.isActive({ textAlign: "center" }) ? styles.isActive : ""
         }
       >
-        <Icon icon={faAlignCenter} />
+        <Icon icon={faAlignCenterIcon} />
       </button>
       <button
-        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        onClick={() => editor.chain().focus().setTextAlign("right").run()}
         className={
-          editor.isActive({ textAlign: 'right' }) ? styles.isActive : ''
+          editor.isActive({ textAlign: "right" }) ? styles.isActive : ""
         }
       >
-        <Icon icon={faAlignRight} />
+        <Icon icon={faAlignRightIcon} />
       </button>
       <input
         type="color"
         onInput={(event: React.ChangeEvent<HTMLInputElement>) =>
           editor.chain().focus().setColor(event.target.value).run()
         }
-        value={editor.getAttributes('textStyle').color || '#000000'}
+        value={editor.getAttributes("textStyle").color || "#000000"}
       />
       <button
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={editor.isActive('bulletList') ? styles.isActive : ''}
+        className={editor.isActive("bulletList") ? styles.isActive : ""}
       >
-        <Icon icon={faListUl} />
+        <Icon icon={faListUlIcon} />
       </button>
       <button
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={editor.isActive('orderedList') ? styles.isActive : ''}
+        className={editor.isActive("orderedList") ? styles.isActive : ""}
       >
-        <Icon icon={faListOl} />
+        <Icon icon={faListOlIcon} />
       </button>
       <button
         onClick={() =>
@@ -136,34 +142,34 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
             .run()
         }
       >
-        <Icon icon={faTable} />
+        <Icon icon={faTableIcon} />
       </button>
       <button
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        className={editor.isActive('blockquote') ? styles.isActive : ''}
+        className={editor.isActive("blockquote") ? styles.isActive : ""}
       >
-        <Icon icon={faQuoteLeft} />
+        <Icon icon={faQuoteLeftIcon} />
       </button>
       <button onClick={() => editor.chain().focus().setHorizontalRule().run()}>
-        <Icon icon={faMinus} />
+        <Icon icon={faMinusIcon} />
       </button>
       <button
-        onClick={() => editor.chain().focus().setDetails('Details').run()}
+        onClick={() => editor.chain().focus().setDetails("Details").run()}
         title="Insert Details Section"
       >
-        <Icon icon={faChevronDown} />
+        <Icon icon={faChevronDownIcon} />
       </button>
       <button
         onClick={() => editor.chain().focus().setTableOfContents().run()}
         title="Insert Table of Contents"
       >
-        <Icon icon={faList} />
+        <Icon icon={faListIcon} />
       </button>
       <button onClick={() => editor.chain().focus().undo().run()}>
-        <Icon icon={faUndo} />
+        <Icon icon={faUndoIcon} />
       </button>
       <button onClick={() => editor.chain().focus().redo().run()}>
-        <Icon icon={faRedo} />
+        <Icon icon={faRedoIcon} />
       </button>
     </div>
   );

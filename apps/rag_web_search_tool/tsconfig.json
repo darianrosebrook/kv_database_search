@@ -16,7 +16,7 @@
     "jsx": "react-jsx",
     "rootDir": ".",
     "outDir": "./dist",
-    "types": ["vite/client", "@types/node"],
+    "types": ["vite/client", "@types/node", "jest", "vitest/globals"],
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true

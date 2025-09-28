@@ -1,5 +1,5 @@
-import React from 'react';
-import { useFieldControl } from './useFieldControl';
+import React from "react";
+import { useFieldControl } from "./useFieldControl";
 
 export interface TextareaAdapterProps {
   placeholder?: string;
@@ -12,14 +12,14 @@ export function TextareaAdapter({
   className,
   rows = 4,
 }: TextareaAdapterProps) {
-  const { controlProps, field } = useFieldControl<HTMLTextAreaElement>();
+  const { controlProps, field } = useFieldControl("textarea");
   return (
     <textarea
       {...controlProps}
       className={className}
       rows={rows}
       placeholder={placeholder}
-      value={(field.value as string) ?? ''}
+      value={(field.value as string) ?? ""}
       onChange={(e) =>
         field.setValue((e.currentTarget as HTMLTextAreaElement).value)
       }

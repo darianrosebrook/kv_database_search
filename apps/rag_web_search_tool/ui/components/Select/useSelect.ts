@@ -11,8 +11,12 @@ import {
   useMemo,
   useRef,
   useEffect,
-} from 'react';
-import type { Option } from '@/types/ui';
+} from "react";
+export interface Option {
+  id: string;
+  title: string;
+  disabled?: boolean;
+}
 
 export interface UseSelectOptions {
   /** Available options */
@@ -63,9 +67,9 @@ export interface UseSelectReturn {
   // Accessibility
   id: string;
   ariaAttributes: {
-    'aria-expanded': boolean;
-    'aria-disabled'?: boolean;
-    'aria-multiselectable'?: boolean;
+    "aria-expanded": boolean;
+    "aria-disabled"?: boolean;
+    "aria-multiselectable"?: boolean;
   };
 
   // Refs for DOM management
@@ -98,7 +102,7 @@ export function useSelect(options: UseSelectOptions): UseSelectReturn {
 
   // State
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
 
   // Handle controlled vs uncontrolled selection
@@ -114,8 +118,8 @@ export function useSelect(options: UseSelectOptions): UseSelectReturn {
     ? Array.isArray(value)
       ? value
       : value
-        ? [value]
-        : []
+      ? [value]
+      : []
     : internalSelection;
 
   const selectedOptions = useMemo(() => {
@@ -139,7 +143,7 @@ export function useSelect(options: UseSelectOptions): UseSelectReturn {
 
   const close = useCallback(() => {
     setIsOpen(false);
-    setSearchTerm('');
+    setSearchTerm("");
     setActiveIndex(-1);
   }, []);
 
@@ -236,9 +240,9 @@ export function useSelect(options: UseSelectOptions): UseSelectReturn {
   }, [filteredOptions]);
 
   const ariaAttributes = {
-    'aria-expanded': isOpen,
-    ...(disabled && { 'aria-disabled': true }),
-    ...(multiple && { 'aria-multiselectable': true }),
+    "aria-expanded": isOpen,
+    ...(disabled && { "aria-disabled": true }),
+    ...(multiple && { "aria-multiselectable": true }),
   };
 
   return {

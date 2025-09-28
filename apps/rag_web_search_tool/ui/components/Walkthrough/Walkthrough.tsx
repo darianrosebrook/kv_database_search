@@ -2,19 +2,20 @@
  * Walkthrough (Composer)
  * Visual scaffolding & Popover composition for coachmarks/feature tours
  */
-'use client';
-import * as React from 'react';
-import { useWalkthrough } from './WalkthroughProvider';
-import { WalkthroughControls } from './slots/WalkthroughControls';
-import { WalkthroughProgress } from './slots/WalkthroughProgress';
-import type { WalkthroughUIProps } from './types';
-import styles from './Walkthrough.module.scss';
-import Popover from '../Popover';
+"use client";
+import * as React from "react";
+import { useWalkthrough } from "./WalkthroughProvider";
+import { WalkthroughControls } from "./slots/WalkthroughControls";
+import { WalkthroughProgress } from "./slots/WalkthroughProgress";
+import type { WalkthroughUIProps } from "./types";
+import styles from "./Walkthrough.module.scss";
+import { Popover } from "../Popover";
+import { Content as PopoverContent } from "../Popover";
 
 export const Walkthrough: React.FC<WalkthroughUIProps> = ({
   className,
   children,
-  onMissingTarget = 'skip',
+  onMissingTarget = "skip",
 }) => {
   const { steps, index, anchorEl, open, cancel, closeOnOutsideClick } =
     useWalkthrough();
@@ -22,33 +23,29 @@ export const Walkthrough: React.FC<WalkthroughUIProps> = ({
 
   const step = steps[index];
 
-  type PopPlacement = 'top' | 'bottom' | 'left' | 'right' | 'auto';
+  type PopPlacement = "top" | "bottom" | "left" | "right";
   const normalizePlacement = (p?: string): PopPlacement =>
-    p === 'top' ||
-    p === 'bottom' ||
-    p === 'left' ||
-    p === 'right' ||
-    p === 'auto'
+    p === "top" || p === "bottom" || p === "left" || p === "right"
       ? p
-      : 'auto';
+      : "bottom";
   const popPlacement = normalizePlacement(
     step?.placement as string | undefined
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       cancel();
       return;
     }
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       next();
       return;
     }
-    if (e.key === 'ArrowLeft') {
+    if (e.key === "ArrowLeft") {
       prev();
       return;
     }
-    if (e.key === 'ArrowRight') {
+    if (e.key === "ArrowRight") {
       next();
       return;
     }
@@ -56,8 +53,8 @@ export const Walkthrough: React.FC<WalkthroughUIProps> = ({
 
   // Target missing policy
   const anchor = anchorEl ?? null;
-  const shouldHide = !step || (!anchor && onMissingTarget === 'hide');
-  const pinToCenter = !anchor && onMissingTarget === 'pin-to-center';
+  const shouldHide = !step || (!anchor && onMissingTarget === "hide");
+  const pinToCenter = !anchor && onMissingTarget === "pin-to-center";
 
   if (!open || shouldHide) return null;
 
@@ -65,36 +62,29 @@ export const Walkthrough: React.FC<WalkthroughUIProps> = ({
   if (pinToCenter) {
     return (
       <Popover
-        open
-        anchor={typeof document !== 'undefined' ? document.body : null}
-        onOpenChange={(o) => {
-          if (!o) cancel();
-        }}
         placement={popPlacement}
-        offset={step?.offset ?? 12}
-        closeOnOutsideClick={closeOnOutsideClick ?? true}
-      >
-        <Popover.Content>
-          <div
-            className={[styles.content, className].filter(Boolean).join(' ')}
-            tabIndex={-1}
-            onKeyDown={handleKeyDown}
-          >
-            {children ?? (
-              <>
-                {step?.title && (
-                  <div className={styles.title}>{step.title}</div>
-                )}
-                {step?.description && (
-                  <div className={styles.description}>{step.description}</div>
-                )}
-                <WalkthroughProgress />
-                <WalkthroughControls />
-              </>
-            )}
-          </div>
-        </Popover.Content>
-      </Popover>
+        content={
+          <PopoverContent>
+            <div
+              className={[styles.content, className].filter(Boolean).join(" ")}
+              tabIndex={-1}
+              onKeyDown={handleKeyDown}
+            >
+              {children ?? (
+                <>
+                  {step?.title && (
+                    <div className={styles.title}>{step.title}</div>
+                  )}
+                  {step?.description && (
+                    <div className={styles.description}>{step.description}</div>
+                  )}
+                  <WalkthroughProgress />
+                  <WalkthroughControls />
+                </>
+              )}
+            </div>
+          </PopoverContent>
+        }
     );
   }
 
@@ -103,37 +93,30 @@ export const Walkthrough: React.FC<WalkthroughUIProps> = ({
 
   return (
     <Popover
-      open
-      anchor={anchor}
-      onOpenChange={(o) => {
-        if (!o) cancel();
-      }}
       placement={popPlacement}
-      offset={step?.offset ?? 12}
-      closeOnOutsideClick={closeOnOutsideClick ?? true}
-    >
-      <Popover.Content>
-        <div
-          className={[styles.content, className].filter(Boolean).join(' ')}
-          tabIndex={-1}
-          onKeyDown={handleKeyDown}
-        >
-          {children ?? (
-            <>
-              {step?.title && <div className={styles.title}>{step.title}</div>}
-              {step?.description && (
-                <div className={styles.description}>{step.description}</div>
-              )}
-              <WalkthroughProgress />
-              <WalkthroughControls />
-            </>
-          )}
-        </div>
-      </Popover.Content>
-    </Popover>
-  );
+      content={
+        <PopoverContent>
+          <div
+            className={[styles.content, className].filter(Boolean).join(" ")}
+            tabIndex={-1}
+            onKeyDown={handleKeyDown}
+          >
+            {children ?? (
+              <>
+                {step?.title && <div className={styles.title}>{step.title}</div>}
+                {step?.description && (
+                  <div className={styles.description}>{step.description}</div>
+                )}
+                <WalkthroughProgress />
+                <WalkthroughControls />
+              </>
+            )}
+          </div>
+        </PopoverContent>
+      }
+    );
 };
 
-Walkthrough.displayName = 'Walkthrough';
+Walkthrough.displayName = "Walkthrough";
 
 export default Walkthrough;

@@ -3,11 +3,12 @@ import { motion } from "motion/react";
 import { Search } from "lucide-react";
 import styles from "./SearchInput.module.scss";
 
-interface SearchInputProps {
+export interface SearchInputProps {
   isInitial: boolean;
   query: string;
   onQueryChange: (query: string) => void;
   onSubmit: () => void;
+  onSearch?: () => void;
   isLoading: boolean;
   placeholder?: string;
   className?: string;
@@ -18,6 +19,7 @@ export function SearchInput({
   query,
   onQueryChange,
   onSubmit,
+  onSearch,
   isLoading,
   placeholder = "Search your Obsidian knowledge base...",
   className = "",

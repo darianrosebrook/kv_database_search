@@ -1,14 +1,14 @@
-'use client';
-import Styles from './Status.module.scss';
-import { Intent, StatusIntent, normalizeStatusIntent } from '@/types';
+"use client";
+import Styles from "./Status.module.scss";
+// import { Intent, StatusIntent, normalizeStatusIntent } from '@/types';
 
 type StatusProps = {
-  status: StatusIntent;
+  status: "info" | "success" | "warning" | "error";
   children: string;
 };
 
 const Status: React.FC<StatusProps> = ({ status, children }) => {
-  const intent: Intent = normalizeStatusIntent(status);
+  const intent = status;
   return (
     <>
       <div className={`${Styles.status} ${Styles[intent]}`}>

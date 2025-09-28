@@ -89,44 +89,93 @@ export { default as provenanceMigration } from "./migrations/002_create_provenan
  * const stats = await system.knowledgeGraph.getKnowledgeGraphStatistics();
  * ```
  */
+import type { KnowledgeGraphPipelineConfig } from "./knowledge-graph-pipeline.js";
+import { KnowledgeGraphPipeline } from "./knowledge-graph-pipeline.js";
+import { KnowledgeGraph } from "./knowledge-graph-manager.js";
+
 export async function createKnowledgeGraphSystem(
   database, // ObsidianDatabase
   embeddings, // ObsidianEmbeddingService
-  _config = {}
+  config: Partial<KnowledgeGraphPipelineConfig> = {}
 ) {
-  // TODO: Implement proper ingestion pipeline creation
-  // For now, return a basic structure
-  const pipeline = {};
-  const knowledgeGraph = {};
+  try {
+    // Initialize the knowledge graph pipeline with proper configuration
+    const pipeline = new KnowledgeGraphPipeline(
+      database.pool || database, // Handle both database instances
+      embeddings,
+      config
+    );
 
-  return {
-    pipeline,
-    knowledgeGraph,
+    // Initialize the knowledge graph manager
+    const knowledgeGraph = new KnowledgeGraph(
+      database.pool || database,
+      embeddings,
+      config.knowledgeGraph || {}
+    );
 
-    // Convenience methods
-    async processAllUnprocessed() {
-      return await knowledgeGraph.processAllUnprocessedChunks();
-    },
+    console.log("✅ Knowledge Graph System initialized successfully");
 
-    async getStatistics() {
-      return await knowledgeGraph.getKnowledgeGraphStatistics();
-    },
+    return {
+      pipeline,
+      knowledgeGraph,
 
-    async validateConsistency() {
-      return await knowledgeGraph.validateKnowledgeGraphConsistency();
-    },
+      // Convenience methods
+      async processAllUnprocessed() {
+        return await pipeline.processExistingChunks();
+      },
 
-    async bootstrap(_options = {}) {
-      // TODO: Implement bootstrap functionality
-      // return await bootstrapKnowledgeGraphFromExistingData(
-      //   database,
-      //   embeddings,
-      //   options
-      // );
-      console.log("Bootstrap functionality not yet implemented");
-      return { success: false, message: "Not implemented" };
-    },
-  };
+      async getStatistics() {
+        return await pipeline.getStatistics();
+      },
+
+      async validateConsistency() {
+        return await pipeline.validateConsistency();
+      },
+
+      async bootstrap(_options = {}) {
+        try {
+          console.log("🔄 Bootstrapping knowledge graph from existing data...");
+
+          // Use the pipeline's existing chunk processing
+          const result = await pipeline.processExistingChunks();
+
+          console.log(
+            `✅ Bootstrap completed: ${result.processedChunks} chunks processed`
+          );
+          return {
+            success: true,
+            processedChunks: result.processedChunks,
+            entitiesCreated: result.entitiesCreated || 0,
+            relationshipsCreated: result.relationshipsCreated || 0,
+            message: "Bootstrap completed successfully",
+          };
+        } catch (error) {
+          console.error("❌ Bootstrap failed:", error);
+          return {
+            success: false,
+            message: `Bootstrap failed: ${error}`,
+            error: error instanceof Error ? error.message : String(error),
+          };
+        }
+      },
+
+      // Additional utility methods
+      async getEntityExtractor() {
+        return pipeline.entityExtractor;
+      },
+
+      async getGraphManager() {
+        return knowledgeGraph;
+      },
+
+      async getConfig() {
+        return pipeline.config;
+      },
+    };
+  } catch (error) {
+    console.error("❌ Failed to create Knowledge Graph System:", error);
+    throw new Error(`Knowledge Graph System initialization failed: ${error}`);
+  }
 }
 
 /**

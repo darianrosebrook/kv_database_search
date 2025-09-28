@@ -22,6 +22,7 @@ import { ImageLinkExtractor, ImageLink } from "./image-link-extractor";
 import { ImagePathResolver } from "./image-path-resolver";
 import { OCRProcessor } from "./processors/ocr-processor";
 import { ImageClassificationProcessor } from "./processors/image-classification-processor";
+import { ObsidianUtils } from "./types/obsidian-utils";
 
 export interface ObsidianChunkingOptions {
   maxChunkSize?: number;
@@ -770,10 +771,8 @@ export class ObsidianIngestionPipeline {
     }
 
     // Parse frontmatter and content
-    // TODO: Implement frontmatter parsing or use a different approach
-    const parseResult = { frontmatter: {}, body: content };
-    const frontmatter = parseResult?.frontmatter || {};
-    const body = parseResult?.body || content;
+    const frontmatter = ObsidianUtils.parseFrontmatter(content);
+    const body = content.replace(/^---[\s\S]*?---\n?/, "").trim();
 
     // Extract wikilinks and tags
     const wikilinks = extractWikilinks(body);
@@ -965,9 +964,9 @@ export class ObsidianIngestionPipeline {
         tags: document.relationships.tags || [] || [],
         checksum: document.metadata.checksum,
         stats: {
-          wordCount: document.stats.wordCount, // TODO: Fix type
-          characterCount: document.stats.characterCount,
-          lineCount: document.stats.lineCount,
+          wordCount: document.stats.wordCount ?? 0,
+          characterCount: document.stats.characterCount ?? 0,
+          lineCount: document.stats.lineCount ?? 0,
         },
       },
     };

@@ -2,10 +2,9 @@
 import * as React from "react";
 import Button from "../Button";
 import Styles from "./AlertNotice.module.scss";
-import { TimesIcon, LocalIcons } from "@/ui/components/Icon/LocalIcons";
-import { Intent, StatusIntent, normalizeStatusIntent } from "@/types";
+import { LocalIcon } from "../LocalIcons";
 export type AlertNoticeProps = {
-  status?: StatusIntent;
+  status?: "info" | "success" | "warning" | "error";
   level?: "page" | "section" | "inline";
   index: number;
   dismissible?: boolean;
@@ -19,7 +18,7 @@ const Container = React.forwardRef<
     { status = "info", level, dismissible, onDismiss, index, ...props },
     ref
   ) => {
-    const intent: Intent = normalizeStatusIntent(status);
+    const intent = status;
     return (
       <div
         ref={ref}
@@ -38,7 +37,7 @@ const Container = React.forwardRef<
               title="Dismiss this alert"
               data-index={index}
             >
-              <TimesIcon aria-hidden={true} />
+              <LocalIcon name="times" aria-hidden={true} />
               <span className="sr-only">Dismiss this alert</span>
             </Button>
           </div>
@@ -59,20 +58,21 @@ const BodyContent = ({ children }: { children: React.ReactNode }) => (
 );
 BodyContent.displayName = "AlertNotice.Body";
 
-const Icon = ({ status }: { status: StatusIntent }) => {
-  const intent: Intent = normalizeStatusIntent(status);
+const Icon = ({
+  status,
+}: {
+  status: "info" | "success" | "warning" | "error";
+}) => {
   const icons = {
     info: "info-circle" as const,
     success: "check-circle" as const,
     warning: "exclamation-triangle" as const,
-    danger: "exclamation-circle" as const,
+    error: "exclamation-circle" as const,
   };
-
-  const IconComponent = LocalIcons[icons[intent]];
 
   return (
     <div className={Styles["__icon"]}>
-      <IconComponent aria-hidden={true} />
+      <LocalIcon name={icons[status]} aria-hidden={true} />
     </div>
   );
 };

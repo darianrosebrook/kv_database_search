@@ -1,12 +1,12 @@
-import React from 'react';
-import { useFieldControl } from './useFieldControl';
+import React from "react";
+import { useFieldControl } from "./useFieldControl";
 
 export interface CheckboxAdapterProps {
   className?: string;
 }
 
 export function CheckboxAdapter({ className }: CheckboxAdapterProps) {
-  const { controlProps, field } = useFieldControl<HTMLInputElement>();
+  const { controlProps, field } = useFieldControl("checkbox");
   return (
     <input
       {...controlProps}

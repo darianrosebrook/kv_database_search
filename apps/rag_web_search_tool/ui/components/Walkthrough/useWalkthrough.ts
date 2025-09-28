@@ -93,11 +93,11 @@ export function useWalkthrough(opts: UseWalkthroughOptions) {
     return {
       canOpen: (): boolean => {
         if (typeof window === "undefined") return true;
-        return allowConcurrent || !window[key];
+        return allowConcurrent || !(window as any)[key];
       },
       setOpen: (value: boolean) => {
         if (typeof window === "undefined") return;
-        window[key] = value;
+        (window as any)[key] = value;
       },
     };
   }, [allowConcurrent]);

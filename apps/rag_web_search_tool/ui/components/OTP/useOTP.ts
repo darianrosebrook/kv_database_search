@@ -1,7 +1,7 @@
 /** Headless logic hook for OTP */
-import * as React from 'react';
+import * as React from "react";
 
-export type OTPGuardMode = 'numeric' | 'alphanumeric' | RegExp;
+export type OTPGuardMode = "numeric" | "alphanumeric" | RegExp;
 
 export interface UseOTPOptions {
   length?: number;
@@ -31,15 +31,15 @@ export interface UseOTPResult {
 }
 
 function isAllowedChar(ch: string, mode: OTPGuardMode): boolean {
-  if (mode === 'numeric') return /^[0-9]$/.test(ch);
-  if (mode === 'alphanumeric') return /^[a-zA-Z0-9]$/.test(ch);
+  if (mode === "numeric") return /^[0-9]$/.test(ch);
+  if (mode === "alphanumeric") return /^[a-zA-Z0-9]$/.test(ch);
   return (mode as RegExp).test(ch);
 }
 
 export function useOTP(options: UseOTPOptions = {}): UseOTPResult {
   const {
     length: lengthProp = 6,
-    mode = 'numeric',
+    mode = "numeric",
     value,
     defaultValue,
     disabled = false,
@@ -49,18 +49,18 @@ export function useOTP(options: UseOTPOptions = {}): UseOTPResult {
   } = options;
 
   const length = Math.max(1, Math.min(12, Math.floor(lengthProp)));
-  const isControlled = typeof value === 'string';
+  const isControlled = typeof value === "string";
 
   const [internal, setInternal] = React.useState<string[]>(() => {
-    if (defaultValue) return defaultValue.slice(0, length).split('');
-    return Array.from({ length }, () => '');
+    if (defaultValue) return defaultValue.slice(0, length).split("");
+    return Array.from({ length }, () => "");
   });
 
   // Re-initialize internal when length changes (uncontrolled only)
   React.useEffect(() => {
     if (!isControlled) {
       setInternal((prev) => {
-        const next = Array.from({ length }, (_, i) => prev[i] ?? '');
+        const next = Array.from({ length }, (_, i) => prev[i] ?? "");
         return next;
       });
     }
@@ -69,12 +69,12 @@ export function useOTP(options: UseOTPOptions = {}): UseOTPResult {
 
   const refs = React.useRef<HTMLInputElement[]>([]);
 
-  const code = isControlled ? value! : internal.join('');
+  const code = isControlled ? value! : internal.join("");
   const chars = React.useMemo(() => {
-    const codeChars = code.slice(0, length).split('');
+    const codeChars = code.slice(0, length).split("");
     // Pad with empty strings to reach desired length
     while (codeChars.length < length) {
-      codeChars.push('');
+      codeChars.push("");
     }
     return codeChars;
   }, [code, length]);
@@ -85,7 +85,7 @@ export function useOTP(options: UseOTPOptions = {}): UseOTPResult {
 
   const emitChange = React.useCallback(
     (next: string[]) => {
-      const joined = next.join('');
+      const joined = next.join("");
       onChange?.(joined);
       if (next.every(Boolean)) onComplete?.(joined);
     },
@@ -106,7 +106,7 @@ export function useOTP(options: UseOTPOptions = {}): UseOTPResult {
         refs.current[index + 1]?.focus();
       } else if (next.every(Boolean)) {
         // All fields filled, call onComplete
-        onComplete?.(next.join(''));
+        onComplete?.(next.join(""));
       }
     },
     [
@@ -126,7 +126,7 @@ export function useOTP(options: UseOTPOptions = {}): UseOTPResult {
     (index: number) => {
       if (disabled || readOnly) return;
       const next = chars.slice();
-      next[index] = '';
+      next[index] = "";
       if (!isControlled) setInternal(next);
       emitChange(next);
     },

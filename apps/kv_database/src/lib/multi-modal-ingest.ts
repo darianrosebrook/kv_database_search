@@ -16,6 +16,7 @@ import { cleanMarkdown } from "./utils";
 import * as fs from "fs";
 import * as path from "path";
 import { createHash } from "crypto";
+import { contentProcessorRegistry } from "./processors/processor-registry-instance";
 
 export interface MultiModalIngestionConfig {
   batchSize?: number;
@@ -60,7 +61,9 @@ export class MultiModalIngestionPipeline {
   ) {
     this.db = database;
     this.embeddings = embeddingService;
-    this.contentDetector = new MultiModalContentDetector();
+    this.contentDetector = new MultiModalContentDetector(
+      contentProcessorRegistry
+    );
     this.pdfProcessor = new PDFProcessingPipeline();
     this.ocrProcessor = new OCRProcessor();
     this.officeProcessor = new OfficeProcessor();

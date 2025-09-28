@@ -10,7 +10,7 @@
 "use client";
 import React, { useCallback, useRef, useEffect } from "react";
 import { useSelectContext } from "./SelectProvider";
-import { ControlSize } from "@/types/ui";
+// import { ControlSize } from "@/types/ui";
 import styles from "./Select.module.scss";
 
 // Trigger component - what the user clicks to open the select
@@ -20,7 +20,7 @@ export interface SelectTriggerProps {
   /** Additional CSS classes */
   className?: string;
   /** Size variant */
-  size?: ControlSize;
+  size?: "small" | "medium" | "large";
   /** Show clear button when selection exists */
   clearable?: boolean;
   /** Loading state */
@@ -323,7 +323,7 @@ export const SelectOptions: React.FC<SelectOptionsProps> = ({
   );
 
   const handleClick = useCallback(
-    (option) => {
+    (option: any) => {
       selectOption(option);
     },
     [selectOption]

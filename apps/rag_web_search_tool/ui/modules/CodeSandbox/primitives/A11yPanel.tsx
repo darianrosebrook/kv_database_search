@@ -71,13 +71,13 @@ export function A11yPanel({
         runTags && runTags.length
           ? { runOnly: { type: "tag", values: runTags } }
           : undefined;
-      const result = await axeModule.run(win.document, options);
-      const v: AxeViolation[] = (result?.violations || []).map((vi) => ({
+      const result = await (axeModule as any).run(win.document, options);
+      const v: AxeViolation[] = (result?.violations || []).map((vi: any) => ({
         id: vi.id,
         impact: vi.impact,
         help: vi.help,
         helpUrl: vi.helpUrl,
-        nodes: (vi.nodes || []).map((n) => ({
+        nodes: (vi.nodes || []).map((n: any) => ({
           target: n.target,
           html: n.html,
         })),

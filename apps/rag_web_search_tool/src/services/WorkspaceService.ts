@@ -42,6 +42,35 @@ export interface Workspace {
   };
 }
 
+export interface MultiModalProcessingResult {
+  id: string;
+  status: "processing" | "completed" | "failed";
+  result?: any;
+  error?: string;
+  metadata?: any;
+}
+
+export interface ContentTypeInfo {
+  type: string;
+  supported: boolean;
+  description: string;
+}
+
+export interface ProcessingStatus {
+  id: string;
+  status: "processing" | "completed" | "failed";
+  result?: any;
+  error?: string;
+}
+
+export interface ProcessorOptions {
+  enableOCR?: boolean;
+  enableImageClassification?: boolean;
+  enableAudioTranscription?: boolean;
+  enableVideoProcessing?: boolean;
+  enableSpeechRecognition?: boolean;
+}
+
 export interface DataSource {
   id: string;
   name: string;
@@ -615,7 +644,25 @@ export class WorkspaceService {
       };
     }
   }
+
+  async loadSupportedContentTypes(): Promise<ContentTypeInfo[]> {
+    try {
+      const response = await fetch(`${WORKSPACE_API_BASE}/content-types`);
+      if (!response.ok) {
+        throw new Error(`Failed to load content types: ${response.statusText}`);
+      }
+      const data = await response.json();
+      return data.contentTypes || [];
+    } catch (error) {
+      console.error("Failed to load content types:", error);
+      return [];
+    }
+  }
 }
 
 // Export singleton instance
 export const workspaceService = WorkspaceService.getInstance();
+
+// Export the function directly for convenience
+export const loadSupportedContentTypes = () =>
+  workspaceService.loadSupportedContentTypes();

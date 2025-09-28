@@ -253,30 +253,35 @@ export class DictionaryService {
   private async loadConfiguration(): Promise<void> {
     try {
       // Load configuration from dictionary_config table
-      const configResult = await this.db.query(`
-        SELECT key, value
-        FROM dictionary_config
-        WHERE key IN ('cache_ttl_seconds', 'max_synonyms_per_entity', 'min_confidence_threshold')
-      `);
+      const client = await this.db.pool.connect();
+      try {
+        const configResult = await client.query(`
+          SELECT key, value
+          FROM dictionary_config
+          WHERE key IN ('cache_ttl_seconds', 'max_synonyms_per_entity', 'min_confidence_threshold')
+        `);
 
-      // Apply configuration
-      for (const row of configResult.rows) {
-        switch (row.key) {
-          case "cache_ttl_seconds":
-            this.cacheTTL = parseInt(row.value) * 1000;
-            break;
-          case "max_synonyms_per_entity":
-            // Store for use in entity processing
-            break;
-          case "min_confidence_threshold":
-            // Store for use in quality filtering
-            break;
+        // Apply configuration
+        for (const row of configResult.rows) {
+          switch (row.key) {
+            case "cache_ttl_seconds":
+              this.cacheTTL = parseInt(row.value) * 1000;
+              break;
+            case "max_synonyms_per_entity":
+              // Store for use in entity processing
+              break;
+            case "min_confidence_threshold":
+              // Store for use in quality filtering
+              break;
+          }
         }
-      }
 
-      console.log(
-        `📊 Dictionary service configured with TTL: ${this.cacheTTL}ms`
-      );
+        console.log(
+          `📊 Dictionary service configured with TTL: ${this.cacheTTL}ms`
+        );
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.warn(`⚠️ Failed to load dictionary configuration: ${error}`);
       // Use defaults
@@ -299,15 +304,20 @@ export class DictionaryService {
   private async initializeDictionarySources(): Promise<void> {
     try {
       // Check existing sources
-      const sourcesResult = await this.db.query(`
-        SELECT name, version, language, status, capabilities, entry_count
-        FROM dictionary_sources
-        WHERE status = 'available'
-      `);
+      const client = await this.db.pool.connect();
+      try {
+        const sourcesResult = await client.query(`
+          SELECT name, version, language, status, capabilities, entry_count
+          FROM dictionary_sources
+          WHERE status = 'available'
+        `);
 
-      console.log(
-        `📚 Found ${sourcesResult.rows.length} available dictionary sources`
-      );
+        console.log(
+          `📚 Found ${sourcesResult.rows.length} available dictionary sources`
+        );
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.warn(`⚠️ Failed to load dictionary sources: ${error}`);
     }
@@ -452,39 +462,44 @@ export class DictionaryService {
   ): Promise<SourceResult | null> {
     try {
       // Query database for cached results first
-      const cachedResult = await this.db.query(
-        `
-        SELECT
-          s.synset_id, s.definition, s.part_of_speech,
-          ARRAY_AGG(DISTINCT le.word_form) FILTER (WHERE le.word_form != $1) as synonyms,
-          ARRAY_AGG(DISTINCT lr.target_synset_id) as related_synsets
-        FROM synsets s
-        JOIN lexical_entries le ON s.id = le.synset_id
-        LEFT JOIN lexical_relationships lr ON s.id = lr.source_synset_id
-        WHERE le.word_form ILIKE $1
-        AND s.source_id = (SELECT id FROM dictionary_sources WHERE name = $2 AND language = $3)
-        GROUP BY s.id, s.synset_id, s.definition, s.part_of_speech
-        LIMIT 1
-      `,
-        [term, source, language]
-      );
+      const client = await this.db.pool.connect();
+      try {
+        const cachedResult = await client.query(
+          `
+          SELECT
+            s.synset_id, s.definition, s.part_of_speech,
+            ARRAY_AGG(DISTINCT le.word_form) FILTER (WHERE le.word_form != $1) as synonyms,
+            ARRAY_AGG(DISTINCT lr.target_synset_id) as related_synsets
+          FROM synsets s
+          JOIN lexical_entries le ON s.id = le.synset_id
+          LEFT JOIN lexical_relationships lr ON s.id = lr.source_synset_id
+          WHERE le.word_form ILIKE $1
+          AND s.source_id = (SELECT id FROM dictionary_sources WHERE name = $2 AND language = $3)
+          GROUP BY s.id, s.synset_id, s.definition, s.part_of_speech
+          LIMIT 1
+        `,
+          [term, source, language]
+        );
 
-      if (cachedResult.rows.length === 0) {
-        return null;
+        if (cachedResult.rows.length === 0) {
+          return null;
+        }
+
+        const row = cachedResult.rows[0];
+
+        return {
+          source,
+          synsetId: row.synset_id,
+          definition: row.definition,
+          partOfSpeech: row.part_of_speech,
+          synonyms: row.synonyms?.slice(0, maxSynonyms) || [],
+          relationships: includeRelationships
+            ? await this.getRelationships(row.id)
+            : [],
+        };
+      } finally {
+        client.release();
       }
-
-      const row = cachedResult.rows[0];
-
-      return {
-        source,
-        synsetId: row.synset_id,
-        definition: row.definition,
-        partOfSpeech: row.part_of_speech,
-        synonyms: row.synonyms?.slice(0, maxSynonyms) || [],
-        relationships: includeRelationships
-          ? await this.getRelationships(row.id)
-          : [],
-      };
     } catch (error) {
       console.warn(`⚠️ Database query failed for source ${source}: ${error}`);
       return null;
@@ -498,26 +513,31 @@ export class DictionaryService {
     synsetId: string
   ): Promise<SemanticRelationship[]> {
     try {
-      const result = await this.db.query(
-        `
-        SELECT
-          lr.relationship_type,
-          s2.lemma as target,
-          lr.confidence
-        FROM lexical_relationships lr
-        JOIN synsets s2 ON lr.target_synset_id = s2.id
-        WHERE lr.source_synset_id = $1
-        AND lr.confidence >= 0.5
-        LIMIT 10
-      `,
-        [synsetId]
-      );
+      const client = await this.db.pool.connect();
+      try {
+        const result = await client.query(
+          `
+          SELECT
+            lr.relationship_type,
+            s2.lemma as target,
+            lr.confidence
+          FROM lexical_relationships lr
+          JOIN synsets s2 ON lr.target_synset_id = s2.id
+          WHERE lr.source_synset_id = $1
+          AND lr.confidence >= 0.5
+          LIMIT 10
+        `,
+          [synsetId]
+        );
 
-      return result.rows.map((row) => ({
-        type: row.relationship_type,
-        target: row.target,
-        confidence: parseFloat(row.confidence),
-      }));
+        return result.rows.map((row) => ({
+          type: row.relationship_type,
+          target: row.target,
+          confidence: parseFloat(row.confidence),
+        }));
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.warn(`⚠️ Failed to get relationships: ${error}`);
       return [];
@@ -587,32 +607,37 @@ export class DictionaryService {
     _context?: string
   ): Promise<EntityCanonicalizationResult | null> {
     try {
-      const result = await this.db.query(
-        `
-        SELECT
-          s.lemma as canonical_name,
-          s.confidence,
-          ds.name as source,
-          s.definition
-        FROM synsets s
-        JOIN dictionary_sources ds ON s.source_id = ds.id
-        WHERE s.lemma = $1
-        AND ds.status = 'available'
-        ORDER BY s.confidence DESC
-        LIMIT 1
-      `,
-        [name]
-      );
+      const client = await this.db.pool.connect();
+      try {
+        const result = await client.query(
+          `
+          SELECT
+            s.lemma as canonical_name,
+            s.confidence,
+            ds.name as source,
+            s.definition
+          FROM synsets s
+          JOIN dictionary_sources ds ON s.source_id = ds.id
+          WHERE s.lemma = $1
+          AND ds.status = 'available'
+          ORDER BY s.confidence DESC
+          LIMIT 1
+        `,
+          [name]
+        );
 
-      if (result.rows.length > 0) {
-        const row = result.rows[0];
-        return {
-          originalName: name,
-          canonicalName: row.canonical_name,
-          confidence: parseFloat(row.confidence),
-          source: row.source,
-          reasoning: `Exact match found in ${row.source}: ${row.definition}`,
+        if (result.rows.length > 0) {
+          const row = result.rows[0];
+          return {
+            originalName: name,
+            canonicalName: row.canonical_name,
+            confidence: parseFloat(row.confidence),
+            source: row.source,
+            reasoning: `Exact match found in ${row.source}: ${row.definition}`,
         };
+      }
+      } finally {
+        client.release();
       }
     } catch (error) {
       console.warn(`⚠️ Exact match query failed: ${error}`);
@@ -633,43 +658,48 @@ export class DictionaryService {
     const _searchTerms = [name, ...aliases];
 
     try {
-      const result = await this.db.query(
-        `
-        SELECT
-          s.lemma as canonical_name,
-          s.confidence,
-          ds.name as source,
-          s.definition,
-          similarity(s.lemma, $1) as similarity_score
-        FROM synsets s
-        JOIN dictionary_sources ds ON s.source_id = ds.id
-        WHERE ds.status = 'available'
-        AND (s.lemma ILIKE '%' || $1 || '%' OR $1 ILIKE '%' || s.lemma || '%')
-        ORDER BY
-          similarity_score DESC,
-          s.confidence DESC
-        LIMIT 5
-      `,
-        [name]
-      );
+      const client = await this.db.pool.connect();
+      try {
+        const result = await client.query(
+          `
+          SELECT
+            s.lemma as canonical_name,
+            s.confidence,
+            ds.name as source,
+            s.definition,
+            similarity(s.lemma, $1) as similarity_score
+          FROM synsets s
+          JOIN dictionary_sources ds ON s.source_id = ds.id
+          WHERE ds.status = 'available'
+          AND (s.lemma ILIKE '%' || $1 || '%' OR $1 ILIKE '%' || s.lemma || '%')
+          ORDER BY
+            similarity_score DESC,
+            s.confidence DESC
+          LIMIT 5
+        `,
+          [name]
+        );
 
-      if (result.rows.length > 0) {
-        const bestMatch = result.rows[0];
-        return {
-          originalName: name,
-          canonicalName: bestMatch.canonical_name,
-          confidence: Math.min(
-            parseFloat(bestMatch.similarity_score) *
-              parseFloat(bestMatch.confidence),
-            1.0
-          ),
-          source: bestMatch.source,
-          reasoning: `Fuzzy match found in ${
-            bestMatch.source
-          } with similarity ${parseFloat(bestMatch.similarity_score).toFixed(
-            2
-          )}`,
-        };
+        if (result.rows.length > 0) {
+          const bestMatch = result.rows[0];
+          return {
+            originalName: name,
+            canonicalName: bestMatch.canonical_name,
+            confidence: Math.min(
+              parseFloat(bestMatch.similarity_score) *
+                parseFloat(bestMatch.confidence),
+              1.0
+            ),
+            source: bestMatch.source,
+            reasoning: `Fuzzy match found in ${
+              bestMatch.source
+            } with similarity ${parseFloat(bestMatch.similarity_score).toFixed(
+              2
+            )}`,
+          };
+        }
+      } finally {
+        client.release();
       }
     } catch (error) {
       console.warn(`⚠️ Fuzzy match query failed: ${error}`);
@@ -766,27 +796,32 @@ export class DictionaryService {
     limit: number
   ): Promise<ExpandedTerm[]> {
     try {
-      const result = await this.db.query(
-        `
-        SELECT DISTINCT
-          le.word_form as synonym,
-          s.confidence
-        FROM lexical_entries le
-        JOIN synsets s ON le.synset_id = s.id
-        WHERE le.word_form != $1
-        AND s.source_id IN (SELECT id FROM dictionary_sources WHERE name IN ('wordnet', 'openthesaurus') AND status = 'available')
-        ORDER BY s.confidence DESC
-        LIMIT $2
-      `,
-        [term, limit]
-      );
+      const client = await this.db.pool.connect();
+      try {
+        const result = await client.query(
+          `
+          SELECT DISTINCT
+            le.word_form as synonym,
+            s.confidence
+          FROM lexical_entries le
+          JOIN synsets s ON le.synset_id = s.id
+          WHERE le.word_form != $1
+          AND s.source_id IN (SELECT id FROM dictionary_sources WHERE name IN ('wordnet', 'openthesaurus') AND status = 'available')
+          ORDER BY s.confidence DESC
+          LIMIT $2
+        `,
+          [term, limit]
+        );
 
-      return result.rows.map((row) => ({
-        term: row.synonym,
-        expansionType: "synonyms",
-        relevanceScore: parseFloat(row.confidence),
-        source: "wordnet",
-      }));
+        return result.rows.map((row) => ({
+          term: row.synonym,
+          expansionType: "synonyms",
+          relevanceScore: parseFloat(row.confidence),
+          source: "wordnet",
+        }));
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.warn(`⚠️ Failed to get synonyms: ${error}`);
       return [];
@@ -801,30 +836,35 @@ export class DictionaryService {
     limit: number
   ): Promise<ExpandedTerm[]> {
     try {
-      const result = await this.db.query(
-        `
-        SELECT DISTINCT
-          s2.lemma as hypernym,
-          lr.confidence
-        FROM lexical_relationships lr
-        JOIN synsets s1 ON lr.source_synset_id = s1.id
-        JOIN synsets s2 ON lr.target_synset_id = s2.id
-        JOIN lexical_entries le ON s1.id = le.synset_id
-        WHERE le.word_form = $1
-        AND lr.relationship_type = 'hypernym'
-        AND lr.confidence >= 0.5
-        ORDER BY lr.confidence DESC
-        LIMIT $2
-      `,
-        [term, limit]
-      );
+      const client = await this.db.pool.connect();
+      try {
+        const result = await client.query(
+          `
+          SELECT DISTINCT
+            s2.lemma as hypernym,
+            lr.confidence
+          FROM lexical_relationships lr
+          JOIN synsets s1 ON lr.source_synset_id = s1.id
+          JOIN synsets s2 ON lr.target_synset_id = s2.id
+          JOIN lexical_entries le ON s1.id = le.synset_id
+          WHERE le.word_form = $1
+          AND lr.relationship_type = 'hypernym'
+          AND lr.confidence >= 0.5
+          ORDER BY lr.confidence DESC
+          LIMIT $2
+        `,
+          [term, limit]
+        );
 
-      return result.rows.map((row) => ({
-        term: row.hypernym,
-        expansionType: "hypernyms",
-        relevanceScore: parseFloat(row.confidence),
-        source: "wordnet",
-      }));
+        return result.rows.map((row) => ({
+          term: row.hypernym,
+          expansionType: "hypernyms",
+          relevanceScore: parseFloat(row.confidence),
+          source: "wordnet",
+        }));
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.warn(`⚠️ Failed to get hypernyms: ${error}`);
       return [];
@@ -839,30 +879,35 @@ export class DictionaryService {
     limit: number
   ): Promise<ExpandedTerm[]> {
     try {
-      const result = await this.db.query(
-        `
-        SELECT DISTINCT
-          s2.lemma as hyponym,
-          lr.confidence
-        FROM lexical_relationships lr
-        JOIN synsets s1 ON lr.target_synset_id = s1.id
-        JOIN synsets s2 ON lr.source_synset_id = s2.id
-        JOIN lexical_entries le ON s1.id = le.synset_id
-        WHERE le.word_form = $1
-        AND lr.relationship_type = 'hyponym'
-        AND lr.confidence >= 0.5
-        ORDER BY lr.confidence DESC
-        LIMIT $2
-      `,
-        [term, limit]
-      );
+      const client = await this.db.pool.connect();
+      try {
+        const result = await client.query(
+          `
+          SELECT DISTINCT
+            s2.lemma as hyponym,
+            lr.confidence
+          FROM lexical_relationships lr
+          JOIN synsets s1 ON lr.target_synset_id = s1.id
+          JOIN synsets s2 ON lr.source_synset_id = s2.id
+          JOIN lexical_entries le ON s1.id = le.synset_id
+          WHERE le.word_form = $1
+          AND lr.relationship_type = 'hyponym'
+          AND lr.confidence >= 0.5
+          ORDER BY lr.confidence DESC
+          LIMIT $2
+        `,
+          [term, limit]
+        );
 
-      return result.rows.map((row) => ({
-        term: row.hyponym,
-        expansionType: "hyponyms",
-        relevanceScore: parseFloat(row.confidence),
-        source: "wordnet",
-      }));
+        return result.rows.map((row) => ({
+          term: row.hyponym,
+          expansionType: "hyponyms",
+          relevanceScore: parseFloat(row.confidence),
+          source: "wordnet",
+        }));
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.warn(`⚠️ Failed to get hyponyms: ${error}`);
       return [];
@@ -877,31 +922,36 @@ export class DictionaryService {
     limit: number
   ): Promise<ExpandedTerm[]> {
     try {
-      const result = await this.db.query(
-        `
-        SELECT DISTINCT
-          s2.lemma as related_term,
-          lr.confidence,
-          lr.relationship_type
-        FROM lexical_relationships lr
-        JOIN synsets s1 ON (lr.source_synset_id = s1.id OR lr.target_synset_id = s1.id)
-        JOIN synsets s2 ON (lr.source_synset_id = s2.id OR lr.target_synset_id = s2.id)
-        JOIN lexical_entries le ON s1.id = le.synset_id
-        WHERE le.word_form = $1
-        AND lr.relationship_type IN ('similar_to', 'related_to')
-        AND lr.confidence >= 0.3
-        ORDER BY lr.confidence DESC
-        LIMIT $2
-      `,
-        [term, limit]
-      );
+      const client = await this.db.pool.connect();
+      try {
+        const result = await client.query(
+          `
+          SELECT DISTINCT
+            s2.lemma as related_term,
+            lr.confidence,
+            lr.relationship_type
+          FROM lexical_relationships lr
+          JOIN synsets s1 ON (lr.source_synset_id = s1.id OR lr.target_synset_id = s1.id)
+          JOIN synsets s2 ON (lr.source_synset_id = s2.id OR lr.target_synset_id = s2.id)
+          JOIN lexical_entries le ON s1.id = le.synset_id
+          WHERE le.word_form = $1
+          AND lr.relationship_type IN ('similar_to', 'related_to')
+          AND lr.confidence >= 0.3
+          ORDER BY lr.confidence DESC
+          LIMIT $2
+        `,
+          [term, limit]
+        );
 
-      return result.rows.map((row) => ({
-        term: row.related_term,
-        expansionType: "related_terms",
-        relevanceScore: parseFloat(row.confidence),
-        source: "wordnet",
-      }));
+        return result.rows.map((row) => ({
+          term: row.related_term,
+          expansionType: "related_terms",
+          relevanceScore: parseFloat(row.confidence),
+          source: "wordnet",
+        }));
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.warn(`⚠️ Failed to get related terms: ${error}`);
       return [];
@@ -917,14 +967,19 @@ export class DictionaryService {
    */
   private async getAvailableSources(): Promise<DictionarySourceType[]> {
     try {
-      const result = await this.db.query(`
-        SELECT name
-        FROM dictionary_sources
-        WHERE status = 'available'
-        ORDER BY name
-      `);
+      const client = await this.db.pool.connect();
+      try {
+        const result = await client.query(`
+          SELECT name
+          FROM dictionary_sources
+          WHERE status = 'available'
+          ORDER BY name
+        `);
 
-      return result.rows.map((row) => row.name);
+        return result.rows.map((row) => row.name);
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.warn(`⚠️ Failed to get available sources: ${error}`);
       return ["wordnet", "wiktionary"];

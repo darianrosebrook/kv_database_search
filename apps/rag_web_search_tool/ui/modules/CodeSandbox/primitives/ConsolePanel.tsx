@@ -1,11 +1,11 @@
-import * as React from 'react';
+import * as React from "react";
 
 export type LogEntry = {
   id: string;
-  level: 'log' | 'warn' | 'error' | 'info' | 'debug';
+  level: "log" | "warn" | "error" | "info" | "debug";
   message: string;
   timestamp: number;
-  args?[];
+  args?: any[];
   stack?: string;
 };
 
@@ -15,24 +15,24 @@ export type ConsolePanelProps = {
   autoCapture?: boolean;
   maxLogs?: number;
   showTimestamps?: boolean;
-  levelFilter?: LogEntry['level'][];
+  levelFilter?: LogEntry["level"][];
   onClear?: () => void;
 };
 
 const LOG_LEVEL_COLORS = {
-  log: 'var(--semantic-color-foreground-primary)',
-  info: 'var(--semantic-color-foreground-info)',
-  warn: 'var(--semantic-color-foreground-warning)',
-  error: 'var(--semantic-color-foreground-danger)',
-  debug: 'var(--semantic-color-foreground-secondary)',
+  log: "var(--semantic-color-foreground-primary)",
+  info: "var(--semantic-color-foreground-info)",
+  warn: "var(--semantic-color-foreground-warning)",
+  error: "var(--semantic-color-foreground-danger)",
+  debug: "var(--semantic-color-foreground-secondary)",
 } as const;
 
 const LOG_LEVEL_BACKGROUNDS = {
-  log: 'transparent',
-  info: 'var(--semantic-color-background-info-subtle)',
-  warn: 'var(--semantic-color-background-warning-subtle)',
-  error: 'var(--semantic-color-background-danger-subtle)',
-  debug: 'var(--semantic-color-background-secondary)',
+  log: "transparent",
+  info: "var(--semantic-color-background-info-subtle)",
+  warn: "var(--semantic-color-background-warning-subtle)",
+  error: "var(--semantic-color-background-danger-subtle)",
+  debug: "var(--semantic-color-background-secondary)",
 } as const;
 
 function formatLogMessage(entry: LogEntry): string {
@@ -40,12 +40,12 @@ function formatLogMessage(entry: LogEntry): string {
     try {
       return entry.args
         .map((arg) => {
-          if (typeof arg === 'object' && arg !== null) {
+          if (typeof arg === "object" && arg !== null) {
             return JSON.stringify(arg, null, 2);
           }
           return String(arg);
         })
-        .join(' ');
+        .join(" ");
     } catch {
       return entry.message;
     }
@@ -55,11 +55,11 @@ function formatLogMessage(entry: LogEntry): string {
 
 function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', {
+  return date.toLocaleTimeString("en-US", {
     hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     fractionalSecondDigits: 3,
   });
 }
@@ -70,12 +70,12 @@ export function ConsolePanel({
   autoCapture = true,
   maxLogs = 1000,
   showTimestamps = true,
-  levelFilter = ['log', 'warn', 'error', 'info', 'debug'],
+  levelFilter = ["log", "warn", "error", "info", "debug"],
   onClear,
 }: ConsolePanelProps) {
   const [capturedLogs, setCapturedLogs] = React.useState<LogEntry[]>([]);
   const [isCapturing, setIsCapturing] = React.useState(autoCapture);
-  const [filter, setFilter] = React.useState<Set<LogEntry['level']>>(
+  const [filter, setFilter] = React.useState<Set<LogEntry["level"]>>(
     new Set(levelFilter)
   );
   const logContainerRef = React.useRef<HTMLDivElement>(null);
@@ -84,7 +84,7 @@ export function ConsolePanel({
     if (targetWindow) return targetWindow;
     try {
       const iframe =
-        document.querySelector<HTMLIFrameElement>('.sp-preview-iframe');
+        document.querySelector<HTMLIFrameElement>(".sp-preview-iframe");
       return iframe?.contentWindow ?? window;
     } catch {
       return window;
@@ -93,9 +93,9 @@ export function ConsolePanel({
 
   const addLogEntry = React.useCallback(
     (
-      level: LogEntry['level'],
+      level: LogEntry["level"],
       message: string,
-      args?[],
+      args?: any[],
       stack?: string
     ) => {
       const entry: LogEntry = {
@@ -119,61 +119,61 @@ export function ConsolePanel({
     if (!isCapturing) return;
 
     const win = resolveTargetWindow();
-    if (!win || !(win ).console) return;
+    if (!win || !(win as any).console) return;
 
     const originalMethods = {
-      log: (win ).console.log,
-      warn: (win ).console.warn,
-      error: (win ).console.error,
-      info: (win ).console.info,
-      debug: (win ).console.debug,
+      log: (win as any).console.log,
+      warn: (win as any).console.warn,
+      error: (win as any).console.error,
+      info: (win as any).console.info,
+      debug: (win as any).console.debug,
     };
 
-    (win ).console.log = (...args[]) => {
-      originalMethods.log.apply((win ).console, args);
-      addLogEntry('log', args.join(' '), args);
+    (win as any).console.log = (...args: any[]) => {
+      originalMethods.log.apply((win as any).console, args);
+      addLogEntry("log", args.join(" "), args);
     };
 
-    (win ).console.warn = (...args[]) => {
-      originalMethods.warn.apply((win ).console, args);
-      addLogEntry('warn', args.join(' '), args);
+    (win as any).console.warn = (...args: any[]) => {
+      originalMethods.warn.apply((win as any).console, args);
+      addLogEntry("warn", args.join(" "), args);
     };
 
-    (win ).console.error = (...args[]) => {
-      originalMethods.error.apply((win ).console, args);
+    (win as any).console.error = (...args: any[]) => {
+      originalMethods.error.apply((win as any).console, args);
       const stack = args.find((arg) => arg instanceof Error)?.stack;
-      addLogEntry('error', args.join(' '), args, stack);
+      addLogEntry("error", args.join(" "), args, stack);
     };
 
-    (win ).console.info = (...args[]) => {
-      originalMethods.info.apply((win ).console, args);
-      addLogEntry('info', args.join(' '), args);
+    (win as any).console.info = (...args: any[]) => {
+      originalMethods.info.apply((win as any).console, args);
+      addLogEntry("info", args.join(" "), args);
     };
 
-    (win ).console.debug = (...args[]) => {
-      originalMethods.debug.apply((win ).console, args);
-      addLogEntry('debug', args.join(' '), args);
+    (win as any).console.debug = (...args: any[]) => {
+      originalMethods.debug.apply((win as any).console, args);
+      addLogEntry("debug", args.join(" "), args);
     };
 
     const handleError = (event: ErrorEvent) => {
-      addLogEntry('error', event.message, [event.error], event.error?.stack);
+      addLogEntry("error", event.message, [event.error], event.error?.stack);
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      addLogEntry('error', `Unhandled Promise Rejection: ${event.reason}`, [
+      addLogEntry("error", `Unhandled Promise Rejection: ${event.reason}`, [
         event.reason,
       ]);
     };
 
-    win.addEventListener('error', handleError);
-    win.addEventListener('unhandledrejection', handleUnhandledRejection);
+    win.addEventListener("error", handleError);
+    win.addEventListener("unhandledrejection", handleUnhandledRejection);
 
     return () => {
-      if ((win ).console) {
-        Object.assign((win ).console, originalMethods);
+      if ((win as any).console) {
+        Object.assign((win as any).console, originalMethods);
       }
-      win.removeEventListener('error', handleError);
-      win.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      win.removeEventListener("error", handleError);
+      win.removeEventListener("unhandledrejection", handleUnhandledRejection);
     };
   }, [isCapturing, resolveTargetWindow, addLogEntry]);
 
@@ -199,7 +199,7 @@ export function ConsolePanel({
     setIsCapturing(!isCapturing);
   };
 
-  const toggleLevelFilter = (level: LogEntry['level']) => {
+  const toggleLevelFilter = (level: LogEntry["level"]) => {
     setFilter((prev) => {
       const next = new Set(prev);
       if (next.has(level)) {
@@ -214,56 +214,56 @@ export function ConsolePanel({
   return (
     <div
       style={{
-        border: '1px solid var(--semantic-color-border-subtle)',
+        border: "1px solid var(--semantic-color-border-subtle)",
         borderRadius: 8,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
         minHeight: 200,
-        background: 'var(--semantic-color-background-primary)',
+        background: "var(--semantic-color-background-primary)",
       }}
     >
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '8px 12px',
-          borderBottom: '1px solid var(--semantic-color-border-subtle)',
-          background: 'var(--semantic-color-background-secondary)',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "8px 12px",
+          borderBottom: "1px solid var(--semantic-color-border-subtle)",
+          background: "var(--semantic-color-background-secondary)",
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <strong>Console</strong>
           <span
             style={{
               fontSize: 12,
-              color: 'var(--semantic-color-foreground-secondary)',
+              color: "var(--semantic-color-foreground-secondary)",
             }}
           >
-            ({allLogs.length} {allLogs.length === 1 ? 'entry' : 'entries'})
+            ({allLogs.length} {allLogs.length === 1 ? "entry" : "entries"})
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: 4 }}>
-          {(['log', 'info', 'warn', 'error', 'debug'] as const).map((level) => (
+        <div style={{ display: "flex", gap: 4 }}>
+          {(["log", "info", "warn", "error", "debug"] as const).map((level) => (
             <button
               key={level}
               type="button"
               onClick={() => toggleLevelFilter(level)}
               style={{
-                padding: '2px 6px',
+                padding: "2px 6px",
                 fontSize: 11,
                 borderRadius: 4,
-                border: '1px solid var(--semantic-color-border-subtle)',
+                border: "1px solid var(--semantic-color-border-subtle)",
                 background: filter.has(level)
                   ? LOG_LEVEL_BACKGROUNDS[level]
-                  : 'transparent',
+                  : "transparent",
                 color: filter.has(level)
                   ? LOG_LEVEL_COLORS[level]
-                  : 'var(--semantic-color-foreground-secondary)',
-                cursor: 'pointer',
-                textTransform: 'uppercase',
+                  : "var(--semantic-color-foreground-secondary)",
+                cursor: "pointer",
+                textTransform: "uppercase",
               }}
             >
               {level}
@@ -274,20 +274,20 @@ export function ConsolePanel({
             type="button"
             onClick={toggleCapture}
             style={{
-              padding: '4px 8px',
+              padding: "4px 8px",
               fontSize: 12,
               borderRadius: 4,
-              border: '1px solid var(--semantic-color-border-subtle)',
+              border: "1px solid var(--semantic-color-border-subtle)",
               background: isCapturing
-                ? 'var(--semantic-color-background-success-subtle)'
-                : 'var(--semantic-color-background-secondary)',
+                ? "var(--semantic-color-background-success-subtle)"
+                : "var(--semantic-color-background-secondary)",
               color: isCapturing
-                ? 'var(--semantic-color-foreground-success)'
-                : 'var(--semantic-color-foreground-secondary)',
-              cursor: 'pointer',
+                ? "var(--semantic-color-foreground-success)"
+                : "var(--semantic-color-foreground-secondary)",
+              cursor: "pointer",
             }}
           >
-            {isCapturing ? 'Stop' : 'Start'}
+            {isCapturing ? "Stop" : "Start"}
           </button>
 
           <button
@@ -295,13 +295,13 @@ export function ConsolePanel({
             onClick={handleClear}
             disabled={allLogs.length === 0}
             style={{
-              padding: '4px 8px',
+              padding: "4px 8px",
               fontSize: 12,
               borderRadius: 4,
-              border: '1px solid var(--semantic-color-border-subtle)',
-              background: 'var(--semantic-color-background-secondary)',
-              color: 'var(--semantic-color-foreground-secondary)',
-              cursor: allLogs.length === 0 ? 'not-allowed' : 'pointer',
+              border: "1px solid var(--semantic-color-border-subtle)",
+              background: "var(--semantic-color-background-secondary)",
+              color: "var(--semantic-color-foreground-secondary)",
+              cursor: allLogs.length === 0 ? "not-allowed" : "pointer",
               opacity: allLogs.length === 0 ? 0.5 : 1,
             }}
           >
@@ -314,9 +314,9 @@ export function ConsolePanel({
         ref={logContainerRef}
         style={{
           flex: 1,
-          overflow: 'auto',
+          overflow: "auto",
           padding: 4,
-          fontFamily: 'var(--semantic-typography-font-family-mono)',
+          fontFamily: "var(--semantic-typography-font-family-mono)",
           fontSize: 12,
           lineHeight: 1.4,
         }}
@@ -325,21 +325,21 @@ export function ConsolePanel({
           <div
             style={{
               padding: 16,
-              textAlign: 'center',
-              color: 'var(--semantic-color-foreground-secondary)',
-              fontStyle: 'italic',
+              textAlign: "center",
+              color: "var(--semantic-color-foreground-secondary)",
+              fontStyle: "italic",
             }}
           >
-            No console output{!isCapturing && ' (capture is stopped)'}
+            No console output{!isCapturing && " (capture is stopped)"}
           </div>
         ) : (
           allLogs.map((entry) => (
             <div
               key={entry.id}
               style={{
-                display: 'flex',
+                display: "flex",
                 gap: 8,
-                padding: '4px 8px',
+                padding: "4px 8px",
                 borderRadius: 4,
                 marginBottom: 2,
                 background: LOG_LEVEL_BACKGROUNDS[entry.level],
@@ -349,10 +349,10 @@ export function ConsolePanel({
               {showTimestamps && (
                 <span
                   style={{
-                    color: 'var(--semantic-color-foreground-tertiary)',
+                    color: "var(--semantic-color-foreground-tertiary)",
                     fontSize: 10,
                     minWidth: 80,
-                    fontFamily: 'var(--semantic-typography-font-family-mono)',
+                    fontFamily: "var(--semantic-typography-font-family-mono)",
                   }}
                 >
                   {formatTimestamp(entry.timestamp)}
@@ -362,7 +362,7 @@ export function ConsolePanel({
                 style={{
                   color: LOG_LEVEL_COLORS[entry.level],
                   fontWeight: 600,
-                  textTransform: 'uppercase',
+                  textTransform: "uppercase",
                   fontSize: 10,
                   minWidth: 40,
                 }}
@@ -372,11 +372,11 @@ export function ConsolePanel({
               <pre
                 style={{
                   margin: 0,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
                   color: LOG_LEVEL_COLORS[entry.level],
-                  fontFamily: 'inherit',
-                  fontSize: 'inherit',
+                  fontFamily: "inherit",
+                  fontSize: "inherit",
                 }}
               >
                 {formatLogMessage(entry)}
@@ -384,21 +384,21 @@ export function ConsolePanel({
                   <details style={{ marginTop: 4 }}>
                     <summary
                       style={{
-                        cursor: 'pointer',
-                        color: 'var(--semantic-color-foreground-secondary)',
+                        cursor: "pointer",
+                        color: "var(--semantic-color-foreground-secondary)",
                       }}
                     >
                       Stack trace
                     </summary>
                     <pre
                       style={{
-                        margin: '4px 0 0 0',
+                        margin: "4px 0 0 0",
                         fontSize: 10,
-                        color: 'var(--semantic-color-foreground-tertiary)',
-                        background: 'var(--semantic-color-background-tertiary)',
+                        color: "var(--semantic-color-foreground-tertiary)",
+                        background: "var(--semantic-color-background-tertiary)",
                         padding: 8,
                         borderRadius: 4,
-                        overflow: 'auto',
+                        overflow: "auto",
                       }}
                     >
                       {entry.stack}

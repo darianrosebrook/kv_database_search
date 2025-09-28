@@ -1,0 +1,32 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  background: var(--semantic-color-background-secondary);
+  border: 1px solid var(--semantic-color-border-subtle);
+  border-radius: 6px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.horizontal {
+  flex-direction: row;
+}
+
+.vertical {
+  flex-direction: column;
+}
+
+.sm {
+  padding: 2px;
+  gap: 1px;
+}
+
+.md {
+  padding: 4px;
+  gap: 2px;
+}
+
+.lg {
+  padding: 8px;
+  gap: 4px;
+}

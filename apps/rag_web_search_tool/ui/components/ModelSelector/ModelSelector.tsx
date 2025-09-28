@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown, Brain, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "../Button";
 import { Select, SelectContent, SelectTrigger } from "../Select";
+import { SelectProvider } from "../Select/SelectProvider";
 import { apiService } from "../../../src/lib/api";
 import styles from "./ModelSelector.module.scss";
 
@@ -76,146 +77,132 @@ export function ModelSelector({
     return "🤖";
   };
 
+  // Convert models to options format
+  const modelOptions = models.map((model) => ({
+    id: model.name,
+    title: model.name,
+  }));
+
   return (
     <div className={`${styles.modelSelector} ${className || ""}`}>
-      <Select
+      <SelectProvider
+        options={modelOptions}
         value={selectedModel}
-        onValueChange={onModelChange}
-        open={isOpen}
-        onOpenChange={setIsOpen}
+        onChange={(selected) => {
+          if (selected && !Array.isArray(selected)) {
+            onModelChange(selected.id);
+          }
+        }}
       >
-        <SelectTrigger className={styles.trigger}>
-          <div className={styles.triggerContent}>
-            <Brain className={styles.modelIcon} />
-            <div className={styles.selectValue}>
-              {selectedModel ? (
-                <div className={styles.selectedModel}>
-                  <span className={styles.modelEmoji}>
-                    {models.find((m) => m.name === selectedModel)
-                      ? getModelIcon(
-                          models.find((m) => m.name === selectedModel)!
-                        )
-                      : "🤖"}
-                  </span>
-                  <span className={styles.modelName}>
-                    {formatModelName(selectedModel)}
-                  </span>
-                  {models.find((m) => m.name === selectedModel) && (
-                    <span className={styles.modelSize}>
-                      {formatModelSize(
-                        models.find((m) => m.name === selectedModel)!.size
-                      )}
-                    </span>
-                  )}
-                </div>
-              ) : (
-                "Select model..."
-              )}
-            </div>
-            <ChevronDown
-              className={`${styles.chevron} ${isOpen ? styles.open : ""}`}
-            />
-          </div>
-        </SelectTrigger>
+        <Select>
+          <SelectTrigger
+            className={styles.trigger}
+            placeholder={selectedModel || "Select model"}
+          />
 
-        <SelectContent className={styles.content}>
-          <div className={styles.contentHeader}>
-            <div className={styles.headerTitle}>
-              <Brain className={styles.headerIcon} />
-              Available Models
-            </div>
-            <Button
-              variant="ghost"
-              size="small"
-              onClick={loadModels}
-              disabled={loading}
-              className={styles.refreshButton}
-            >
-              <RefreshCw
-                className={`${styles.refreshIcon} ${
-                  loading ? styles.spinning : ""
-                }`}
-              />
-              Refresh
-            </Button>
-          </div>
-
-          <div className={styles.modelsList}>
-            {loading ? (
-              <div className={styles.loading}>
+          <SelectContent className={styles.content}>
+            <div className={styles.contentHeader}>
+              <div className={styles.headerTitle}>
+                <Brain className={styles.headerIcon} />
+                Available Models
+              </div>
+              <Button
+                variant="ghost"
+                size="small"
+                onClick={loadModels}
+                disabled={loading}
+                className={styles.refreshButton}
+              >
                 <RefreshCw
-                  className={`${styles.loadingIcon} ${styles.spinning}`}
+                  className={`${styles.refreshIcon} ${
+                    loading ? styles.spinning : ""
+                  }`}
                 />
-                Loading models...
-              </div>
-            ) : error ? (
-              <div className={styles.error}>
-                <AlertCircle className={styles.errorIcon} />
-                <div className={styles.errorContent}>
-                  <p className={styles.errorTitle}>Failed to load models</p>
-                  <p className={styles.errorMessage}>{error}</p>
-                  <Button variant="secondary" size="small" onClick={loadModels}>
-                    Try Again
-                  </Button>
+                Refresh
+              </Button>
+            </div>
+
+            <div className={styles.modelsList}>
+              {loading ? (
+                <div className={styles.loading}>
+                  <RefreshCw
+                    className={`${styles.loadingIcon} ${styles.spinning}`}
+                  />
+                  Loading models...
                 </div>
-              </div>
-            ) : models.length === 0 ? (
-              <div className={styles.empty}>
-                <Brain className={styles.emptyIcon} />
-                <p>No models available</p>
-                <p className={styles.emptyHint}>
-                  Make sure Ollama is running and has models installed
-                </p>
-              </div>
-            ) : (
-              models.map((model) => (
-                <div
-                  key={model.name}
-                  className={styles.modelItem}
-                  onClick={() => handleModelSelect(model.name)}
-                >
-                  <div className={styles.modelItemContent}>
-                    <div className={styles.modelHeader}>
-                      <span className={styles.modelEmoji}>
-                        {getModelIcon(model)}
-                      </span>
-                      <span className={styles.modelName}>
-                        {formatModelName(model.name)}
-                      </span>
-                      {selectedModel === model.name && (
-                        <span className={styles.selectedBadge}>Selected</span>
-                      )}
-                    </div>
-                    <div className={styles.modelMeta}>
-                      <span className={styles.modelSize}>
-                        {formatModelSize(model.size)}
-                      </span>
-                      <span className={styles.modelModified}>
-                        Updated{" "}
-                        {new Date(model.modified_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    {model.details && (
-                      <div className={styles.modelDetails}>
-                        {model.details.parameter_size && (
-                          <span className={styles.detailItem}>
-                            {model.details.parameter_size}
-                          </span>
-                        )}
-                        {model.details.quantization_level && (
-                          <span className={styles.detailItem}>
-                            {model.details.quantization_level}
-                          </span>
-                        )}
-                      </div>
-                    )}
+              ) : error ? (
+                <div className={styles.error}>
+                  <AlertCircle className={styles.errorIcon} />
+                  <div className={styles.errorContent}>
+                    <p className={styles.errorTitle}>Failed to load models</p>
+                    <p className={styles.errorMessage}>{error}</p>
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={loadModels}
+                    >
+                      Try Again
+                    </Button>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </SelectContent>
-      </Select>
+              ) : models.length === 0 ? (
+                <div className={styles.empty}>
+                  <Brain className={styles.emptyIcon} />
+                  <p>No models available</p>
+                  <p className={styles.emptyHint}>
+                    Make sure Ollama is running and has models installed
+                  </p>
+                </div>
+              ) : (
+                models.map((model) => (
+                  <div
+                    key={model.name}
+                    className={styles.modelItem}
+                    onClick={() => onModelChange(model.name)}
+                  >
+                    <div className={styles.modelItemContent}>
+                      <div className={styles.modelHeader}>
+                        <span className={styles.modelEmoji}>
+                          {getModelIcon(model)}
+                        </span>
+                        <span className={styles.modelName}>
+                          {formatModelName(model.name)}
+                        </span>
+                        {selectedModel === model.name && (
+                          <span className={styles.selectedBadge}>Selected</span>
+                        )}
+                      </div>
+                      <div className={styles.modelMeta}>
+                        <span className={styles.modelSize}>
+                          {formatModelSize(model.size)}
+                        </span>
+                        <span className={styles.modelModified}>
+                          Updated{" "}
+                          {new Date(model.modified_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {model.details && (
+                        <div className={styles.modelDetails}>
+                          {model.details.parameter_size && (
+                            <span className={styles.detailItem}>
+                              {model.details.parameter_size}
+                            </span>
+                          )}
+                          {model.details.quantization_level && (
+                            <span className={styles.detailItem}>
+                              {model.details.quantization_level}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </SelectContent>
+        </Select>
+      </SelectProvider>
     </div>
   );
 }

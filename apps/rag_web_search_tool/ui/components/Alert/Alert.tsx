@@ -2,22 +2,19 @@
  * Alert - Consolidated alert component supporting inline, section, and page levels
  * Replaces both Alert and AlertNotice components
  */
-'use client';
-import * as React from 'react';
-import Button from '../Button';
-import { TimesIcon, LocalIcons } from '@/ui/components/Icon/LocalIcons';
-import { Intent, DismissibleProps } from '@/types/ui';
-import styles from './Alert.module.scss';
+"use client";
+import * as React from "react";
+import Button from "../Button";
+import { LocalIcon } from "../LocalIcons";
+import styles from "./Alert.module.scss";
 
-export type AlertLevel = 'inline' | 'section' | 'page';
+export type AlertLevel = "inline" | "section" | "page";
 
-export interface AlertProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    DismissibleProps {
+export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Visual intent/severity of the alert
    */
-  intent?: Intent;
+  intent?: "info" | "success" | "warning" | "error";
   /**
    * Display level affecting layout and emphasis
    */
@@ -26,17 +23,25 @@ export interface AlertProps
    * Index for dismissible alerts (used in onDismiss callback)
    */
   index?: number;
+  /**
+   * Whether the alert can be dismissed
+   */
+  dismissible?: boolean;
+  /**
+   * Callback when alert is dismissed
+   */
+  onDismiss?: (index: number) => void;
 }
 
 const Container = React.forwardRef<HTMLDivElement, AlertProps>(
   (
     {
-      intent = 'info',
-      level = 'section',
+      intent = "info",
+      level = "section",
       dismissible,
       onDismiss,
       index = 0,
-      className = '',
+      className = "",
       children,
       ...rest
     },
@@ -49,20 +54,20 @@ const Container = React.forwardRef<HTMLDivElement, AlertProps>(
       className,
     ]
       .filter(Boolean)
-      .join(' ');
+      .join(" ");
 
     return (
       <div ref={ref} role="alert" className={alertClassName} {...rest}>
         {children}
         {dismissible && onDismiss && (
-          <div className={styles['__dismiss']}>
+          <div className={styles["__dismiss"]}>
             <Button
               variant="tertiary"
-              onClick={onDismiss}
+              onClick={() => onDismiss?.(index)}
               title="Dismiss this alert"
               data-index={index}
             >
-              <TimesIcon aria-hidden={true} />
+              <LocalIcon name="times" aria-hidden={true} />
               <span className="sr-only">Dismiss this alert</span>
             </Button>
           </div>
@@ -71,35 +76,37 @@ const Container = React.forwardRef<HTMLDivElement, AlertProps>(
     );
   }
 );
-Container.displayName = 'Alert.Container';
+Container.displayName = "Alert.Container";
 
 const Title = ({ children }: { children: React.ReactNode }) => (
-  <h6 className={styles['__title']}>{children}</h6>
+  <h6 className={styles["__title"]}>{children}</h6>
 );
-Title.displayName = 'Alert.Title';
+Title.displayName = "Alert.Title";
 
 const Body = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles['__body']}>{children}</div>
+  <div className={styles["__body"]}>{children}</div>
 );
-Body.displayName = 'Alert.Body';
+Body.displayName = "Alert.Body";
 
-const Icon = ({ intent }: { intent: Intent }) => {
+const Icon = ({
+  intent,
+}: {
+  intent: "info" | "success" | "warning" | "error";
+}) => {
   const icons = {
-    info: 'info-circle' as const,
-    success: 'check-circle' as const,
-    warning: 'exclamation-triangle' as const,
-    danger: 'exclamation-circle' as const,
+    info: "info-circle" as const,
+    success: "check-circle" as const,
+    warning: "exclamation-triangle" as const,
+    error: "exclamation-circle" as const,
   };
 
-  const IconComponent = LocalIcons[icons[intent]];
-
   return (
-    <div className={styles['__icon']}>
-      <IconComponent aria-hidden={true} />
+    <div className={styles["__icon"]}>
+      <LocalIcon name={icons[intent]} aria-hidden={true} />
     </div>
   );
 };
-Icon.displayName = 'Alert.Icon';
+Icon.displayName = "Alert.Icon";
 
 // Compound component pattern
 const Alert = Object.assign(Container, {

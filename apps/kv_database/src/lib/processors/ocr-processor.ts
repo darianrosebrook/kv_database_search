@@ -176,10 +176,19 @@ export class OCRProcessor implements ContentProcessor {
   ): Promise<{
     text: string;
     metadata: OCRContentMetadata;
+    processingTime: number;
   }> {
     try {
+      const startTime = Date.now();
       const buffer = fs.readFileSync(filePath);
-      return await this.extractTextFromBuffer(buffer, options);
+      const result = await this.extractTextFromBuffer(buffer, options);
+      const processingTime = Date.now() - startTime;
+
+      return {
+        text: result.text,
+        metadata: result.metadata,
+        processingTime,
+      };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -197,6 +206,7 @@ export class OCRProcessor implements ContentProcessor {
       return {
         text: `Image OCR Error: Failed to read file - ${errorMessage}`,
         metadata: contentMetadata,
+        processingTime: 0,
       };
     }
   }
@@ -282,7 +292,7 @@ export class OCRProcessor implements ContentProcessor {
       text: result.text,
       metadata: result.metadata,
       success: true,
-      processingTime: Date.now() - Date.now(), // TODO: Calculate actual processing time
+      processingTime: result.processingTime,
       confidence: result.metadata.confidence,
     };
   }

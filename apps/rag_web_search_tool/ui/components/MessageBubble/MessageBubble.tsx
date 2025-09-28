@@ -12,6 +12,8 @@ export interface MessageBubbleProps {
   useGraphRag?: boolean;
   onExploreEntity?: (entity: GraphRagEntity) => void;
   onExploreRelationship?: (relationship: GraphRagRelationship) => void;
+  onReasonAbout?: (entities: GraphRagEntity[]) => void;
+  showEntityActions?: boolean;
   className?: string;
 }
 
@@ -20,6 +22,8 @@ export function MessageBubble({
   useGraphRag = false,
   onExploreEntity,
   onExploreRelationship,
+  onReasonAbout,
+  showEntityActions = false,
   className = "",
 }: MessageBubbleProps) {
   return (

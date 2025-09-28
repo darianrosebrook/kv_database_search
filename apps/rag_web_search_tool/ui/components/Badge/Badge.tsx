@@ -2,12 +2,12 @@
  * Badge - Versatile badge component supporting multiple variants including status indicators
  * Consolidates Badge and Status components
  */
-'use client';
-import * as React from 'react';
-import { Intent, ControlSize } from '@/types/ui';
-import styles from './Badge.module.scss';
+"use client";
+import * as React from "react";
+// import { Intent, ControlSize } from '@/types/ui';
+import styles from "./Badge.module.scss";
 
-export type BadgeVariant = 'default' | 'status' | 'counter' | 'tag';
+export type BadgeVariant = "default" | "status" | "counter" | "tag";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -17,11 +17,11 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Intent/severity for status badges
    */
-  intent?: Intent;
+  intent?: "info" | "success" | "warning" | "error";
   /**
    * Size of the badge
    */
-  size?: ControlSize;
+  size?: "small" | "medium" | "large";
   /**
    * Icon to display (for status badges)
    */
@@ -31,11 +31,11 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
   (
     {
-      variant = 'default',
-      intent = 'info',
-      size = 'md',
+      variant = "default",
+      intent = "info",
+      size = "md",
       icon,
-      className = '',
+      className = "",
       children,
       ...rest
     },
@@ -44,12 +44,12 @@ export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
     const badgeClassName = [
       styles.badge,
       styles[variant],
-      variant === 'status' && styles[intent],
+      variant === "status" && styles[intent],
       styles[size],
       className,
     ]
       .filter(Boolean)
-      .join(' ');
+      .join(" ");
 
     return (
       <div ref={ref} className={badgeClassName} {...rest}>
@@ -59,6 +59,6 @@ export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
     );
   }
 );
-Badge.displayName = 'Badge';
+Badge.displayName = "Badge";
 
 export default Badge;

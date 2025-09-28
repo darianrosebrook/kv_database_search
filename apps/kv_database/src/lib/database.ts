@@ -9,6 +9,7 @@ import {
   ProcessingStatus,
   // ChatMessage, // Unused import
 } from "../types/index";
+import { Workspace } from "./workspace-manager";
 
 // Extended ChatSession interface for database operations
 interface DatabaseChatSession extends ChatSession {
@@ -116,6 +117,39 @@ export class DocumentDatabase {
       await client.query(`
         CREATE INDEX IF NOT EXISTS chat_sessions_created_at_idx
         ON chat_sessions (created_at DESC)
+      `);
+
+      // Create workspaces table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS workspaces (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL UNIQUE,
+          description TEXT,
+          type JSONB NOT NULL,
+          status JSONB NOT NULL,
+          configuration JSONB NOT NULL,
+          metadata JSONB NOT NULL,
+          permissions JSONB NOT NULL,
+          data_sources JSONB DEFAULT '[]'::jsonb,
+          entity_mappings JSONB DEFAULT '[]'::jsonb,
+          statistics JSONB NOT NULL,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+
+      // Create indexes for workspaces
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS workspaces_name_idx
+        ON workspaces (name)
+      `);
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS workspaces_status_idx
+        ON workspaces USING GIN ((status->'current'))
+      `);
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS workspaces_created_at_idx
+        ON workspaces (created_at DESC)
       `);
 
       await client.query(`
@@ -1095,6 +1129,148 @@ export class DocumentDatabase {
          )`,
         [filePath, keepVersions]
       );
+    } finally {
+      client.release();
+    }
+  }
+
+  // ============================================================================
+  // WORKSPACE MANAGEMENT METHODS
+  // ============================================================================
+
+  /**
+   * Save workspace to persistent storage
+   */
+  async saveWorkspace(workspace: Workspace): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      const query = `
+        INSERT INTO workspaces (
+          id, name, description, type, status, configuration, metadata,
+          permissions, data_sources, entity_mappings, statistics, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ON CONFLICT (name) DO UPDATE SET
+          description = EXCLUDED.description,
+          type = EXCLUDED.type,
+          status = EXCLUDED.status,
+          configuration = EXCLUDED.configuration,
+          metadata = EXCLUDED.metadata,
+          permissions = EXCLUDED.permissions,
+          data_sources = EXCLUDED.data_sources,
+          entity_mappings = EXCLUDED.entity_mappings,
+          statistics = EXCLUDED.statistics,
+          updated_at = NOW()
+      `;
+
+      await client.query(query, [
+        workspace.id,
+        workspace.name,
+        workspace.description,
+        JSON.stringify(workspace.type),
+        JSON.stringify(workspace.status),
+        JSON.stringify(workspace.configuration),
+        JSON.stringify(workspace.metadata),
+        JSON.stringify(workspace.permissions),
+        JSON.stringify(workspace.dataSources || []),
+        JSON.stringify(workspace.entityMappings || []),
+        JSON.stringify(workspace.statistics),
+        workspace.metadata?.createdAt || new Date(),
+        new Date(),
+      ]);
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Load workspace from persistent storage
+   */
+  async loadWorkspace(name: string): Promise<Workspace | null> {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(
+        "SELECT * FROM workspaces WHERE name = $1",
+        [name]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        type: JSON.parse(row.type),
+        status: JSON.parse(row.status),
+        configuration: JSON.parse(row.configuration),
+        metadata: JSON.parse(row.metadata),
+        permissions: JSON.parse(row.permissions),
+        dataSources: JSON.parse(row.data_sources || "[]"),
+        entityMappings: JSON.parse(row.entity_mappings || "[]"),
+        statistics: JSON.parse(row.statistics),
+      };
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Load all workspaces from persistent storage
+   */
+  async loadAllWorkspaces(): Promise<Workspace[]> {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(
+        "SELECT * FROM workspaces ORDER BY created_at DESC"
+      );
+
+      return result.rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        type: JSON.parse(row.type),
+        status: JSON.parse(row.status),
+        configuration: JSON.parse(row.configuration),
+        metadata: JSON.parse(row.metadata),
+        permissions: JSON.parse(row.permissions),
+        dataSources: JSON.parse(row.data_sources || "[]"),
+        entityMappings: JSON.parse(row.entity_mappings || "[]"),
+        statistics: JSON.parse(row.statistics),
+      }));
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Delete workspace from persistent storage
+   */
+  async deleteWorkspace(name: string): Promise<boolean> {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(
+        "DELETE FROM workspaces WHERE name = $1",
+        [name]
+      );
+      return result.rowCount > 0;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Check if workspace exists in persistent storage
+   */
+  async workspaceExists(name: string): Promise<boolean> {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(
+        "SELECT 1 FROM workspaces WHERE name = $1",
+        [name]
+      );
+      return result.rows.length > 0;
     } finally {
       client.release();
     }

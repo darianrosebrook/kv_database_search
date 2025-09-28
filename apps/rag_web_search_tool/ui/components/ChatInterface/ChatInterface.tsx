@@ -10,11 +10,11 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Button } from "../Button";
-import { ScrollArea } from "../../../src/components/ui/scroll-area";
+import { ScrollArea } from "../ScrollArea";
 import { ContextChip } from "../ContextChip";
 import { ChatInput } from "../ChatInput";
-import { MessageContent } from "../../../src/components/MessageContent";
-import { LoadingSkeleton } from "../../../src/components/LoadingSkeleton";
+import { MessageContent } from "../MessageContent";
+import { LoadingSkeleton } from "../LoadingSkeleton";
 import styles from "./ChatInterface.module.scss";
 
 interface Message {
@@ -50,7 +50,7 @@ interface ChatSession {
   messageCount: number;
 }
 
-interface ChatInterfaceProps {
+export interface ChatInterfaceProps {
   _initialQuery: string;
   messages: Message[];
   onSendMessage: (
@@ -70,13 +70,13 @@ interface ChatInterfaceProps {
     type: "refine_search" | "new_search" | "filter" | "explore";
     label: string;
     query?: string;
-    filters?;
+    filters?: any;
   }>;
   onSuggestedAction?: (_action: {
     type: "refine_search" | "new_search" | "filter" | "explore";
     label: string;
     query?: string;
-    filters?;
+    filters?: any;
   }) => void;
   selectedModel?: string;
   currentSession?: ChatSession | null;
@@ -152,7 +152,7 @@ export function ChatInterface({
               {contextResults.map((result) => (
                 <div key={result.id}>
                   <ContextChip
-                    result={result}
+                    label={result.title || result.summary || "Result"}
                     onRemove={() => onRemoveContext?.(result.id)}
                   />
                 </div>
@@ -208,16 +208,15 @@ export function ChatInterface({
                 <div
                   className={`${styles.messageBubble} ${styles[message.type]}`}
                 >
-                  <MessageContent
-                    content={message.content}
-                    type={message.type}
-                  />
+                  <MessageContent content={message.content} type="text" />
                 </div>
               </div>
             </motion.div>
           ))}
 
-          {isLoading && <LoadingSkeleton lines={3} showAvatar={true} />}
+          {isLoading && (
+            <LoadingSkeleton height="100px" variant="rectangular" />
+          )}
 
           {/* Suggested Actions */}
           {suggestedActions.length > 0 && (

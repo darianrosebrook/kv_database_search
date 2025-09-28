@@ -1,8 +1,13 @@
 import React, { useMemo } from "react";
 import styles from "./Button.module.scss";
 
-export type ButtonSize = "small" | "medium" | "large";
-export type ButtonVariant = "primary" | "secondary" | "tertiary";
+export type ButtonSize = "small" | "sm" | "medium" | "large";
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "tertiary"
+  | "ghost"
+  | "outline";
 
 interface ButtonBaseProps {
   size?: ButtonSize;
@@ -75,7 +80,8 @@ const Button: React.FC<ButtonProps> = ({
     React.isValidElement(children) &&
     (children.type === "svg" ||
       (children.props &&
-        (children.props["aria-label"] || children.props["data-icon"])));
+        (children.props["aria-label" as keyof typeof children.props] ||
+          children.props["data-icon" as keyof typeof children.props])));
 
   const combinedClassName = useMemo(
     () =>
@@ -99,12 +105,19 @@ const Button: React.FC<ButtonProps> = ({
     ]
   );
 
-  const ariaProps = {
-    ...(hasOnlyIcon && { "aria-label": title || ariaLabel }),
-    ...(ariaExpanded !== undefined && { "aria-expanded": ariaExpanded }),
-    ...(ariaPressed !== undefined && { "aria-pressed": ariaPressed }),
-    ...(role && { role }),
-  } as const;
+  const ariaProps: Record<string, any> = {};
+  if (hasOnlyIcon) {
+    ariaProps["aria-label"] = title || ariaLabel;
+  }
+  if (ariaExpanded !== undefined) {
+    ariaProps["aria-expanded"] = ariaExpanded;
+  }
+  if (ariaPressed !== undefined) {
+    ariaProps["aria-pressed"] = ariaPressed;
+  }
+  if (role) {
+    ariaProps.role = role;
+  }
 
   const renderChildren = () => {
     if (loading) {

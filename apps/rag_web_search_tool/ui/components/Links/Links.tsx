@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { NavigationLink } from "../NavigationLink";
 import { useRef } from "react";
 import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
-import { useFontsLoaded } from "@/hooks/useFontsLoaded";
+// import { useFontsLoaded } from "@/hooks/useFontsLoaded";
 import styles from "./Links.module.scss";
 
 gsap.registerPlugin(useGSAP, SplitText);
@@ -32,7 +32,7 @@ export function AnimatedLink({
   const rootRef = useRef<HTMLAnchorElement | null>(null);
   const textRef = useRef<HTMLSpanElement | null>(null);
   const cloneRef = useRef<HTMLSpanElement | null>(null);
-  const fontsLoaded = useFontsLoaded();
+  const fontsLoaded = true; // Simplified for now
 
   useGSAP(
     () => {
@@ -103,7 +103,7 @@ export function AnimatedLink({
   );
 
   return (
-    <Link
+    <NavigationLink
       ref={rootRef}
       href={href}
       className={`${styles.root} ${className || ""}`}
@@ -118,7 +118,7 @@ export function AnimatedLink({
           {children}
         </span>
       </span>
-    </Link>
+    </NavigationLink>
   );
 }
 

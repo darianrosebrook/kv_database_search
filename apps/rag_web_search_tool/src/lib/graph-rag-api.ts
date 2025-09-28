@@ -1,5 +1,5 @@
 // Enhanced API service for Graph RAG integration
-const GRAPH_RAG_API_BASE_URL = "http://localhost:3001/api/graph-rag";
+const GRAPH_RAG_API_BASE_URL = "http://localhost:3001";
 
 export interface GraphRagEntity {
   id: string;
@@ -217,7 +217,7 @@ export interface ProvenanceRecord {
     options?: Record<string, unknown>;
   };
   outputData: {
-    results;
+    results: any[];
     metrics: Record<string, number>;
     confidence: number;
     explanation?: string;

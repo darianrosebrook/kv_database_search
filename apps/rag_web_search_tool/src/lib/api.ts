@@ -48,6 +48,41 @@ export interface SearchOptions {
   rerank?: boolean;
 }
 
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: Array<{
+    id: string;
+    type: "user" | "assistant";
+    content: string;
+    timestamp: string;
+  }>;
+  created_at: string;
+  updated_at: string;
+  model?: string;
+  message_count?: number;
+  topics?: string[];
+}
+
+export interface ChatHistoryResponse {
+  sessions: ChatSession[];
+}
+
+export interface SaveChatRequest {
+  title?: string;
+  messages: Array<{
+    role: string;
+    content: string;
+  }>;
+  model?: string;
+}
+
+export interface SaveChatResponse {
+  success: boolean;
+  session_id?: string;
+  error?: string;
+}
+
 class ApiService {
   private baseUrl: string;
 
@@ -55,7 +90,7 @@ class ApiService {
     this.baseUrl = baseUrl;
   }
 
-  private transformMetaToSource(meta): SearchResult["source"] {
+  private transformMetaToSource(meta: any): SearchResult["source"] {
     // Extract external URL from meta.uri (this should be the Coda document URL)
     const url = meta.uri || meta.url || "#";
 
@@ -117,7 +152,7 @@ class ApiService {
       const data = await response.json();
 
       // Transform backend response to frontend format
-      const transformedResults = data.results.map((result) => ({
+      const transformedResults = data.results.map((result: any) => ({
         ...result,
         source: this.transformMetaToSource(result.meta),
       }));
@@ -141,7 +176,7 @@ class ApiService {
     options: SearchOptions = {}
   ): Promise<
     SearchResponse & {
-      resultsWithRationales?: Array<SearchResult & { rationale? }>;
+      resultsWithRationales?: Array<SearchResult & { rationale?: any }>;
     }
   > {
     try {
@@ -166,7 +201,7 @@ class ApiService {
 
       // Transform backend response to frontend format
       if (data.results) {
-        const transformedResults = data.results.map((result) => ({
+        const transformedResults = data.results.map((result: any) => ({
           ...result,
           source: this.transformMetaToSource(result.meta),
         }));
@@ -174,10 +209,12 @@ class ApiService {
         return {
           ...data,
           results: transformedResults,
-          resultsWithRationales: data.resultsWithRationales?.map((result) => ({
-            ...result,
-            source: this.transformMetaToSource(result.meta),
-          })),
+          resultsWithRationales: data.resultsWithRationales?.map(
+            (result: any) => ({
+              ...result,
+              source: this.transformMetaToSource(result.meta),
+            })
+          ),
         };
       }
 
@@ -192,7 +229,7 @@ class ApiService {
     }
   }
 
-  async generateRationale(query: string, resultId: string): Promise {
+  async generateRationale(query: string, resultId: string): Promise<any> {
     try {
       const response = await fetch(`${this.baseUrl}/search/rationale`, {
         method: "POST",
@@ -228,12 +265,12 @@ class ApiService {
     message: string,
     options: {
       context?: Array<{ role: string; content: string }>;
-      searchResults?: Array;
+      searchResults?: Array<any>;
       originalQuery?: string;
       searchMetadata?: {
         totalResults: number;
         searchTime: number;
-        filters?;
+        filters?: any;
       };
       model?: string;
     } = {}
@@ -244,7 +281,7 @@ class ApiService {
       type: "refine_search" | "new_search" | "filter" | "explore";
       label: string;
       query?: string;
-      filters?;
+      filters?: any;
     }>;
     timestamp: string;
     model?: string;
@@ -283,7 +320,7 @@ class ApiService {
     }
   }
 
-  async explain(query: string, resultId: string): Promise {
+  async explain(query: string, resultId: string): Promise<any> {
     try {
       const response = await fetch(`${this.baseUrl}/search/explain`, {
         method: "POST",
@@ -314,7 +351,7 @@ class ApiService {
     }
   }
 
-  async getHealth(): Promise {
+  async getHealth(): Promise<any> {
     try {
       const response = await fetch(`${this.baseUrl}/health`);
 
@@ -336,7 +373,7 @@ class ApiService {
     }
   }
 
-  async getStats(): Promise {
+  async getStats(): Promise<any> {
     try {
       const response = await fetch(`${this.baseUrl}/stats`);
 
@@ -387,6 +424,111 @@ class ApiService {
       console.error("Models API error:", error);
       throw new Error(
         `Failed to get models: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  // Chat history and session management
+  async getChatHistory(): Promise<ChatHistoryResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/history`);
+
+      if (!response.ok) {
+        throw new Error(
+          `Chat history request failed: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Chat history API error:", error);
+      throw new Error(
+        `Failed to get chat history: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  async loadChatSession(sessionId: string): Promise<ChatSession | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/session/${sessionId}`);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        throw new Error(
+          `Load chat session failed: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      return data.session || null;
+    } catch (error) {
+      console.error("Load chat session API error:", error);
+      throw new Error(
+        `Failed to load chat session: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  async saveChatSession(chatData: SaveChatRequest): Promise<SaveChatResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/save`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(chatData),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Save chat session failed: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Save chat session API error:", error);
+      throw new Error(
+        `Failed to save chat session: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  async deleteChatSession(
+    sessionId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/chat/session/${sessionId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Delete chat session failed: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Delete chat session API error:", error);
+      throw new Error(
+        `Failed to delete chat session: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );

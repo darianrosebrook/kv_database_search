@@ -1,7 +1,7 @@
 "use client";
 
 import React, { ReactNode, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+// import { usePathname } from "next/navigation";
 import styles from "./PageTransition.module.scss";
 
 interface PageTransitionProps {
@@ -42,7 +42,8 @@ export function PageTransition({
   enabled = true,
   className,
 }: PageTransitionProps) {
-  const pathname = usePathname();
+  const pathname =
+    typeof window !== "undefined" ? window.location.pathname : "/";
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [mounted, setMounted] = useState(false);
 

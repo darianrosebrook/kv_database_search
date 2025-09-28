@@ -90,7 +90,7 @@ export function PerfPanel({ targetWindow, sampleMs = 5000 }: PerfPanelProps) {
       try {
         const win = resolveTargetWindow();
         if ("memory" in win.performance) {
-          const memory = win.performance.memory;
+          const memory = (win.performance as any).memory;
           setMetrics((prev) => ({
             ...prev,
             memoryEstimate: Math.round(memory.usedJSHeapSize / 1024 / 1024), // MB

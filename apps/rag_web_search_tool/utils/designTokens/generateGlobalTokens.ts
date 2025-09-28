@@ -195,7 +195,7 @@ function generate(): void {
   ].join("\n\n");
 
   fs.writeFileSync(OUTPUT_PATH, content, "utf8");
-  // eslint-disable-next-line no-console
+   
   console.log(`[tokens] Wrote ${path.relative(PROJECT_ROOT, OUTPUT_PATH)}`);
 }
 

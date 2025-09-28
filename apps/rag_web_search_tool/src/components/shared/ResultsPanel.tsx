@@ -22,7 +22,7 @@ interface ResultsPanelProps {
   useGraphRag: boolean;
   graphRagResults: GraphRagSearchResult[];
   selectedGraphRagResult: GraphRagSearchResult | null;
-  reasoningResults: ReasoningResult;
+  reasoningResults?: ReasoningResult;
   allEntities: GraphRagEntity[];
   onSelectGraphRagResult: (result: GraphRagSearchResult) => void;
   onExploreEntity: (entity: GraphRagEntity) => void;
@@ -81,27 +81,34 @@ export function ResultsPanel({
             const adaptedResult = useGraphRag
               ? {
                   id: result.id,
-                  title: result.metadata.sourceFile || "Graph RAG Result",
-                  summary: result.text,
-                  highlights: [result.text.substring(0, 200) + "..."],
-                  confidenceScore: result.score,
-                  rationale: result.explanation || "Graph-based search result",
-                  tags: result.entities.map((e) => e.type).slice(0, 3),
+                  title:
+                    (result as any).metadata?.sourceFile || "Graph RAG Result",
+                  summary: (result as any).text || "",
+                  highlights: [
+                    (result as any).text?.substring(0, 200) + "..." || "",
+                  ],
+                  confidenceScore: (result as any).score || 0,
+                  rationale:
+                    (result as any).explanation || "Graph-based search result",
+                  tags:
+                    (result as any).entities
+                      ?.map((e: any) => e.type)
+                      .slice(0, 3) || [],
                   lastUpdated:
-                    result.metadata.updatedAt ||
-                    result.metadata.createdAt ||
+                    (result as any).metadata?.updatedAt ||
+                    (result as any).metadata?.createdAt ||
                     new Date().toISOString(),
                   source: {
                     type: "documentation" as const,
-                    path: result.metadata.sourceFile || "",
-                    url: result.metadata.url || "#",
+                    path: (result as any).metadata?.sourceFile || "",
+                    url: (result as any).metadata?.url || "#",
                   },
-                  text: result.text,
+                  text: (result as any).text || "",
                   meta: {
-                    contentType: result.metadata.contentType,
-                    section: result.metadata.section,
-                    breadcrumbs: result.metadata.breadcrumbs || [],
-                    uri: result.metadata.uri,
+                    contentType: (result as any).metadata?.contentType || "",
+                    section: (result as any).metadata?.section || "",
+                    breadcrumbs: (result as any).metadata?.breadcrumbs || [],
+                    uri: (result as any).metadata?.uri || "",
                   },
                 }
               : result;
@@ -109,14 +116,16 @@ export function ResultsPanel({
             return (
               <ResultCard
                 key={result.id}
-                result={adaptedResult}
+                result={adaptedResult as any}
                 index={index}
                 query={query}
                 isSelected={
                   result.id ===
                   (selectedResult?.id || selectedGraphRagResult?.id)
                 }
-                onSelect={useGraphRag ? onSelectGraphRagResult : onSelectResult}
+                onSelect={
+                  useGraphRag ? (onSelectGraphRagResult as any) : onSelectResult
+                }
                 onAddToContext={onAddToContext}
               />
             );

@@ -3,13 +3,16 @@ import React, { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Workspace,
+  WorkspaceServiceResponse,
+  DataSource,
+} from "../services/WorkspaceService";
+import {
   MultiModalProcessingResult,
   ContentTypeInfo,
   ProcessingStatus,
   ProcessorOptions,
-  WorkspaceServiceResponse,
-  DataSource,
-} from "../services/WorkspaceService";
+  loadSupportedContentTypes,
+} from "../services/MultiModalService";
 import {
   GraphQuery,
   GraphQueryResult,
@@ -53,6 +56,9 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
   const [processingResults, setProcessingResults] = useState<
     Record<string, MultiModalProcessingResult>
   >({});
+  const [supportedContentTypes, setSupportedContentTypes] = useState<
+    ContentTypeInfo[]
+  >([]);
 
   // Workspace state
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -99,7 +105,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
   React.useEffect(() => {
     if (isOpen) {
       loadWorkspaces();
-      loadSupportedContentTypes();
+      loadSupportedContentTypes().then(setSupportedContentTypes);
     }
   }, [isOpen]);
 
@@ -240,13 +246,13 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               fileId,
               fileName: status.fileName,
               contentType: status.result?.metadata?.type || "unknown",
-              results: [status.result],
+              results: status.result ? [status.result] : [],
               summary: {
-                totalTextLength: status.result.text.length,
-                totalChunks: status.result.chunks?.length || 0,
-                totalEntities: status.result.entities?.length || 0,
-                totalImages: status.result.images?.length || 0,
-                processingTime: status.result.processingTime,
+                totalTextLength: status.result?.text?.length || 0,
+                totalChunks: status.result?.chunks?.length || 0,
+                totalEntities: status.result?.entities?.length || 0,
+                totalImages: status.result?.images?.length || 0,
+                processingTime: status.result?.processingTime || 0,
                 success: true,
                 errors: [],
               },
@@ -319,6 +325,7 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
             status: "completed",
             progress: 100,
             result: result.results[0],
+            startedAt: new Date().toISOString(),
             completedAt: new Date().toISOString(),
           },
         }));
@@ -864,7 +871,11 @@ export const MultiModalInterface: React.FC<MultiModalInterfaceProps> = ({
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setCurrentTab(tab.id)}
+                  onClick={() =>
+                    setCurrentTab(
+                      tab.id as "upload" | "workspace" | "graph" | "settings"
+                    )
+                  }
                   className={`flex items-center space-x-2 px-4 py-3 border-b-2 transition-colors ${
                     currentTab === tab.id
                       ? "border-primary text-primary"

@@ -42,7 +42,7 @@ export type ControlDef<T = unknown> = {
   label: string;
   kind: ControlKind;
   defaultValue: T;
-  options?: { label: string; value }[];
+  options?: { label: string; value: any }[];
   min?: number;
   max?: number;
   step?: number;

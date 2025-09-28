@@ -1,39 +1,39 @@
-import { useMemo } from 'react';
-import { useFieldCtx } from './FieldProvider';
+/**
+ * Hook for form field control
+ */
+import { useId } from "react";
 
-type FieldControlAriaProps = Readonly<{
-  id: string;
-  name: string;
-  'aria-labelledby': string;
-  'aria-describedby'?: string;
-  'aria-errormessage'?: string;
-  'aria-invalid'?: true;
+export interface FieldControlOptions {
   required?: boolean;
   disabled?: boolean;
-  readOnly?: boolean;
-  onBlur: () => void;
-}>;
-
-export function useFieldControl<
-  T extends HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement,
->() {
-  const f = useFieldCtx();
-  return useMemo(
-    () => ({
-      controlProps: {
-        id: f.inputId,
-        name: f.name,
-        'aria-labelledby': f.labelId,
-        'aria-describedby': f.describedBy,
-        'aria-errormessage': f.errors.length ? f.errId : undefined,
-        'aria-invalid': f.errors.length ? true : undefined,
-        required: f.required || undefined,
-        disabled: f.disabled || undefined,
-        readOnly: f.readOnly || undefined,
-        onBlur: () => f.onBlur(),
-      } satisfies FieldControlAriaProps,
-      field: f,
-    }),
-    [f]
-  );
 }
+
+export const useFieldControl = (
+  name: string,
+  options: FieldControlOptions = {}
+) => {
+  const id = useId();
+
+  // Mock field object - replace with actual form library integration
+  const field = {
+    value: "",
+    setValue: (value: any) => {
+      console.log(`Setting ${name} to:`, value);
+    },
+    name,
+  };
+
+  const controlProps = {
+    id,
+    name,
+    required: options.required,
+    disabled: options.disabled,
+    "aria-describedby": options.required ? `${id}-description` : undefined,
+    "aria-invalid": false,
+  };
+
+  return {
+    field,
+    controlProps,
+  };
+};

@@ -1,0 +1,24 @@
+.logoMarquee {
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  width: 100%;
+}
+
+.content {
+  display: inline-block;
+  animation: marquee 20s linear infinite;
+}
+
+[data-direction="right"] .content {
+  animation-direction: reverse;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}

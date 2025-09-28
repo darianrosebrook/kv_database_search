@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, {
   useRef,
   useId,
@@ -10,16 +10,16 @@ import React, {
   useCallback,
   forwardRef,
   MutableRefObject,
-} from 'react';
-import { gsap } from 'gsap';
-import styles from './Popover.module.scss';
-import { createPortal } from 'react-dom';
+} from "react";
+import { gsap } from "gsap";
+import styles from "./Popover.module.scss";
+import { createPortal } from "react-dom";
 
 interface PopoverProps {
   children: React.ReactNode;
   offset?: number;
-  placement?: 'top' | 'bottom' | 'left' | 'right' | 'auto';
-  triggerStrategy?: 'click' | 'hover';
+  placement?: "top" | "bottom" | "left" | "right" | "auto";
+  triggerStrategy?: "click" | "hover";
   closeOnOutsideClick?: boolean;
   closeOnEscape?: boolean;
   onOpen?: () => void;
@@ -61,8 +61,8 @@ interface PopoverContextType {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   offset: number;
-  placement: Required<NonNullable<PopoverProps['placement']>>;
-  triggerStrategy: Required<NonNullable<PopoverProps['triggerStrategy']>>;
+  placement: Required<NonNullable<PopoverProps["placement"]>>;
+  triggerStrategy: Required<NonNullable<PopoverProps["triggerStrategy"]>>;
   closeOnOutsideClick: boolean;
   closeOnEscape: boolean;
   anchorEl: HTMLElement | null;
@@ -76,8 +76,8 @@ const Popover: React.FC<PopoverProps> & {
 } = ({
   children,
   offset = 8,
-  placement = 'auto',
-  triggerStrategy = 'click',
+  placement = "auto",
+  triggerStrategy = "click",
   closeOnOutsideClick = true,
   closeOnEscape = true,
   className,
@@ -93,7 +93,7 @@ const Popover: React.FC<PopoverProps> & {
   const [position, setPosition] = useState<Position>({ top: 0, left: 0 });
   const [internalOpen, setInternalOpen] = useState(false);
 
-  const isControlled = typeof open === 'boolean';
+  const isControlled = typeof open === "boolean";
   const isOpen = isControlled ? (open as boolean) : internalOpen;
 
   const anchorEl = anchor ?? null;
@@ -119,23 +119,23 @@ const Popover: React.FC<PopoverProps> & {
       let left = 0;
 
       switch (placement) {
-        case 'top':
+        case "top":
           top = triggerRect.top - contentRect.height - offset;
           left = triggerRect.left + (triggerRect.width - contentRect.width) / 2;
           break;
-        case 'bottom':
+        case "bottom":
           top = triggerRect.bottom + offset;
           left = triggerRect.left + (triggerRect.width - contentRect.width) / 2;
           break;
-        case 'left':
+        case "left":
           top = triggerRect.top + (triggerRect.height - contentRect.height) / 2;
           left = triggerRect.left - contentRect.width - offset;
           break;
-        case 'right':
+        case "right":
           top = triggerRect.top + (triggerRect.height - contentRect.height) / 2;
           left = triggerRect.right + offset;
           break;
-        case 'auto':
+        case "auto":
         default: {
           // Prefer bottom placement; flip to top if overflow; clamp horizontally
           let calculatedLeft =
@@ -181,19 +181,19 @@ const Popover: React.FC<PopoverProps> & {
     };
 
     const handleEscapeKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) setIsOpen(false);
+      if (e.key === "Escape" && isOpen) setIsOpen(false);
     };
 
     if (closeOnOutsideClick)
-      document.addEventListener('mousedown', handleClickOutside);
-    if (closeOnEscape) document.addEventListener('keydown', handleEscapeKey);
+      document.addEventListener("mousedown", handleClickOutside);
+    if (closeOnEscape) document.addEventListener("keydown", handleEscapeKey);
 
     return () => {
       if (closeOnOutsideClick) {
-        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener("mousedown", handleClickOutside);
       }
       if (closeOnEscape) {
-        document.removeEventListener('keydown', handleEscapeKey);
+        document.removeEventListener("keydown", handleEscapeKey);
       }
     };
   }, [isOpen, closeOnOutsideClick, closeOnEscape, anchorEl, setIsOpen]);
@@ -216,7 +216,7 @@ const Popover: React.FC<PopoverProps> & {
         anchorEl,
       }}
     >
-      <div className={`${styles.popoverContainer} ${className || ''}`}>
+      <div className={`${styles.popoverContainer} ${className || ""}`}>
         {children}
       </div>
     </PopoverContext.Provider>
@@ -224,12 +224,12 @@ const Popover: React.FC<PopoverProps> & {
 };
 
 const Trigger = forwardRef<HTMLElement, TriggerProps>(
-  ({ children, className, as: Component = 'div', onClick }, forwardedRef) => {
+  ({ children, className, as: Component = "div", onClick }, forwardedRef) => {
     const context = useContext(PopoverContext);
 
     if (!context) {
       throw new Error(
-        'Popover.Trigger must be used within a Popover component'
+        "Popover.Trigger must be used within a Popover component"
       );
     }
 
@@ -239,7 +239,7 @@ const Trigger = forwardRef<HTMLElement, TriggerProps>(
       triggerRef.current = element;
 
       if (forwardedRef) {
-        if (typeof forwardedRef === 'function') {
+        if (typeof forwardedRef === "function") {
           forwardedRef(element);
         } else {
           forwardedRef.current = element;
@@ -248,22 +248,24 @@ const Trigger = forwardRef<HTMLElement, TriggerProps>(
     };
 
     const handleClick = (e: React.MouseEvent) => {
-      if (triggerStrategy === 'click') setIsOpen(!isOpen);
+      if (triggerStrategy === "click") setIsOpen(!isOpen);
       onClick?.(e);
     };
 
     const handleMouseEnter = () => {
-      if (triggerStrategy === 'hover') setIsOpen(true);
+      if (triggerStrategy === "hover") setIsOpen(true);
     };
 
     const handleMouseLeave = () => {
-      if (triggerStrategy === 'hover') setIsOpen(false);
+      if (triggerStrategy === "hover") setIsOpen(false);
     };
 
     return (
       <Component
         ref={handleRefs}
-        className={`${styles.popoverTrigger} ${isOpen ? styles.activeTrigger : ''} ${className || ''}`}
+        className={`${styles.popoverTrigger} ${
+          isOpen ? styles.activeTrigger : ""
+        } ${className || ""}`}
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -276,7 +278,7 @@ const Trigger = forwardRef<HTMLElement, TriggerProps>(
   }
 );
 
-Trigger.displayName = 'Trigger';
+Trigger.displayName = "Trigger";
 
 const Content: React.FC<ContentProps> = ({
   children,
@@ -287,7 +289,7 @@ const Content: React.FC<ContentProps> = ({
   const context = useContext(PopoverContext);
 
   if (!context) {
-    throw new Error('Popover.Content must be used within a Popover component');
+    throw new Error("Popover.Content must be used within a Popover component");
   }
 
   const { popoverId, position, updatePosition, isOpen, contentRef } = context;
@@ -297,27 +299,27 @@ const Content: React.FC<ContentProps> = ({
   const getMotionTokens = useCallback(() => {
     const style = getComputedStyle(document.documentElement);
     const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
+      "(prefers-reduced-motion: reduce)"
     ).matches;
 
     return {
       duration: {
         fast: prefersReducedMotion
           ? 0
-          : parseFloat(style.getPropertyValue('--semantic-duration-fast')) /
+          : parseFloat(style.getPropertyValue("--semantic-duration-fast")) /
             1000,
         medium: prefersReducedMotion
           ? 0
-          : parseFloat(style.getPropertyValue('--semantic-duration-medium')) /
+          : parseFloat(style.getPropertyValue("--semantic-duration-medium")) /
             1000,
       },
       easing: {
-        standard: style.getPropertyValue('--semantic-easing-standard').trim(),
+        standard: style.getPropertyValue("--semantic-easing-standard").trim(),
         emphasized: style
-          .getPropertyValue('--semantic-easing-emphasized')
+          .getPropertyValue("--semantic-easing-emphasized")
           .trim(),
         decelerated: style
-          .getPropertyValue('--semantic-easing-decelerated')
+          .getPropertyValue("--semantic-easing-decelerated")
           .trim(),
       },
       prefersReducedMotion,
@@ -340,15 +342,15 @@ const Content: React.FC<ContentProps> = ({
       const contentElement = contentRef.current;
       const tokens = getMotionTokens();
 
-      contentElement.style.opacity = '0';
-      contentElement.style.transform = 'translateY(-10px) scale(0.95)';
+      contentElement.style.opacity = "0";
+      contentElement.style.transform = "translateY(-10px) scale(0.95)";
 
       animationRef.current = gsap.to(contentElement, {
         duration: tokens.duration.medium,
         opacity: 1,
         y: 0,
         scale: 1,
-        ease: tokens.prefersReducedMotion ? 'none' : 'back.out(1.7)',
+        ease: tokens.prefersReducedMotion ? "none" : "back.out(1.7)",
         onComplete: () => {},
       });
 
@@ -357,16 +359,16 @@ const Content: React.FC<ContentProps> = ({
         updatePosition();
         onPositionUpdate?.(position);
       };
-      window.addEventListener('resize', handleUpdate);
-      window.addEventListener('scroll', handleUpdate);
+      window.addEventListener("resize", handleUpdate);
+      window.addEventListener("scroll", handleUpdate);
 
       return () => {
         resizeObserver.disconnect();
-        window.removeEventListener('resize', handleUpdate);
-        window.removeEventListener('scroll', handleUpdate);
+        window.removeEventListener("resize", handleUpdate);
+        window.removeEventListener("scroll", handleUpdate);
         if (animationRef.current) animationRef.current.kill();
-        contentElement.style.transform = '';
-        contentElement.style.opacity = '';
+        contentElement.style.transform = "";
+        contentElement.style.opacity = "";
       };
     }
   }, [updatePosition, isOpen, contentRef, getMotionTokens]);
@@ -380,7 +382,7 @@ const Content: React.FC<ContentProps> = ({
         duration: tokens.duration.fast,
         opacity: 0,
         scale: 0.95,
-        ease: tokens.prefersReducedMotion ? 'none' : 'power2.in',
+        ease: tokens.prefersReducedMotion ? "none" : "power2.in",
         onComplete: () => {},
       });
       return () => {
@@ -395,9 +397,9 @@ const Content: React.FC<ContentProps> = ({
     <div
       ref={contentRef}
       id={popoverId}
-      className={`${styles.popoverContent} ${className || ''}`}
+      className={`${styles.popoverContent} ${className || ""}`}
       style={{
-        position: 'fixed',
+        position: "fixed",
         top: `${position.top}px`,
         left: `${position.left}px`,
         ...style,
@@ -407,7 +409,7 @@ const Content: React.FC<ContentProps> = ({
     </div>
   );
 
-  return typeof document !== 'undefined'
+  return typeof document !== "undefined"
     ? createPortal(node, document.body)
     : node;
 };
@@ -415,4 +417,5 @@ const Content: React.FC<ContentProps> = ({
 Popover.Trigger = Trigger;
 Popover.Content = Content;
 
+export { Content, Trigger };
 export default Popover;

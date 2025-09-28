@@ -1,19 +1,23 @@
-'use client';
-import { useRef } from 'react';
-import Link from 'next/link';
-import gsap from 'gsap';
-import { useGSAP } from '@gsap/react';
-import Styles from './index.module.css';
-import { horizontalLoop } from '@/utils/helpers';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { byPrefixAndName } from '@awesome.me/kit-0ba7f5fefb/icons';
-import Icon from '../../components/Icon';
+"use client";
+import { useRef } from "react";
+import Link from "next/link";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import Styles from "./index.module.css";
+import { horizontalLoop } from "@/utils/helpers";
+import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import {
+  faGithub,
+  faTwitter,
+  faLinkedin,
+} from "@fortawesome/free-brands-svg-icons";
+import Icon from "../../components/Icon";
 type MarqueeProps = {
   title: string;
   icon: IconDefinition;
   url: string;
 };
-const faArrowUpRight = byPrefixAndName['far']['arrow-up-right'];
+const faArrowUpRightIcon = faGithub; // Using github as a placeholder
 
 const Marquee: React.FC<MarqueeProps> = ({ title, icon, url }) => {
   const marqueeRef = useRef<HTMLDivElement>(null); // Create a ref for the marquee element
@@ -46,7 +50,7 @@ const Marquee: React.FC<MarqueeProps> = ({ title, icon, url }) => {
       <Link href={url} className={Styles.socialLink}>
         <h4 className={Styles.socialLinkTitle}>
           {title.toUpperCase()}
-          <Icon width={48} height={48} icon={faArrowUpRight} />
+          <Icon width={48} height={48} icon={faArrowUpRightIcon} />
         </h4>
         <div className={Styles.marquee} ref={marqueeRef}>
           {clones && clones.map((clone, index) => clone(index))}

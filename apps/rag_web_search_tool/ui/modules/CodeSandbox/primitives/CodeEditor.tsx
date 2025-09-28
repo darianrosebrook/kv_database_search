@@ -26,7 +26,7 @@ export const CodeEditor = React.memo(function CodeEditor({
       wrapContent={wrap}
       readOnly={readOnly}
       style={{ height }}
-      decorators={decorators}
+      // decorators={decorators}
     />
   );
 });

@@ -1,6 +1,6 @@
-import { BreadcrumbNavigationLink } from '@/ui/components/PageTransition';
-import React from 'react';
-import styles from './Breadcrumbs.module.scss';
+import { BreadcrumbNavigationLink } from "../PageTransition";
+import React from "react";
+import styles from "./Breadcrumbs.module.scss";
 
 export type Crumb = {
   label: string;

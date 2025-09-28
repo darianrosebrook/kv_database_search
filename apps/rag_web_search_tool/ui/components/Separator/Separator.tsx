@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./Separator.module.scss";
 
-interface SeparatorProps {
+export interface SeparatorProps {
   className?: string;
   orientation?: "horizontal" | "vertical";
 }

@@ -2,12 +2,12 @@
  * Progress - Determinate and indeterminate progress indicators
  * Supports linear and circular variants
  */
-'use client';
-import React, { forwardRef } from 'react';
-import { ControlSize, Intent } from '@/types/ui';
-import styles from './Progress.module.scss';
+"use client";
+import React, { forwardRef } from "react";
+// import { ControlSize, Intent } from '@/types/ui';
+import styles from "./Progress.module.scss";
 
-export type ProgressVariant = 'linear' | 'circular';
+export type ProgressVariant = "linear" | "circular";
 
 export interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -25,11 +25,11 @@ export interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Size of the progress indicator
    */
-  size?: ControlSize;
+  size?: "small" | "medium" | "large";
   /**
    * Visual intent/color
    */
-  intent?: Intent;
+  intent?: "info" | "success" | "warning" | "error";
   /**
    * Label for accessibility
    */
@@ -49,13 +49,13 @@ const Progress = forwardRef<HTMLDivElement, ProgressProps>(
     {
       value,
       max = 100,
-      variant = 'linear',
-      size = 'md',
-      intent = 'info',
+      variant = "linear",
+      size = "md",
+      intent = "info",
       label,
       showValue = false,
       formatValue,
-      className = '',
+      className = "",
       ...rest
     },
     ref
@@ -75,22 +75,22 @@ const Progress = forwardRef<HTMLDivElement, ProgressProps>(
       className,
     ]
       .filter(Boolean)
-      .join(' ');
+      .join(" ");
 
     const formattedValue = formatValue
       ? formatValue(normalizedValue, max)
       : `${Math.round(percentage)}%`;
 
     const ariaProps = {
-      role: 'progressbar',
-      'aria-label': label,
-      'aria-valuenow': isIndeterminate ? undefined : normalizedValue,
-      'aria-valuemin': 0,
-      'aria-valuemax': max,
-      'aria-valuetext': isIndeterminate ? 'Loading...' : formattedValue,
+      role: "progressbar",
+      "aria-label": label,
+      "aria-valuenow": isIndeterminate ? undefined : normalizedValue,
+      "aria-valuemin": 0,
+      "aria-valuemax": max,
+      "aria-valuetext": isIndeterminate ? "Loading..." : formattedValue,
     };
 
-    if (variant === 'circular') {
+    if (variant === "circular") {
       const radius = 16;
       const circumference = 2 * Math.PI * radius;
       const strokeDashoffset = isIndeterminate
@@ -154,6 +154,6 @@ const Progress = forwardRef<HTMLDivElement, ProgressProps>(
   }
 );
 
-Progress.displayName = 'Progress';
+Progress.displayName = "Progress";
 
 export default Progress;

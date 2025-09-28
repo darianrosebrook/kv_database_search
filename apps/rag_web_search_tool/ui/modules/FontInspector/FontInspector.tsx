@@ -11,7 +11,7 @@ import React, {
 import * as fontkit from 'fontkit';
 import type { Font, Glyph } from 'fontkit';
 import styles from './FontInspector.module.scss';
-import { DrawColors } from '@/utils/geometry/drawing';
+// import { DrawColors } from '@/utils/geometry/drawing';
 import { InspectorControls } from './InspectorControls';
 import { AnatomyControls } from './AnatomyControls';
 import { SymbolGrid } from './SymbolGrid';
@@ -60,7 +60,7 @@ interface InspectorContextType {
   anatomyFeatures: AnatomyFeature[];
   selectedAnatomy: Map<string, AnatomyFeature>;
   toggleAnatomy: (feature: AnatomyFeature) => void;
-  colors: DrawColors;
+  colors: any;
 }
 
 // ---------------------------
@@ -98,7 +98,7 @@ export const InspectorProvider: React.FC<{
   const [glyphUnicode, setGlyphUnicode] = useState<number>(0x0041);
   const [showDetails, setShowDetails] = useState<boolean>(false);
   const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('light');
-  const [colors, setColors] = useState<DrawColors>({
+  const [colors, setColors] = useState<any>({
     metricStroke: '',
     metricFill: '',
     anchorFill: '',

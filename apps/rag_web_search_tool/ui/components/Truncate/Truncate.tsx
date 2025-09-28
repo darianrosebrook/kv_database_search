@@ -60,10 +60,10 @@ export const Truncate = React.forwardRef<HTMLElement, TruncateProps>(
       [isExpanded, onToggle]
     );
 
-    const customStyle: React.CSSProperties = {
+    const customStyle = {
       ...style,
-      ["--truncate-lines"]: lines,
-    };
+      ["--truncate-lines" as any]: lines,
+    } as React.CSSProperties;
 
     return React.createElement(
       Component,

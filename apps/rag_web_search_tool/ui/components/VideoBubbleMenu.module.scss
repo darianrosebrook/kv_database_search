@@ -1,0 +1,28 @@
+.videoBubbleMenu {
+  position: relative;
+}
+
+.trigger {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 80px;
+}

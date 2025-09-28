@@ -1,7 +1,7 @@
 import React, { forwardRef } from "react";
 import styles from "./ScrollArea.module.scss";
 
-interface ScrollAreaProps {
+export interface ScrollAreaProps {
   className?: string;
   children: React.ReactNode;
 }

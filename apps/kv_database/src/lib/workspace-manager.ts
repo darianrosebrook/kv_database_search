@@ -341,7 +341,43 @@ export class WorkspaceManager {
     this.ingestionEngine = new IngestionEngine(database);
     this.queryFederator = new QueryFederator(database);
 
+    // Load workspaces from persistent storage on initialization
+    this.loadWorkspacesFromStorage();
+
     console.log("🚀 Workspace Manager initialized");
+  }
+
+  // ============================================================================
+  // INITIALIZATION AND PERSISTENCE METHODS
+  // ============================================================================
+
+  /**
+   * Load workspaces from persistent storage on startup
+   */
+  private async loadWorkspacesFromStorage(): Promise<void> {
+    try {
+      console.log("🔄 Loading workspaces from persistent storage...");
+      const workspaces = await this.database.loadAllWorkspaces();
+
+      for (const workspace of workspaces) {
+        // Only load active workspaces
+        if (workspace.status.current === "active") {
+          this.workspaces.set(workspace.name, workspace);
+          console.log(`✅ Loaded workspace: ${workspace.name}`);
+        } else {
+          console.log(
+            `⏭️ Skipped inactive workspace: ${workspace.name} (${workspace.status.current})`
+          );
+        }
+      }
+
+      console.log(
+        `📊 Loaded ${this.workspaces.size} active workspaces from storage`
+      );
+    } catch (error) {
+      console.error("❌ Failed to load workspaces from storage:", error);
+      console.log("💡 Continuing with empty workspace state");
+    }
   }
 
   // ============================================================================
@@ -504,8 +540,19 @@ export class WorkspaceManager {
     // Remove from memory
     this.workspaces.delete(workspace.name);
 
-    // TODO: Remove from persistent storage
-    console.log(`✅ Workspace deleted: ${workspace.name}`);
+    // Remove from persistent storage
+    try {
+      await this.database.deleteWorkspace(workspace.name);
+      console.log(
+        `✅ Workspace deleted from persistent storage: ${workspace.name}`
+      );
+    } catch (error) {
+      console.error(
+        `❌ Failed to delete workspace ${workspace.name} from storage:`,
+        error
+      );
+      throw error;
+    }
   }
 
   /**
@@ -848,8 +895,15 @@ export class WorkspaceManager {
   }
 
   private async saveWorkspace(workspace: Workspace): Promise<void> {
-    // TODO: Implement persistent storage
-    console.log(`💾 Saving workspace: ${workspace.name}`);
+    try {
+      await this.database.saveWorkspace(workspace);
+      console.log(
+        `💾 Workspace saved to persistent storage: ${workspace.name}`
+      );
+    } catch (error) {
+      console.error(`❌ Failed to save workspace ${workspace.name}:`, error);
+      throw error;
+    }
   }
 }
 

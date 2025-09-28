@@ -7,14 +7,14 @@ import {
 } from 'react';
 import { useInspector, AxisValues } from './FontInspector';
 import styles from './FontInspector.module.scss';
-import {
-  drawAnatomyOverlay,
-  drawAxisValues,
-  drawCursorLabel,
-  drawGlyphBounds,
-  drawMetricLine,
-  drawPathDetails,
-} from '@/utils/geometry/drawing';
+// import {
+//   drawAnatomyOverlay,
+//   drawAxisValues,
+//   drawCursorLabel,
+//   drawGlyphBounds,
+//   drawMetricLine,
+//   drawPathDetails,
+// } from '@/utils/geometry/drawing';
 
 export const SymbolCanvas: React.FC = () => {
   const {

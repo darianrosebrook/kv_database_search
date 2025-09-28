@@ -628,7 +628,25 @@ export class MultiModalService {
       };
     }
   }
+
+  async loadSupportedContentTypes(): Promise<ContentTypeInfo[]> {
+    try {
+      const response = await fetch(`${MULTIMODAL_API_BASE}/content-types`);
+      if (!response.ok) {
+        throw new Error(`Failed to load content types: ${response.statusText}`);
+      }
+      const data = await response.json();
+      return data.contentTypes || [];
+    } catch (error) {
+      console.error("Failed to load content types:", error);
+      return [];
+    }
+  }
 }
 
 // Export singleton instance
 export const multiModalService = MultiModalService.getInstance();
+
+// Export the function directly for convenience
+export const loadSupportedContentTypes = () =>
+  multiModalService.loadSupportedContentTypes();

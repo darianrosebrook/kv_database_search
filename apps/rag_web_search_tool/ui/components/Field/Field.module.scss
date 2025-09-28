@@ -1,56 +1,38 @@
-@use './Field.tokens.generated.scss' as fld;
-
-.root {
-  @include fld.vars;
-
-  display: grid;
-  gap: var(--field-gap-y);
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.header {
-  color: var(--field-label-color);
-  font-size: var(--field-label-fontSize);
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--semantic-color-foreground-primary);
 }
 
-.control :is(input, select, textarea) {
-  padding: var(--field-pad-y) var(--field-pad-x);
-  background: var(--field-color-bg);
-  border: 1px solid var(--field-color-border);
-  border-radius: var(
-    --field-radius,
-    var(--semantic-shape-control-radius-default)
-  );
-  outline: none;
-  color: var(--field-color-fg);
+.required {
+  color: var(--semantic-color-foreground-error);
+  margin-left: 2px;
 }
 
-.control :is(input, select, textarea):focus-visible {
-  border-color: var(--field-color-focus-border);
-  box-shadow: 0 0 0 3px
-    color-mix(in oklab, var(--field-color-focus-border) 30%, transparent);
+.inputContainer {
+  position: relative;
 }
 
-[data-status='invalid'] .control :is(input, select, textarea) {
-  border-color: var(--field-color-invalid-border);
+.loading {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
 }
 
-.meta {
-  display: grid;
-  gap: var(--field-gap-meta);
+.error {
+  font-size: 12px;
+  color: var(--semantic-color-foreground-error);
 }
 
-.meta [role='alert'] {
-  color: var(--field-color-invalid-text);
-}
-
-.validatingIndicator {
-  display: inline-flex;
-  align-items: center;
-  margin-inline-start: var(--core-spacing-size-03);
-}
-
-@media (prefers-contrast: more) {
-  .control :is(input, select, textarea) {
-    border-color: var(--semantic-color-border-bold);
-  }
+.description {
+  font-size: 12px;
+  color: var(--semantic-color-foreground-secondary);
 }

@@ -561,11 +561,11 @@ export class ObsidianSearchService {
     );
 
     // Convert entity clusters to knowledge clusters format
-    const knowledgeClusters = entityClusters
-      .map((cluster) => ({
-        name: cluster.name,
+    const knowledgeClusters = Object.entries(entityClusters)
+      .map(([clusterName, entities]) => ({
+        name: clusterName,
         files: Array.from(new Set(results.map((r) => r.documentId))), // All files in this cluster
-        centrality: cluster.centrality,
+        centrality: entities.length / allEntities.length, // Simple centrality based on entity count
       }))
       .slice(0, 5);
 
