@@ -2,7 +2,7 @@
  * Login button component for navbar
  */
 import React from "react";
-import { Button } from "../Button";
+import { Button } from "../primitives/Button";
 import styles from "./loginButton.module.scss";
 
 export interface LoginButtonProps {

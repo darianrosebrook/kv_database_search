@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown, Brain, AlertCircle, RefreshCw } from "lucide-react";
-import { Button } from "../Button";
-import { Select, SelectContent, SelectTrigger } from "../Select";
-import { SelectProvider } from "../Select/SelectProvider";
+import { Button } from "../primitives/Button";
+import { Select, SelectContent, SelectTrigger } from "../forms/Select";
+import { SelectProvider } from "../forms/Select/SelectProvider";
 import { apiService } from "../../../src/lib/api";
 import styles from "./ModelSelector.module.scss";
 

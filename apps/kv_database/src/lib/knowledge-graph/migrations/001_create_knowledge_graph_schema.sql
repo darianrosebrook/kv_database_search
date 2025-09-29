@@ -99,10 +99,7 @@ CREATE TABLE knowledge_graph_entities (
     last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_occurrence TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     metadata JSONB DEFAULT '{}',
-    search_vector tsvector GENERATED ALWAYS AS (
-        setweight(to_tsvector('english', name), 'A') ||
-        setweight(to_tsvector('english', coalesce(array_to_string(aliases, ' '), '')), 'B')
-    ) STORED,
+    search_vector tsvector,
     CONSTRAINT valid_confidence_range CHECK (confidence >= 0.7),
     CONSTRAINT non_empty_name CHECK (length(trim(name)) > 0),
     CONSTRAINT non_empty_canonical CHECK (length(trim(canonical_name)) > 0)
@@ -134,7 +131,7 @@ CREATE TABLE knowledge_graph_relationships (
 CREATE TABLE entity_chunk_mappings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     entity_id UUID NOT NULL REFERENCES knowledge_graph_entities(id) ON DELETE CASCADE,
-    chunk_id UUID NOT NULL REFERENCES obsidian_chunks(id) ON DELETE CASCADE,
+    chunk_id TEXT NOT NULL, -- Reference to obsidian_chunks.id (TEXT type)
     mention_text TEXT NOT NULL,
     mention_context TEXT,
     start_position INTEGER,

@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import Button from "../Button";
+import { Button } from "../../primitives/Button";
 import Styles from "./AlertNotice.module.scss";
 import { LocalIcon } from "../LocalIcons";
 export type AlertNoticeProps = {

@@ -3,7 +3,7 @@
  */
 import React from "react";
 import { Badge } from "../Badge";
-import { Button } from "../Button";
+import { Button } from "../primitives/Button";
 import styles from "./ContextChip.module.scss";
 
 export interface ContextChipProps {

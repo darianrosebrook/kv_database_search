@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { SearchInput } from "../ui/components/SearchInput";
 import { ChatInterface } from "./components/shared/ChatInterface";
 import { ResultsPanel } from "./components/shared/ResultsPanel";
-import ResultCard from "../ui/components/ResultCard";
+import ResultCard from "../ui/components/data-display/ResultCard";
 import ModelSelector from "../ui/components/ModelSelector";
 import ChatHistory from "../ui/components/ChatHistory";
 import { TestIntegration } from "./test-integration";

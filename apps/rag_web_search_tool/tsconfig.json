@@ -21,6 +21,6 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "ui/**/*", "types/**/*"],
+  "include": ["src/**/*", "ui/**/*", "types/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist", "build"]
 }

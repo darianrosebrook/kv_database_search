@@ -3,7 +3,8 @@
  * Combines OCR text extraction with AI-powered scene understanding
  */
 
-import { ContentType, ContentMetadata } from "../../types/index";
+import { ContentType } from "../../types/index";
+import { ContentMetadata } from "../multi-modal";
 import {
   ContentProcessor,
   ProcessorOptions,
@@ -241,8 +242,10 @@ export class ImageClassificationProcessor implements ContentProcessor {
         success: true,
         processingTime: Date.now() - startTime,
         confidence: Math.min(
-          ocrResult.confidence,
-          sceneDescription?.confidence || 1
+          Number.isNaN(ocrResult.confidence) ? 0 : ocrResult.confidence,
+          Number.isNaN(sceneDescription?.confidence)
+            ? 1
+            : sceneDescription?.confidence || 1
         ),
         features: {
           hasText: ocrResult.text.length > 0,
@@ -262,7 +265,7 @@ export class ImageClassificationProcessor implements ContentProcessor {
         },
         success: false,
         processingTime: Date.now() - startTime,
-        confidence: 0,
+        confidence: 0.0, // Explicitly set to 0.0 to avoid NaN
         features: {
           hasText: false,
           hasSceneDescription: false,
@@ -292,7 +295,7 @@ export class ImageClassificationProcessor implements ContentProcessor {
         },
         success: false,
         processingTime: 0,
-        confidence: 0,
+        confidence: 0.0, // Explicitly set to 0.0 to avoid NaN
         features: {
           hasText: false,
           hasSceneDescription: false,

@@ -152,9 +152,12 @@ export function useAppState() {
     setState((prev) => ({ ...prev, showChatHistory }));
   }, []);
 
-  const setShowMultiModalInterface = useCallback((showMultiModalInterface: boolean) => {
-    setState((prev) => ({ ...prev, showMultiModalInterface }));
-  }, []);
+  const setShowMultiModalInterface = useCallback(
+    (showMultiModalInterface: boolean) => {
+      setState((prev) => ({ ...prev, showMultiModalInterface }));
+    },
+    []
+  );
 
   const setSelectedModel = useCallback((selectedModel: string) => {
     setState((prev) => ({ ...prev, selectedModel }));

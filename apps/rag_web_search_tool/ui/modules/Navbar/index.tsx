@@ -14,7 +14,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import Avatar from "../../components/Avatar";
-import Button from "../../components/Button";
+import { Button } from "../../components/primitives/Button";
 import Popover from "../../components/Popover/Popover";
 import ToggleSwitch from "../../components/ToggleSwitch";
 import styles from "./index.module.css";

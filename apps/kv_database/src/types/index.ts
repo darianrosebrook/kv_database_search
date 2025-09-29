@@ -58,17 +58,38 @@ export type SuggestedActionType = (typeof SuggestedActionTypes)[number];
 
 // Content classification used in search/meta
 export enum ContentType {
+  // Text types
+  PLAIN_TEXT = "plain_text",
+  MARKDOWN = "markdown",
+  RICH_TEXT = "rich_text",
   CODE = "code",
   TEXT = "text",
   WEB = "web",
   CHAT_SESSION = "chat_session",
-  UNKNOWN = "unknown",
+
+  // Document types
   PDF = "pdf",
+  OFFICE_DOC = "office_doc",
+  OFFICE_SHEET = "office_sheet",
+  OFFICE_PRESENTATION = "office_presentation",
+
+  // Image types
   RASTER_IMAGE = "raster_image",
   VECTOR_IMAGE = "vector_image",
+
+  // Audio/Video types
   AUDIO = "audio",
   AUDIO_FILE = "audio_file",
   VIDEO = "video",
+
+  // Structured data types
+  JSON = "json",
+  XML = "xml",
+  CSV = "csv",
+
+  // Special types
+  BINARY = "binary",
+  UNKNOWN = "unknown",
 }
 
 // Filters – NOTE: value can be scalar or array

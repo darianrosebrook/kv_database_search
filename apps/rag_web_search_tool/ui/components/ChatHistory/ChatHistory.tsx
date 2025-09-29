@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { History, MessageSquare, Trash2, Plus, Bot, Save } from "lucide-react";
-import { Button } from "../Button";
+import { Button } from "../primitives/Button";
 import { ScrollArea } from "../ScrollArea";
 import { apiService } from "../../../src/lib/api";
 import styles from "./ChatHistory.module.scss";

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
 import { Send, Plus, Trash2, MessageSquare } from "lucide-react";
-import { Button } from "../../../ui/components/Button";
+import { Button } from "../../../ui/components/primitives/Button";
 import { ChatInput } from "../../../ui/components/ChatInput";
 import { MessageBubble } from "../../../ui/components/MessageBubble";
 import type { EnhancedMessage, SuggestedAction } from "../../types";

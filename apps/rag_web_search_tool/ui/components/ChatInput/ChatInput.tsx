@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Code, Search, Sparkles, Clipboard } from "lucide-react";
-import { Button } from "../Button";
-import { Textarea } from "../Textarea";
-import { Badge } from "../Badge";
+import { Button } from "../primitives/Button";
+import { Textarea } from "../primitives/Textarea";
+import { Badge } from "../feedback/Badge";
 import styles from "./ChatInput.module.scss";
 
 interface ChatInputProps {

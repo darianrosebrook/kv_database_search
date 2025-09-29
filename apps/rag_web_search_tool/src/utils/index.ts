@@ -105,35 +105,35 @@ export function transformGraphRagToSearchResult(
 
   return {
     id: result.id,
-    title: result.metadata.section || "Document",
+    title: result.metadata?.section || "Document",
     summary: truncateText(result.text, maxSummaryLength),
     highlights: [
       truncateText(result.text, 100),
-      `Source: ${result.metadata.sourceFile}`,
-      `Type: ${result.metadata.contentType}`,
+      `Source: ${result.metadata?.sourceFile || "Unknown"}`,
+      `Type: ${result.metadata?.contentType || "Unknown"}`,
     ].slice(0, maxHighlights),
     confidenceScore: result.score,
     source: {
       type:
-        result.metadata.contentType === "code" ? "component" : "documentation",
-      path: result.metadata.sourceFile,
-      url: result.metadata.url || `#${result.id}`,
+        result.metadata?.contentType === "code" ? "component" : "documentation",
+      path: result.metadata?.sourceFile || "Unknown",
+      url: result.metadata?.url || `#${result.id}`,
     },
     rationale:
       result.explanation || `Graph RAG score: ${result.score.toFixed(3)}`,
     tags: [
-      result.metadata.contentType,
-      ...result.entities.slice(0, 2).map((e) => e.type),
+      result.metadata?.contentType || "Unknown",
+      ...(result.entities || []).slice(0, 2).map((e) => e.type),
     ],
     lastUpdated:
-      result.metadata.updatedAt || new Date().toISOString().split("T")[0],
+      result.metadata?.updatedAt || new Date().toISOString().split("T")[0],
     ...(includeMetadata && {
       text: result.text,
       meta: {
-        contentType: result.metadata.contentType,
-        section: result.metadata.section || "",
+        contentType: result.metadata?.contentType || "Unknown",
+        section: result.metadata?.section || "",
         breadcrumbs: [],
-        uri: result.metadata.url,
+        uri: result.metadata?.url,
       },
     }),
   };
@@ -151,27 +151,30 @@ export function transformApiToSearchResult(
 
   return {
     id: result.id,
-    title: result.meta.section || "Documentation",
+    title: result.meta?.section || "Documentation",
     summary: truncateText(result.text, maxSummaryLength),
     highlights: [
       truncateText(result.text, 100),
-      `Section: ${result.meta.section}`,
-      `Type: ${result.meta.contentType}`,
+      `Section: ${result.meta?.section || "Unknown"}`,
+      `Type: ${result.meta?.contentType || "Unknown"}`,
     ].slice(0, maxHighlights),
     confidenceScore: calculateCompositeScore(result),
     source: {
-      type: determineSourceType(result.meta.contentType),
+      type: determineSourceType(result.meta?.contentType),
       path:
-        result.meta.breadcrumbs?.join(" > ") ||
-        result.meta.section ||
+        result.meta?.breadcrumbs?.join(" > ") ||
+        result.meta?.section ||
         "Unknown",
-      url: result.source?.url || result.meta.uri || `#${result.id}`,
+      url: result.source?.url || result.meta?.uri || `#${result.id}`,
     },
     rationale: generateDetailedRationale(result),
-    tags: [result.meta.contentType, ...result.meta.breadcrumbs.slice(0, 2)],
+    tags: [
+      result.meta?.contentType || "Unknown",
+      ...(result.meta?.breadcrumbs || []).slice(0, 2),
+    ],
     lastUpdated:
-      result.meta.updatedAt ||
-      result.meta.createdAt ||
+      result.meta?.updatedAt ||
+      result.meta?.createdAt ||
       new Date().toISOString().split("T")[0],
     ...(includeMetadata && {
       text: result.text,

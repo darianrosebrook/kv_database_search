@@ -723,16 +723,22 @@ export class ObsidianIngestionPipeline {
           }
 
           processedImages++;
+          const ocrConfidence = Number.isNaN(classificationResult.confidence)
+            ? 0
+            : classificationResult.confidence;
+          const sceneConfidence = Number.isNaN(
+            classificationResult.metadata?.imageClassification?.sceneConfidence
+          )
+            ? 0
+            : classificationResult.metadata?.imageClassification
+                ?.sceneConfidence || 0;
+
           console.log(
             `✅ Processed ${cleanText.length} characters from ${path.basename(
               resolvedPath.resolvedPath
-            )} (OCR: ${
-              classificationResult.confidence?.toFixed(1) || 0
-            }%, Scene: ${
-              classificationResult.metadata?.imageClassification?.sceneConfidence?.toFixed(
-                1
-              ) || 0
-            }%)`
+            )} (OCR: ${ocrConfidence.toFixed(
+              1
+            )}%, Scene: ${sceneConfidence.toFixed(1)}%)`
           );
         } else {
           console.log(

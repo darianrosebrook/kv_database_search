@@ -329,7 +329,10 @@ async function buildServices(): Promise<AppServices> {
   // Initialize hybrid search engine
   let hybridSearchEngine: HybridSearchEngine;
   try {
-    hybridSearchEngine = new HybridSearchEngine(database, embeddingService);
+    hybridSearchEngine = new HybridSearchEngine(
+      database.pool,
+      embeddingService
+    );
     console.log("✅ Hybrid search engine initialized");
   } catch (e) {
     const error = asError(e);
@@ -640,27 +643,30 @@ server.post("/api/graph-rag/search", async (request, reply) => {
           result.explanation?.summary ||
           `Found via hybrid search: ${searchRequest.query}`,
       })),
-      metrics: searchResponse.metrics ? {
-        totalResults: searchResponse.metrics.totalResults || 0,
-        executionTime: searchResponse.metrics.executionTime || 0,
-        vectorResults: searchResponse.metrics.vectorResults || 0,
-        graphResults: searchResponse.metrics.graphResults || 0,
-        entitiesFound: searchResponse.metrics.entitiesFound || 0,
-        relationshipsTraversed: searchResponse.metrics.relationshipsTraversed || 0,
-        vectorSearchTime: searchResponse.metrics.vectorSearchTime || 0,
-        graphTraversalTime: searchResponse.metrics.graphTraversalTime || 0,
-        resultFusionTime: searchResponse.metrics.resultFusionTime || 0,
-      } : {
-        totalResults: 0,
-        executionTime: 0,
-        vectorResults: 0,
-        graphResults: 0,
-        entitiesFound: 0,
-        relationshipsTraversed: 0,
-        vectorSearchTime: 0,
-        graphTraversalTime: 0,
-        resultFusionTime: 0,
-      },
+      metrics: searchResponse.metrics
+        ? {
+            totalResults: searchResponse.metrics.totalResults || 0,
+            executionTime: searchResponse.metrics.executionTime || 0,
+            vectorResults: searchResponse.metrics.vectorResults || 0,
+            graphResults: searchResponse.metrics.graphResults || 0,
+            entitiesFound: searchResponse.metrics.entitiesFound || 0,
+            relationshipsTraversed:
+              searchResponse.metrics.relationshipsTraversed || 0,
+            vectorSearchTime: searchResponse.metrics.vectorSearchTime || 0,
+            graphTraversalTime: searchResponse.metrics.graphTraversalTime || 0,
+            resultFusionTime: searchResponse.metrics.resultFusionTime || 0,
+          }
+        : {
+            totalResults: 0,
+            executionTime: 0,
+            vectorResults: 0,
+            graphResults: 0,
+            entitiesFound: 0,
+            relationshipsTraversed: 0,
+            vectorSearchTime: 0,
+            graphTraversalTime: 0,
+            resultFusionTime: 0,
+          },
       explanation: {
         queryEntities: searchResponse.explanation?.queryEntities || [],
         searchStrategy: searchResponse.explanation?.searchStrategy || "hybrid",

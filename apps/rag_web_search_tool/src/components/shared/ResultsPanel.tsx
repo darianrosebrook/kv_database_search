@@ -1,6 +1,6 @@
 import React from "react";
 // import { motion } from "motion/react";
-import ResultCard from "../../../ui/components/ResultCard";
+import ResultCard from "../../../ui/components/data-display/ResultCard";
 import type { SearchResult } from "../../types";
 import type {
   GraphRagSearchResult,

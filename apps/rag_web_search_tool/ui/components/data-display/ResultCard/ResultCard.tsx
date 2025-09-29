@@ -15,15 +15,15 @@ import {
   Eye,
   BookOpen,
 } from "lucide-react";
-import { Badge } from "../Badge";
-import { Button } from "../Button";
-import { Card } from "../Card";
-import { Skeleton } from "../Skeleton";
-import { Separator } from "../Separator";
+import { Badge } from "../../feedback/Badge";
+import { Button } from "../../primitives/Button";
+import { Card } from "../../layout/Card";
+import { Skeleton } from "../../Skeleton";
+import { Separator } from "../../Separator";
 import {
   ExplanationService,
   type ResultExplanation,
-} from "../../../src/lib/explanation-service";
+} from "../../../../src/lib/explanation-service";
 import styles from "./ResultCard.module.scss";
 
 interface SearchResult {

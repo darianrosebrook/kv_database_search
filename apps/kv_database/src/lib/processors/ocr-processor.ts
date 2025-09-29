@@ -87,7 +87,7 @@ export class OCRProcessor implements ContentProcessor {
 
       const processingTime = Date.now() - startTime;
       const rawText = result.data.text.trim();
-      const confidence = result.data.confidence;
+      const confidence = result.data.confidence ?? 0; // Handle NaN values from Tesseract
 
       // Enhanced text processing
       const enhancedText = this.enhanceOCRText(rawText);

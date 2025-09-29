@@ -447,14 +447,14 @@ export class HybridSearchEngine {
     try {
       // Build vector search query with filters
       let vectorQuery = `
-        SELECT 
+        SELECT
           c.id,
-          c.content,
+          c.text,
           c.meta,
-          (c.embedding <=> $1::vector) as distance,
-          (1 - (c.embedding <=> $1::vector)) as similarity
+          (c.v <=> $1::vector) as distance,
+          (1 - (c.v <=> $1::vector)) as similarity
         FROM obsidian_chunks c
-        WHERE c.embedding IS NOT NULL
+        WHERE c.v IS NOT NULL
       `;
 
       const queryParams: string[] = [`[${queryEmbedding.embedding.join(",")}]`];
@@ -476,13 +476,11 @@ export class HybridSearchEngine {
 
       // Add similarity threshold
       const minSimilarity = query.options?.minSimilarity || 0.1;
-      vectorQuery += ` AND (1 - (c.embedding <=> $1::vector)) >= ${minSimilarity}`;
+      vectorQuery += ` AND (1 - (c.v <=> $1::vector)) >= ${minSimilarity}`;
 
       // Order by similarity and limit results
       const maxResults = query.options?.maxResults || 20;
-      vectorQuery += ` ORDER BY c.embedding <=> $1::vector LIMIT ${
-        maxResults * 2
-      }`; // Get more for fusion
+      vectorQuery += ` ORDER BY c.v <=> $1::vector LIMIT ${maxResults * 2}`; // Get more for fusion
 
       const result = await client.query(vectorQuery, queryParams);
 
@@ -619,7 +617,7 @@ export class HybridSearchEngine {
         max(gt.path_confidence) as max_confidence
       FROM graph_traversal gt
       JOIN obsidian_chunks c ON c.id = gt.chunk_id
-      GROUP BY gt.chunk_id, gt.hop_count, gt.path_confidence, c.content, c.meta
+      GROUP BY gt.chunk_id, gt.hop_count, gt.path_confidence, c.text, c.meta
       ORDER BY max_confidence DESC, hop_count ASC
       LIMIT 50
     `;

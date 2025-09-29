@@ -1,0 +1,86 @@
+// Table component styles
+
+.tableContainer {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  caption-side: bottom;
+  font-size: 0.875rem;
+}
+
+.tableHeader {
+  tr {
+    border-bottom: 1px solid rgb(var(--border));
+  }
+}
+
+.tableBody {
+  tr:last-child {
+    border: none;
+  }
+}
+
+.tableFooter {
+  background-color: rgb(var(--muted) / 0.5);
+  border-top: 1px solid rgb(var(--border));
+  font-weight: 500;
+
+  tr:last-child {
+    border-bottom: none;
+  }
+}
+
+.tableRow {
+  border-bottom: 1px solid rgb(var(--border));
+  transition: background-color 0.2s ease-in-out;
+
+  &:hover {
+    background-color: rgb(var(--muted) / 0.5);
+  }
+
+  &[data-state="selected"] {
+    background-color: rgb(var(--muted));
+  }
+}
+
+.tableHead {
+  color: rgb(var(--foreground));
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  text-align: left;
+  vertical-align: middle;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &:has([role="checkbox"]) {
+    padding-right: 0;
+  }
+
+  [role="checkbox"] {
+    transform: translateY(2px);
+  }
+}
+
+.tableCell {
+  padding: 0.5rem;
+  vertical-align: middle;
+  white-space: nowrap;
+
+  &:has([role="checkbox"]) {
+    padding-right: 0;
+  }
+
+  [role="checkbox"] {
+    transform: translateY(2px);
+  }
+}
+
+.tableCaption {
+  color: rgb(var(--muted-foreground));
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}

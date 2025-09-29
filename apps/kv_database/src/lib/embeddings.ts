@@ -56,21 +56,8 @@ export class DocumentEmbeddingService {
         "May not capture technical terms well",
       ],
     },
-    {
-      name: "nomic-embed-text",
-      dimension: 768,
-      type: "semantic",
-      domain: "general",
-      strengths: [
-        "Excellent for general text",
-        "Good performance on knowledge tasks",
-        "Handles long documents well",
-      ],
-      limitations: [
-        "Larger model, slower inference",
-        "May be overkill for simple queries",
-      ],
-    },
+    // Note: nomic-embed-text removed as it's not available in Ollama
+    // Fallback to embeddinggemma for all content types
   ];
 
   constructor(config: EmbeddingConfig) {
@@ -79,17 +66,23 @@ export class DocumentEmbeddingService {
   }
 
   private createObsidianStrategy(): EmbeddingStrategy {
+    const primaryModel =
+      this.models.find((m) => m.name === this.config.model) || this.models[0];
+    const fallbackModels = this.models.filter(
+      (m) => m.name !== this.config.model
+    );
+
     return {
-      primaryModel:
-        this.models.find((m) => m.name === this.config.model) || this.models[0],
-      fallbackModels: this.models.filter((m) => m.name !== this.config.model),
+      primaryModel,
+      fallbackModels:
+        fallbackModels.length > 0 ? fallbackModels : [primaryModel], // Use primary as fallback if no others available
       contentTypeOverrides: {
-        // Obsidian-specific content type optimizations
-        moc: this.models.find((m) => m.name === "embeddinggemma")!,
-        article: this.models.find((m) => m.name === "embeddinggemma")!,
-        conversation: this.models.find((m) => m.name === "embeddinggemma")!,
-        "book-note": this.models.find((m) => m.name === "embeddinggemma")!,
-        note: this.models.find((m) => m.name === "embeddinggemma")!,
+        // Obsidian-specific content type optimizations - all use embeddinggemma
+        moc: primaryModel,
+        article: primaryModel,
+        conversation: primaryModel,
+        "book-note": primaryModel,
+        note: primaryModel,
       },
       qualityThresholds: {
         minSimilarity: 0.3,
@@ -237,8 +230,15 @@ export class DocumentEmbeddingService {
         `Failed to embed with ${selectedModel.name}, trying fallback...`
       );
 
-      // Try fallback models
+      // Try fallback models (skip if same as primary to avoid infinite loops)
       for (const fallbackModel of this.strategy.fallbackModels) {
+        if (fallbackModel.name === selectedModel.name) {
+          console.warn(
+            `Skipping fallback to same model: ${fallbackModel.name}`
+          );
+          continue;
+        }
+
         try {
           const originalModel = this.config.model;
           this.config.model = fallbackModel.name;
