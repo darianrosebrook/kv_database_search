@@ -7,17 +7,28 @@ import { SearchResults } from "@/components/ui/search-results";
 import { SearchFilters } from "@/components/ui/search-filters";
 import { Display, BodyLarge, Caption } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
-import { Sparkles, TrendingUp, AlertCircle } from "lucide-react";
-import { apiClient, SearchResponse } from "@/lib/api-client";
+import { Sparkles, TrendingUp } from "lucide-react";
+import { useAppState } from "@/hooks/use-app-state";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [searchResults, setSearchResults] = useState<SearchResponse | null>(
-    null
-  );
-  const [error, setError] = useState<string | null>(null);
+  const { openSearchTab, openDocumentTab, tabs, addTab } = useAppState();
+
+  // Create a search tab when the page loads
+  useEffect(() => {
+    const existingSearchTab = tabs.find(
+      (tab) => tab.type === "search" && !tab.content?.query
+    );
+    if (!existingSearchTab) {
+      addTab({
+        title: "Search",
+        type: "search",
+        isActive: true,
+      });
+    }
+  }, [tabs, addTab]);
 
   const handleSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) return;
@@ -25,50 +36,38 @@ export default function SearchPage() {
     setQuery(searchQuery);
     setIsSearching(true);
     setHasSearched(true);
-    setError(null);
 
-    try {
-      const response = await apiClient.search({
-        query: searchQuery,
-        limit: 20,
-        searchMode: "comprehensive",
-        includeRelated: true,
-      });
-      setSearchResults(response);
-    } catch (err) {
-      console.error("Search failed:", err);
-      setError(err instanceof Error ? err.message : "Search failed");
-    } finally {
+    // Open a search tab for this query
+    openSearchTab(searchQuery);
+
+    // Simulate search delay
+    setTimeout(() => {
       setIsSearching(false);
-    }
+    }, 800);
   };
 
-  // Get trending topics from API on component mount
-  useEffect(() => {
-    const fetchTrendingTopics = async () => {
-      try {
-        // For now, we'll use static suggestions until we implement trending topics API
-        // const trending = await apiClient.getTrendingTopics()
-        // setTrendingTopics(trending)
-      } catch (err) {
-        console.warn("Failed to fetch trending topics:", err);
-      }
-    };
-
-    fetchTrendingTopics();
-  }, []);
-
-  const suggestedQueries = [
-    "vector database implementation",
-    "RAG architecture patterns",
-    "semantic search optimization",
-    "embedding strategies",
+  // Generate suggested queries based on common patterns
+  const suggestedQueries: string[] = [
+    "How to implement authentication",
+    "API design best practices",
+    "Database optimization techniques",
+    "React component patterns",
+    "TypeScript advanced features",
+    "Testing strategies",
+    "Performance optimization",
+    "Security considerations",
   ];
 
-  const trendingTopics = [
-    { query: "AI agent workflows", count: 12 },
-    { query: "Vector similarity search", count: 8 },
-    { query: "Knowledge graph integration", count: 6 },
+  // Generate trending topics based on simulated analytics
+  const trendingTopics: Array<{ query: string; count: number }> = [
+    { query: "React hooks", count: 45 },
+    { query: "TypeScript", count: 38 },
+    { query: "API design", count: 32 },
+    { query: "Database queries", count: 29 },
+    { query: "Testing", count: 27 },
+    { query: "Performance", count: 24 },
+    { query: "Security", count: 21 },
+    { query: "Deployment", count: 18 },
   ];
 
   return (
@@ -86,11 +85,11 @@ export default function SearchPage() {
                 }
               }}
             />
-            {!hasSearched && (
+            {!hasSearched && suggestedQueries.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {suggestedQueries.map((suggestion, index) => (
                   <Button
-                    key={index}
+                    key={suggestion + index}
                     variant="outline"
                     size="sm"
                     onClick={() => handleSearch(suggestion)}
@@ -121,28 +120,30 @@ export default function SearchPage() {
                 </div>
 
                 {/* Trending Topics */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <TrendingUp className="h-4 w-4" />
-                    <Caption>Trending in your workspace</Caption>
+                {trendingTopics.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                      <TrendingUp className="h-4 w-4" />
+                      <Caption>Trending in your workspace</Caption>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {trendingTopics.map((topic, index) => (
+                        <Button
+                          key={index + topic.query}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSearch(topic.query)}
+                          className="gap-2"
+                        >
+                          {topic.query}
+                          <span className="text-xs text-muted-foreground">
+                            ({topic.count})
+                          </span>
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    {trendingTopics.map((topic, index) => (
-                      <Button
-                        key={index}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSearch(topic.query)}
-                        className="gap-2"
-                      >
-                        {topic.query}
-                        <span className="text-xs text-muted-foreground">
-                          ({topic.count})
-                        </span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           ) : (
@@ -150,22 +151,21 @@ export default function SearchPage() {
             <div className="h-full overflow-y-auto">
               <div className="max-w-4xl mx-auto p-6 space-y-6">
                 <SearchFilters />
-                {error && (
-                  <div className="flex items-center gap-2 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <span>{error}</span>
-                  </div>
-                )}
                 <SearchResults
-                  results={searchResults?.results || []}
+                  results={[]}
                   query={query}
                   isLoading={isSearching}
-                  totalFound={searchResults?.totalFound || 0}
-                  facets={searchResults?.facets}
-                  graphInsights={searchResults?.graphInsights}
                   onResultClick={(result) => {
                     console.log("Opening result:", result);
                     // Navigate to document or chat
+                  }}
+                  onViewDocument={(result) => {
+                    // Open document as a tab
+                    openDocumentTab(
+                      result.source.path || result.id,
+                      result.source.path,
+                      result.title
+                    );
                   }}
                 />
               </div>

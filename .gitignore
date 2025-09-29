@@ -88,3 +88,4 @@ apps/rag_web_search_tool/accessibility-report.txt
 
 .env*
 external-resources/wikidata-20250924-lexemes.json.gz
+external-resources/

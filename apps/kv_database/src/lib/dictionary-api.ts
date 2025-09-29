@@ -35,9 +35,11 @@ interface EntityCanonicalizationRequest {
 }
 
 interface DictionaryExpansionRequest {
-  terms: string[];
+  terms?: string[];
+  queryTerms?: string[]; // Alternative field name from frontend
   expansionTypes?: string[];
   maxExpansions?: number;
+  maxExpansionsPerTerm?: number; // Alternative field name from frontend
   language?: string;
 }
 
@@ -305,7 +307,11 @@ export class DictionaryAPI {
     reply: FastifyReply
   ): Promise<void> {
     try {
-      const { terms, expansionTypes, maxExpansions } = request.body;
+      // Handle both frontend (queryTerms) and backend (terms) field names
+      const terms = request.body.terms || request.body.queryTerms;
+      const maxExpansions =
+        request.body.maxExpansions || request.body.maxExpansionsPerTerm;
+      const { expansionTypes } = request.body;
 
       if (!terms || !Array.isArray(terms) || terms.length === 0) {
         reply.status(400).send({

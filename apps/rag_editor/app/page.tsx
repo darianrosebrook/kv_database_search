@@ -9,11 +9,15 @@ import { WorkspaceCard } from "@/components/ui/workspace-card";
 import { Display, BodyLarge, Caption } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText, Clock, PenTool, AlertCircle } from "lucide-react";
-import { apiClient, ChatSession } from "@/lib/api-client";
+import {
+  fetchRecentDocuments,
+  formatRelativeTime,
+  type RecentDocument,
+} from "@/lib/api";
 
 export default function SplashScreen() {
   const [isMobile, setIsMobile] = useState(false);
-  const [recentDocuments, setRecentDocuments] = useState<ChatSession[]>([]);
+  const [recentDocuments, setRecentDocuments] = useState<RecentDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -29,23 +33,18 @@ export default function SplashScreen() {
   }, []);
 
   useEffect(() => {
-    const fetchRecentDocuments = async () => {
+    const loadRecentDocuments = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
-        setIsLoading(true);
-        setError(null);
-
-        // Fetch recent chat sessions as a proxy for recent documents
-        // In a real implementation, we might want to fetch recent document activity
-        const chatHistory = await apiClient.getChatHistory();
-
-        if (chatHistory.sessions && chatHistory.sessions.length > 0) {
-          setRecentDocuments(chatHistory.sessions.slice(0, 3));
+        const response = await fetchRecentDocuments();
+        if (response.error) {
+          setError(response.error);
         } else {
-          // Fallback to empty state if no chat sessions
-          setRecentDocuments([]);
+          setRecentDocuments(response.documents);
         }
       } catch (err) {
-        console.error("Failed to fetch recent documents:", err);
         setError(
           err instanceof Error ? err.message : "Failed to load recent documents"
         );
@@ -54,21 +53,8 @@ export default function SplashScreen() {
       }
     };
 
-    fetchRecentDocuments();
+    loadRecentDocuments();
   }, []);
-
-  // Transform chat sessions to document format for UI
-  const transformedDocuments = recentDocuments.map((session) => ({
-    id: session.id,
-    title: session.title,
-    description:
-      session.messages.length > 0
-        ? session.messages[0].content.substring(0, 100) +
-          (session.messages[0].content.length > 100 ? "..." : "")
-        : "Chat session",
-    lastAccessed: new Date(session.updatedAt).toLocaleDateString(),
-    isChat: true,
-  }));
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
@@ -92,13 +78,9 @@ export default function SplashScreen() {
   };
 
   const handleDocumentClick = (docId: string) => {
-    // Check if it's a chat session or document
-    const isChat = recentDocuments.some((session) => session.id === docId);
-    if (isChat) {
-      router.push(`/chat/${docId}`);
-    } else {
-      router.push(`/workspace/document/${docId}`);
-    }
+    // URL encode the document ID to handle special characters and paths
+    const encodedId = encodeURIComponent(docId);
+    router.push(`/workspace/document/${encodedId}`);
   };
 
   // Redirect to mobile view on mobile devices
@@ -171,44 +153,52 @@ export default function SplashScreen() {
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Clock className="h-4 w-4" />
-              <Caption>Recent Activity</Caption>
+              <Caption>Recently Accessed</Caption>
             </div>
 
-            {error && (
-              <div className="flex items-center gap-2 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
-                <AlertCircle className="h-4 w-4" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {isLoading ? (
+            {isLoading && (
               <div className="grid gap-4">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="p-4 border border-border rounded-lg animate-pulse"
-                  >
-                    <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-muted rounded w-full mb-1" />
-                    <div className="h-3 bg-muted rounded w-1/2" />
+                {[...Array(3)].map((_, index) => (
+                  <div key={index} className="animate-pulse">
+                    <div className="h-20 bg-muted rounded-lg"></div>
                   </div>
                 ))}
               </div>
-            ) : transformedDocuments.length > 0 ? (
+            )}
+
+            {error && (
+              <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                <div>
+                  <Caption className="text-destructive font-medium">
+                    Failed to load recent documents
+                  </Caption>
+                  <Caption className="text-destructive/80">{error}</Caption>
+                </div>
+              </div>
+            )}
+
+            {!isLoading && !error && recentDocuments.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <Caption>No recent documents found</Caption>
+                <Caption className="text-sm">
+                  Start by creating or importing some documents
+                </Caption>
+              </div>
+            )}
+
+            {!isLoading && !error && recentDocuments.length > 0 && (
               <div className="grid gap-4">
-                {transformedDocuments.map((doc, index) => (
+                {recentDocuments.map((doc, index) => (
                   <WorkspaceCard
-                    key={index}
+                    key={doc.id || index}
                     title={doc.title}
                     description={doc.description}
-                    lastAccessed={doc.lastAccessed}
+                    lastAccessed={formatRelativeTime(doc.lastAccessed)}
                     onClick={() => handleDocumentClick(doc.id)}
                   />
                 ))}
-              </div>
-            ) : (
-              <div className="text-center p-8 text-muted-foreground">
-                <Caption>No recent activity found</Caption>
               </div>
             )}
           </div>

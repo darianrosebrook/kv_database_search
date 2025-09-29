@@ -94,6 +94,14 @@ export class WebSearchService {
       return cached.results;
     }
 
+    // If no providers are configured, return empty results
+    if (this.providers.size === 0) {
+      console.warn(
+        "⚠️ No web search providers configured. Configure API keys to enable web search."
+      );
+      return [];
+    }
+
     const searchPromises: Promise<WebSearchResult[]>[] = [];
 
     // Use all available providers
@@ -150,11 +158,12 @@ export class WebSearchService {
       return resultsWithEmbeddings;
     } catch (error) {
       console.error("Web search failed:", error);
-      throw new Error(
-        `Web search failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
+
+      // If providers failed, return empty results
+      console.warn(
+        "⚠️ Web search providers failed. Check API keys and network connectivity."
       );
+      return [];
     }
   }
 

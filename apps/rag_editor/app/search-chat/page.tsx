@@ -17,44 +17,38 @@ import {
   Zap,
   Plus,
   Minus,
-  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Title, Caption } from "@/components/ui/typography";
-import { apiClient, SearchResponse, ChatResponse } from "@/lib/api-client";
+import { searchService } from "@/lib/services/search-service";
+import { SearchResult } from "@/lib/types";
 
-// Extract refinement options from search results
-const getRefinementOptions = (results: SearchResponse["results"]) => {
-  const options = new Set<string>();
+// Generate refinement options based on search query
+const getRefinementOptions = (query: string): string[] => {
+  if (!query.trim()) return [];
 
-  results.forEach((result) => {
-    // Extract key terms from metadata
-    if (result.meta?.section) options.add(result.meta.section);
-    if (result.meta?.contentType) options.add(result.meta.contentType);
-    if (result.meta?.author) options.add(`by ${result.meta.author}`);
+  const baseOptions = ["examples", "tutorial", "guide", "documentation"];
 
-    // Extract terms from text content
-    const words = (result.text || "").split(/\s+/);
-    words.forEach((word) => {
-      if (word.length > 4 && word.match(/^[a-zA-Z]+$/)) {
-        options.add(word);
-      }
-    });
-  });
+  // Add query-specific refinements
+  const queryWords = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((word) => word.length > 3);
+  const specificOptions = queryWords
+    .map((word) => `${word} examples`)
+    .slice(0, 2);
 
-  return Array.from(options).slice(0, 5);
+  return [...baseOptions, ...specificOptions];
 };
 
 export default function SearchChatPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResponse | null>(
-    null
-  );
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedContext, setSelectedContext] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [searchTime, setSearchTime] = useState<number>(0);
   const lastProcessedQuery = useRef<string>("");
 
   useEffect(() => {
@@ -67,48 +61,48 @@ export default function SearchChatPage() {
   }, [searchParams]);
 
   const performSearch = async (query: string) => {
+    if (!query.trim()) return;
+
     setIsLoading(true);
-    setError(null);
+    const startTime = Date.now();
 
     try {
-      const response = await apiClient.combinedSearch({
-        query,
-        limit: 10,
-        includeChatSessions: true,
-        includeWebResults: true,
+      // Use our enhanced search service with dictionary integration
+      const searchResponse = await searchService.enhancedSearch(query, {
+        useDictionary: true,
+        expandSynonyms: true,
+        canonicalizeEntities: false, // Enable when Graph RAG is ready
       });
 
-      setSearchResults(response);
+      setSearchResults(searchResponse.results);
+      setSearchTime(Date.now() - startTime);
 
-      // Auto-select top 2 results for context
-      if (response.results.length > 0) {
-        setSelectedContext(response.results.slice(0, 2).map((r) => r.id));
-      }
-    } catch (err) {
-      console.error("Search failed:", err);
-      setError(err instanceof Error ? err.message : "Search failed");
+      // Auto-select top results for context (up to 3)
+      const topResults = searchResponse.results
+        .sort((a, b) => b.confidenceScore - a.confidenceScore)
+        .slice(0, 3)
+        .map((result) => result.id);
+
+      setSelectedContext(topResults);
+    } catch (error) {
+      console.error("Search failed:", error);
+      setSearchResults([]);
+      setSelectedContext([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getFileIcon = (result: any) => {
-    const contentType = result.meta?.contentType;
-    const sourceType = result.source?.type;
-
-    if (sourceType === "web") {
-      return <ImageIcon className="w-4 h-4 text-purple-500" />;
-    }
-
-    switch (contentType) {
-      case "code":
-        return <FileText className="w-4 h-4 text-blue-500" />;
-      case "text":
-        return <FileText className="w-4 h-4 text-green-500" />;
-      case "chat_session":
-        return <MessageSquare className="w-4 h-4 text-orange-500" />;
+  const getFileIcon = (type: string) => {
+    switch (type) {
+      case "pdf":
+        return <FileText className="w-4 h-4" />;
+      case "csv":
+        return <FileSpreadsheet className="w-4 h-4" />;
+      case "image":
+        return <ImageIcon className="w-4 h-4" />;
       default:
-        return <File className="w-4 h-4 text-gray-500" />;
+        return <File className="w-4 h-4" />;
     }
   };
 
@@ -118,11 +112,11 @@ export default function SearchChatPage() {
     const parts = [];
     let lastIndex = 0;
 
-    highlights.forEach(({ start, end }) => {
+    highlights.forEach(({ start, end }, index) => {
       parts.push(text.slice(lastIndex, start));
       parts.push(
         <mark
-          key={start}
+          key={text.slice(start, end) + index}
           className="bg-workspace-accent/30 text-workspace-accent-foreground px-0.5 rounded"
         >
           {text.slice(start, end)}
@@ -134,52 +128,6 @@ export default function SearchChatPage() {
 
     return parts;
   };
-
-  // Transform API results to UI format
-  const transformedResults =
-    searchResults?.results.map((result) => ({
-      id: result.id,
-      title:
-        result.meta?.section ||
-        result.text?.substring(0, 50) + "..." ||
-        "Untitled",
-      type:
-        result.meta?.contentType === "chat_session"
-          ? "chat"
-          : result.source?.type === "web"
-          ? "web"
-          : result.meta?.contentType || "document",
-      confidence: result.cosineSimilarity || 0.5,
-      preview:
-        result.text?.substring(0, 200) +
-          (result.text?.length > 200 ? "..." : "") || "",
-      matchedText: searchQuery,
-      highlights: [], // TODO: Extract highlights from search
-      metadata: {
-        author: result.meta?.author,
-        date: result.meta?.updatedAt
-          ? new Date(result.meta.updatedAt).toLocaleDateString()
-          : undefined,
-        path: result.meta?.uri || result.source?.url,
-        pages: result.meta?.characterCount
-          ? Math.ceil(result.meta.characterCount / 500)
-          : undefined,
-        section: result.meta?.section,
-        dimensions:
-          result.meta?.contentType === "image" ? "Unknown" : undefined,
-        format: result.meta?.contentType,
-        rows: result.meta?.contentType === "csv" ? "Unknown" : undefined,
-        columns: result.meta?.contentType === "csv" ? "Unknown" : undefined,
-        size: result.meta?.characterCount
-          ? `${result.meta.characterCount} chars`
-          : undefined,
-        modified: result.meta?.updatedAt
-          ? new Date(result.meta.updatedAt).toLocaleDateString()
-          : undefined,
-      },
-    })) || [];
-
-  const refinementOptions = getRefinementOptions(searchResults?.results || []);
 
   const handleAddContext = (resultId: string) => {
     setSelectedContext((prev) => [...prev, resultId]);
@@ -208,11 +156,11 @@ export default function SearchChatPage() {
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-2">
               <Zap className="w-4 h-4" />
-              {searchResults?.totalFound || 0} results
+              {searchResults.length} results
             </span>
             <span className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              0.34s
+              {(searchTime / 1000).toFixed(2)}s
             </span>
           </div>
         </div>
@@ -226,7 +174,7 @@ export default function SearchChatPage() {
             Refine
           </Caption>
           <div className="flex flex-wrap gap-2">
-            {refinementOptions.map((option, idx) => (
+            {getRefinementOptions(searchQuery).map((option, idx) => (
               <Button
                 key={idx}
                 variant="outline"
@@ -243,13 +191,6 @@ export default function SearchChatPage() {
 
       {/* Results */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {error && (
-          <div className="flex items-center gap-2 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
-            <AlertCircle className="h-4 w-4" />
-            <span>{error}</span>
-          </div>
-        )}
-
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
@@ -257,7 +198,7 @@ export default function SearchChatPage() {
             ))}
           </div>
         ) : (
-          transformedResults.map((result) => (
+          searchResults.map((result) => (
             <div
               key={result.id}
               className="bg-card border border-border rounded-lg p-4 hover:border-border-hover transition-all group"
@@ -266,19 +207,19 @@ export default function SearchChatPage() {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-start gap-3 flex-1">
                   <div className="text-muted-foreground">
-                    {getFileIcon(result)}
+                    {getFileIcon(result.source.type)}
                   </div>
                   <div className="flex-1">
                     <Title className="text-base mb-1">{result.title}</Title>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
-                      {result.metadata.author && (
-                        <span>{result.metadata.author}</span>
-                      )}
-                      {result.metadata.author && result.metadata.date && (
-                        <span>·</span>
-                      )}
-                      {result.metadata.date && (
-                        <span>{result.metadata.date}</span>
+                      <span>{result.source.path}</span>
+                      {result.lastUpdated && (
+                        <>
+                          <span>·</span>
+                          <span>
+                            {new Date(result.lastUpdated).toLocaleDateString()}
+                          </span>
+                        </>
                       )}
                     </div>
                   </div>
@@ -288,7 +229,7 @@ export default function SearchChatPage() {
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <div className="text-xl font-light">
-                      {(result.confidence * 100).toFixed(0)}
+                      {Math.round(result.confidenceScore * 100)}
                     </div>
                     <Caption className="text-xs uppercase tracking-wider">
                       Match
@@ -319,7 +260,10 @@ export default function SearchChatPage() {
 
               {/* Preview */}
               <div className="mb-3 p-3 bg-muted border border-border rounded font-mono text-xs text-muted-foreground leading-relaxed">
-                {highlightText(result.preview, result.highlights)}
+                {highlightText(
+                  result.text || result.summary,
+                  result.highlights || []
+                )}
               </div>
 
               {/* Actions */}
@@ -353,7 +297,7 @@ export default function SearchChatPage() {
   const chatPanel = (
     <SearchChatInterface
       searchQuery={searchQuery}
-      searchResults={transformedResults}
+      searchResults={searchResults}
       selectedContext={selectedContext}
       onAddContext={handleAddContext}
       onRemoveContext={handleRemoveContext}

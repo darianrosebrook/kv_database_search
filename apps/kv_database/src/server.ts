@@ -32,6 +32,7 @@ import { FederatedSearchAPI } from "./lib/federated-search-api";
 import { WorkspaceAPI } from "./lib/workspace-api";
 import { GraphQueryAPI } from "./lib/graph-query-api";
 import { HybridSearchEngine } from "./lib/knowledge-graph/hybrid-search-engine";
+import { ObsidianUtils } from "./lib/types/obsidian-utils";
 import type {
   HealthResponse,
   SearchRequest,
@@ -491,11 +492,15 @@ async function buildServices(): Promise<AppServices> {
     }
   }
 
-  if (env.SERPER_API_KEY) {
+  if (env.SERPER_API_KEY && env.SERPER_API_KEY !== "YOUR_SERPER_API_KEY_HERE") {
     if (webSearchService) {
       webSearchService.enableSerper(env.SERPER_API_KEY);
       console.log("🔍 Serper web search enabled");
     }
+  } else {
+    console.log(
+      "⚠️ Serper API key not configured. Web search will return empty results."
+    );
   }
 
   return {
@@ -1116,6 +1121,485 @@ server.get("/models", async (request, reply): Promise<ModelsResponse> => {
       models: [],
       error: error.message,
     };
+  }
+});
+
+/**
+ * Recent documents endpoint
+ */
+server.get("/api/recent-documents", async (request, reply) => {
+  const { database } = request.server.services;
+
+  try {
+    const client = await database.pool.connect();
+
+    try {
+      // Get recent documents based on updated_at timestamp
+      // Group by file to avoid duplicates from chunks
+      const result = await client.query(`
+        SELECT DISTINCT
+          meta->'obsidianFile'->>'fileName' as title,
+          meta->'obsidianFile'->>'filePath' as id,
+          meta->'obsidianFile'->>'filePath' as path,
+          COALESCE(meta->>'description', 
+                   SUBSTRING(text FROM 1 FOR 200) || '...') as description,
+          MAX(updated_at) as lastAccessed,
+          meta->'obsidianFile'->'tags' as tags
+        FROM obsidian_chunks
+        WHERE meta->'obsidianFile'->>'fileName' IS NOT NULL
+        GROUP BY 
+          meta->'obsidianFile'->>'fileName',
+          meta->'obsidianFile'->>'filePath',
+          meta->>'description',
+          text,
+          meta->'obsidianFile'->'tags'
+        ORDER BY MAX(updated_at) DESC
+        LIMIT 10
+      `);
+
+      const recentDocuments = result.rows.map((row) => ({
+        id: row.id || row.path,
+        title: row.title || "Untitled Document",
+        description: row.description || "No description available",
+        lastAccessed: row.lastaccessed
+          ? new Date(row.lastaccessed).toISOString()
+          : new Date().toISOString(),
+        tags: row.tags || [],
+      }));
+
+      reply.code(200);
+      return {
+        documents: recentDocuments,
+        total: recentDocuments.length,
+        timestamp: new Date().toISOString(),
+      };
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error("Failed to fetch recent documents:", error);
+    reply.code(500);
+    return {
+      documents: [],
+      total: 0,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    };
+  }
+});
+
+/**
+ * Vault file operations endpoints
+ */
+
+// List files in vault directory
+server.get("/api/vault/files", async (request, reply) => {
+  try {
+    const { path: subPath = "" } = request.query as { path?: string };
+    const fullPath = path.join(OBSIDIAN_VAULT_PATH, subPath);
+
+    // Security check - ensure path is within vault
+    if (!fullPath.startsWith(OBSIDIAN_VAULT_PATH)) {
+      reply.code(403);
+      return { error: "Access denied: Path outside vault" };
+    }
+
+    if (!fs.existsSync(fullPath)) {
+      reply.code(404);
+      return { error: "Path not found" };
+    }
+
+    const stats = fs.statSync(fullPath);
+
+    if (stats.isFile()) {
+      // Return single file info
+      const relativePath = path.relative(OBSIDIAN_VAULT_PATH, fullPath);
+      return {
+        type: "file",
+        files: [
+          {
+            name: path.basename(fullPath),
+            path: relativePath,
+            size: stats.size,
+            modified: stats.mtime.toISOString(),
+            created: stats.ctime.toISOString(),
+            extension: path.extname(fullPath),
+            isMarkdown: fullPath.endsWith(".md"),
+          },
+        ],
+      };
+    }
+
+    // List directory contents
+    const items = fs.readdirSync(fullPath, { withFileTypes: true });
+    const files = items
+      .filter((item) => !item.name.startsWith(".") && item.name !== ".obsidian")
+      .map((item) => {
+        const itemPath = path.join(fullPath, item.name);
+        const itemStats = fs.statSync(itemPath);
+        const relativePath = path.relative(OBSIDIAN_VAULT_PATH, itemPath);
+
+        return {
+          name: item.name,
+          path: relativePath,
+          type: item.isDirectory() ? "directory" : "file",
+          size: item.isFile() ? itemStats.size : undefined,
+          modified: itemStats.mtime.toISOString(),
+          created: itemStats.ctime.toISOString(),
+          extension: item.isFile() ? path.extname(item.name) : undefined,
+          isMarkdown: item.isFile() && item.name.endsWith(".md"),
+        };
+      })
+      .sort((a, b) => {
+        // Directories first, then files, alphabetically
+        if (a.type !== b.type) {
+          return a.type === "directory" ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name);
+      });
+
+    reply.code(200);
+    return {
+      type: "directory",
+      path: subPath,
+      files,
+      total: files.length,
+    };
+  } catch (error) {
+    console.error("Failed to list vault files:", error);
+    reply.code(500);
+    return { error: error.message };
+  }
+});
+
+// Read file content
+server.get("/api/vault/file/*", async (request, reply) => {
+  try {
+    const filePath = (request.params as any)["*"];
+    const fullPath = path.join(OBSIDIAN_VAULT_PATH, filePath);
+
+    // Security check
+    if (!fullPath.startsWith(OBSIDIAN_VAULT_PATH)) {
+      reply.code(403);
+      return { error: "Access denied: Path outside vault" };
+    }
+
+    if (!fs.existsSync(fullPath)) {
+      reply.code(404);
+      return { error: "File not found" };
+    }
+
+    const stats = fs.statSync(fullPath);
+    if (!stats.isFile()) {
+      reply.code(400);
+      return { error: "Path is not a file" };
+    }
+
+    const content = fs.readFileSync(fullPath, "utf-8");
+    const isMarkdown = fullPath.endsWith(".md");
+
+    let parsedContent = { content, frontmatter: {}, body: content };
+    if (isMarkdown) {
+      try {
+        parsedContent.frontmatter = ObsidianUtils.parseFrontmatter(content);
+        parsedContent.body = content.replace(/^---[\s\S]*?---\n?/, "").trim();
+      } catch (error) {
+        console.warn("Failed to parse frontmatter:", error);
+      }
+    }
+
+    reply.code(200);
+    return {
+      path: filePath,
+      name: path.basename(fullPath),
+      size: stats.size,
+      modified: stats.mtime.toISOString(),
+      created: stats.ctime.toISOString(),
+      extension: path.extname(fullPath),
+      isMarkdown,
+      ...parsedContent,
+    };
+  } catch (error) {
+    console.error("Failed to read file:", error);
+    reply.code(500);
+    return { error: error.message };
+  }
+});
+
+// Write/create file
+server.post("/api/vault/file/*", async (request, reply) => {
+  try {
+    const filePath = (request.params as any)["*"];
+    const { content, frontmatter } = request.body as {
+      content: string;
+      frontmatter?: Record<string, unknown>;
+    };
+
+    const fullPath = path.join(OBSIDIAN_VAULT_PATH, filePath);
+
+    // Security check
+    if (!fullPath.startsWith(OBSIDIAN_VAULT_PATH)) {
+      reply.code(403);
+      return { error: "Access denied: Path outside vault" };
+    }
+
+    // Ensure directory exists
+    const dir = path.dirname(fullPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    let finalContent = content;
+
+    // Handle frontmatter for markdown files
+    if (
+      fullPath.endsWith(".md") &&
+      frontmatter &&
+      Object.keys(frontmatter).length > 0
+    ) {
+      const frontmatterYaml = Object.entries(frontmatter)
+        .map(
+          ([key, value]) =>
+            `${key}: ${
+              typeof value === "string" ? value : JSON.stringify(value)
+            }`
+        )
+        .join("\n");
+      finalContent = `---\n${frontmatterYaml}\n---\n\n${content}`;
+    }
+
+    const existed = fs.existsSync(fullPath);
+    fs.writeFileSync(fullPath, finalContent, "utf-8");
+
+    const stats = fs.statSync(fullPath);
+
+    reply.code(existed ? 200 : 201);
+    return {
+      success: true,
+      action: existed ? "updated" : "created",
+      path: filePath,
+      name: path.basename(fullPath),
+      size: stats.size,
+      modified: stats.mtime.toISOString(),
+    };
+  } catch (error) {
+    console.error("Failed to write file:", error);
+    reply.code(500);
+    return { error: error.message };
+  }
+});
+
+// Delete file
+server.delete("/api/vault/file/*", async (request, reply) => {
+  try {
+    const filePath = (request.params as any)["*"];
+    const fullPath = path.join(OBSIDIAN_VAULT_PATH, filePath);
+
+    // Security check
+    if (!fullPath.startsWith(OBSIDIAN_VAULT_PATH)) {
+      reply.code(403);
+      return { error: "Access denied: Path outside vault" };
+    }
+
+    if (!fs.existsSync(fullPath)) {
+      reply.code(404);
+      return { error: "File not found" };
+    }
+
+    const stats = fs.statSync(fullPath);
+    if (!stats.isFile()) {
+      reply.code(400);
+      return { error: "Path is not a file" };
+    }
+
+    fs.unlinkSync(fullPath);
+
+    reply.code(200);
+    return {
+      success: true,
+      action: "deleted",
+      path: filePath,
+      name: path.basename(fullPath),
+    };
+  } catch (error) {
+    console.error("Failed to delete file:", error);
+    reply.code(500);
+    return { error: error.message };
+  }
+});
+
+// Create directory
+server.post("/api/vault/directory/*", async (request, reply) => {
+  try {
+    const dirPath = (request.params as any)["*"];
+    const fullPath = path.join(OBSIDIAN_VAULT_PATH, dirPath);
+
+    // Security check
+    if (!fullPath.startsWith(OBSIDIAN_VAULT_PATH)) {
+      reply.code(403);
+      return { error: "Access denied: Path outside vault" };
+    }
+
+    if (fs.existsSync(fullPath)) {
+      reply.code(409);
+      return { error: "Directory already exists" };
+    }
+
+    fs.mkdirSync(fullPath, { recursive: true });
+
+    reply.code(201);
+    return {
+      success: true,
+      action: "created",
+      path: dirPath,
+      name: path.basename(fullPath),
+    };
+  } catch (error) {
+    console.error("Failed to create directory:", error);
+    reply.code(500);
+    return { error: error.message };
+  }
+});
+
+// Search files by name/content
+server.post("/api/vault/search", async (request, reply) => {
+  try {
+    const {
+      query,
+      type = "both",
+      limit = 50,
+    } = request.body as {
+      query: string;
+      type?: "name" | "content" | "both";
+      limit?: number;
+    };
+
+    if (!query || query.trim().length === 0) {
+      reply.code(400);
+      return { error: "Query is required" };
+    }
+
+    const results: Array<{
+      path: string;
+      name: string;
+      type: "name" | "content";
+      matches?: string[];
+      size: number;
+      modified: string;
+    }> = [];
+
+    const searchQuery = query.toLowerCase();
+
+    function searchDirectory(dirPath: string) {
+      if (results.length >= limit) return;
+
+      try {
+        const items = fs.readdirSync(dirPath, { withFileTypes: true });
+
+        for (const item of items) {
+          if (results.length >= limit) break;
+          if (item.name.startsWith(".") || item.name === ".obsidian") continue;
+
+          const itemPath = path.join(dirPath, item.name);
+          const relativePath = path.relative(OBSIDIAN_VAULT_PATH, itemPath);
+
+          if (item.isDirectory()) {
+            // Search directory name
+            if (
+              (type === "name" || type === "both") &&
+              item.name.toLowerCase().includes(searchQuery)
+            ) {
+              const stats = fs.statSync(itemPath);
+              results.push({
+                path: relativePath,
+                name: item.name,
+                type: "name",
+                size: 0,
+                modified: stats.mtime.toISOString(),
+              });
+            }
+            // Recurse into subdirectory
+            searchDirectory(itemPath);
+          } else if (item.isFile()) {
+            const stats = fs.statSync(itemPath);
+
+            // Search filename
+            if (
+              (type === "name" || type === "both") &&
+              item.name.toLowerCase().includes(searchQuery)
+            ) {
+              results.push({
+                path: relativePath,
+                name: item.name,
+                type: "name",
+                size: stats.size,
+                modified: stats.mtime.toISOString(),
+              });
+            }
+
+            // Search file content (only for text files)
+            if (
+              (type === "content" || type === "both") &&
+              (item.name.endsWith(".md") || item.name.endsWith(".txt"))
+            ) {
+              try {
+                const content = fs.readFileSync(itemPath, "utf-8");
+                const contentLower = content.toLowerCase();
+
+                if (contentLower.includes(searchQuery)) {
+                  // Find matching lines
+                  const lines = content.split("\n");
+                  const matches = lines
+                    .map((line, index) => ({ line: line.trim(), index }))
+                    .filter(({ line }) =>
+                      line.toLowerCase().includes(searchQuery)
+                    )
+                    .slice(0, 3) // Limit to 3 matches per file
+                    .map(
+                      ({ line, index }) =>
+                        `Line ${index + 1}: ${line.substring(0, 100)}${
+                          line.length > 100 ? "..." : ""
+                        }`
+                    );
+
+                  results.push({
+                    path: relativePath,
+                    name: item.name,
+                    type: "content",
+                    matches,
+                    size: stats.size,
+                    modified: stats.mtime.toISOString(),
+                  });
+                }
+              } catch (error) {
+                // Skip files that can't be read
+                console.warn(
+                  `Could not search content of ${itemPath}:`,
+                  error.message
+                );
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.warn(`Could not search directory ${dirPath}:`, error.message);
+      }
+    }
+
+    searchDirectory(OBSIDIAN_VAULT_PATH);
+
+    reply.code(200);
+    return {
+      query,
+      type,
+      results: results.slice(0, limit),
+      total: results.length,
+      hasMore: results.length >= limit,
+    };
+  } catch (error) {
+    console.error("Failed to search vault:", error);
+    reply.code(500);
+    return { error: error.message };
   }
 });
 
@@ -2997,7 +3481,7 @@ async function start() {
     // Register dictionary API routes
     if (services.dictionaryAPI) {
       await server.register(services.dictionaryAPI.getPlugin(), {
-        prefix: "/dictionary",
+        prefix: "/api/dictionary",
       });
       console.log("📚 Dictionary API routes registered");
     }
@@ -3035,6 +3519,12 @@ async function start() {
     console.log(
       `💡 Context suggestions: http://${HOST}:${PORT}/context/suggestions`
     );
+    console.log(`📁 Vault files: http://${HOST}:${PORT}/api/vault/files`);
+    console.log(
+      `📄 Vault file ops: http://${HOST}:${PORT}/api/vault/file/:path`
+    );
+    console.log(`🔍 Vault search: http://${HOST}:${PORT}/api/vault/search`);
+    console.log(`📋 Recent docs: http://${HOST}:${PORT}/api/recent-documents`);
     if (services.dictionaryAPI) {
       console.log(
         `📚 Dictionary health: http://${HOST}:${PORT}/dictionary/health`

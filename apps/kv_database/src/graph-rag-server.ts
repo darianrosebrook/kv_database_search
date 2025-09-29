@@ -52,8 +52,8 @@ async function initializeServices() {
 
     // Initialize core services
     embeddingService = new ObsidianEmbeddingService({
-      model: "text-embedding-ada-002",
-      dimension: 1536,
+      model: "embeddinggemma",
+      dimension: 768,
     });
     // databaseService = new DatabaseService(pool); // Not used
 

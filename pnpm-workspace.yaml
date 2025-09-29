@@ -1,5 +1,7 @@
 packages:
   - apps/*
-
 onlyBuiltDependencies:
+  - '@swc/core'
+  - '@tailwindcss/oxide'
   - canvas
+  - es5-ext
