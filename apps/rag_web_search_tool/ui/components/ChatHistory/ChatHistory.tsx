@@ -46,57 +46,8 @@ export function ChatHistory({
       setError(null);
       const response = await apiService.getChatHistory();
 
-      // For now, use mock data
-      const mockSessions: ChatSession[] = [
-        {
-          id: "1",
-          title: "Sample Chat Session",
-          messages: [
-            {
-              id: "1",
-              type: "user",
-              content: "Hello, how can you help me?",
-              timestamp: new Date(Date.now() - 86400000), // 1 day ago
-            },
-            {
-              id: "2",
-              type: "assistant",
-              content:
-                "I can help you search through your knowledge base and answer questions about your documents.",
-              timestamp: new Date(Date.now() - 86400000),
-            },
-          ],
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          updatedAt: new Date(Date.now() - 86400000).toISOString(),
-          model: "llama3.1",
-          messageCount: 2,
-        },
-        {
-          id: "2",
-          title: "Design System Questions",
-          messages: [
-            {
-              id: "3",
-              type: "user",
-              content: "What are the main components in the design system?",
-              timestamp: new Date(Date.now() - 172800000), // 2 days ago
-            },
-            {
-              id: "4",
-              type: "assistant",
-              content:
-                "The design system includes Button, Input, Modal, Card, and many other components...",
-              timestamp: new Date(Date.now() - 172800000),
-            },
-          ],
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-          updatedAt: new Date(Date.now() - 172800000).toISOString(),
-          model: "llama3.1",
-          messageCount: 4,
-        },
-      ];
-
-      setSessions(mockSessions);
+      // No mock data - use empty array
+      setSessions([]);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load chat history"

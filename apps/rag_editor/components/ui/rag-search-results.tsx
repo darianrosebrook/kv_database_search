@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
   FileText,
   FileSpreadsheet,
@@ -13,22 +13,22 @@ import {
   Zap,
   Sun,
   Moon,
-} from "lucide-react"
+} from "lucide-react";
 
 interface RAGSearchResultsProps {
-  query?: string
-  onQueryChange?: (query: string) => void
+  query?: string;
+  onQueryChange?: (query: string) => void;
 }
 
 export function RAGSearchResults({
   query: initialQuery = "quarterly revenue growth",
   onQueryChange,
 }: RAGSearchResultsProps) {
-  const [query, setQuery] = useState(initialQuery)
-  const [results, setResults] = useState<any[]>([])
-  const [feedback, setFeedback] = useState<Record<string, string>>({})
-  const [animationComplete, setAnimationComplete] = useState(false)
-  const [darkMode, setDarkMode] = useState(true)
+  const [query, setQuery] = useState(initialQuery);
+  const [results, setResults] = useState<any[]>([]);
+  const [feedback, setFeedback] = useState<Record<string, string>>({});
+  const [animationComplete, setAnimationComplete] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
 
   const mockResults = [
     {
@@ -53,7 +53,8 @@ export function RAGSearchResults({
       title: "Sales Performance Dashboard",
       type: "csv",
       confidence: 0.89,
-      preview: "Month,Revenue,Growth_Rate\nQ1,1.2M,18%\nQ2,1.5M,21%\nQ3,1.8M,23%\nQ4,2.1M,24%",
+      preview:
+        "Month,Revenue,Growth_Rate\nQ1,1.2M,18%\nQ2,1.5M,21%\nQ3,1.8M,23%\nQ4,2.1M,24%",
       matchedText: "revenue growth",
       highlights: [],
       metadata: {
@@ -98,69 +99,75 @@ export function RAGSearchResults({
         modified: "2024-12-05",
       },
     },
-  ]
+  ];
 
-  const refinementOptions = ["Q4 2024", "Year-over-year", "Regional", "Market expansion", "Customer metrics"]
+  const refinementOptions = [
+    "Q4 2024",
+    "Year-over-year",
+    "Regional",
+    "Market expansion",
+    "Customer metrics",
+  ];
 
   useEffect(() => {
-    setResults([])
-    setAnimationComplete(false)
+    setResults([]);
+    setAnimationComplete(false);
     const timer = setTimeout(() => {
-      setResults(mockResults)
-      setTimeout(() => setAnimationComplete(true), mockResults.length * 100)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [query])
+      setResults(mockResults);
+      setTimeout(() => setAnimationComplete(true), mockResults.length * 100);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   const getFileIcon = (type: string) => {
     switch (type) {
       case "pdf":
-        return <FileText className="w-4 h-4" />
+        return <FileText className="w-4 h-4" />;
       case "csv":
-        return <FileSpreadsheet className="w-4 h-4" />
+        return <FileSpreadsheet className="w-4 h-4" />;
       case "image":
-        return <ImageIcon className="w-4 h-4" />
+        return <ImageIcon className="w-4 h-4" />;
       default:
-        return <File className="w-4 h-4" />
+        return <File className="w-4 h-4" />;
     }
-  }
+  };
 
   const highlightText = (text: string, highlights: any[]) => {
-    if (!highlights || highlights.length === 0) return text
+    if (!highlights || highlights.length === 0) return text;
 
-    const parts = []
-    let lastIndex = 0
+    const parts = [];
+    let lastIndex = 0;
 
     highlights.forEach(({ start, end }) => {
-      parts.push(text.slice(lastIndex, start))
+      parts.push(text.slice(lastIndex, start));
       parts.push(
         <mark key={start} className="bg-lime-400 text-black px-0.5">
           {text.slice(start, end)}
-        </mark>,
-      )
-      lastIndex = end
-    })
-    parts.push(text.slice(lastIndex))
+        </mark>
+      );
+      lastIndex = end;
+    });
+    parts.push(text.slice(lastIndex));
 
-    return parts
-  }
+    return parts;
+  };
 
   const handleFeedback = (resultId: number, type: string) => {
     setFeedback((prev) => ({
       ...prev,
       [resultId]: type,
-    }))
-  }
+    }));
+  };
 
   const handleRefine = (refinement: string) => {
-    const newQuery = `${query} ${refinement}`
-    setQuery(newQuery)
-    onQueryChange?.(newQuery)
-  }
+    const newQuery = `${query} ${refinement}`;
+    setQuery(newQuery);
+    onQueryChange?.(newQuery);
+  };
 
   const openDocument = (result: any) => {
-    console.log("Opening document:", result)
-  }
+    console.log("Opening document:", result);
+  };
 
   const theme = {
     bg: darkMode ? "bg-neutral-950" : "bg-neutral-50",
@@ -170,12 +177,16 @@ export function RAGSearchResults({
     textTertiary: darkMode ? "text-neutral-300" : "text-neutral-700",
     card: darkMode ? "bg-neutral-900" : "bg-white",
     cardBorder: darkMode ? "border-neutral-800" : "border-neutral-200",
-    cardBorderHover: darkMode ? "hover:border-neutral-700" : "hover:border-neutral-300",
+    cardBorderHover: darkMode
+      ? "hover:border-neutral-700"
+      : "hover:border-neutral-300",
     preview: darkMode ? "bg-black" : "bg-neutral-100",
     previewBorder: darkMode ? "border-neutral-800" : "border-neutral-200",
     previewText: darkMode ? "text-neutral-300" : "text-neutral-700",
     button: darkMode ? "bg-white text-black" : "bg-black text-white",
-    buttonHover: darkMode ? "hover:bg-lime-400" : "hover:bg-lime-400 hover:text-black",
+    buttonHover: darkMode
+      ? "hover:bg-lime-400"
+      : "hover:bg-lime-400 hover:text-black",
     tag: darkMode
       ? "bg-neutral-800 text-neutral-400 border-neutral-700"
       : "bg-neutral-100 text-neutral-600 border-neutral-300",
@@ -189,15 +200,19 @@ export function RAGSearchResults({
       ? "bg-transparent text-neutral-600 border-neutral-800 hover:border-neutral-600"
       : "bg-transparent text-neutral-400 border-neutral-300 hover:border-neutral-500",
     divider: darkMode ? "border-neutral-800" : "border-neutral-200",
-  }
+  };
 
   return (
-    <div className={`min-h-screen ${theme.bg} ${theme.text} p-6 transition-colors`}>
+    <div
+      className={`min-h-screen ${theme.bg} ${theme.text} p-6 transition-colors`}
+    >
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className={`mb-8 border-b ${theme.divider} pb-6`}>
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-light tracking-tight">Search Results</h1>
+            <h1 className="text-2xl font-light tracking-tight">
+              Search Results
+            </h1>
             <div className="flex items-center gap-6 text-sm">
               <div className={`flex items-center gap-6 ${theme.textMuted}`}>
                 <span className="flex items-center gap-2">
@@ -213,17 +228,27 @@ export function RAGSearchResults({
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 border ${theme.cardBorder} ${theme.cardBorderHover} transition-all`}
               >
-                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {darkMode ? (
+                  <Sun className="w-4 h-4" />
+                ) : (
+                  <Moon className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
-          <div className={`font-mono text-sm ${theme.textSecondary}`}>{query}</div>
+          <div className={`font-mono text-sm ${theme.textSecondary}`}>
+            {query}
+          </div>
         </div>
 
         {/* Refinement Options */}
         {animationComplete && (
           <div className="mb-8">
-            <div className={`text-xs uppercase tracking-wider ${theme.textMuted} mb-3`}>Refine</div>
+            <div
+              className={`text-xs uppercase tracking-wider ${theme.textMuted} mb-3`}
+            >
+              Refine
+            </div>
             <div className="flex flex-wrap gap-2">
               {refinementOptions.map((option, idx) => (
                 <button
@@ -248,20 +273,32 @@ export function RAGSearchResults({
                 animation: `slideUp 0.5s ease-out ${idx * 0.1}s forwards`,
               }}
             >
-              <div className={`${theme.card} border ${theme.cardBorder} ${theme.cardBorderHover} transition-all group`}>
+              <div
+                className={`${theme.card} border ${theme.cardBorder} ${theme.cardBorderHover} transition-all group`}
+              >
                 <div className="p-5">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-3 flex-1">
-                      <div className={theme.textMuted}>{getFileIcon(result.type)}</div>
+                      <div className={theme.textMuted}>
+                        {getFileIcon(result.type)}
+                      </div>
                       <div className="flex-1">
-                        <h3 className={`text-base font-light ${theme.text} mb-1`}>{result.title}</h3>
-                        <div className={`flex items-center gap-3 text-xs ${theme.textMuted} font-mono`}>
+                        <h3
+                          className={`text-base font-light ${theme.text} mb-1`}
+                        >
+                          {result.title}
+                        </h3>
+                        <div
+                          className={`flex items-center gap-3 text-xs ${theme.textMuted} font-mono`}
+                        >
                           <span>{result.metadata.author}</span>
                           <span>·</span>
                           <span>{result.metadata.date}</span>
                           <span>·</span>
-                          <span className="truncate max-w-xs">{result.metadata.path}</span>
+                          <span className="truncate max-w-xs">
+                            {result.metadata.path}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -272,7 +309,11 @@ export function RAGSearchResults({
                         <div className={`text-2xl font-light ${theme.text}`}>
                           {(result.confidence * 100).toFixed(0)}
                         </div>
-                        <div className={`text-xs ${theme.textMuted} uppercase tracking-wider`}>Match</div>
+                        <div
+                          className={`text-xs ${theme.textMuted} uppercase tracking-wider`}
+                        >
+                          Match
+                        </div>
                       </div>
                       <div className="w-1 h-12 bg-lime-400 group-hover:h-16 transition-all"></div>
                     </div>
@@ -288,9 +329,14 @@ export function RAGSearchResults({
                   {/* Metadata */}
                   <div className="flex flex-wrap gap-2 mb-4">
                     {Object.entries(result.metadata)
-                      .filter(([key]) => !["author", "date", "path"].includes(key))
+                      .filter(
+                        ([key]) => !["author", "date", "path"].includes(key)
+                      )
                       .map(([key, value]) => (
-                        <span key={key} className={`px-2 py-1 ${theme.tag} text-xs font-mono border`}>
+                        <span
+                          key={key}
+                          className={`px-2 py-1 ${theme.tag} text-xs font-mono border`}
+                        >
                           {key}: {value}
                         </span>
                       ))}
@@ -346,7 +392,7 @@ export function RAGSearchResults({
         }
       `}</style>
     </div>
-  )
+  );
 }
 
-export default RAGSearchResults
+export default RAGSearchResults;

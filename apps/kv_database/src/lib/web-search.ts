@@ -75,67 +75,7 @@ export class WebSearchService {
   }
 
   private initializeProviders() {
-    // Mock providers for demonstration - in production, implement real APIs
-    this.providers.set("mock", {
-      name: "Mock Search",
-      rateLimitDelay: 100,
-      async search(
-        query: string,
-        options: WebSearchOptions
-      ): Promise<WebSearchResult[]> {
-        // Simulate web search with mock data
-        const mockResults: WebSearchResult[] = [
-          {
-            title: `Latest ${query} Information`,
-            url: `https://example.com/search?q=${encodeURIComponent(query)}`,
-            snippet: `This is a simulated search result for "${query}". In a real implementation, this would be actual web content from search engines.`,
-            publishedDate: new Date().toISOString(),
-            source: "Mock Search Engine",
-            relevanceScore: 0.9,
-          },
-          {
-            title: `${query} - Wikipedia`,
-            url: `https://en.wikipedia.org/wiki/${encodeURIComponent(
-              query.replace(/\s+/g, "_")
-            )}`,
-            snippet: `Wikipedia page about ${query}. Contains comprehensive information and references.`,
-            publishedDate: new Date(
-              Date.now() - 7 * 24 * 60 * 60 * 1000
-            ).toISOString(),
-            source: "Wikipedia",
-            relevanceScore: 0.8,
-          },
-          {
-            title: `Recent News about ${query}`,
-            url: `https://news.example.com/search?q=${encodeURIComponent(
-              query
-            )}`,
-            snippet: `Latest news articles and updates related to ${query} from various news sources.`,
-            publishedDate: new Date(
-              Date.now() - 2 * 60 * 60 * 1000
-            ).toISOString(),
-            source: "News Aggregator",
-            relevanceScore: 0.7,
-          },
-        ];
-
-        // Apply filters
-        let filteredResults = mockResults;
-        if (options.minRelevanceScore) {
-          filteredResults = filteredResults.filter(
-            (r) => r.relevanceScore >= options.minRelevanceScore!
-          );
-        }
-
-        if (options.maxResults) {
-          filteredResults = filteredResults.slice(0, options.maxResults);
-        }
-
-        return filteredResults;
-      },
-    });
-
-    // In a real implementation, you would add actual providers:
+    // No mock providers - in production, implement real APIs:
     // this.providers.set('google', new GoogleSearchProvider());
     // this.providers.set('bing', new BingSearchProvider());
     // this.providers.set('serper', new SerperSearchProvider());

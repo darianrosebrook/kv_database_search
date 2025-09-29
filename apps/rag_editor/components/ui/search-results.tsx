@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { Badge } from "./badge";
 import { SearchResult as ApiSearchResult } from "@/lib/api-client";
-import styles from "./search-results.module.scss";
 
 interface SearchResult extends ApiSearchResult {
   // Keep compatibility with existing UI expectations
@@ -141,33 +140,26 @@ export function SearchResults({
   }));
 
   const getIcon = (type: SearchResult["type"]) => {
-    const iconProps = { className: "h-4 w-4" };
     switch (type) {
       case "document":
-        return (
-          <FileText className={cn(iconProps.className, styles.iconDocument)} />
-        );
+        return <FileText className="h-4 w-4 text-blue-500" />;
       case "chat":
-        return (
-          <MessageSquare className={cn(iconProps.className, styles.iconChat)} />
-        );
+        return <MessageSquare className="h-4 w-4 text-green-500" />;
       case "web":
-        return <Globe className={cn(iconProps.className, styles.iconWeb)} />;
+        return <Globe className="h-4 w-4 text-purple-500" />;
       case "insight":
-        return (
-          <Lightbulb className={cn(iconProps.className, styles.iconInsight)} />
-        );
+        return <Lightbulb className="h-4 w-4 text-yellow-500" />;
       default:
-        return (
-          <FileText className={cn(iconProps.className, styles.iconDefault)} />
-        );
+        return <FileText className="h-4 w-4 text-gray-500" />;
     }
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.9) return styles.high;
-    if (confidence >= 0.8) return styles.medium;
-    return styles.low;
+    if (confidence >= 0.9)
+      return "bg-green-500/20 text-green-700 dark:text-green-300";
+    if (confidence >= 0.8)
+      return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-300";
+    return "bg-orange-500/20 text-orange-700 dark:text-orange-300";
   };
 
   const highlightText = (text: string, highlights: string[] = []) => {
@@ -187,12 +179,15 @@ export function SearchResults({
 
   if (isLoading) {
     return (
-      <div className={cn(styles.loadingContainer, className)}>
+      <div className={cn("space-y-4", className)}>
         {[...Array(3)].map((_, i) => (
-          <div key={i} className={styles.loadingSkeleton}>
-            <div className={cn(styles.skeletonLine, styles.short)} />
-            <div className={cn(styles.skeletonLine, styles.medium)} />
-            <div className={cn(styles.skeletonLine, styles.long)} />
+          <div
+            key={i}
+            className="p-4 rounded-lg border border-border animate-pulse"
+          >
+            <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+            <div className="h-3 bg-muted rounded w-full mb-1" />
+            <div className="h-3 bg-muted rounded w-2/3" />
           </div>
         ))}
       </div>
@@ -200,16 +195,16 @@ export function SearchResults({
   }
 
   return (
-    <div className={cn(styles.searchResults, className)}>
+    <div className={cn("space-y-4", className)}>
       {/* Search Stats */}
-      <div className={styles.searchStats}>
-        <div className={styles.statsContent}>
-          <Zap className={cn("h-4 w-4", styles.iconWorkspaceAccent)} />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Zap className="h-4 w-4 text-workspace-accent" />
           <Caption>
             Found {totalFound} results for "{query}" in 0.12s
           </Caption>
         </div>
-        <Button variant="ghost" size="sm" className={styles.sortButton}>
+        <Button variant="ghost" size="sm" className="text-xs">
           Sort by relevance
         </Button>
       </div>
@@ -218,20 +213,16 @@ export function SearchResults({
       {graphInsights &&
         (graphInsights.queryConcepts.length > 0 ||
           graphInsights.relatedConcepts.length > 0) && (
-          <div className={styles.graphInsights}>
-            <div className={styles.insightsHeader}>
-              <Hash className={cn("h-4 w-4", styles.iconMutedForeground)} />
-              <Caption className={cn(styles.headerText)}>
+          <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+            <div className="flex items-center gap-2">
+              <Hash className="h-4 w-4 text-muted-foreground" />
+              <Caption className="text-sm font-medium">
                 Related Concepts
               </Caption>
             </div>
-            <div className={styles.conceptsContainer}>
+            <div className="flex flex-wrap gap-2">
               {graphInsights.queryConcepts.slice(0, 5).map((concept, index) => (
-                <Badge
-                  key={index}
-                  variant="outline"
-                  className={cn(styles.conceptBadge)}
-                >
+                <Badge key={index} variant="outline" className="text-xs">
                   {concept}
                 </Badge>
               ))}
@@ -241,7 +232,7 @@ export function SearchResults({
                   <Badge
                     key={`related-${index}`}
                     variant="outline"
-                    className={cn(styles.conceptBadge, styles.related)}
+                    className="text-xs opacity-75"
                   >
                     {concept}
                   </Badge>
@@ -254,24 +245,26 @@ export function SearchResults({
       {transformedResults.map((result) => (
         <div
           key={result.id}
-          className={cn(styles.resultCard, "group")}
+          className="p-4 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-all duration-200 group"
           onClick={() => onResultClick?.(result)}
         >
-          <div className={styles.resultHeader}>
-            <div className={styles.resultMain}>
-              <div className={styles.resultIcon}>{getIcon(result.type)}</div>
-              <div className={styles.resultContent}>
-                <Title className={cn(styles.resultTitle)}>{result.title}</Title>
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              {getIcon(result.type)}
+              <div className="min-w-0 flex-1">
+                <Title className="text-base truncate group-hover:text-workspace-accent transition-colors">
+                  {result.title}
+                </Title>
                 {result.path && (
-                  <Caption className={styles.resultPath}>{result.path}</Caption>
+                  <Caption className="truncate">{result.path}</Caption>
                 )}
               </div>
             </div>
-            <div className={styles.resultActions}>
+            <div className="flex items-center gap-2 flex-shrink-0">
               <Badge
                 variant="secondary"
                 className={cn(
-                  styles.confidenceBadge,
+                  "text-xs font-mono",
                   getConfidenceColor(result.confidence)
                 )}
               >
@@ -280,7 +273,7 @@ export function SearchResults({
               <Button
                 variant="ghost"
                 size="sm"
-                className={styles.externalLinkButton}
+                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
               >
                 <ExternalLink className="h-3 w-3" />
               </Button>
@@ -288,34 +281,30 @@ export function SearchResults({
           </div>
 
           <Body
-            className={cn(styles.resultExcerpt)}
+            className="text-muted-foreground mb-3 line-clamp-2"
             dangerouslySetInnerHTML={{
               __html: highlightText(result.excerpt, result.highlights),
             }}
           />
 
-          <div className={styles.resultFooter}>
-            <div className={styles.highlightsSection}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
               {result.highlights && result.highlights.length > 0 && (
-                <>
-                  <Micro className={styles.highlightsLabel}>Highlights:</Micro>
-                  <div className={styles.highlightsContainer}>
+                <div className="flex items-center gap-1">
+                  <Micro className="text-muted-foreground">Highlights:</Micro>
+                  <div className="flex gap-1">
                     {result.highlights.slice(0, 3).map((highlight, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className={styles.highlightBadge}
-                      >
+                      <Badge key={index} variant="outline" className="text-xs">
                         {highlight}
                       </Badge>
                     ))}
                   </div>
-                </>
+                </div>
               )}
             </div>
             {result.lastModified && (
-              <div className={styles.timestampSection}>
-                <Clock className={styles.timestampIcon} />
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="h-3 w-3" />
                 <Caption>{result.lastModified}</Caption>
               </div>
             )}
