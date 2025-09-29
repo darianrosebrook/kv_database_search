@@ -20,6 +20,12 @@ import {
 } from "../utils";
 import { dictionaryClient } from "./dictionary-client";
 
+// API endpoints configuration
+const MAIN_API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const GRAPH_RAG_API_BASE_URL =
+  process.env.NEXT_PUBLIC_GRAPH_RAG_API_URL || "http://localhost:3002";
+
 // ============================================================================
 // SEARCH RESPONSE TYPES
 // ============================================================================
@@ -294,8 +300,7 @@ export class SearchService {
     const startTime = Date.now();
 
     // Call the existing API service
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
-    const response = await fetch(`${apiUrl}/search`, {
+    const response = await fetch(`${MAIN_API_BASE_URL}/search`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

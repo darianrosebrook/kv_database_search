@@ -1,3 +1,49 @@
+## 🏗️ Architecture
+
+This project uses a **microservices architecture** with the following services:
+
+- **Main Server** (Port 3001): Handles search, chat, vault operations, ingestion, and acts as a proxy for Graph RAG requests
+- **Graph RAG Server** (Port 3002): Specialized service for Graph RAG operations including entity extraction, relationship analysis, and reasoning
+
+### ⚙️ Configuration
+
+#### Environment Variables
+
+**Main Server (Port 3001):**
+```bash
+PORT=3001
+HOST=0.0.0.0
+DATABASE_URL=postgresql://user:pass@localhost:5432/obsidian_rag
+EMBEDDING_MODEL=embeddinggemma
+EMBEDDING_DIMENSION=768
+LLM_MODEL=llama3.1
+OBSIDIAN_VAULT_PATH=/path/to/vault
+```
+
+**Graph RAG Server (Port 3002):**
+```bash
+GRAPH_RAG_PORT=3002
+GRAPH_RAG_HOST=localhost
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=obsidian_rag
+DB_USER=postgres
+DB_PASSWORD=password
+EMBEDDING_MODEL=embeddinggemma
+EMBEDDING_DIMENSION=768
+```
+
+**Frontend Clients:**
+```bash
+# Main API (search, chat, vault operations)
+NEXT_PUBLIC_API_URL=http://localhost:3001
+
+# Graph RAG API (entity analysis, reasoning)
+NEXT_PUBLIC_GRAPH_RAG_API_URL=http://localhost:3002
+```
+
+---
+
 ## 🆕 Enhanced: Image Classification & Scene Description
 
 ### Beyond OCR: True Visual Understanding

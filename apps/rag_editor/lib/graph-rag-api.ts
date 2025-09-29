@@ -1,6 +1,6 @@
 // Enhanced API service for Graph RAG integration
 const GRAPH_RAG_API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+  process.env.NEXT_PUBLIC_GRAPH_RAG_API_URL || "http://localhost:3002";
 
 export interface GraphRagEntity {
   id: string;

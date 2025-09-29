@@ -1,5 +1,5 @@
 // Enhanced API service for Graph RAG integration
-const GRAPH_RAG_API_BASE_URL = "http://localhost:3001";
+const GRAPH_RAG_API_BASE_URL = "http://localhost:3002/api/graph-rag";
 
 export interface GraphRagEntity {
   id: string;
