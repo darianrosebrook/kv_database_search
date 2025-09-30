@@ -1,0 +1,187 @@
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: rgb(0 0 0 / 0.5);
+
+  &[data-state="open"] {
+    animation: fadeIn 0.15s ease-out;
+  }
+
+  &[data-state="closed"] {
+    animation: fadeOut 0.15s ease-in;
+  }
+}
+
+.sheetContent {
+  background-color: var(--background);
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transition: ease-in-out 0.5s;
+
+  &[data-state="open"] {
+    animation: slideIn 0.5s ease-out;
+  }
+
+  &[data-state="closed"] {
+    animation: slideOut 0.3s ease-in;
+  }
+
+  /* Side variations */
+  &.right {
+    inset-block: 0;
+    right: 0;
+    height: 100%;
+    width: 75%;
+    border-left: 1px solid var(--border);
+
+    @media (min-width: 640px) {
+      max-width: 24rem;
+    }
+  }
+
+  &.left {
+    inset-block: 0;
+    left: 0;
+    height: 100%;
+    width: 75%;
+    border-right: 1px solid var(--border);
+
+    @media (min-width: 640px) {
+      max-width: 24rem;
+    }
+  }
+
+  &.top {
+    inset-inline: 0;
+    top: 0;
+    height: auto;
+    border-bottom: 1px solid var(--border);
+  }
+
+  &.bottom {
+    inset-inline: 0;
+    bottom: 0;
+    height: auto;
+    border-top: 1px solid var(--border);
+  }
+}
+
+.sheetHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1rem;
+}
+
+.sheetFooter {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.sheetTitle {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.sheetDescription {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.sheetClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  border-radius: var(--radius-sm);
+  opacity: 0.7;
+  transition: opacity 0.2s ease-in-out;
+  padding: 0.25rem;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  outline: hidden;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    pointer-events: none;
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(var(--slide-from, 100%));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--slide-to, 100%));
+  }
+}
+
+/* Side-specific animations */
+.sheetContent.right {
+  --slide-from: 100%;
+  --slide-to: 100%;
+}
+
+.sheetContent.left {
+  --slide-from: -100%;
+  --slide-to: -100%;
+}
+
+.sheetContent.top {
+  --slide-from: 0 -100%;
+  --slide-to: 0 -100%;
+}
+
+.sheetContent.bottom {
+  --slide-from: 0 100%;
+  --slide-to: 0 100%;
+}

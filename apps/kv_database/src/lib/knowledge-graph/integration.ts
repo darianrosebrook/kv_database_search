@@ -6,7 +6,7 @@ import {
   KnowledgeGraphPipeline,
   KnowledgeGraphPipelineConfig,
 } from "./knowledge-graph-pipeline.js";
-import { ContentType } from "../types/index.js";
+import { ContentType } from "../../types/index.js";
 
 export interface KnowledgeGraphIntegrationConfig {
   enableRealTimeProcessing: boolean;

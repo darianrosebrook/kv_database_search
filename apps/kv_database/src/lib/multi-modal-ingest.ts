@@ -59,12 +59,15 @@ export class MultiModalIngestionPipeline {
     database: ObsidianDatabase,
     embeddingService: ObsidianEmbeddingService
   ) {
+    console.log("hi mom 1");
     this.db = database;
     this.embeddings = embeddingService;
     this.contentDetector = new MultiModalContentDetector(
       contentProcessorRegistry
     );
+    console.log("hi mom 2");
     this.pdfProcessor = new PDFProcessingPipeline();
+    console.log("hi mom 3");
     this.ocrProcessor = new OCRProcessor();
     this.officeProcessor = new OfficeProcessor();
     this.speechProcessor = new SpeechProcessor();

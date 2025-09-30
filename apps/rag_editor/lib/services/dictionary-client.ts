@@ -372,16 +372,31 @@ export class DictionaryClient {
    * Check dictionary service health
    */
   async getHealth(): Promise<DictionaryHealthResponse | null> {
+    // If baseUrl is empty, dictionary service is not configured
+    if (!this.baseUrl || this.baseUrl === "/") {
+      return null;
+    }
+
     try {
       const response = await fetch(`${this.baseUrl}/dictionary/health`);
 
       if (!response.ok) {
+        // Don't log 404 errors as they're expected when service isn't implemented
+        if (response.status === 404) {
+          return null;
+        }
         throw new Error(`Health check failed: ${response.statusText}`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error("❌ Health check failed:", error);
+      // Only log unexpected errors, not network/404 errors
+      if (
+        !error.message?.includes("fetch") &&
+        !error.message?.includes("404")
+      ) {
+        console.error("❌ Health check failed:", error);
+      }
       return null;
     }
   }

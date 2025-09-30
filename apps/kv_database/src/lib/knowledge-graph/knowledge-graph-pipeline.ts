@@ -1,6 +1,6 @@
 import { Pool } from "pg";
 import { ObsidianEmbeddingService } from "../embeddings.js";
-import { ContentType } from "../types/index.js";
+import { ContentType } from "../../types/index.js";
 import {
   KnowledgeGraphEntityExtractor,
   EntityExtractionConfig,

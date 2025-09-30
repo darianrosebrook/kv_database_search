@@ -9,11 +9,12 @@ import { registerSearchRoutes } from "./routes/search.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerIngestionRoutes } from "./routes/ingestion.js";
 import { registerVaultRoutes } from "./routes/vault.js";
+import { registerDictionaryRoutes } from "./routes/dictionary.js";
 
 /**
  * Initialize and start the complete server
  */
-async function startMainServer(): Promise<void> {
+export async function startMainServer(): Promise<void> {
   try {
     // Create Fastify server instance
     const server = await createServer();
@@ -27,10 +28,12 @@ async function startMainServer(): Promise<void> {
     registerIngestionRoutes(server);
     registerVaultRoutes(server);
 
+    // Register dictionary routes
+    registerDictionaryRoutes(server);
+
     // TODO: Register additional route modules as they are extracted:
     // registerChatRoutes(server);
     // registerWebSearchRoutes(server);
-    // registerDictionaryRoutes(server);
     // registerGraphRoutes(server);
     // registerWorkspaceRoutes(server);
     // registerFederatedSearchRoutes(server);
@@ -45,7 +48,7 @@ async function startMainServer(): Promise<void> {
   }
 }
 
-// Start the server if this file is run directly
-if (require.main === module) {
+// Start the server if this file is run directly (ES module equivalent)
+if (import.meta.url === `file://${process.argv[1]}`) {
   startMainServer().catch(console.error);
 }

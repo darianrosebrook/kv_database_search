@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Body, Caption, Title } from "../typography";
+import styles from "./workspace-card.module.scss";
 
 interface WorkspaceCardProps {
   title: string;
@@ -24,23 +25,21 @@ export function WorkspaceCard({
     <div
       onClick={onClick}
       className={cn(
-        "p-4 rounded-lg border border-border bg-card hover:bg-accent/50",
-        "cursor-pointer transition-all duration-200 group",
-        "workspace-indicator",
-        isActive && "active bg-accent",
+        styles.workspaceCard,
+        isActive && styles.active,
         className
       )}
     >
-      <div className="space-y-2">
-        <Title className="group-hover:text-foreground transition-colors">
+      <div className={styles.cardContent}>
+        <Title className={styles.title}>
           {title}
         </Title>
         {description && (
-          <Body className="text-muted-foreground line-clamp-2">
+          <Body className={styles.description}>
             {description}
           </Body>
         )}
-        {lastAccessed && <Caption>Last accessed {lastAccessed}</Caption>}
+        {lastAccessed && <Caption className={styles.lastAccessed}>Last accessed {lastAccessed}</Caption>}
       </div>
     </div>
   );

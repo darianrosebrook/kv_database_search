@@ -1,0 +1,51 @@
+.scrollArea {
+  position: relative;
+}
+
+.scrollAreaViewport {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  transition: color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  outline: none;
+
+  &:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--ring) 50%, transparent);
+  }
+}
+
+.scrollAreaScrollbar {
+  display: flex;
+  touch-action: none;
+  padding: 1px;
+  transition: colors 0.2s ease-in-out;
+  user-select: none;
+
+  &.vertical {
+    height: 100%;
+    width: 0.625rem;
+    border-left: 1px solid transparent;
+  }
+
+  &.horizontal {
+    height: 0.625rem;
+    flex-direction: column;
+    border-top: 1px solid transparent;
+  }
+}
+
+.scrollAreaThumb {
+  background-color: var(--border);
+  position: relative;
+  flex: 1;
+  border-radius: 9999px;
+}
+
+/* Hover states for scrollbar */
+.scrollAreaScrollbar:hover .scrollAreaThumb {
+  background-color: var(--muted-foreground);
+}
+
+.scrollAreaScrollbar[data-state="visible"] .scrollAreaThumb {
+  background-color: var(--muted-foreground);
+}

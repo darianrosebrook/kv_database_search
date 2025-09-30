@@ -2,6 +2,8 @@
 
 import * as CollapsiblePrimitive from '@radix-ui/react-collapsible'
 
+import styles from './collapsible.module.scss'
+
 function Collapsible({
   ...props
 }: React.ComponentProps<typeof CollapsiblePrimitive.Root>) {
@@ -25,6 +27,7 @@ function CollapsibleContent({
   return (
     <CollapsiblePrimitive.CollapsibleContent
       data-slot="collapsible-content"
+      className={styles.collapsibleContent}
       {...props}
     />
   )

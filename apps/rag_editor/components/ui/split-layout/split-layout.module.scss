@@ -1,0 +1,74 @@
+.splitLayout {
+  height: 100%;
+  display: flex;
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease-in-out;
+
+  .panelContent {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .panelToggle {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 10;
+  }
+}
+
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+
+  .panelContent {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .panelToggle {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 10;
+  }
+}
+
+.resizeHandle {
+  width: 0.25rem;
+  background-color: var(--border);
+  cursor: col-resize;
+  transition: background-color 0.2s ease-in-out;
+
+  &:hover {
+    background-color: var(--accent);
+  }
+}
+
+.collapsedToggleLeft {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10;
+}
+
+.collapsedToggleRight {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+
+/* Backdrop blur effect */
+.panelToggle button,
+.collapsedToggleLeft button,
+.collapsedToggleRight button {
+  background-color: color-mix(in srgb, var(--background) 80%, transparent);
+  backdrop-filter: blur(4px);
+}

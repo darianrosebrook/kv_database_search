@@ -9,22 +9,8 @@
  * @author @darianrosebrook
  */
 
-// Import the full bootstrap server
-import {
-  createServer,
-  initializeServer,
-  startServer,
-} from "./server/bootstrap";
+// Import and run the server initialization logic
+import { startMainServer } from "./server/index.js";
 
-async function main() {
-  try {
-    const server = await createServer();
-    await initializeServer(server);
-    await startServer(server);
-  } catch (error) {
-    console.error("❌ Server startup failed:", error);
-    process.exit(1);
-  }
-}
-
-main().catch(console.error);
+// Start the server
+startMainServer().catch(console.error);

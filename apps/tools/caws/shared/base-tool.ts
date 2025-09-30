@@ -103,7 +103,7 @@ export abstract class CawsBaseTool {
   /**
    * Safely read a YAML file
    */
-  protected readYamlFile<T = unknown>(filePath: string): T | null {
+  protected async readYamlFile<T = unknown>(filePath: string): Promise<T | null> {
     try {
       if (!fs.existsSync(filePath)) {
         return null;
@@ -113,7 +113,7 @@ export abstract class CawsBaseTool {
       const yaml = await import("js-yaml");
       return yaml.load(content) as T;
     } catch (error) {
-      this.logError(`Failed to read YAML file ${filePath}: ${error}`);
+      this.logError(`Failed to read YAML file ${error}`);
       return null;
     }
   }

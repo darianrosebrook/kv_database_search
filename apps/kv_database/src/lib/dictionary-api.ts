@@ -75,6 +75,13 @@ export class DictionaryAPI {
   }
 
   /**
+   * Initialize the dictionary API after database is ready
+   */
+  async initialize(): Promise<void> {
+    await this.dictionaryService.initialize();
+  }
+
+  /**
    * Get the Fastify plugin for dictionary endpoints
    */
   getPlugin() {

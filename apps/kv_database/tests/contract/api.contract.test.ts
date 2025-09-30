@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 
 // Load OpenAPI schema
-const openApiPath = path.join(__dirname, "../../apps/contracts/api.yaml");
+const openApiPath = path.join(__dirname, "../../../contracts/api.yaml");
 const openApiContent = fs.readFileSync(openApiPath, "utf-8");
 
 // Parse OpenAPI spec (simplified for testing - in production use a proper OpenAPI parser)

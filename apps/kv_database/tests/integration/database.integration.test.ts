@@ -1,12 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import {
-  PostgreSqlContainer,
-  StartedPostgreSqlContainer,
-} from "@testcontainers/postgresql";
 import { ObsidianDatabase } from "../../src/lib/database.ts";
+import { TestDatabaseManager } from "../../../tests/setup";
 
 describe("ObsidianDatabase Integration", () => {
-  let postgresContainer: StartedPostgreSqlContainer;
   let database: ObsidianDatabase;
 
   // Helper to create 768-dimensional embeddings
@@ -14,28 +10,22 @@ describe("ObsidianDatabase Integration", () => {
     new Array(768).fill(0).map(() => Math.random() * 2 - 1);
 
   beforeAll(async () => {
-    // Start PostgreSQL container with pgvector extension
-    postgresContainer = await new PostgreSqlContainer("pgvector/pgvector:pg16")
-      .withDatabase("testdb")
-      .withUsername("testuser")
-      .withPassword("testpass")
-      .start();
+    // Ensure test database is available
+    await TestDatabaseManager.ensureDatabase();
+    const connectionString = TestDatabaseManager.getConnectionString();
 
-    // Create database instance with container connection
-    const connectionString = postgresContainer.getConnectionUri();
     database = new ObsidianDatabase(connectionString);
 
     // Initialize database schema
     await database.initialize();
-  }, 60000); // 60 second timeout for container startup
+  }, 60000); // 60 second timeout for database setup
 
   afterAll(async () => {
     if (database) {
       await database.close();
     }
-    if (postgresContainer) {
-      await postgresContainer.stop();
-    }
+    // Clean up test database if we created one
+    await TestDatabaseManager.cleanup();
   });
 
   describe("Database Initialization", () => {

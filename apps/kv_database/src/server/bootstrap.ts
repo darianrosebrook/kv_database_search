@@ -173,6 +173,7 @@ async function buildServices(): Promise<AppServices> {
   let webSearchService: WebSearchService | undefined;
   let contextManager: ContextManager | undefined;
   let dictionaryAPI: DictionaryAPI | undefined;
+  let ingestionPipeline: ObsidianIngestionPipeline | undefined;
   let mlEntityAPI: MLEntityAPI | undefined;
   let temporalReasoningAPI: TemporalReasoningAPI | undefined;
   let federatedSearchAPI: FederatedSearchAPI | undefined;
@@ -327,7 +328,7 @@ async function buildServices(): Promise<AppServices> {
     database,
     embeddingService,
     searchService,
-    ingestionPipeline: _ingestionPipeline,
+    ingestionPipeline,
     webSearchService,
     contextManager,
     dictionaryAPI,

@@ -1,0 +1,213 @@
+.selectTrigger {
+  border: 1px solid var(--input);
+  background-color: transparent;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  outline: none;
+  width: fit-content;
+  cursor: pointer;
+
+  &[data-placeholder] {
+    color: var(--muted-foreground);
+  }
+
+  &[data-size="default"] {
+    height: 2.25rem;
+  }
+
+  &[data-size="sm"] {
+    height: 2rem;
+  }
+
+  &:focus-visible {
+    border-color: var(--ring);
+    outline: 3px solid color-mix(in srgb, var(--ring) 50%, transparent);
+  }
+
+  &[aria-invalid="true"] {
+    border-color: var(--destructive);
+    outline: 3px solid color-mix(in srgb, var(--destructive) 20%, transparent);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  svg {
+    pointer-events: none;
+    flex-shrink: 0;
+
+    &:not([class*='text-']) {
+      color: var(--muted-foreground);
+    }
+
+    &:not([class*='size-']) {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  [data-slot="select-value"] {
+    line-clamp: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+.selectContent {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  position: relative;
+  z-index: 50;
+  max-height: var(--radix-select-content-available-height);
+  min-width: 8rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transform-origin: var(--radix-select-content-transform-origin);
+
+  &[data-state="open"] {
+    animation: in 0.15s ease-out;
+  }
+
+  &[data-state="closed"] {
+    animation: out 0.15s ease-in;
+  }
+}
+
+.selectViewport {
+  padding: 0.25rem;
+
+  &[data-position="popper"] {
+    height: var(--radix-select-trigger-height);
+    width: 100%;
+    min-width: var(--radix-select-trigger-width);
+    scroll-margin: 0.25rem;
+  }
+}
+
+.selectLabel {
+  color: var(--muted-foreground);
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.selectItem {
+  position: relative;
+  display: flex;
+  width: 100%;
+  cursor: default;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.125rem;
+  padding: 0.375rem 2rem 0.375rem 0.5rem;
+  font-size: 0.875rem;
+  outline: hidden;
+  user-select: none;
+
+  &:focus {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  &[data-disabled] {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  svg {
+    pointer-events: none;
+    flex-shrink: 0;
+
+    &:not([class*='text-']) {
+      color: var(--muted-foreground);
+    }
+
+    &:not([class*='size-']) {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  [data-slot="select-item-text"] {
+    &:last-child {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+}
+
+.selectItemIndicator {
+  position: absolute;
+  right: 0.5rem;
+  display: flex;
+  width: 0.75rem;
+  height: 0.75rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.selectSeparator {
+  background-color: var(--border);
+  pointer-events: none;
+  margin: 0.25rem -0.25rem;
+  height: 1px;
+}
+
+.selectScrollButton {
+  display: flex;
+  cursor: default;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+}
+
+/* Dark mode overrides */
+.dark .selectTrigger {
+  background-color: color-mix(in srgb, var(--input) 30%, transparent);
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--input) 50%, transparent);
+  }
+
+  &[aria-invalid="true"] {
+    outline: 3px solid color-mix(in srgb, var(--destructive) 40%, transparent);
+  }
+}
+
+/* Animations */
+@keyframes in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}

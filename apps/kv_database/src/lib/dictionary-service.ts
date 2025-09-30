@@ -222,10 +222,19 @@ export class DictionaryService {
 
   constructor(database: ObsidianDatabase) {
     this.db = database;
-    // Initialize service asynchronously to avoid blocking constructor
-    this.initializeService().catch((error) => {
+    // Don't initialize immediately - wait for explicit initialize() call
+  }
+
+  /**
+   * Initialize the dictionary service after database is ready
+   */
+  async initialize(): Promise<void> {
+    try {
+      await this.initializeService();
+    } catch (error) {
       console.warn(`⚠️ Dictionary service initialization failed: ${error}`);
-    });
+      // Don't throw - allow service to work in degraded mode
+    }
   }
 
   /**
@@ -634,8 +643,8 @@ export class DictionaryService {
             confidence: parseFloat(row.confidence),
             source: row.source,
             reasoning: `Exact match found in ${row.source}: ${row.definition}`,
-        };
-      }
+          };
+        }
       } finally {
         client.release();
       }

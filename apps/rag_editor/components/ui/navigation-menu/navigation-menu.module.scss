@@ -1,0 +1,346 @@
+.navigationMenu {
+  position: relative;
+  display: flex;
+  max-width: max-content;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.navigationMenuList {
+  display: flex;
+  flex: 1;
+  list-style: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.navigationMenuItem {
+  position: relative;
+}
+
+.navigationMenuTrigger {
+  display: inline-flex;
+  height: 2.25rem;
+  width: max-content;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background-color: var(--background);
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  outline: none;
+
+  &:hover {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  &:focus-visible {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+    outline: 3px solid color-mix(in srgb, var(--ring) 50%, transparent);
+  }
+
+  &:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  &[data-state="open"] {
+    background-color: color-mix(in srgb, var(--accent) 50%, transparent);
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--accent);
+      color: var(--accent-foreground);
+    }
+  }
+
+  svg {
+    position: relative;
+    top: 1px;
+    margin-left: 0.25rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    transition: transform 0.3s ease-in-out;
+
+    .group[data-state="open"] & {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.navigationMenuContent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 0.5rem;
+  padding-right: 0.625rem;
+
+  /* Viewport-based positioning */
+  .navigationMenu[data-viewport="true"] & {
+    position: absolute;
+    width: auto;
+  }
+
+  /* Viewport false styles */
+  .navigationMenu[data-viewport="false"] & {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    margin-top: 0.375rem;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+
+    &[data-state="open"] {
+      animation: fadeIn 0.15s ease-out, zoomIn 0.15s ease-out;
+    }
+
+    &[data-state="closed"] {
+      animation: fadeOut 0.15s ease-in, zoomOut 0.15s ease-in;
+    }
+  }
+
+  /* Animation classes */
+  &[data-motion^="from-"] {
+    animation: slideIn 0.15s ease-out;
+  }
+
+  &[data-motion^="to-"] {
+    animation: slideOut 0.15s ease-in;
+  }
+
+  &[data-motion="from-end"] {
+    animation: slideInFromRight 0.15s ease-out;
+  }
+
+  &[data-motion="from-start"] {
+    animation: slideInFromLeft 0.15s ease-out;
+  }
+
+  &[data-motion="to-end"] {
+    animation: slideOutToRight 0.15s ease-in;
+  }
+
+  &[data-motion="to-start"] {
+    animation: slideOutToLeft 0.15s ease-in;
+  }
+}
+
+.navigationMenuViewport {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: var(--radix-navigation-menu-viewport-height);
+  overflow: hidden;
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  margin-top: 0.375rem;
+
+  &[data-state="open"] {
+    animation: fadeIn 0.15s ease-out, zoomIn 0.15s ease-out;
+  }
+
+  &[data-state="closed"] {
+    animation: fadeOut 0.15s ease-in, zoomOut 0.15s ease-in;
+  }
+}
+
+.navigationMenuLink {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-radius: 0.125rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+  outline: hidden;
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  &[data-active="true"] {
+    background-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    color: var(--accent-foreground);
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--accent);
+    }
+  }
+
+  &:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--ring) 50%, transparent);
+  }
+
+  svg {
+    &:not([class*='text-']) {
+      color: var(--muted-foreground);
+    }
+
+    &:not([class*='size-']) {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+}
+
+.navigationMenuIndicator {
+  position: absolute;
+  top: 100%;
+  z-index: 1;
+  display: flex;
+  height: 0.375rem;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+
+  &[data-state="visible"] {
+    animation: fadeIn 0.15s ease-out;
+  }
+
+  &[data-state="hidden"] {
+    animation: fadeOut 0.15s ease-in;
+  }
+
+  > div {
+    background-color: var(--border);
+    position: relative;
+    top: 60%;
+    height: 0.5rem;
+    width: 0.5rem;
+    transform: rotate(45deg);
+    border-radius: 0.125rem 0 0 0;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+}
+
+/* Focus ring overrides for links */
+.navigationMenuContent [data-slot="navigation-menu-link"] {
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(13rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-13rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(13rem);
+  }
+}
+
+@keyframes slideOutToLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-13rem);
+  }
+}

@@ -54,7 +54,7 @@ export { QueryOptimizer } from "./query-optimizer.js";
 export { MonitoringSystem } from "./monitoring-system.js";
 
 // API Layers
-export { GraphRagApiServer } from "./graph-rag-api.js";
+// export { GraphRagApiServer } from "./graph-rag-api.js"; // Not implemented yet
 export {
   createGraphQLSchema,
   createGraphQLContext,
@@ -63,9 +63,9 @@ export {
 } from "./graphql-api.js";
 
 // Database schema and migrations
-export { default as knowledgeGraphSchema } from "./schema.sql";
-export { default as knowledgeGraphMigration } from "./migrations/001_create_knowledge_graph_schema.sql";
-export { default as provenanceMigration } from "./migrations/002_create_provenance_schema.sql";
+// export { default as knowledgeGraphSchema } from "./schema.sql"; // Commented out to avoid SQL import issues
+// export { default as knowledgeGraphMigration } from "./migrations/001_create_knowledge_graph_schema.sql"; // Commented out to avoid SQL import issues
+// export { default as provenanceMigration } from "./migrations/002_create_provenance_schema.sql"; // Commented out to avoid SQL import issues
 
 /**
  * Quick start factory function for knowledge graph integration

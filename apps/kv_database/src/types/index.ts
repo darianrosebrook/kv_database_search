@@ -4,7 +4,8 @@
 
 import type { WebSocket } from "ws";
 
-// Re-export all Obsidian-specific types from models
+// Re-export multi-modal types
+export { ContentMetadata };
 export type {
   ObsidianDocument,
   Wikilink,

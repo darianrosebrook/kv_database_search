@@ -1,3 +1,1 @@
-// Re-export commonly used types
-export { ContentType, ContentMetadata } from "../multi-modal";
-
+// Types are imported directly from the main types file where needed

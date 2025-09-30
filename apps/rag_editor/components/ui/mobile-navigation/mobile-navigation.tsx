@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "../button";
 import { cn } from "@/lib/utils";
 import { Home, Search, MessageSquare, FileText, User } from "lucide-react";
+import styles from "./mobile-navigation.module.scss";
 
 interface MobileNavigationProps {
   className?: string;
@@ -21,8 +22,8 @@ export function MobileNavigation({ className }: MobileNavigationProps) {
   const [activeItem, setActiveItem] = useState("home");
 
   return (
-    <nav className={cn("bg-card border-t border-border", className)}>
-      <div className="flex items-center justify-around py-2">
+    <nav className={cn(styles.mobileNavigation, className)}>
+      <div className={styles.navContainer}>
         {navigationItems.map((item) => (
           <Button
             key={item.id}
@@ -30,8 +31,8 @@ export function MobileNavigation({ className }: MobileNavigationProps) {
             size="sm"
             onClick={() => setActiveItem(item.id)}
             className={cn(
-              "flex flex-col items-center gap-1 h-auto py-2 px-3",
-              activeItem === item.id && "text-workspace-accent"
+              styles.navItem,
+              activeItem === item.id && styles.active
             )}
           >
             <item.icon className="h-4 w-4" />

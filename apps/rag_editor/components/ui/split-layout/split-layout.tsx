@@ -6,6 +6,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "../button";
 import { PanelLeftClose, PanelRightClose } from "lucide-react";
+import styles from "./split-layout.module.scss";
 
 interface SplitLayoutProps {
   leftPanel: React.ReactNode;
@@ -65,19 +66,16 @@ export function SplitLayout({
   }, [isDragging]);
 
   return (
-    <div id="split-container" className={cn("h-full flex", className)}>
+    <div id="split-container" className={cn(styles.splitLayout, className)}>
       {/* Left Panel */}
       <div
-        className={cn(
-          "flex flex-col transition-all duration-200",
-          isLeftCollapsed ? "w-0" : `w-[${leftWidth}%]`
-        )}
+        className={cn(styles.leftPanel)}
         style={{ width: isLeftCollapsed ? 0 : `${leftWidth}%` }}
       >
         {!isLeftCollapsed && (
           <>
-            <div className="flex-1 overflow-hidden">{leftPanel}</div>
-            <div className="absolute top-4 right-4 z-10">
+            <div className={styles.panelContent}>{leftPanel}</div>
+            <div className={styles.panelToggle}>
               <Button
                 variant="ghost"
                 size="sm"
@@ -94,27 +92,27 @@ export function SplitLayout({
       {/* Resize Handle */}
       {!isLeftCollapsed && !isRightCollapsed && (
         <div
-          className="w-1 bg-border hover:bg-workspace-accent cursor-col-resize transition-colors"
+          className={styles.resizeHandle}
           onMouseDown={handleMouseDown}
         />
       )}
 
       {/* Right Panel */}
       <div
-        className={cn(
-          "flex flex-col transition-all duration-200 relative",
-          isRightCollapsed
-            ? "w-0"
+        className={cn(styles.rightPanel)}
+        style={{
+          width: isRightCollapsed
+            ? 0
             : isLeftCollapsed
-            ? "w-full"
-            : `w-[${100 - leftWidth}%]`
-        )}
+            ? "100%"
+            : `${100 - leftWidth}%`
+        }}
       >
         {!isRightCollapsed && (
           <>
-            <div className="flex-1 overflow-hidden">{rightPanel}</div>
+            <div className={styles.panelContent}>{rightPanel}</div>
             {!isLeftCollapsed && (
-              <div className="absolute top-4 right-4 z-10">
+              <div className={styles.panelToggle}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -135,7 +133,7 @@ export function SplitLayout({
           variant="ghost"
           size="sm"
           onClick={() => setIsLeftCollapsed(false)}
-          className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm"
+          className={styles.collapsedToggleLeft + " bg-background/80 backdrop-blur-sm"}
         >
           <PanelLeftClose className="h-4 w-4 rotate-180" />
         </Button>
@@ -146,7 +144,7 @@ export function SplitLayout({
           variant="ghost"
           size="sm"
           onClick={() => setIsRightCollapsed(false)}
-          className="absolute top-4 right-4 z-10 bg-background/80 backdrop-blur-sm"
+          className={styles.collapsedToggleRight + " bg-background/80 backdrop-blur-sm"}
         >
           <PanelRightClose className="h-4 w-4 rotate-180" />
         </Button>

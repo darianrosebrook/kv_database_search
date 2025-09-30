@@ -1,0 +1,43 @@
+.workspaceCard {
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+
+  &.active {
+    background-color: var(--accent);
+  }
+
+  .cardContent {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .title {
+      transition: color 0.2s ease-in-out;
+
+      .workspaceCard:hover & {
+        color: var(--foreground);
+      }
+    }
+
+    .description {
+      color: var(--muted-foreground);
+      line-clamp: 2;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .lastAccessed {
+      color: var(--muted-foreground);
+    }
+  }
+}

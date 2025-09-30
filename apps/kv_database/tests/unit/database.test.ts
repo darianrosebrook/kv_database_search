@@ -1,29 +1,39 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+} from "vitest";
 import { ObsidianDatabase } from "../../src/lib/database.ts";
+import { TestDatabaseManager } from "../../../../tests/setup";
 
 describe("ObsidianDatabase", () => {
   let db: ObsidianDatabase;
 
-  beforeEach(async () => {
-    // Use test database URL
-    const testUrl =
-      process.env.DATABASE_URL ||
-      "postgresql://postgres:password@localhost:5432/obsidian_rag_test";
+  beforeAll(async () => {
+    // Ensure test database is available
+    await TestDatabaseManager.ensureDatabase();
+    const testUrl = TestDatabaseManager.getConnectionString();
+
     db = new ObsidianDatabase(testUrl);
 
     try {
       await db.initialize();
     } catch (error) {
-      // Skip tests if database is not available
-      console.warn("Database not available for tests, skipping...");
-      return;
+      console.warn("Database initialization failed:", error);
+      throw error; // Fail fast if database setup failed
     }
-  });
+  }, 60000); // 60 second timeout for database setup
 
-  afterEach(async () => {
+  afterAll(async () => {
     if (db) {
       await db.close();
     }
+    // Clean up test database if we created one
+    await TestDatabaseManager.cleanup();
   });
 
   it("should initialize successfully", async () => {

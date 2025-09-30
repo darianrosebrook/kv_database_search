@@ -7,6 +7,7 @@ import {
 
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
+import styles from './pagination.module.scss'
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
   return (
@@ -14,7 +15,7 @@ function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
       role="navigation"
       aria-label="pagination"
       data-slot="pagination"
-      className={cn('mx-auto flex w-full justify-center', className)}
+      className={cn(styles.pagination, className)}
       {...props}
     />
   )
@@ -27,7 +28,7 @@ function PaginationContent({
   return (
     <ul
       data-slot="pagination-content"
-      className={cn('flex flex-row items-center gap-1', className)}
+      className={cn(styles.paginationContent, className)}
       {...props}
     />
   )
@@ -58,6 +59,7 @@ function PaginationLink({
           variant: isActive ? 'outline' : 'ghost',
           size,
         }),
+        styles.paginationLink,
         className,
       )}
       {...props}
@@ -107,7 +109,7 @@ function PaginationEllipsis({
     <span
       aria-hidden
       data-slot="pagination-ellipsis"
-      className={cn('flex size-9 items-center justify-center', className)}
+      className={cn(styles.paginationEllipsis, className)}
       {...props}
     >
       <MoreHorizontalIcon className="size-4" />

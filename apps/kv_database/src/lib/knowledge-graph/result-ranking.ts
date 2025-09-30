@@ -1,5 +1,5 @@
 import { Pool, PoolClient } from "pg";
-import { ContentType } from "../types/index.js";
+import { ContentType } from "../../types/index.js";
 // Removed unused imports
 import {
   type SearchResult,

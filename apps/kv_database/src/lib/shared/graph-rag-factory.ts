@@ -15,7 +15,7 @@ import {
   ProvenanceTracker,
   QueryOptimizer,
   MonitoringSystem,
-  GraphRagApiServer,
+  // GraphRagApiServer, // Not implemented yet
 } from "../knowledge-graph/index.js";
 import { DependencyContainer, SERVICE_TOKENS } from "./dependency-container.js";
 import { Logger } from "./logger.js";
@@ -29,7 +29,7 @@ export interface GraphRagServices {
   provenanceTracker: ProvenanceTracker;
   queryOptimizer: QueryOptimizer;
   monitoringSystem: MonitoringSystem;
-  graphRagApiServer: GraphRagApiServer;
+  // graphRagApiServer: GraphRagApiServer; // Not implemented yet
 }
 
 /**
@@ -73,15 +73,15 @@ export class GraphRagServiceFactory {
       const monitoringSystem = await this.createMonitoringSystem(pool);
 
       // Initialize Graph RAG API server
-      const graphRagApiServer = await this.createGraphRagApiServer(
-        hybridSearchEngine,
-        reasoningEngine,
-        rankingService,
-        knowledgeGraph,
-        provenanceTracker,
-        queryOptimizer,
-        monitoringSystem
-      );
+      // const graphRagApiServer = await this.createGraphRagApiServer( // Not implemented yet
+      //   hybridSearchEngine,
+      //   reasoningEngine,
+      //   rankingService,
+      //   knowledgeGraph,
+      //   provenanceTracker,
+      //   queryOptimizer,
+      //   monitoringSystem
+      // );
 
       // Register services in container
       this.registerServices({
@@ -92,7 +92,7 @@ export class GraphRagServiceFactory {
         provenanceTracker,
         queryOptimizer,
         monitoringSystem,
-        graphRagApiServer,
+        // graphRagApiServer, // Not implemented yet
       });
 
       this.logger.info("✅ Graph RAG services initialized successfully");
@@ -104,7 +104,7 @@ export class GraphRagServiceFactory {
         provenanceTracker,
         queryOptimizer,
         monitoringSystem,
-        graphRagApiServer,
+        // graphRagApiServer, // Not implemented yet
       };
     } catch (error) {
       this.logger.error("❌ Failed to initialize Graph RAG services", error);
@@ -225,34 +225,34 @@ export class GraphRagServiceFactory {
     }
   }
 
-  private async createGraphRagApiServer(
-    hybridSearchEngine: HybridSearchEngine,
-    reasoningEngine: MultiHopReasoningEngine,
-    rankingService: ResultRankingEngine,
-    knowledgeGraph: KnowledgeGraph,
-    provenanceTracker: ProvenanceTracker,
-    queryOptimizer: QueryOptimizer,
-    monitoringSystem: MonitoringSystem
-  ): Promise<GraphRagApiServer> {
-    try {
-      this.logger.info("🌐 Creating Graph RAG API Server...");
-      const graphRagApiServer = new GraphRagApiServer(
-        hybridSearchEngine,
-        reasoningEngine,
-        rankingService,
-        knowledgeGraph,
-        provenanceTracker,
-        queryOptimizer,
-        monitoringSystem
-      );
-      await graphRagApiServer.initialize();
-      this.logger.info("✅ Graph RAG API Server created");
-      return graphRagApiServer;
-    } catch (error) {
-      this.logger.error("❌ Failed to create Graph RAG API Server", error);
-      throw error;
-    }
-  }
+  // private async createGraphRagApiServer( // Not implemented yet
+  //   hybridSearchEngine: HybridSearchEngine,
+  //   reasoningEngine: MultiHopReasoningEngine,
+  //   rankingService: ResultRankingEngine,
+  //   knowledgeGraph: KnowledgeGraph,
+  //   provenanceTracker: ProvenanceTracker,
+  //   queryOptimizer: QueryOptimizer,
+  //   monitoringSystem: MonitoringSystem
+  // ): Promise<GraphRagApiServer> {
+  //   try {
+  //     this.logger.info("🌐 Creating Graph RAG API Server...");
+  //     const graphRagApiServer = new GraphRagApiServer(
+  //       hybridSearchEngine,
+  //       reasoningEngine,
+  //       rankingService,
+  //       knowledgeGraph,
+  //       provenanceTracker,
+  //       queryOptimizer,
+  //       monitoringSystem
+  //     );
+  //     await graphRagApiServer.initialize();
+  //     this.logger.info("✅ Graph RAG API Server created");
+  //     return graphRagApiServer;
+  //   } catch (error) {
+  //     this.logger.error("❌ Failed to create Graph RAG API Server", error);
+  //     throw error;
+  //   }
+  // }
 
   private registerServices(services: GraphRagServices): void {
     this.container.register(
