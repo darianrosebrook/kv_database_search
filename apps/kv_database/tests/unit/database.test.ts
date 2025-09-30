@@ -8,7 +8,7 @@ import {
   afterEach,
 } from "vitest";
 import { ObsidianDatabase } from "../../src/lib/database.ts";
-import { TestDatabaseManager } from "../../../../tests/setup";
+import { TestDatabaseManager } from "../setup";
 
 describe("ObsidianDatabase", () => {
   let db: ObsidianDatabase;

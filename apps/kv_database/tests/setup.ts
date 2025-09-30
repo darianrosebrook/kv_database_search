@@ -1,44 +1,84 @@
-import { beforeAll, afterAll, vi } from "vitest";
+// Setup for vitest
 
-// Import consolidated test utilities
-import {
-  createMockEmbeddings,
-  createMockSearchResult,
-  createMockObsidianFile,
-  TEST_CONSTANTS,
-} from "./test-helpers";
+// Test database management utilities
+export class TestDatabaseManager {
+  private static container: any = null;
+  private static connectionString: string = "";
+  private static isInitialized = false;
 
-// Mock environment variables for testing
-process.env.NODE_ENV = "test";
+  static async ensureDatabase(): Promise<string> {
+    if (this.isInitialized && this.connectionString) {
+      return this.connectionString;
+    }
 
-// Mock console methods to reduce noise in tests
-const originalConsole = { ...console };
-beforeAll(() => {
-  console.log = vi.fn();
-  console.warn = vi.fn();
-  console.error = vi.fn();
-  console.info = vi.fn();
-});
+    if (
+      process.env.CI ||
+      process.env.USE_TESTCONTAINERS ||
+      process.env.FORCE_TESTCONTAINERS
+    ) {
+      // In CI or when explicitly requested, use testcontainers
+      console.log("🐳 Starting test database container...");
+      const { PostgreSqlContainer } = await import(
+        "@testcontainers/postgresql"
+      );
+      this.container = await new PostgreSqlContainer("pgvector/pgvector:pg16")
+        .withDatabase("testdb")
+        .withUsername("testuser")
+        .withPassword("testpass")
+        .start();
+      this.connectionString = this.container.getConnectionUri();
+      console.log("✅ Test database container ready");
+    } else {
+      // In local development, check for existing database
+      this.connectionString =
+        process.env.DATABASE_URL ||
+        "postgresql://postgres:password@localhost:5432/obsidian_rag_test";
 
-afterAll(() => {
-  // Restore console methods
-  Object.assign(console, originalConsole);
-});
+      console.log("🔍 Checking local database connection...");
+      const { Client } = await import("pg");
+      const client = new Client({ connectionString: this.connectionString });
+      try {
+        await client.connect();
+        await client.end();
+        console.log("✅ Local database available");
+      } catch (error) {
+        console.warn(
+          "⚠️ Local database not available, starting test container..."
+        );
+        // Fall back to testcontainers if local DB not available
+        const { PostgreSqlContainer } = await import(
+          "@testcontainers/postgresql"
+        );
+        this.container = await new PostgreSqlContainer("pgvector/pgvector:pg16")
+          .withDatabase("testdb")
+          .withUsername("testuser")
+          .withPassword("testpass")
+          .start();
+        this.connectionString = this.container.getConnectionUri();
+        console.log("✅ Test database container ready");
+      }
+    }
 
-// Global test utilities using consolidated helpers
-global.testUtils = {
-  // Helper to create mock database URLs
-  mockDatabaseUrl: () => TEST_CONSTANTS.MOCK_DATABASE_URL,
+    this.isInitialized = true;
+    process.env.DATABASE_URL = this.connectionString;
+    return this.connectionString;
+  }
 
-  // Helper to create mock embeddings
-  mockEmbeddings: createMockEmbeddings,
+  static async cleanup() {
+    if (this.container) {
+      console.log("🛑 Stopping test database container...");
+      await this.container.stop();
+      this.container = null;
+      console.log("✅ Test database container stopped");
+    }
+    this.isInitialized = false;
+    this.connectionString = "";
+  }
 
-  // Helper to create mock search results
-  mockSearchResult: createMockSearchResult,
-
-  // Helper to create mock Obsidian file
-  mockObsidianFile: createMockObsidianFile,
-
-  // Access to test constants
-  constants: TEST_CONSTANTS,
-};
+  static getConnectionString(): string {
+    if (!this.isInitialized) {
+      throw new Error("Database not initialized. Call ensureDatabase() first.");
+    }
+    return this.connectionString;
+  }
+}

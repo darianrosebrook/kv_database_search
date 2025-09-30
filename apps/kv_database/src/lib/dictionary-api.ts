@@ -82,6 +82,13 @@ export class DictionaryAPI {
   }
 
   /**
+   * Get the dictionary service instance
+   */
+  getDictionaryService(): DictionaryService {
+    return this.dictionaryService;
+  }
+
+  /**
    * Get the Fastify plugin for dictionary endpoints
    */
   getPlugin() {

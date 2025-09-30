@@ -154,13 +154,13 @@ async function buildServices(): Promise<AppServices> {
     throw error;
   }
 
-  // Initialize comprehensive search service
+  // Initialize comprehensive search service (after dictionary service)
   let comprehensiveSearchService: ComprehensiveSearchService | undefined;
   try {
     comprehensiveSearchService = new ComprehensiveSearchService(
       database,
       embeddingService,
-      dictionaryAPI
+      dictionaryService
     );
     console.log("✅ Comprehensive search service initialized");
   } catch (e) {
@@ -198,6 +198,7 @@ async function buildServices(): Promise<AppServices> {
   let webSearchService: WebSearchService | undefined;
   let contextManager: ContextManager | undefined;
   let dictionaryAPI: DictionaryAPI | undefined;
+  let dictionaryService: DictionaryService | undefined;
   let ingestionPipeline: ObsidianIngestionPipeline | undefined;
   let mlEntityAPI: MLEntityAPI | undefined;
   let temporalReasoningAPI: TemporalReasoningAPI | undefined;
@@ -233,6 +234,7 @@ async function buildServices(): Promise<AppServices> {
   try {
     dictionaryAPI = new DictionaryAPI(database);
     await dictionaryAPI.initialize();
+    dictionaryService = dictionaryAPI.getDictionaryService();
     console.log("✅ Dictionary service initialized");
   } catch (e) {
     const error = asError(e);
