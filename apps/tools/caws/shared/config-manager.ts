@@ -140,7 +140,13 @@ export class CawsConfigManager extends CawsBaseTool {
       defaultTier: "2",
       workingSpecPath: path.join(this.getCawsDirectory(), "working-spec.yaml"),
       provenancePath: path.join(this.getCawsDirectory(), "provenance.json"),
+      waiversPath: path.join(this.getCawsDirectory(), "waivers.yml"),
       cawsDirectory: this.getCawsDirectory(),
+      experiment_defaults: {
+        enabled: false,
+        timeboxed_hours: 24,
+        success_criteria: ["Basic functionality works"],
+      },
     };
   }
 

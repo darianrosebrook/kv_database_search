@@ -11,6 +11,11 @@ jobs:
     outputs:
       risk: ${{ steps.risk.outputs.tier }}
       should_run_all: ${{ steps.risk.outputs.should_run_all }}
+      experiment_mode: ${{ steps.risk.outputs.experiment_mode }}
+      has_waivers: ${{ steps.waivers.outputs.has_waivers }}
+      coverage_waived: ${{ steps.waivers.outputs.coverage_waived }}
+      mutation_waived: ${{ steps.waivers.outputs.mutation_waived }}
+      contracts_waived: ${{ steps.waivers.outputs.contracts_waived }}
     steps:
       - uses: actions/checkout@v4
 
@@ -18,21 +23,55 @@ jobs:
         id: risk
         run: |
           # Check if working spec exists
-          if [ -f ".caws/working-spec.yaml" ]; then
+          if [ -f ".caws/working-spec.yml" ] || [ -f ".caws/working-spec.yaml" ]; then
             # Extract risk tier (default to 2 if parsing fails)
-            TIER=$(yq -r '.risk_tier // 2' .caws/working-spec.yaml)
+            TIER=$(yq -r '.risk_tier // 2' .caws/working-spec.y*ml)
+            EXPERIMENT=$(yq -r '.experiment_mode // false' .caws/working-spec.y*ml)
             echo "tier=$TIER" >> $GITHUB_OUTPUT
             echo "should_run_all=true" >> $GITHUB_OUTPUT
+            echo "experiment_mode=$EXPERIMENT" >> $GITHUB_OUTPUT
           else
             echo "tier=2" >> $GITHUB_OUTPUT
             echo "should_run_all=false" >> $GITHUB_OUTPUT
+            echo "experiment_mode=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Waivers
+        id: waivers
+        run: |
+          # Initialize waiver flags
+          echo "has_waivers=false" >> $GITHUB_OUTPUT
+          echo "coverage_waived=false" >> $GITHUB_OUTPUT
+          echo "mutation_waived=false" >> $GITHUB_OUTPUT
+          echo "contracts_waived=false" >> $GITHUB_OUTPUT
+
+          # Check if waivers file exists and has active waivers
+          if [ -f ".caws/waivers.yml" ]; then
+            # Check for active waivers using the waivers tool
+            if command -v npx &> /dev/null; then
+              npx tsx apps/tools/caws/waivers.ts cleanup > /dev/null 2>&1 || true
+
+              # Check each gate for waivers
+              if npx tsx apps/tools/caws/waivers.ts list | grep -q "coverage"; then
+                echo "coverage_waived=true" >> $GITHUB_OUTPUT
+                echo "has_waivers=true" >> $GITHUB_OUTPUT
+              fi
+              if npx tsx apps/tools/caws/waivers.ts list | grep -q "mutation"; then
+                echo "mutation_waived=true" >> $GITHUB_OUTPUT
+                echo "has_waivers=true" >> $GITHUB_OUTPUT
+              fi
+              if npx tsx apps/tools/caws/waivers.ts list | grep -q "contracts"; then
+                echo "contracts_waived=true" >> $GITHUB_OUTPUT
+                echo "has_waivers=true" >> $GITHUB_OUTPUT
+              fi
+            fi
           fi
 
       - name: Validate Working Spec
         if: steps.risk.outputs.should_run_all == 'true'
         run: |
-          if [ -f ".caws/working-spec.yaml" ]; then
-            npx tsx apps/tools/caws/validate.ts working-spec .caws/working-spec.yaml
+          if [ -f ".caws/working-spec.yml" ] || [ -f ".caws/working-spec.yaml" ]; then
+            npx tsx apps/tools/caws/validate.ts working-spec .caws/working-spec.y*ml
           fi
 
   static:
@@ -107,6 +146,7 @@ jobs:
           name: codecov-umbrella
 
       - name: Enforce Branch Coverage
+        if: needs.setup.outputs.coverage_waived != 'true' && needs.setup.outputs.experiment_mode != 'true'
         run: npm run gates:coverage -- ${{ needs.setup.outputs.risk }}
 
       - name: Archive test results
@@ -119,7 +159,7 @@ jobs:
   mutation:
     needs: [setup, unit]
     runs-on: ubuntu-latest
-    if: needs.setup.outputs.risk != '3'
+    if: needs.setup.outputs.risk != '3' && needs.setup.outputs.experiment_mode != 'true' && needs.setup.outputs.mutation_waived != 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -132,6 +172,7 @@ jobs:
         run: npm run test:mutation
 
       - name: Enforce Mutation Score
+        if: needs.setup.outputs.mutation_waived != 'true'
         run: npm run gates:mutation -- ${{ needs.setup.outputs.risk }}
 
       - name: Archive mutation reports
@@ -144,7 +185,7 @@ jobs:
   contracts:
     needs: setup
     runs-on: ubuntu-latest
-    if: needs.setup.outputs.should_run_all == 'true'
+    if: needs.setup.outputs.should_run_all == 'true' && needs.setup.outputs.experiment_mode != 'true' && needs.setup.outputs.contracts_waived != 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -157,6 +198,7 @@ jobs:
         run: npm run test:contract
 
       - name: Validate contracts against tier
+        if: needs.setup.outputs.contracts_waived != 'true'
         run: npm run gates:contracts -- ${{ needs.setup.outputs.risk }}
 
   integration:
@@ -363,6 +405,15 @@ jobs:
         if: needs.provenance_trust.result == 'success' && (needs.manual_review_gate.result == 'success' || needs.setup.outputs.risk != '1')
         run: |
           echo "🎉 All CAWS quality gates passed!"
+          if [ "${{ needs.setup.outputs.has_waivers }}" = "true" ]; then
+            echo "⚠️  Note: Some quality gates were waived for this change"
+            echo "   Coverage waived: ${{ needs.setup.outputs.coverage_waived }}"
+            echo "   Mutation waived: ${{ needs.setup.outputs.mutation_waived }}"
+            echo "   Contracts waived: ${{ needs.setup.outputs.contracts_waived }}"
+          fi
+          if [ "${{ needs.setup.outputs.experiment_mode }}" = "true" ]; then
+            echo "🧪 Note: This is an experimental feature with reduced requirements"
+          fi
           echo "PR is ready for merge"
 
       - name: Gates Failed

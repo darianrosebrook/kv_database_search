@@ -190,6 +190,42 @@ export interface TierPolicy {
 }
 
 // =============================================================================
+// WAIVER AND OVERRIDE TYPES
+// =============================================================================
+
+export interface WaiverConfig {
+  gate: string;
+  reason: string;
+  owner: string;
+  expiry: string;
+  compensating_control?: string;
+  ticket_url?: string;
+  approved_by?: string;
+  created_at: string;
+  status: "active" | "expired" | "revoked";
+}
+
+export interface HumanOverride {
+  approved_by: string;
+  reason: string;
+  waived_requirements: string[];
+  expiry_date?: string;
+}
+
+export interface AIAssessment {
+  confidence_level: number;
+  uncertainty_areas: string[];
+  recommended_pairing?: boolean;
+}
+
+export interface ExperimentConfig {
+  enabled: boolean;
+  timeboxed_hours?: number;
+  success_criteria?: string[];
+  expiry_date?: string;
+}
+
+// =============================================================================
 // CAWS GATE TYPES
 // =============================================================================
 
@@ -265,11 +301,14 @@ export interface CawsConfig {
   workingSpecPath: string;
   provenancePath: string;
   cawsDirectory: string;
+  waiversPath?: string;
   paths?: Record<string, string>;
   gates?: Record<string, GateConfig>;
   tools?: Record<string, ToolConfig>;
   logging?: LoggingConfig;
   features?: Record<string, FeatureConfig>;
+  waivers?: Record<string, WaiverConfig>;
+  experiment_defaults?: ExperimentConfig;
 }
 
 // =============================================================================

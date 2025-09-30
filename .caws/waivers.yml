@@ -1,0 +1,7 @@
+TEST-001:
+  gate: mutation
+  reason: Testing waiver system
+  owner: darianrosebrook
+  expiry: '2025-10-07T23:11:38.037Z'
+  created_at: '2025-09-30T23:11:38.038Z'
+  status: revoked

@@ -2,6 +2,175 @@
 
 This directory contains a comprehensive set of tools for code quality assessment, compliance checking, and trust scoring. The tools have been refactored to use shared base classes and utilities for better maintainability and consistency.
 
+## 🚀 New Features (v1.1)
+
+### Fast Lane Workflows
+CAWS now supports controlled escape hatches for urgent changes and experimental work:
+
+- **Waiver System**: Temporarily exempt specific quality gates (coverage, mutation, contracts) with approval and expiry
+- **Human Overrides**: Senior developers can waive requirements in working specs for hotfixes
+- **Experiment Mode**: Reduced ceremony for time-boxed prototypes and spikes
+- **AI Confidence Assessment**: AI agents self-assess uncertainty and recommend human involvement
+
+### Enhanced Flexibility
+- **Tier-Based CI Optimization**: Low-risk changes skip expensive checks
+- **Configurable Requirements**: Customize thresholds per project or language
+- **Multi-Language Support**: Extensible tooling for Python, Java, and other ecosystems
+
+See the [Fast Lane Guide](#fast-lane-features) below for usage examples.
+
+## 🏎️ Fast Lane Features
+
+### Waivers for Temporary Exemptions
+
+Use waivers to temporarily bypass quality gates for urgent situations:
+
+```bash
+# Add a waiver for mutation testing (expires in 7 days)
+npx caws waivers add HOTFIX-001 mutation "Urgent production fix" alice-smith 7
+
+# Check waiver status
+npx caws waivers check HOTFIX-001
+
+# List all active waivers
+npx caws waivers list
+
+# Revoke a waiver
+npx caws waivers revoke HOTFIX-001
+```
+
+### Human Overrides in Working Specs
+
+For hotfixes or special cases, senior developers can override requirements:
+
+```yaml
+# In .caws/working-spec.yml
+human_override:
+  approved_by: "alice-smith"
+  reason: "Critical production fix - bypassing mutation tests for immediate deployment"
+  waived_requirements: ["mutation_testing", "manual_review"]
+  expiry_date: "2025-10-01T00:00:00Z"
+```
+
+### Experiment Mode for Prototypes
+
+Enable reduced requirements for experimental features:
+
+```yaml
+# In .caws/working-spec.yml
+experiment_mode: true
+timeboxed_hours: 24
+```
+
+Experiments automatically:
+- Skip mutation testing
+- Skip contract validation
+- Reduce coverage requirements to 50%
+- Skip manual review
+
+### AI Confidence Assessment
+
+AI agents can self-assess and flag uncertainty:
+
+```yaml
+# In .caws/working-spec.yml
+ai_assessment:
+  confidence_level: 6  # 1-10 scale
+  uncertainty_areas: ["complex business logic", "performance implications"]
+  recommended_pairing: true
+```
+
+Low confidence (< 5) triggers additional human oversight.
+
+### Initialization with Fast Lane Options
+
+```bash
+# Interactive initialization
+npx caws init spec --interactive
+
+# Initialize experimental feature
+npx caws init spec --experiment --id=EXP-001 --title="New AI Feature" --tier=3
+
+# Initialize with AI assessment
+npx caws init spec --id=FEAT-123 --title="User Authentication" --tier=1
+```
+
+## 📊 Advanced Quality Tools
+
+### Test Quality Analysis
+
+Beyond just coverage metrics, analyze test meaningfulness:
+
+```bash
+# Analyze test quality
+npx tsx apps/tools/caws/test-quality.ts analyze tests .caws/working-spec.yml
+
+# Checks for:
+# - Meaningful assertions (not just trivial tests)
+# - Spec coverage (each acceptance criterion has tests)
+# - Property-based tests
+# - Edge case coverage
+# - Weak test detection
+```
+
+### Multi-Language Support
+
+CAWS adapts to different programming languages:
+
+```bash
+# Auto-detect project language
+npx tsx apps/tools/caws/language-adapters.ts detect
+
+# List supported languages
+npx tsx apps/tools/caws/language-adapters.ts list
+
+# Get language-specific configuration
+npx tsx apps/tools/caws/language-adapters.ts config python
+
+# Get tier policy for language
+npx tsx apps/tools/caws/language-adapters.ts tier rust 2
+```
+
+Supported: TypeScript, Python, Rust, Go, Java
+
+### Legacy Codebase Migration
+
+Assess and plan migration of legacy code to CAWS:
+
+```bash
+# Assess a legacy module
+npx tsx apps/tools/caws/legacy-assessment.ts assess src/auth
+
+# Generate full migration plan
+npx tsx apps/tools/caws/legacy-assessment.ts plan .
+
+# Provides:
+# - Complexity analysis
+# - Coverage assessment
+# - Recommended tier
+# - Migration priority
+# - Quick wins
+# - Phased migration plan
+```
+
+### Security & Provenance
+
+Enhanced security with cryptographic signing and AI supply chain tracking:
+
+```bash
+# Sign provenance manifest
+npx tsx apps/tools/caws/security-provenance.ts sign .agent/provenance.json
+
+# Verify signature
+npx tsx apps/tools/caws/security-provenance.ts verify .agent/provenance.json <signature>
+
+# Run security scans
+npx tsx apps/tools/caws/security-provenance.ts scan .
+
+# Generate SLSA attestation
+npx tsx apps/tools/caws/security-provenance.ts slsa <commit-hash>
+```
+
 ## Architecture
 
 ### Shared Components

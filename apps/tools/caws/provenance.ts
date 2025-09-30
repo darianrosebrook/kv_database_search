@@ -23,9 +23,23 @@ interface ProvenanceManifest {
       provider: boolean;
     };
     a11y?: string;
-    perf?;
+    perf?: Record<string, any>;
   };
   approvals: string[];
+  security?: {
+    signature?: string;
+    signedBy?: string;
+    signedAt?: string;
+    modelProvenance?: {
+      modelId: string;
+      version: string;
+      trainingDataCutoff?: string;
+    };
+    promptHashes?: string[];
+    secretScanPassed?: boolean;
+    sastPassed?: boolean;
+    dependencyScanPassed?: boolean;
+  };
 }
 
 export async function generateProvenance(): Promise<ProvenanceManifest> {

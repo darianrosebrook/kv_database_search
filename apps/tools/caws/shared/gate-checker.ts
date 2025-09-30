@@ -11,11 +11,15 @@ import {
 import {
   GateResult,
   GateCheckOptions,
-  CoverageData,
   MutationData,
   ContractTestResults,
   TierPolicy,
+  WaiverConfig,
+  HumanOverride,
+  AIAssessment,
+  ExperimentConfig,
 } from "./types.ts";
+import { WaiversManager } from "../waivers.ts";
 
 export class CawsGateChecker extends CawsBaseTool {
   private tierPolicies: Record<number, TierPolicy> = {
@@ -40,9 +44,12 @@ export class CawsGateChecker extends CawsBaseTool {
     },
   };
 
+  private waiversManager: WaiversManager;
+
   constructor() {
     super();
     this.loadTierPolicies();
+    this.waiversManager = new WaiversManager();
   }
 
   /**
@@ -56,10 +63,178 @@ export class CawsGateChecker extends CawsBaseTool {
   }
 
   /**
+   * Check if a waiver applies to the given gate
+   */
+  private async checkWaiver(
+    gate: string,
+    workingDirectory?: string
+  ): Promise<{
+    waived: boolean;
+    waiver?: WaiverConfig;
+    reason?: string;
+  }> {
+    try {
+      const waivers = await this.waiversManager.getWaiversByGate(gate);
+      if (waivers.length === 0) {
+        return { waived: false };
+      }
+
+      // Check if any waiver applies (for now, return the first active one)
+      for (const waiver of waivers) {
+        const status = await this.waiversManager.checkWaiverStatus(
+          waiver.created_at
+        );
+        if (status.active) {
+          return { waived: true, waiver };
+        }
+      }
+
+      return { waived: false };
+    } catch (error) {
+      return { waived: false, reason: `Waiver check failed: ${error}` };
+    }
+  }
+
+  /**
+   * Load and validate working spec from project
+   */
+  private loadWorkingSpec(workingDirectory?: string): {
+    spec?: any;
+    experiment_mode?: boolean;
+    human_override?: HumanOverride;
+    ai_assessment?: AIAssessment;
+    errors?: string[];
+  } {
+    try {
+      const specPath = path.join(
+        workingDirectory || this.getWorkingDirectory(),
+        ".caws/working-spec.yml"
+      );
+
+      if (!this.pathExists(specPath)) {
+        return { errors: ["Working spec not found at .caws/working-spec.yml"] };
+      }
+
+      const spec = this.readYamlFile(specPath);
+      if (!spec) {
+        return { errors: ["Failed to parse working spec"] };
+      }
+
+      return {
+        spec,
+        experiment_mode: spec.experiment_mode,
+        human_override: spec.human_override,
+        ai_assessment: spec.ai_assessment,
+      };
+    } catch (error) {
+      return { errors: [`Failed to load working spec: ${error}`] };
+    }
+  }
+
+  /**
+   * Check if human override applies to waive requirements
+   */
+  private checkHumanOverride(
+    humanOverride: HumanOverride | undefined,
+    requirement: string
+  ): { waived: boolean; reason?: string } {
+    if (!humanOverride) {
+      return { waived: false };
+    }
+
+    if (humanOverride.waived_requirements?.includes(requirement)) {
+      return {
+        waived: true,
+        reason: `Human override by ${humanOverride.approved_by}: ${humanOverride.reason}`,
+      };
+    }
+
+    return { waived: false };
+  }
+
+  /**
+   * Check if experiment mode applies reduced requirements
+   */
+  private checkExperimentMode(experimentMode: boolean | undefined): {
+    reduced: boolean;
+    adjustments?: Record<string, any>;
+  } {
+    if (!experimentMode) {
+      return { reduced: false };
+    }
+
+    return {
+      reduced: true,
+      adjustments: {
+        skip_mutation: true,
+        skip_contracts: true,
+        reduced_coverage: 0.5, // Minimum coverage for experiments
+        skip_manual_review: true,
+      },
+    };
+  }
+
+  /**
    * Check branch coverage against tier requirements
    */
   async checkCoverage(options: GateCheckOptions): Promise<GateResult> {
     try {
+      // Check waivers and overrides first
+      const waiverCheck = await this.checkWaiver(
+        "coverage",
+        options.workingDirectory
+      );
+      if (waiverCheck.waived) {
+        return {
+          passed: true,
+          score: 1.0, // Waived checks pass with perfect score
+          details: {
+            waived: true,
+            waiver_reason: waiverCheck.waiver?.reason,
+            waiver_owner: waiverCheck.waiver?.owner,
+          },
+          tier: options.tier,
+        };
+      }
+
+      // Load working spec for overrides and experiment mode
+      const specData = this.loadWorkingSpec(options.workingDirectory);
+
+      // Check human override
+      const overrideCheck = this.checkHumanOverride(
+        specData.human_override,
+        "coverage"
+      );
+      if (overrideCheck.waived) {
+        return {
+          passed: true,
+          score: 1.0,
+          details: {
+            overridden: true,
+            override_reason: overrideCheck.reason,
+          },
+          tier: options.tier,
+        };
+      }
+
+      // Check experiment mode
+      const experimentCheck = this.checkExperimentMode(
+        specData.experiment_mode
+      );
+      if (
+        experimentCheck.reduced &&
+        experimentCheck.adjustments?.reduced_coverage
+      ) {
+        // For experiments, use reduced coverage requirement
+        options.tier = 4; // Special experiment tier
+        this.tierPolicies[4] = {
+          min_branch: experimentCheck.adjustments.reduced_coverage,
+          min_mutation: 0,
+          min_coverage: experimentCheck.adjustments.reduced_coverage,
+          requires_contracts: false,
+          requires_manual_review: false,
+        };
+      }
       const coveragePath = path.join(
         options.workingDirectory || this.getWorkingDirectory(),
         "coverage/coverage-final.json"
@@ -154,6 +329,63 @@ export class CawsGateChecker extends CawsBaseTool {
    */
   async checkMutation(options: GateCheckOptions): Promise<GateResult> {
     try {
+      // Check waivers and overrides first
+      const waiverCheck = await this.checkWaiver(
+        "mutation",
+        options.workingDirectory
+      );
+      if (waiverCheck.waived) {
+        return {
+          passed: true,
+          score: 1.0,
+          details: {
+            waived: true,
+            waiver_reason: waiverCheck.waiver?.reason,
+            waiver_owner: waiverCheck.waiver?.owner,
+          },
+          tier: options.tier,
+        };
+      }
+
+      // Load working spec for overrides and experiment mode
+      const specData = this.loadWorkingSpec(options.workingDirectory);
+
+      // Check human override
+      const overrideCheck = this.checkHumanOverride(
+        specData.human_override,
+        "mutation_testing"
+      );
+      if (overrideCheck.waived) {
+        return {
+          passed: true,
+          score: 1.0,
+          details: {
+            overridden: true,
+            override_reason: overrideCheck.reason,
+          },
+          tier: options.tier,
+        };
+      }
+
+      // Check experiment mode
+      const experimentCheck = this.checkExperimentMode(
+        specData.experiment_mode
+      );
+      if (
+        experimentCheck.reduced &&
+        experimentCheck.adjustments?.skip_mutation
+      ) {
+        return {
+          passed: true,
+          score: 1.0,
+          details: {
+            experiment_mode: true,
+            mutation_skipped: true,
+          },
+          tier: options.tier,
+        };
+      }
+
       const mutationPath = path.join(
         options.workingDirectory || this.getWorkingDirectory(),
         "reports/mutation/mutation.json"
@@ -212,6 +444,63 @@ export class CawsGateChecker extends CawsBaseTool {
    */
   async checkContracts(options: GateCheckOptions): Promise<GateResult> {
     try {
+      // Check waivers and overrides first
+      const waiverCheck = await this.checkWaiver(
+        "contracts",
+        options.workingDirectory
+      );
+      if (waiverCheck.waived) {
+        return {
+          passed: true,
+          score: 1.0,
+          details: {
+            waived: true,
+            waiver_reason: waiverCheck.waiver?.reason,
+            waiver_owner: waiverCheck.waiver?.owner,
+          },
+          tier: options.tier,
+        };
+      }
+
+      // Load working spec for overrides and experiment mode
+      const specData = this.loadWorkingSpec(options.workingDirectory);
+
+      // Check human override
+      const overrideCheck = this.checkHumanOverride(
+        specData.human_override,
+        "contract_tests"
+      );
+      if (overrideCheck.waived) {
+        return {
+          passed: true,
+          score: 1.0,
+          details: {
+            overridden: true,
+            override_reason: overrideCheck.reason,
+          },
+          tier: options.tier,
+        };
+      }
+
+      // Check experiment mode
+      const experimentCheck = this.checkExperimentMode(
+        specData.experiment_mode
+      );
+      if (
+        experimentCheck.reduced &&
+        experimentCheck.adjustments?.skip_contracts
+      ) {
+        return {
+          passed: true,
+          score: 1.0,
+          details: {
+            experiment_mode: true,
+            contracts_skipped: true,
+          },
+          tier: options.tier,
+        };
+      }
+
       const policy = this.tierPolicies[options.tier];
 
       if (!policy.requires_contracts) {
