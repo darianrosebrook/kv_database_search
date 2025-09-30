@@ -510,7 +510,7 @@ export class WorkspaceManager {
       metadata: {
         ...workspace.metadata,
         lastModified: new Date(),
-        lastModifiedBy: "system", // TODO: Get from context
+        lastModifiedBy: "system", // TODO: Get from context when user system is available
       },
     };
 

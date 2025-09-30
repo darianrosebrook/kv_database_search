@@ -576,7 +576,7 @@ export class WorkspaceAPI {
         transformationRules: mappingData.transformationRules || [],
         metadata: {
           createdAt: new Date(),
-          createdBy: "api", // TODO: Get from context
+          createdBy: "api", // TODO: Get from context when user authentication is available
           lastUsed: new Date(),
           usageCount: 0,
           qualityScore: 0.8,

@@ -479,7 +479,7 @@ export function SearchChatInterface({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyPress}
-            placeholder="Ask questions about your search results..."
+            placeholder="Ask questions about your search results or request refinements..."
             className="w-full pl-4 pr-20 py-3 bg-input border border-border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px] max-h-32"
             rows={1}
           />

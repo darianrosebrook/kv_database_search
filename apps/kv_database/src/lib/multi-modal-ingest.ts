@@ -804,7 +804,7 @@ export class MultiModalIngestionPipeline {
     baseMetadata: DocumentMetadata,
     metadata: UniversalMetadata
   ): Promise<DocumentChunk[]> {
-    // Placeholder for video processing
+    // TODO: Implement video processing when video content support is added
     // In production, would extract audio and attempt speech-to-text
 
     const chunk: DocumentChunk = {

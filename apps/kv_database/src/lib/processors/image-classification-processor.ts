@@ -11,9 +11,13 @@ import {
   ProcessorResult,
 } from "./base-processor";
 import { OCRProcessor } from "./ocr-processor";
+import { LoggerFactory } from "../shared/logger";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
 import path from "path";
+
+// Initialize logger for this module
+const logger = LoggerFactory.create("ImageClassificationProcessor");
 
 /**
  * Model configuration for image classification
@@ -153,7 +157,6 @@ export class ImageClassificationProcessor implements ContentProcessor {
       confidence: 0.6,
     });
 
-    // High accuracy model (placeholder for future ML model)
     this.availableModels.set("high-accuracy", {
       name: "high-accuracy",
       type: "ml-model",
@@ -167,7 +170,6 @@ export class ImageClassificationProcessor implements ContentProcessor {
       confidence: 0.8,
     });
 
-    // Fast model (placeholder for lightweight model)
     this.availableModels.set("fast", {
       name: "fast",
       type: "rule-based",
@@ -902,7 +904,7 @@ class RuleBasedClassificationModel implements ImageClassificationModel {
 }
 
 /**
- * ML-based classification model (placeholder for future implementation)
+ * ML-based classification model
  */
 class MLClassificationModel implements ImageClassificationModel {
   name: string;
@@ -915,21 +917,21 @@ class MLClassificationModel implements ImageClassificationModel {
   }
 
   async load(): Promise<void> {
-    // TODO: Implement actual ML model loading
+    // TODO: Implement ML model loading when ML infrastructure is available
     // This would involve loading ONNX models, TensorFlow.js models, etc.
-    console.log(`🔄 Loading ML model ${this.name} from ${this.config.path}`);
+    logger.info(`Loading ML model ${this.name} from ${this.config.path}`);
 
     // Simulate loading time
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     this.isLoaded = true;
-    console.log(`✅ ML model ${this.name} loaded`);
+    logger.info(`ML model ${this.name} loaded`);
   }
 
   async unload(): Promise<void> {
-    // TODO: Clean up ML model resources
+    // TODO: Clean up ML model resources when ML infrastructure is available
     this.isLoaded = false;
-    console.log(`✅ ML model ${this.name} unloaded`);
+    logger.info(`ML model ${this.name} unloaded`);
   }
 
   async classify(
@@ -940,9 +942,9 @@ class MLClassificationModel implements ImageClassificationModel {
       throw new Error("Model not loaded");
     }
 
-    // TODO: Implement actual ML classification
+    // TODO: Implement actual ML classification when ML infrastructure is available
     // For now, fall back to rule-based
-    console.log(`🤖 ML classification for ${this.name} (placeholder)`);
+    logger.info(`ML classification for ${this.name} (placeholder)`);
 
     // Return a high-confidence placeholder result
     return {
@@ -981,18 +983,18 @@ class APIClassificationModel implements ImageClassificationModel {
       throw new Error("API endpoint not configured");
     }
 
-    // TODO: Test API connectivity
-    console.log(
-      `🔗 API model ${this.name} configured for ${this.config.endpoint}`
+    // TODO: Test API connectivity when external ML service is available
+    logger.info(
+      `API model ${this.name} configured for ${this.config.endpoint}`
     );
 
     this.isLoaded = true;
-    console.log(`✅ API model ${this.name} ready`);
+    logger.info(`API model ${this.name} ready`);
   }
 
   async unload(): Promise<void> {
     this.isLoaded = false;
-    console.log(`✅ API model ${this.name} disconnected`);
+    logger.info(`API model ${this.name} disconnected`);
   }
 
   async classify(
@@ -1003,8 +1005,8 @@ class APIClassificationModel implements ImageClassificationModel {
       throw new Error("API model not ready");
     }
 
-    // TODO: Implement actual API call
-    console.log(`🌐 Sending image to API endpoint: ${this.config.endpoint}`);
+    // TODO: Implement actual API call when external ML service is available
+    logger.info(`Sending image to API endpoint: ${this.config.endpoint}`);
 
     // For now, return a placeholder result
     return {

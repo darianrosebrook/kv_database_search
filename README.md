@@ -5,6 +5,36 @@ This project uses a **microservices architecture** with the following services:
 - **Main Server** (Port 3001): Handles search, chat, vault operations, ingestion, and acts as a proxy for Graph RAG requests
 - **Graph RAG Server** (Port 3002): Specialized service for Graph RAG operations including entity extraction, relationship analysis, and reasoning
 
+### 🧠 RAG (Retrieval Augmented Generation) System
+
+#### How Documents Are Embedded
+- **Document Ingestion**: Documents are processed through `DocumentIngestionPipeline` which chunks text and generates embeddings
+- **Embedding Model**: Uses `embeddinggemma` (768-dimensional vectors) via Ollama for consistent semantic representation
+- **Storage**: Embeddings stored in PostgreSQL with pgvector extension in `obsidian_chunks` table
+- **Chunking Strategy**: Intelligent text chunking preserves context while maintaining optimal embedding quality
+
+#### How Searches Are Handled
+- **Query Embedding**: User queries are embedded using the same `embeddinggemma` model
+- **Vector Similarity**: Uses cosine similarity (`v <=> query_embedding`) for semantic matching
+- **Multi-Strategy Search**: Combines vector search, entity extraction, graph traversal, and multi-modal analysis
+- **Advanced Features**:
+  - **Entity Linking**: Extracts entities and finds related content
+  - **Graph Traversal**: Uses entity relationships for expanded search
+  - **Multi-Modal Search**: Searches across text, images, audio, and video content
+  - **Result Fusion**: Combines results from multiple strategies using algorithms like Reciprocal Rank Fusion (RRF)
+
+#### LLM Integration for Aligned Answers
+- **Context Retrieval**: Search results provide relevant document chunks as context
+- **Chat Sessions**: Conversations stored with embeddings for similarity-based retrieval
+- **Answer Generation**: LLM uses retrieved context to generate responses aligned with document content
+- **Quality Assurance**: Multiple scoring mechanisms ensure answer relevance and accuracy
+
+#### Current System Capabilities
+- **21,555+ Document Chunks**: Large knowledge base with semantic search capability
+- **Multi-Modal Support**: Text, images, audio, video, and PDF processing
+- **Graph RAG**: Advanced entity relationship understanding
+- **Real-time Ingestion**: Automatic document processing and embedding updates
+
 ### ⚙️ Configuration
 
 #### Environment Variables

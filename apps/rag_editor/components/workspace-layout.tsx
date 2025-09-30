@@ -107,7 +107,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
                     result.summary ||
                     result.text?.substring(0, 200) + "..." ||
                     "",
-                  highlights: [], // TODO: Add highlight extraction
+                  highlights: [], // TODO: Add highlight extraction when text selection feature is implemented
                   confidenceScore: result.score || 0.5,
                   rationale: `Found in ${result.filePath || "document"}`,
                   tags: result.tags || [],
@@ -201,7 +201,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
               <h1 className="text-2xl font-semibold">{activeTab.title}</h1>
             </div>
             <div className="flex-1">
-              {/* TODO: Implement chat tab content */}
+              {/* TODO: Implement chat tab content when chat feature is developed */}
               <div className="text-center text-muted-foreground py-12">
                 Chat tab content for session:{" "}
                 {activeTab.content?.sessionId || "New session"}
@@ -220,7 +220,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
               <h1 className="text-2xl font-semibold">{activeTab.title}</h1>
             </div>
             <div className="flex-1">
-              {/* TODO: Implement document tab content */}
+              {/* TODO: Implement document tab content when document viewer is developed */}
               <div className="text-center text-muted-foreground py-12">
                 Document content for:{" "}
                 {activeTab.content?.documentPath ||
@@ -241,7 +241,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
               <h1 className="text-2xl font-semibold">{activeTab.title}</h1>
             </div>
             <div className="flex-1">
-              {/* TODO: Implement workspace tab content */}
+              {/* TODO: Implement workspace tab content when workspace management is developed */}
               <div className="text-center text-muted-foreground py-12">
                 Workspace content for:{" "}
                 {activeTab.content?.workspaceId || "Default workspace"}

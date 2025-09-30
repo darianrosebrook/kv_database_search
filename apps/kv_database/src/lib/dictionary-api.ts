@@ -384,7 +384,7 @@ export class DictionaryAPI {
 
       console.log(`🔗 Getting relationships for term: ${term}`);
 
-      // For now, return mock relationships since database is empty
+      // TODO: Return real relationships when dictionary database is populated
       reply.send({
         term,
         relationships: [],

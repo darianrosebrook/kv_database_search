@@ -16,7 +16,6 @@ import { WorkspaceManager } from "./workspace-management";
 
 /**
  * Main database facade that coordinates all database operations
- * Refactored version using composition and single responsibility modules
  * @darianrosebrook
  */
 export class DocumentDatabase {
@@ -65,19 +64,13 @@ export class DocumentDatabase {
     options: {
       limit?: number;
       threshold?: number;
-      minSimilarity?: number;
       contentType?: string;
       fileName?: string;
       tags?: string[];
       includeMetadata?: boolean;
     } = {}
   ): Promise<SearchResult[]> {
-    // Map minSimilarity to threshold for backward compatibility
-    const searchOptions = {
-      ...options,
-      threshold: options.minSimilarity ?? options.threshold,
-    };
-    return this.documentOps.search(queryEmbedding, searchOptions);
+    return this.documentOps.search(queryEmbedding, options);
   }
 
   async getChunkById(id: string): Promise<DocumentChunk | null> {
@@ -217,13 +210,11 @@ export class DocumentDatabase {
   async updateFileProcessingStatus(
     filePath: string,
     status: ProcessingStatus["status"],
-    errorMessage?: string,
     retryCount?: number
   ): Promise<void> {
     return this.versionManager.updateFileProcessingStatus(
       filePath,
       status,
-      errorMessage,
       retryCount
     );
   }
@@ -303,18 +294,6 @@ export class DocumentDatabase {
 
   getPerformanceMetrics() {
     return this.documentOps.getPerformanceMetrics();
-  }
-
-  /**
-   * Health check method for monitoring database connectivity
-   */
-  async healthCheck(): Promise<void> {
-    const client = await this.pool.connect();
-    try {
-      await client.query("SELECT 1");
-    } finally {
-      client.release();
-    }
   }
 }
 

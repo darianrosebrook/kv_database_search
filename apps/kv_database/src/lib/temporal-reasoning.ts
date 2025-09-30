@@ -869,7 +869,7 @@ class CausalityDetectionEngine {
     _timeWindow: TimeRange,
     _options
   ): Promise<CausalityResult> {
-    // Placeholder for causality analysis implementation
+    // TODO: Implement causality analysis when temporal reasoning requirements are defined
     // In real implementation, this would use Granger causality, transfer entropy,
     // or other causal inference methods
 
@@ -936,7 +936,7 @@ class TrendAnalysisEngine {
     timeRange: TimeRange,
     forecastOptions
   ): Promise<TrendAnalysis> {
-    // Placeholder for trend analysis implementation
+    // TODO: Implement trend analysis when temporal reasoning requirements are defined
     // In real implementation, this would use ARIMA, Prophet, or other time series models
 
     console.log(
@@ -1024,7 +1024,7 @@ class ChangePointDetector {
     _relationshipTypes: string[] = [],
     _options
   ): Promise<ChangePoint[]> {
-    // Placeholder for change point detection implementation
+    // TODO: Implement change point detection when temporal reasoning requirements are defined
     // In real implementation, this would use Bayesian online change detection,
     // CUSUM, or other change detection algorithms
 
@@ -1073,7 +1073,7 @@ class TemporalQueryEngine {
   constructor(private database) {}
 
   async executeQuery(query: TemporalQuery): Promise {
-    // Placeholder for temporal query execution
+    // TODO: Implement temporal query execution when temporal reasoning requirements are defined
     // In real implementation, this would parse and execute temporal GraphQL queries
 
     console.log(

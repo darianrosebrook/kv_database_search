@@ -87,11 +87,17 @@ export class ObsidianSearchService {
       }
 
       // Enhance results with Obsidian-specific data
-      const enhancedResults = await this.enhanceResults(
-        filteredResults.slice(0, limit),
-        query,
-        { includeRelated, maxRelated }
-      );
+      let enhancedResults: ObsidianSearchResult[];
+      try {
+        enhancedResults = await this.enhanceResults(
+          filteredResults.slice(0, limit),
+          query,
+          { includeRelated, maxRelated }
+        );
+      } catch (error) {
+        console.error("Error enhancing search results:", error);
+        enhancedResults = [];
+      }
 
       // Generate facets for filtering
       const facets = await this.generateFacets(enhancedResults);
@@ -131,8 +137,8 @@ export class ObsidianSearchService {
 
     for (const result of results) {
       // Handle both Obsidian files and multi-modal files
-      const obsidianMeta = result.meta.obsidianFile;
-      const multiModalMeta = result.meta.multiModalFile;
+      const obsidianMeta = result.meta?.obsidianFile;
+      const multiModalMeta = result.meta?.multiModalFile;
 
       if (!obsidianMeta && !multiModalMeta) continue;
 
@@ -270,7 +276,7 @@ export class ObsidianSearchService {
     }
   ): SearchResult[] {
     return results.filter((result) => {
-      const multiModalMeta = result.meta.multiModalFile;
+      const multiModalMeta = result.meta?.multiModalFile;
 
       // If no multi-modal metadata and we have multi-modal filters, skip
       if (
@@ -385,7 +391,7 @@ export class ObsidianSearchService {
       // Filter to only include chunks from wikilinked files
       return results
         .filter((result) => {
-          const fileName = result.meta.obsidianFile?.fileName;
+          const fileName = result.meta?.obsidianFile?.fileName;
           return (
             fileName &&
             wikilinks.some(
@@ -411,8 +417,8 @@ export class ObsidianSearchService {
     centralityScore: number;
   }> {
     // Extract concepts from tags and content
-    const tags = result.meta.obsidianFile?.tags || [];
-    const wikilinks = result.meta.obsidianFile?.wikilinks || [];
+    const tags = result.meta?.obsidianFile?.tags || [];
+    const wikilinks = result.meta?.obsidianFile?.wikilinks || [];
 
     // Simple concept extraction from query
     const queryTerms = query

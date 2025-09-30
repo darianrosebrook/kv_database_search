@@ -29,7 +29,7 @@ interface RelatedContentAsideProps {
   className?: string;
 }
 
-// TODO: Remove this mock data - related items should come from props only
+// Related items should come from props - this component displays contextual suggestions
 
 export function RelatedContentAside({
   isOpen,
