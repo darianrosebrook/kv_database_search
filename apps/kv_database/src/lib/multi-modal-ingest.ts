@@ -18,6 +18,71 @@ import * as path from "path";
 import { createHash } from "crypto";
 import { contentProcessorRegistry } from "./processors/processor-registry-instance";
 
+/**
+ * TODO: Content Type Prioritization - Research fast-path processing for common types
+ * TODO: Lazy Loading - Evaluate on-demand content extraction strategies
+ * TODO: Processing Pipelines - Study parallel vs sequential processing architectures
+ * TODO: Quality vs Speed Trade-offs - Benchmark accuracy impacts of faster extraction methods
+ *
+ * Current multi-modal ingestion lacks performance optimization for different
+ * content types and processing strategies:
+ *
+ * Potential improvements for content type prioritization:
+ * - Implement fast-path processing for common content types (PDF, images)
+ * - Add content-type-aware resource allocation
+ * - Create priority queues for different file types
+ * - Implement adaptive processing based on content complexity
+ * - Add pre-processing hints for expected content types
+ *
+ * Potential improvements for lazy loading:
+ * - Implement on-demand content extraction during search
+ * - Add progressive loading for large documents
+ * - Create caching strategies for partially processed content
+ * - Implement lazy evaluation for metadata extraction
+ * - Add background processing for non-critical content
+ *
+ * Potential improvements for processing pipelines:
+ * - Implement parallel processing for independent content types
+ * - Add pipeline orchestration for complex multi-step processing
+ * - Create streaming pipelines for large file processing
+ * - Implement fault-tolerant pipeline execution
+ * - Add pipeline monitoring and optimization
+ *
+ * Potential improvements for quality vs speed trade-offs:
+ * - Implement configurable accuracy/speed trade-offs
+ * - Add A/B testing for different processing strategies
+ * - Create performance profiles for different use cases
+ * - Implement adaptive quality based on content importance
+ * - Add benchmarking framework for quality metrics
+ *
+ * TODO: Advanced vision models for image understanding
+ * TODO: Real-time multi-modal processing
+ * TODO: Distributed processing for large-scale content
+ *
+ * Current system lacks advanced vision and distributed processing capabilities:
+ *
+ * Potential improvements for advanced vision models:
+ * - Research state-of-the-art vision models for image understanding
+ * - Implement object detection and scene understanding
+ * - Add image captioning with contextual awareness
+ * - Create visual question answering capabilities
+ * - Implement multi-modal vision-language models
+ *
+ * Potential improvements for real-time processing:
+ * - Add streaming multi-modal content processing
+ * - Implement real-time content analysis and indexing
+ * - Create live document processing capabilities
+ * - Add real-time search result updates
+ * - Implement incremental indexing for dynamic content
+ *
+ * Potential improvements for distributed processing:
+ * - Create distributed ingestion pipelines across multiple nodes
+ * - Implement load balancing for content processing
+ * - Add fault-tolerant distributed processing architecture
+ * - Create scalable storage and indexing for large datasets
+ * - Implement distributed query execution and result aggregation
+ */
+
 export interface MultiModalIngestionConfig {
   batchSize?: number;
   rateLimitMs?: number;

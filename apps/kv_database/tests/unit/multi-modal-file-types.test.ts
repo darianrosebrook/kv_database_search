@@ -9,14 +9,29 @@ import * as fs from "fs";
 import * as path from "path";
 
 // Mock dependencies
-vi.mock("fs", () => ({
-  default: {
-    statSync: vi.fn(),
-    readFileSync: vi.fn(),
-  },
-  statSync: vi.fn(),
-  readFileSync: vi.fn(),
-}));
+vi.mock("fs", async () => {
+  const actual = await vi.importActual("fs");
+  const mockStatSync = vi.fn();
+  const mockReadFileSync = vi.fn();
+  return {
+    ...actual,
+    default: {
+      statSync: mockStatSync,
+      readFileSync: mockReadFileSync,
+    },
+    statSync: mockStatSync,
+    readFileSync: mockReadFileSync,
+    // Export mocks for testing
+    __mockStatSync: mockStatSync,
+    __mockReadFileSync: mockReadFileSync,
+  };
+});
+
+import * as fs from "fs";
+
+// Access the mock functions through the mocked module
+const mockStatSync = (fs as any).__mockStatSync;
+const mockReadFileSync = (fs as any).__mockReadFileSync;
 
 vi.mock("../../src/lib/database");
 vi.mock("../../src/lib/embeddings");

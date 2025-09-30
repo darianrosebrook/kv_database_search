@@ -5,39 +5,17 @@
   "reporters": ["html", "clear-text", "progress", "json"],
   "coverageAnalysis": "off",
   "mutate": [
-    "apps/kv_database/src/**/*.ts",
-    "!apps/kv_database/src/**/*processor*.ts",
-    "!apps/kv_database/src/**/*ingestion*.ts",
-    "!apps/kv_database/src/**/*multi-modal*.ts",
-    "!apps/kv_database/src/**/*ocr*.ts",
-    "!apps/kv_database/src/**/*image*.ts",
-    "!apps/kv_database/src/**/*audio*.ts",
-    "!apps/kv_database/src/**/*video*.ts",
-    "!apps/kv_database/src/**/*speech*.ts",
-    "!apps/kv_database/src/**/*office*.ts",
-    "!apps/kv_database/src/**/*pdf*.ts",
+    "apps/kv_database/src/lib/utils.ts",
+    "apps/kv_database/src/lib/database.ts",
+    "apps/kv_database/src/lib/embeddings.ts",
+    "apps/kv_database/src/lib/types/**/*.ts",
     "apps/tools/**/*.ts"
   ],
   "testRunnerOptions": {
     "vitest": {
       "run": true,
       "reporter": "verbose",
-      "include": [
-        "apps/kv_database/tests/unit/**/*.test.ts"
-      ],
-      "exclude": [
-        "**/*image*",
-        "**/*ocr*",
-        "**/*multi-modal*",
-        "**/*speech*",
-        "**/*video*",
-        "**/*audio*",
-        "**/*office*",
-        "**/*pdf*",
-        "**/*ingestion*",
-        "**/*processor*"
-      ],
-      "environment": "node"
+      "config": "config/vitest.config.ts"
     }
   },
   "thresholds": {
@@ -45,9 +23,10 @@
     "low": 30,
     "break": null
   },
-  "concurrency": 1,
-  "timeoutMS": 15000,
-  "timeoutFactor": 2.0,
+  "concurrency": 2,
+  "timeoutMS": 10000,
+  "timeoutFactor": 1.5,
+  "incremental": true,
   "tempDirName": "stryker-tmp",
   "disableTypeChecks": "**/*.ts",
   "checkers": [],

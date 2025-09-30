@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { ObsidianDatabase } from "../../src/lib/database.ts";
-import { TestDatabaseManager } from "../setup";
+import { TestObsidianDatabase } from "../../src/lib/database.ts";
+import { TestDatabaseManager } from "../../../../tests/setup";
 
-describe("ObsidianDatabase Integration", () => {
-  let database: ObsidianDatabase;
+describe("TestObsidianDatabase Integration", () => {
+  let database: TestObsidianDatabase;
 
   // Helper to create 768-dimensional embeddings
   const createEmbedding = () =>
@@ -14,7 +14,7 @@ describe("ObsidianDatabase Integration", () => {
     await TestDatabaseManager.ensureDatabase();
     const connectionString = TestDatabaseManager.getConnectionString();
 
-    database = new ObsidianDatabase(connectionString);
+    database = new TestObsidianDatabase(connectionString);
 
     // Initialize database schema
     await database.initialize();

@@ -9,15 +9,20 @@ import {
 import fs from "fs";
 
 // Mock fs module for ESM
-vi.mock("fs", async () => {
-  const actual = await vi.importActual("fs");
-  return {
-    ...actual,
-    statSync: vi.fn(),
-    readFileSync: vi.fn(),
-    existsSync: vi.fn(),
-  };
-});
+const mockStatSync = vi.fn();
+const mockReadFileSync = vi.fn();
+const mockExistsSync = vi.fn();
+
+vi.mock("fs", () => ({
+  default: {
+    statSync: mockStatSync,
+    readFileSync: mockReadFileSync,
+    existsSync: mockExistsSync,
+  },
+  statSync: mockStatSync,
+  readFileSync: mockReadFileSync,
+  existsSync: mockExistsSync,
+}));
 
 describe("MultiModalContentDetector", () => {
   let detector: MultiModalContentDetector;
@@ -157,14 +162,14 @@ describe("UniversalMetadataExtractor", () => {
 
     beforeEach(() => {
       // Mock fs.statSync
-      fs.statSync.mockReturnValue({
+      mockStatSync.mockReturnValue({
         size: 100,
         birthtime: new Date("2023-01-01"),
         mtime: new Date("2023-01-02"),
       });
 
       // Mock fs.readFileSync
-      fs.readFileSync.mockReturnValue(Buffer.from("test content"));
+      mockReadFileSync.mockReturnValue(Buffer.from("test content"));
     });
 
     afterEach(() => {

@@ -7,15 +7,22 @@ import { ImagePathResolver } from "../../src/lib/image-path-resolver";
 import fs from "fs";
 
 // Mock dependencies for ESM
-vi.mock("fs", async () => {
-  const actual = await vi.importActual("fs");
-  return {
-    ...actual,
-    existsSync: vi.fn(),
-    readdirSync: vi.fn(),
-    statSync: vi.fn(),
-  };
-});
+const mockExistsSync = vi.fn();
+const mockReaddirSync = vi.fn();
+const mockStatSync = vi.fn();
+
+vi.mock("fs", () => ({
+  default: {
+    existsSync: mockExistsSync,
+    readdirSync: mockReaddirSync,
+    statSync: mockStatSync,
+  },
+  existsSync: mockExistsSync,
+  readdirSync: mockReaddirSync,
+  statSync: mockStatSync,
+}));
+
+import fs from "fs";
 
 vi.mock("../../src/lib/database");
 vi.mock("../../src/lib/embeddings");

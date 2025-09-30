@@ -1,13 +1,26 @@
 // Setup for vitest
+import { InMemoryTestDatabase } from './in-memory-db';
 
 // Test database management utilities
 export class TestDatabaseManager {
   private static container: any = null;
+  private static inMemoryDb: InMemoryTestDatabase | null = null;
   private static connectionString: string = "";
   private static isInitialized = false;
 
   static async ensureDatabase(): Promise<string> {
     if (this.isInitialized && this.connectionString) {
+      return this.connectionString;
+    }
+
+    // Use in-memory database for faster local testing if requested
+    if (process.env.USE_SQLITE_TESTS === 'true') {
+      console.log("🗄️ Using in-memory database for fast local testing...");
+      this.inMemoryDb = new InMemoryTestDatabase();
+      this.connectionString = await this.inMemoryDb.initialize();
+      console.log("✅ In-memory test database ready");
+      this.isInitialized = true;
+      process.env.DATABASE_URL = this.connectionString;
       return this.connectionString;
     }
 
@@ -22,7 +35,7 @@ export class TestDatabaseManager {
         "@testcontainers/postgresql"
       );
       this.container = await new PostgreSqlContainer("pgvector/pgvector:pg16")
-        .withDatabase("testdb")
+        .withDatabase("test_rag_db")
         .withUsername("testuser")
         .withPassword("testpass")
         .start();
@@ -50,7 +63,7 @@ export class TestDatabaseManager {
           "@testcontainers/postgresql"
         );
         this.container = await new PostgreSqlContainer("pgvector/pgvector:pg16")
-          .withDatabase("testdb")
+          .withDatabase("test_rag_db")
           .withUsername("testuser")
           .withPassword("testpass")
           .start();
@@ -65,6 +78,13 @@ export class TestDatabaseManager {
   }
 
   static async cleanup() {
+    if (this.inMemoryDb) {
+      console.log("🛑 Closing in-memory test database...");
+      await this.inMemoryDb.close();
+      this.inMemoryDb = null;
+      console.log("✅ In-memory test database closed");
+    }
+
     if (this.container) {
       console.log("🛑 Stopping test database container...");
       await this.container.stop();

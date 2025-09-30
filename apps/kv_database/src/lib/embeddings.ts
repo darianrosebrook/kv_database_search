@@ -2,6 +2,58 @@ import ollama from "ollama";
 import { EmbeddingConfig } from "../types/index";
 import { normalize, normalizeVector } from "./utils";
 
+/**
+ * TODO: Test impact on index size and search speed
+ *
+ * Current embedding system generates semantic vectors for all content but lacks
+ * systematic measurement of how entity extraction features affect:
+ * - Index size growth with additional entity metadata
+ * - Search speed degradation with richer entity relationships
+ * - Memory usage for hierarchical concept clustering
+ *
+ * Potential improvements:
+ * - Add benchmarks comparing index size with/without entity extraction
+ * - Measure search latency impact of entity relationship traversal
+ * - Implement entity-aware index compression strategies
+ * - Create performance profiles for different entity extraction depths
+ * - Add telemetry for entity clustering overhead on search performance
+ *
+ * TODO: Embedding Compression - Research quantization and dimensionality reduction techniques
+ * TODO: Memory-Mapped Indexes - Evaluate memory efficiency for large indexes
+ * TODO: Tiered Storage - Study hot/cold data separation strategies
+ * TODO: Batch Processing - Optimize ingestion batch sizes for memory usage
+ *
+ * Current embedding system lacks advanced memory and storage optimization:
+ *
+ * Potential improvements for embedding compression:
+ * - Implement scalar quantization (int8, binary) for vector storage
+ * - Add product quantization for memory-efficient retrieval
+ * - Create adaptive dimensionality reduction based on content type
+ * - Implement compressed sensing for sparse vector representation
+ * - Add lossy compression with quality/performance trade-offs
+ *
+ * Potential improvements for memory-mapped indexes:
+ * - Create memory-mapped vector indexes for large datasets
+ * - Implement on-demand loading for cold data segments
+ * - Add virtual memory management for index structures
+ * - Create memory-mapped graph storage for relationship data
+ * - Implement zero-copy access patterns for performance
+ *
+ * Potential improvements for tiered storage:
+ * - Implement hot/cold data separation based on access patterns
+ * - Add automatic data migration between storage tiers
+ * - Create intelligent caching strategies for multi-tier storage
+ * - Implement archival storage for rarely accessed content
+ * - Add cost-based optimization for storage tier selection
+ *
+ * Potential improvements for batch processing:
+ * - Optimize embedding generation batch sizes for memory usage
+ * - Implement streaming processing for large document collections
+ * - Add memory-aware batching with garbage collection hints
+ * - Create adaptive batch sizing based on available memory
+ * - Implement checkpointing for resumable batch processing
+ */
+
 export interface EmbeddingModel {
   name: string;
   dimension: number;
@@ -56,8 +108,21 @@ export class DocumentEmbeddingService {
         "May not capture technical terms well",
       ],
     },
-    // Note: nomic-embed-text removed as it's not available in Ollama
-    // Fallback to embeddinggemma for all content types
+    {
+      name: "nomic-embed-text",
+      dimension: 768,
+      type: "semantic",
+      domain: "general-purpose",
+      strengths: [
+        "High quality embeddings",
+        "Good general text understanding",
+        "Strong performance on diverse content",
+      ],
+      limitations: [
+        "Slower inference than embeddinggemma",
+        "Higher resource usage",
+      ],
+    },
   ];
 
   constructor(config: EmbeddingConfig) {

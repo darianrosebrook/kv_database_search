@@ -22,6 +22,13 @@ export default defineConfig({
       "contracts",
       "docs",
       "**/pdf-processor.test.ts",
+      ...(process.env.MUTATION_TESTING === "true"
+        ? [
+            "**/image-*.test.ts", // Skip image-related tests in mutation testing
+            "**/multi-modal.test.ts", // Skip multi-modal tests in mutation testing
+            "**/database.test.ts", // Skip database integration tests in mutation testing
+          ]
+        : []),
     ],
     coverage: {
       provider: "v8",

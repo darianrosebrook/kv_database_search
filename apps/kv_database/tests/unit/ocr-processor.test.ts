@@ -15,12 +15,16 @@ vi.mock("pdf-parse", () => ({
   }),
 }));
 
+// Create mock function before mocking
+let mockReadFileSync: any;
+
 // Mock fs module for ESM
 vi.mock("fs", async () => {
   const actual = await vi.importActual("fs");
+  mockReadFileSync = vi.fn();
   return {
     ...actual,
-    readFileSync: vi.fn(),
+    readFileSync: mockReadFileSync,
   };
 });
 
@@ -126,7 +130,7 @@ describe("OCRProcessor", () => {
   describe("extractTextFromFile", () => {
     it("should read file and perform OCR", async () => {
       // Mock fs.readFileSync
-      fs.readFileSync.mockReturnValue(Buffer.from("image data"));
+      mockReadFileSync.mockReturnValue(Buffer.from("image data"));
 
       mockWorker.recognize.mockResolvedValue({
         data: {
@@ -142,7 +146,7 @@ describe("OCRProcessor", () => {
     });
 
     it("should handle file read errors", async () => {
-      fs.readFileSync.mockImplementation(() => {
+      mockReadFileSync.mockImplementation(() => {
         throw new Error("File not found");
       });
 

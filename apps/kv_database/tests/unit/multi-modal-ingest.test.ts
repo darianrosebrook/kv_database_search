@@ -4,18 +4,28 @@ import {
   MultiModalIngestionConfig,
 } from "../../src/lib/multi-modal-ingest.ts";
 import { ContentType } from "../../src/lib/multi-modal.ts";
-import fs from "fs";
 import path from "path";
 
 // Mock fs module for ESM
 vi.mock("fs", async () => {
   const actual = await vi.importActual("fs");
+  const mockStatSync = vi.fn();
+  const mockReadFileSync = vi.fn();
   return {
     ...actual,
-    statSync: vi.fn(),
-    readFileSync: vi.fn(),
+    statSync: mockStatSync,
+    readFileSync: mockReadFileSync,
+    // Export mocks for testing
+    __mockStatSync: mockStatSync,
+    __mockReadFileSync: mockReadFileSync,
   };
 });
+
+import fs from "fs";
+
+// Access the mock functions through the mocked module
+const mockStatSync = (fs as any).__mockStatSync;
+const mockReadFileSync = (fs as any).__mockReadFileSync;
 
 describe("MultiModalIngestionPipeline", () => {
   let mockDatabase;

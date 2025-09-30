@@ -7,18 +7,48 @@ import {
   beforeEach,
   afterEach,
 } from "vitest";
-import { ObsidianDatabase } from "../../src/lib/database.ts";
-import { TestDatabaseManager } from "../setup";
+import { TestObsidianDatabase } from "../../src/lib/database.ts";
+import { TestDatabaseManager } from "../../../../tests/setup";
 
-describe("ObsidianDatabase", () => {
-  let db: ObsidianDatabase;
+// Helper function to create valid DocumentMetadata for testing
+function createTestMetadata(overrides: Partial<any> = {}): any {
+  return {
+    uri: "test://test.md",
+    section: "content",
+    breadcrumbs: [],
+    contentType: "markdown",
+    sourceType: "obsidian",
+    sourceDocumentId: "test-doc",
+    lang: "en",
+    acl: "public",
+    updatedAt: new Date(),
+    createdAt: new Date(),
+    obsidianFile: {
+      fileName: "test.md",
+      filePath: "test.md",
+      frontmatter: {},
+      wikilinks: [],
+      tags: [],
+      checksum: "test-checksum",
+      stats: {
+        wordCount: 100,
+        characterCount: 500,
+        lineCount: 20,
+      },
+    },
+    ...overrides,
+  };
+}
+
+describe("TestObsidianDatabase", () => {
+  let db: TestObsidianDatabase;
 
   beforeAll(async () => {
     // Ensure test database is available
     await TestDatabaseManager.ensureDatabase();
     const testUrl = TestDatabaseManager.getConnectionString();
 
-    db = new ObsidianDatabase(testUrl);
+    db = new TestObsidianDatabase(testUrl);
 
     try {
       await db.initialize();

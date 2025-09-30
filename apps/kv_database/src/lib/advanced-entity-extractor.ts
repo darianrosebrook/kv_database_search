@@ -254,6 +254,21 @@ export interface QualityMetrics {
 // ============================================================================
 
 /**
+ * TODO: Benchmark NLP processing overhead
+ *
+ * Current entity extraction system lacks systematic performance benchmarking.
+ * While sophisticated NLP-based entity recognition, relationship classification,
+ * and hierarchical clustering are implemented, we need to measure:
+ *
+ * Potential improvements:
+ * - Add performance benchmarks for NLP processing overhead across different document sizes
+ * - Implement lightweight entity extraction models for faster processing
+ * - Add caching strategies to reduce repeated NLP computations
+ * - Create performance regression tests for entity extraction pipelines
+ * - Measure impact on overall system latency when entity extraction is enabled
+ */
+
+/**
  * Entity Extraction System
  *
  * Sophisticated entity extraction system that goes beyond basic tag clustering

@@ -20,13 +20,20 @@ vi.mock("pdf-parse", () => ({
 // Mock fs module for ESM
 vi.mock("fs", async () => {
   const actual = await vi.importActual("fs");
+  const mockReadFileSync = vi.fn();
   return {
     ...actual,
-    readFileSync: vi.fn(),
+    readFileSync: mockReadFileSync,
+    // Export the mock for testing
+    __mockReadFileSync: mockReadFileSync,
   };
 });
 
 import { createModel, createRecognizer } from "sherpa-onnx";
+import fs from "fs";
+
+// Access the mock function through the mocked module
+const mockReadFileSync = (fs as any).__mockReadFileSync;
 
 describe("SpeechProcessor", () => {
   let processor: SpeechProcessor;
@@ -155,10 +162,7 @@ describe("SpeechProcessor", () => {
   describe("transcribeFromFile", () => {
     it("should read file and transcribe audio", async () => {
       // Mock fs.readFileSync
-      const fs = await import("fs");
-      vi.spyOn(fs, "readFileSync").mockReturnValue(
-        Buffer.from("audio file data")
-      );
+      mockReadFileSync.mockReturnValue(Buffer.from("audio file data"));
 
       mockRecognizer.getResult.mockReturnValue({
         text: "File transcription result",

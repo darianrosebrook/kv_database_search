@@ -6,9 +6,11 @@ import {
 import { EmbeddingConfig } from "../../src/types/index.ts";
 
 // Mock ollama
+const mockOllamaEmbed = vi.fn();
+
 vi.mock("ollama", () => ({
   default: {
-    embed: vi.fn(),
+    embed: mockOllamaEmbed,
   },
 }));
 
@@ -27,6 +29,7 @@ describe("ObsidianEmbeddingService", () => {
 
     // Clear mocks
     vi.clearAllMocks();
+    mockOllamaEmbed.mockClear();
   });
 
   describe("constructor", () => {
@@ -61,13 +64,13 @@ describe("ObsidianEmbeddingService", () => {
   describe("embed", () => {
     it("should embed text successfully", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
       const result = await service.embed("test text");
 
-      expect(ollama.embed).toHaveBeenCalledWith({
+      expect(mockOllamaEmbed).toHaveBeenCalledWith({
         model: "embeddinggemma",
         input: expect.any(String), // normalized text
       });
@@ -77,7 +80,7 @@ describe("ObsidianEmbeddingService", () => {
 
     it("should cache results", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
@@ -86,11 +89,11 @@ describe("ObsidianEmbeddingService", () => {
       // Second call with same text should use cache
       await service.embed("test text");
 
-      expect(ollama.embed).toHaveBeenCalledTimes(1);
+      expect(mockOllamaEmbed).toHaveBeenCalledTimes(1);
     });
 
     it("should handle ollama errors", async () => {
-      ollama.embed.mockRejectedValue(new Error("Ollama error"));
+      mockOllamaEmbed.mockRejectedValue(new Error("Ollama error"));
 
       await expect(service.embed("test text")).rejects.toThrow(
         "Embedding failed"
@@ -98,7 +101,7 @@ describe("ObsidianEmbeddingService", () => {
     });
 
     it("should handle empty embeddings response", async () => {
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [],
       });
 
@@ -108,7 +111,7 @@ describe("ObsidianEmbeddingService", () => {
     });
 
     it("should handle null embeddings response", async () => {
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: null,
       });
 
@@ -118,7 +121,7 @@ describe("ObsidianEmbeddingService", () => {
     });
 
     it("should handle malformed embedding response", async () => {
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         wrongField: [1, 2, 3],
       });
 
@@ -126,7 +129,7 @@ describe("ObsidianEmbeddingService", () => {
     });
 
     it("should handle embedding with wrong dimension", async () => {
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [[0.1, 0.2, 0.3]], // Wrong dimension
       });
 
@@ -137,7 +140,7 @@ describe("ObsidianEmbeddingService", () => {
 
     it("should validate embedding dimension", async () => {
       const mockEmbedding = new Array(500).fill(0.1); // Wrong dimension
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
@@ -150,7 +153,7 @@ describe("ObsidianEmbeddingService", () => {
   describe("embedBatch", () => {
     it("should process batch successfully", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
@@ -159,7 +162,7 @@ describe("ObsidianEmbeddingService", () => {
 
       expect(results).toHaveLength(3);
       expect(results[0]).toHaveLength(768);
-      expect(ollama.embed).toHaveBeenCalledTimes(3); // 3 individual calls (batch size doesn't affect ollama calls)
+      expect(mockOllamaEmbed).toHaveBeenCalledTimes(3); // 3 individual calls (batch size doesn't affect ollama calls)
     });
 
     it("should handle empty batch", async () => {
@@ -169,7 +172,7 @@ describe("ObsidianEmbeddingService", () => {
 
     it("should respect batch size", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
@@ -177,14 +180,14 @@ describe("ObsidianEmbeddingService", () => {
       const results = await service.embedBatch(texts, 2);
 
       expect(results).toHaveLength(5);
-      expect(ollama.embed).toHaveBeenCalledTimes(5); // 5 individual calls (batch size controls concurrency, not API batching)
+      expect(mockOllamaEmbed).toHaveBeenCalledTimes(5); // 5 individual calls (batch size controls concurrency, not API batching)
     });
   });
 
   describe("embedWithStrategy", () => {
     it("should embed with strategy successfully", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
@@ -198,7 +201,7 @@ describe("ObsidianEmbeddingService", () => {
 
     it("should use content type override", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
@@ -211,7 +214,7 @@ describe("ObsidianEmbeddingService", () => {
       const mockEmbedding = new Array(768).fill(0.1);
 
       // Primary model fails
-      ollama.embed
+      mockOllamaEmbed
         .mockRejectedValueOnce(new Error("Primary failed"))
         .mockResolvedValueOnce({
           embeddings: [mockEmbedding],
@@ -225,7 +228,7 @@ describe("ObsidianEmbeddingService", () => {
     });
 
     it("should fail if all models fail", async () => {
-      ollama.embed.mockRejectedValue(new Error("All models failed"));
+      mockOllamaEmbed.mockRejectedValue(new Error("All models failed"));
 
       await expect(service.embedWithStrategy("test text")).rejects.toThrow(
         "All embedding models failed"
@@ -284,7 +287,7 @@ describe("ObsidianEmbeddingService", () => {
   describe("testConnection", () => {
     it("should test connection successfully", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
@@ -296,7 +299,7 @@ describe("ObsidianEmbeddingService", () => {
     });
 
     it("should handle connection failure", async () => {
-      ollama.embed.mockRejectedValue(new Error("Connection failed"));
+      mockOllamaEmbed.mockRejectedValue(new Error("Connection failed"));
 
       const result = await service.testConnection();
 
@@ -308,7 +311,7 @@ describe("ObsidianEmbeddingService", () => {
   describe("cache management", () => {
     it("should clear cache", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
@@ -321,7 +324,7 @@ describe("ObsidianEmbeddingService", () => {
 
     it("should return cache stats", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      ollama.embed.mockResolvedValue({
+      mockOllamaEmbed.mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 

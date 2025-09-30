@@ -2,6 +2,28 @@ import { Pool, PoolClient } from "pg";
 import { type SearchQuery } from "./hybrid-search-engine.js";
 import { type ReasoningQuery } from "./multi-hop-reasoning.js";
 
+/**
+ * TODO: Index Compression - Research techniques to reduce storage while maintaining performance
+ * TODO: Parallel Processing - Research concurrent search across multiple index types
+ *
+ * Current query optimization focuses on hybrid search strategies but lacks
+ * advanced index compression and parallel processing capabilities.
+ *
+ * Potential improvements for index compression:
+ * - Implement vector quantization and dimensionality reduction
+ * - Add product quantization for memory-efficient storage
+ * - Create compressed inverted indexes for text search
+ * - Implement delta encoding for incremental updates
+ * - Add compression-aware query optimization
+ *
+ * Potential improvements for parallel processing:
+ * - Implement concurrent vector and graph search execution
+ * - Add parallel index scanning for multi-term queries
+ * - Create distributed query execution across index shards
+ * - Implement GPU acceleration for vector operations
+ * - Add query result merging for parallel executions
+ */
+
 export interface QueryPlan {
   id: string;
   originalQuery: SearchQuery | ReasoningQuery;

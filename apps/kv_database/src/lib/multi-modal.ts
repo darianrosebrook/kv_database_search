@@ -34,6 +34,48 @@ export type {
 export { ContentType } from "../types/index";
 
 /**
+ * TODO: Table and structured data extraction
+ *
+ * Current multi-modal system supports various content types but lacks
+ * structured data extraction capabilities for tables, forms, and structured content.
+ *
+ * Potential improvements:
+ * - Add table extraction from PDFs and office documents
+ * - Implement structured data parsing from CSV/TSV files
+ * - Create form field extraction from scanned documents
+ * - Add database table schema inference
+ * - Implement data relationship discovery in structured content
+ * - Create searchable metadata for tabular data structures
+ *
+ * TODO: Evaluate OCR accuracy vs performance trade-offs
+ * TODO: Test multiple OCR engines (Tesseract, Google Vision, etc.)
+ * TODO: Research lightweight vision models for local processing
+ *
+ * Current OCR implementation lacks systematic evaluation and optimization:
+ *
+ * Potential improvements for OCR accuracy vs performance:
+ * - Implement comparative benchmarking across OCR engines
+ * - Add accuracy metrics for different document types
+ * - Create performance profiling for OCR processing times
+ * - Implement adaptive OCR quality based on content type
+ * - Add OCR confidence scoring and fallback strategies
+ *
+ * Potential improvements for multiple OCR engines:
+ * - Create pluggable OCR engine architecture
+ * - Implement engine selection based on content characteristics
+ * - Add ensemble OCR combining multiple engine results
+ * - Create engine-specific preprocessing optimizations
+ * - Implement cost-based OCR engine selection
+ *
+ * Potential improvements for lightweight vision models:
+ * - Research efficient vision models for local processing
+ * - Implement model quantization for faster inference
+ * - Add on-device vision processing capabilities
+ * - Create model distillation for smaller, faster models
+ * - Implement progressive vision processing with quality levels
+ */
+
+/**
  * Multi-modal content detector and processor
  */
 export class MultiModalContentDetector {

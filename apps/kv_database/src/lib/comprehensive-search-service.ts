@@ -150,6 +150,45 @@ export interface ComprehensiveSearchResponse extends ObsidianSearchResponse {
   };
 }
 
+/**
+ * TODO: Test impact on search latency with mixed data sources
+ *
+ * Current implementation combines multiple search modes (basic, advanced, graph, multi-modal)
+ * but lacks systematic benchmarking of latency impact when mixing different content types
+ * and data sources (Obsidian vault, external APIs, federated systems).
+ *
+ * Potential improvements:
+ * - Add latency benchmarks across different data source combinations
+ * - Implement content-type-aware query routing to optimize performance
+ * - Add telemetry to measure search latency degradation with mixed sources
+ * - Create performance regression tests for multi-source queries
+ *
+ * TODO: Sub-200ms average search response time
+ * TODO: Sub-50ms for cached/frequent queries
+ * TODO: Sub-2s for complex multi-modal searches
+ *
+ * Current search performance lacks systematic target setting and monitoring:
+ *
+ * Potential improvements for latency targets:
+ * - Implement real-time latency monitoring and alerting
+ * - Add performance SLOs (Service Level Objectives) with automated tracking
+ * - Create latency profiling for different query types and complexities
+ * - Implement performance budgets with automatic optimization
+ * - Add latency-based query routing and caching strategies
+ *
+ * TODO: Support 100K+ documents/chunks
+ * TODO: Handle concurrent users without degradation
+ * TODO: Maintain performance with mixed content types
+ *
+ * Current system lacks scalability testing and optimization:
+ *
+ * Potential improvements for scalability targets:
+ * - Implement horizontal scaling capabilities for document processing
+ * - Add concurrent user load testing and optimization
+ * - Create performance profiling for mixed content type scenarios
+ * - Implement adaptive resource allocation based on load
+ * - Add performance monitoring for different scale levels
+ */
 export class ComprehensiveSearchService {
   private obsidianSearch: ObsidianSearchService;
   private advancedSearch: SemanticSearchEngine;

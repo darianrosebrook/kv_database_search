@@ -327,3 +327,98 @@ export class ObsidianDatabase extends DocumentDatabase {
     super(connectionString, "obsidian_chunks");
   }
 }
+
+/**
+ * Test version of ObsidianDatabase that supports SQLite for faster testing
+ */
+export class TestObsidianDatabase {
+  private db: any;
+  public tableName: string;
+  public dimension: number;
+  private isSQLite: boolean;
+
+  constructor(connectionString: string, tableName: string = "obsidian_chunks", dimension: number = 768) {
+    this.tableName = tableName;
+    this.dimension = dimension;
+    this.isSQLite = connectionString.startsWith('sqlite:');
+
+    if (this.isSQLite) {
+      // Use in-memory database for testing (avoids native compilation issues)
+      const { InMemoryTestDatabase } = require('../../../tests/in-memory-db');
+      this.db = new InMemoryTestDatabase();
+      // No initialization needed for in-memory
+    } else {
+      // Use PostgreSQL
+      const { Pool } = require('pg');
+      this.db = new Pool({
+        connectionString,
+        max: 5,
+        min: 1,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+        allowExitOnIdle: true,
+      });
+    }
+  }
+
+  // No initialization needed for in-memory database
+
+  async initialize(): Promise<void> {
+    if (!this.isSQLite) {
+      // For PostgreSQL, we would normally initialize schema here
+      // For testing, we'll skip complex schema setup
+    }
+  }
+
+  async close(): Promise<void> {
+    if (this.isSQLite) {
+      await this.db.close();
+    } else {
+      await this.db.end();
+    }
+  }
+
+  // Mock methods for testing - simplified versions
+  async upsertChunk(chunk: any): Promise<void> {
+    if (this.isSQLite) {
+      await this.db.execute(
+        `INSERT OR REPLACE INTO ${this.tableName} (id, content, embedding, metadata, file_path) VALUES (?, ?, ?, ?, ?)`,
+        [
+          chunk.id,
+          chunk.content,
+          chunk.embedding ? JSON.stringify(chunk.embedding) : null,
+          chunk.metadata ? JSON.stringify(chunk.metadata) : null,
+          chunk.file_path
+        ]
+      );
+    } else {
+      // Mock PostgreSQL operation - just succeed for testing
+    }
+  }
+
+  async search(query: any): Promise<any[]> {
+    if (this.isSQLite) {
+      return await this.db.query(
+        `SELECT * FROM ${this.tableName} WHERE content LIKE ? LIMIT ?`,
+        [`%${query.text || ''}%`, query.limit || 10]
+      );
+    } else {
+      // Mock search results
+      return [];
+    }
+  }
+
+  async getStats(): Promise<any> {
+    if (this.isSQLite) {
+      const results = await this.db.query(`SELECT COUNT(*) as total_chunks FROM ${this.tableName}`);
+      return { totalChunks: results[0]?.total_chunks || 0 };
+    } else {
+      return { totalChunks: 0 };
+    }
+  }
+
+  // Expose pool for testing
+  get pool(): any {
+    return this.isSQLite ? null : this.db;
+  }
+}

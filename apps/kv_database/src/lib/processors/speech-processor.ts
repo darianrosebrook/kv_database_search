@@ -1,20 +1,67 @@
-// Temporarily disabled sherpa-onnx import to fix module resolution
-// import {
-//   createModel,
-//   createRecognizer,
-//   type ModelConfig,
-//   type RecognizerConfig,
-// } from "sherpa-onnx";
+// Import sherpa-onnx - will be mocked in tests
+import {
+  createModel,
+  createRecognizer,
+  type ModelConfig,
+  type RecognizerConfig,
+} from "sherpa-onnx";
 
-// Temporary stubs for testing
-type ModelConfig = Record<string, unknown>;
-type RecognizerConfig = Record<string, unknown>;
-const createModel = () => {
-  throw new Error("sherpa-onnx not available");
-};
-const createRecognizer = () => {
-  throw new Error("sherpa-onnx not available");
-};
+/**
+ * TODO: Audio content summarization
+ * TODO: Speaker identification and segmentation
+ *
+ * Current speech processing focuses on transcription but lacks
+ * content summarization and speaker analysis capabilities.
+ *
+ * Potential improvements for audio content summarization:
+ * - Implement automatic speech summarization algorithms
+ * - Add key phrase extraction from transcribed audio
+ * - Create topic modeling for long-form audio content
+ * - Add sentiment analysis for voice content
+ * - Implement abstractive summarization for meetings/recordings
+ *
+ * Potential improvements for speaker identification and segmentation:
+ * - Add speaker diarization to identify different speakers
+ * - Implement voice activity detection for silence removal
+ * - Create speaker embedding models for voice fingerprinting
+ * - Add speaker turn detection and labeling
+ * - Implement multi-speaker conversation analysis
+ *
+ * TODO: Benchmark speech recognition accuracy and speed
+ * TODO: Evaluate local vs cloud transcription services
+ * TODO: Research audio preprocessing for better transcription
+ * TODO: Test transcription quality across different audio formats
+ *
+ * Current speech processing lacks systematic evaluation and optimization:
+ *
+ * Potential improvements for speech recognition benchmarking:
+ * - Implement accuracy metrics for different audio qualities
+ * - Add performance benchmarking across speech engines
+ * - Create transcription quality scoring and validation
+ * - Implement comparative analysis of different transcription services
+ * - Add real-time performance monitoring for speech processing
+ *
+ * Potential improvements for local vs cloud services:
+ * - Create hybrid local/cloud transcription strategies
+ * - Implement cost-benefit analysis for service selection
+ * - Add offline-first transcription capabilities
+ * - Create adaptive service selection based on network conditions
+ * - Implement privacy-preserving local processing options
+ *
+ * Potential improvements for audio preprocessing:
+ * - Add noise reduction and audio enhancement algorithms
+ * - Implement speaker separation for multi-speaker audio
+ * - Create audio format optimization for better recognition
+ * - Add voice activity detection and silence removal
+ * - Implement audio normalization and quality improvement
+ *
+ * Potential improvements for different audio formats:
+ * - Create format-specific preprocessing pipelines
+ * - Add support for compressed audio formats
+ * - Implement streaming audio processing capabilities
+ * - Create audio quality assessment and optimization
+ * - Add format conversion for unsupported audio types
+ */
 import { ContentType, ContentMetadata } from "../../types/index";
 import { detectLanguage } from "../utils";
 import * as fs from "fs";

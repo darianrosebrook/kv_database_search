@@ -16,7 +16,23 @@ vi.mock("pdf-parse", () => ({
   ),
 }));
 
+// Mock fs module for ESM
+vi.mock("fs", async () => {
+  const actual = await vi.importActual("fs");
+  const mockReadFileSync = vi.fn();
+  return {
+    ...actual,
+    readFileSync: mockReadFileSync,
+    // Export the mock for testing
+    __mockReadFileSync: mockReadFileSync,
+  };
+});
+
 import * as pdfParse from "pdf-parse";
+import fs from "fs";
+
+// Access the mock function through the mocked module
+const mockReadFileSync = (fs as any).__mockReadFileSync;
 
 describe("PDFProcessor", () => {
   let processor: PDFProcessor;
@@ -95,8 +111,7 @@ describe("PDFProcessor", () => {
       mockPdfParse.mockResolvedValue(mockPdfData);
 
       // Mock fs.readFileSync
-      const fs = await import("fs");
-      vi.spyOn(fs, "readFileSync").mockReturnValue(Buffer.from("pdf content"));
+      mockReadFileSync.mockReturnValue(Buffer.from("%PDF-1.4 mock content"));
 
       const result = await processor.extractText("/test/file.pdf");
 

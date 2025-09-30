@@ -8,14 +8,19 @@ import fs from "fs";
 import path from "path";
 
 // Mock fs module for ESM
-vi.mock("fs", async () => {
-  const actual = await vi.importActual("fs");
-  return {
-    ...actual,
-    statSync: vi.fn(),
-    existsSync: vi.fn(),
-  };
-});
+const mockStatSync = vi.fn();
+const mockExistsSync = vi.fn();
+
+vi.mock("fs", () => ({
+  default: {
+    statSync: mockStatSync,
+    existsSync: mockExistsSync,
+  },
+  statSync: mockStatSync,
+  existsSync: mockExistsSync,
+}));
+
+import fs from "fs";
 
 describe("ImagePathResolver", () => {
   let resolver: ImagePathResolver;

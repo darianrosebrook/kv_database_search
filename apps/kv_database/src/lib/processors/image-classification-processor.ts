@@ -1,6 +1,26 @@
 /**
  * Image Classification and Scene Description Processor
  * Combines OCR text extraction with AI-powered scene understanding
+ *
+ * TODO: Visual similarity search capabilities
+ * TODO: Chart and diagram understanding
+ *
+ * Current image processing focuses on classification and OCR but lacks
+ * visual similarity search and diagram/chart understanding capabilities.
+ *
+ * Potential improvements for visual similarity search:
+ * - Implement image embedding generation for visual similarity matching
+ * - Add perceptual hashing for duplicate image detection
+ * - Create visual search indices for content-based image retrieval
+ * - Implement feature extraction for color, texture, and shape matching
+ * - Add semantic visual search across image collections
+ *
+ * Potential improvements for chart and diagram understanding:
+ * - Add chart type detection (bar, line, pie, scatter plots)
+ * - Implement diagram parsing for flowcharts and technical drawings
+ * - Create mathematical formula extraction from images
+ * - Add schematic diagram understanding for engineering docs
+ * - Implement table/chart data extraction and structuring
  */
 
 import { ContentType } from "../../types/index";

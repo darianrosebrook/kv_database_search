@@ -395,6 +395,27 @@ export interface QueryMetadata {
 // ============================================================================
 
 /**
+ * TODO: Test query complexity limits and timeouts
+ * TODO: Measure memory usage for graph operations
+ *
+ * Current graph query engine supports sophisticated traversals and pattern matching
+ * but lacks systematic limits on query complexity and memory usage monitoring.
+ *
+ * Potential improvements for query complexity limits:
+ * - Add configurable timeouts for complex graph traversals
+ * - Implement query complexity scoring to prevent expensive operations
+ * - Add circuit breakers for queries exceeding resource thresholds
+ * - Create query optimization hints for complex relationship discovery
+ *
+ * Potential improvements for memory usage measurement:
+ * - Add telemetry for graph traversal memory consumption
+ * - Implement memory-efficient traversal algorithms for large graphs
+ * - Add memory usage monitoring for different traversal strategies
+ * - Create memory profiling tools for graph query operations
+ * - Implement streaming results for memory-intensive graph queries
+ */
+
+/**
  * Graph Query Engine - Natural Language to Graph Query Translation
  *
  * Advanced system for translating natural language queries into graph traversals,
