@@ -1,5 +1,5 @@
 import { DocumentChunk, DocumentMetadata } from "../types/index";
-import { ImageLinkExtractor, ImageLink } from "./image-link-extractor";
+import { ImageLinkExtractor } from "./image-link-extractor";
 import { ImagePathResolver } from "./image-path-resolver";
 import { OCRProcessor } from "./processors/ocr-processor";
 import { ImageClassificationProcessor } from "./processors/image-classification-processor";
@@ -63,7 +63,6 @@ export class ObsidianImageProcessor {
       maxImagesPerFile = 10,
       maxImageSize = 5 * 1024 * 1024, // 5MB
       ocrLanguage = "eng",
-      imageProcessingTimeout = 30000,
       minClassificationConfidence = 0.7,
       maxObjects = 10,
       includeVisualFeatures = false,

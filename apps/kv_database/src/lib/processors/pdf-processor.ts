@@ -36,6 +36,7 @@ export interface PDFContentMetadata extends ContentMetadata {
     paragraphs: number;
     hasTables: boolean;
     hasImages: boolean;
+    hasLists: boolean;
   };
 }
 
@@ -351,11 +352,13 @@ export class PDFProcessor extends BaseContentProcessor {
     paragraphs: number;
     hasTables: boolean;
     hasImages: boolean;
+    hasLists: boolean;
   } {
     const headers: string[] = [];
     let paragraphs = 0;
     let hasTables = false;
     let hasImages = false;
+    let hasLists = false;
 
     // Extract potential headers (lines that look like titles)
     const lines = text.split("\n");
@@ -383,12 +386,15 @@ export class PDFProcessor extends BaseContentProcessor {
     const tablePattern = /(.+\t.+|.+,.+.+)\n(.+\t.+|.+,.+.+)/;
     hasTables = tablePattern.test(text);
 
+    // Detect lists (bullet points, numbered lists)
+    hasLists = /(^|\n)\s*[-*•]\s+|(\d+\.|\w+\))\s+/.test(text);
+
     // Detect image references
     hasImages =
       /\b(image|figure|img|pic|photo)\b/i.test(text) ||
       /\.(jpg|jpeg|png|gif|bmp|tiff|webp)\b/i.test(text);
 
-    return { headers, paragraphs, hasTables, hasImages };
+    return { headers, paragraphs, hasTables, hasImages, hasLists };
   }
 
   /**

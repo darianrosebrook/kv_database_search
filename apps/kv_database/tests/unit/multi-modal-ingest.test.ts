@@ -9,23 +9,18 @@ import path from "path";
 // Mock fs module for ESM
 vi.mock("fs", async () => {
   const actual = await vi.importActual("fs");
-  const mockStatSync = vi.fn();
-  const mockReadFileSync = vi.fn();
   return {
     ...actual,
-    statSync: mockStatSync,
-    readFileSync: mockReadFileSync,
-    // Export mocks for testing
-    __mockStatSync: mockStatSync,
-    __mockReadFileSync: mockReadFileSync,
+    statSync: vi.fn(),
+    readFileSync: vi.fn(),
   };
 });
 
-import fs from "fs";
+import { statSync, readFileSync } from "fs";
 
-// Access the mock functions through the mocked module
-const mockStatSync = (fs as any).__mockStatSync;
-const mockReadFileSync = (fs as any).__mockReadFileSync;
+// Access the mock functions
+const mockStatSync = vi.mocked(statSync);
+const mockReadFileSync = vi.mocked(readFileSync);
 
 describe("MultiModalIngestionPipeline", () => {
   let mockDatabase;
@@ -68,13 +63,13 @@ describe("MultiModalIngestionPipeline", () => {
     pipeline.metadataExtractor = mockMetadataExtractor;
 
     // Mock file system operations
-    fs.statSync.mockReturnValue({
+    mockStatSync.mockReturnValue({
       size: 100,
       birthtime: new Date("2023-01-01"),
       mtime: new Date("2023-01-02"),
     });
 
-    fs.readFileSync.mockReturnValue(Buffer.from("test content"));
+    mockReadFileSync.mockReturnValue(Buffer.from("test content"));
   });
 
   afterEach(() => {
@@ -222,7 +217,7 @@ describe("MultiModalIngestionPipeline", () => {
       const testFiles = ["/test/large-file.txt"];
 
       // Mock large file
-      vi.spyOn(fs, "statSync").mockReturnValue({
+      mockStatSync.mockReturnValue({
         size: 100 * 1024 * 1024, // 100MB
         birthtime: new Date(),
         mtime: new Date(),

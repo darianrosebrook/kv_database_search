@@ -123,7 +123,7 @@ describe("Multi-Modal File Type Support", () => {
       expect(mp3Result.mimeType).toBe("audio/mpeg");
 
       // WAV
-      const wavBuffer = Buffer.from("RIFF");
+      const wavBuffer = Buffer.from("RIFF\x00\x00\x00\x00WAVE");
       const wavResult = await detector.detectContentType(wavBuffer, "test.wav");
       expect(wavResult.contentType).toBe(ContentType.AUDIO);
       expect(wavResult.mimeType).toBe("audio/wav");

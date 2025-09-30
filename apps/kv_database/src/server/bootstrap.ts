@@ -17,6 +17,7 @@ import { ObsidianIngestionPipeline } from "../lib/obsidian-ingest";
 import { WebSearchService } from "../lib/web-search";
 import { ContextManager } from "../lib/context-manager";
 import { DictionaryAPI } from "../lib/dictionary-api";
+import { DictionaryService } from "../lib/dictionary-service";
 import { MLEntityAPI } from "../lib/ml-entity-api";
 import { TemporalReasoningAPI } from "../lib/temporal-reasoning-api";
 import { FederatedSearchAPI } from "../lib/federated-search-api";
@@ -78,21 +79,21 @@ const asError = (e: unknown): Error =>
 /**
  * Find an available port dynamically
  */
-async function findAvailablePort(startPort: number): Promise<number> {
-  const { createServer, AddressInfo } = await import("net");
-  const net = { createServer };
+async function _findAvailablePort(startPort: number): Promise<number> {
+  const { createServer } = await import("net");
 
   return new Promise((resolve) => {
-    const server = net.createServer();
+    const server = createServer();
 
     server.listen(startPort, () => {
-      const port = (server.address() as AddressInfo).port;
+      const address = server.address() as { port: number };
+      const port = address.port;
       server.close(() => resolve(port));
     });
 
     server.on("error", () => {
       // Port is in use, try next one
-      resolve(findAvailablePort(startPort + 1));
+      resolve(_findAvailablePort(startPort + 1));
     });
   });
 }
@@ -191,7 +192,7 @@ async function buildServices(): Promise<AppServices> {
       "💡 Make sure OBSIDIAN_VAULT_PATH points to a valid Obsidian vault"
     );
     // Don't throw - allow server to start with limited functionality
-    ingestionPipeline = null as any;
+    ingestionPipeline = undefined;
   }
 
   // Initialize optional services

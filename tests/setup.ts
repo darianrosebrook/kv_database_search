@@ -1,5 +1,5 @@
 // Setup for vitest
-import { InMemoryTestDatabase } from './in-memory-db';
+import { InMemoryTestDatabase } from "./in-memory-db";
 
 // Test database management utilities
 export class TestDatabaseManager {
@@ -14,7 +14,7 @@ export class TestDatabaseManager {
     }
 
     // Use in-memory database for faster local testing if requested
-    if (process.env.USE_SQLITE_TESTS === 'true') {
+    if (process.env.USE_SQLITE_TESTS === "true") {
       console.log("🗄️ Using in-memory database for fast local testing...");
       this.inMemoryDb = new InMemoryTestDatabase();
       this.connectionString = await this.inMemoryDb.initialize();
@@ -91,6 +91,14 @@ export class TestDatabaseManager {
       this.container = null;
       console.log("✅ Test database container stopped");
     }
+
+    // Force garbage collection to free memory
+    if (global.gc) {
+      console.log("🧹 Running garbage collection...");
+      global.gc();
+      console.log("✅ Garbage collection completed");
+    }
+
     this.isInitialized = false;
     this.connectionString = "";
   }

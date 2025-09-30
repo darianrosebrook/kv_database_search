@@ -377,26 +377,27 @@ export class EntityAnalyzer {
         },
       }));
 
-      const processedRelationships = this.entityExtractor.extractRelationships(
-        processedEntities,
-        text,
-        {
-          documentId: "unknown",
-          documentType: "text",
-          domain: options.domain || "general",
-          language: "en",
-          processingStage: "initial",
-          previousEntities: [],
-          constraints: {
-            maxEntities: 100,
-            minConfidence: 0.6,
-            allowedTypes: [],
-            forbiddenTypes: [],
-            contextWindow: 100,
-            overlapThreshold: 0.8,
-          },
-        }
-      );
+      const processedRelationships =
+        await this.entityExtractor.extractRelationships(
+          processedEntities,
+          text,
+          {
+            documentId: "unknown",
+            documentType: "text",
+            domain: options.domain || "general",
+            language: "en",
+            processingStage: "initial",
+            previousEntities: [],
+            constraints: {
+              maxEntities: 100,
+              minConfidence: 0.6,
+              allowedTypes: [],
+              forbiddenTypes: [],
+              contextWindow: 100,
+              overlapThreshold: 0.8,
+            },
+          }
+        );
 
       relationships = processedRelationships.map((rel) => ({
         source: rel.sourceEntity,

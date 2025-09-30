@@ -10,6 +10,7 @@ import {
   PDFTextExtractionResult,
 } from "../core/pdf-text-extractor";
 import { ImageOCRExtractor } from "../core/image-ocr-extractor";
+import { PDFPageRenderer } from "../core/pdf-page-renderer";
 import {
   EntityAnalyzer,
   EntityAnalysisResult,
@@ -67,12 +68,14 @@ export interface PDFProcessingOptions extends ProcessorOptions {
 export class PDFProcessingPipeline {
   private textExtractor: PDFTextExtractor;
   private ocrExtractor: ImageOCRExtractor;
+  private pageRenderer: PDFPageRenderer;
   private entityAnalyzer: EntityAnalyzer;
   private strategyEngine: PDFProcessingStrategyEngine;
 
   constructor() {
     this.textExtractor = new PDFTextExtractor();
     this.ocrExtractor = new ImageOCRExtractor();
+    this.pageRenderer = new PDFPageRenderer();
     this.entityAnalyzer = new EntityAnalyzer();
     this.strategyEngine = new PDFProcessingStrategyEngine();
   }
@@ -142,20 +145,112 @@ export class PDFProcessingPipeline {
       let imageCount = 0;
 
       if (strategy.includeOCR) {
-        console.log("🖼️ Starting OCR processing...");
+        // First, try to extract embedded images from PDF (most efficient approach)
+        let embeddedImageOcrResults = null;
 
-        // For now, we'll use a simplified approach
-        // In a full implementation, we'd extract images from the PDF pages
-        // This is a placeholder that would need the actual PDF page extraction logic
-        ocrResults = {
-          combinedText: "",
-          totalConfidence: 0,
-          imageCount: 0,
-        };
+        if (textResult.pages && textResult.pages.length > 0) {
+          console.log("🖼️ Attempting to extract embedded images for OCR...");
 
-        console.log(
-          `🔍 OCR complete: ${ocrResults.imageCount} images processed`
-        );
+          try {
+            // Extract images from PDF pages and perform OCR
+            embeddedImageOcrResults =
+              await this.ocrExtractor.extractFromPDFPages(textResult.pages);
+
+            if (embeddedImageOcrResults.images.length > 0) {
+              console.log(
+                `🔍 Embedded image OCR complete: ${embeddedImageOcrResults.imageCount} images processed, ` +
+                  `${embeddedImageOcrResults.combinedText.length} characters extracted, ` +
+                  `confidence: ${(
+                    embeddedImageOcrResults.totalConfidence * 100
+                  ).toFixed(1)}%`
+              );
+            } else {
+              console.log("⚠️ No embedded images found in PDF");
+            }
+          } catch (error) {
+            console.error("❌ Embedded image OCR failed:", error);
+            embeddedImageOcrResults = null;
+          }
+        }
+
+        // Check if embedded image OCR provided sufficient content
+        const hasSufficientEmbeddedContent =
+          embeddedImageOcrResults &&
+          embeddedImageOcrResults.combinedText.length > 50 &&
+          embeddedImageOcrResults.totalConfidence > 0.3;
+
+        if (hasSufficientEmbeddedContent) {
+          // Use embedded image OCR results
+          hasImages = true;
+          imageCount = embeddedImageOcrResults.images.length;
+          ocrResults = {
+            combinedText: embeddedImageOcrResults.combinedText,
+            totalConfidence: embeddedImageOcrResults.totalConfidence,
+            imageCount: embeddedImageOcrResults.images.length,
+          };
+        } else {
+          // Fall back to rendering entire pages (for scanned PDFs or PDFs with insufficient embedded content)
+          console.log(
+            "📸 Insufficient embedded image content - rendering pages for OCR..."
+          );
+
+          try {
+            // Render PDF pages to images
+            const renderedPages = await this.pageRenderer.renderPagesToImages(
+              buffer,
+              {
+                density: 150,
+                format: "png",
+                maxPages: 50, // Limit to first 50 pages for performance
+              }
+            );
+
+            if (renderedPages.length > 0) {
+              // Convert rendered pages to ImageInfo format
+              const imageInfos = renderedPages.map((page) => {
+                const base64Data = page.buffer.toString("base64");
+                console.log(
+                  `📋 Page ${page.pageNumber}: buffer size ${page.buffer.length}, base64 length ${base64Data.length}`
+                );
+                return {
+                  pageNumber: page.pageNumber,
+                  width: page.width,
+                  height: page.height,
+                  data: base64Data,
+                };
+              });
+
+              // Perform OCR on rendered page images
+              const pageOcrResults = await this.ocrExtractor.extractFromImages(
+                imageInfos
+              );
+
+              hasImages = true;
+              imageCount = renderedPages.length;
+
+              ocrResults = {
+                combinedText: pageOcrResults.combinedText,
+                totalConfidence: pageOcrResults.totalConfidence,
+                imageCount: renderedPages.length,
+              };
+
+              console.log(
+                `🔍 Page rendering OCR complete: ${ocrResults.imageCount} pages processed, ` +
+                  `${ocrResults.combinedText.length} characters extracted, ` +
+                  `confidence: ${(ocrResults.totalConfidence * 100).toFixed(
+                    1
+                  )}%`
+              );
+            }
+          } catch (error) {
+            console.error("❌ Page rendering OCR failed:", error);
+            ocrResults = {
+              combinedText: "",
+              totalConfidence: 0,
+              imageCount: 0,
+            };
+          }
+        }
       }
 
       // Step 6: Combine text results
@@ -289,7 +384,6 @@ export class PDFProcessingPipeline {
           },
         } as PDFContentMetadata,
         processingTime,
-        error: errorMessage,
       };
     }
   }

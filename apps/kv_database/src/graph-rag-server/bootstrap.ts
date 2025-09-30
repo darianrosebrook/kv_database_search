@@ -33,7 +33,6 @@ export class GraphRagServerBootstrap {
       // Get configuration
       const dbConfig = config.getDatabaseConfig();
       const embeddingConfig = config.getEmbeddingConfig();
-      const graphRagConfig = config.getGraphRagConfig();
 
       // Initialize database services
       const databaseFactory = new DatabaseFactory(this.container, this.logger);

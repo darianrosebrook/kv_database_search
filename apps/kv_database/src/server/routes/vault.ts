@@ -5,8 +5,6 @@
  */
 
 import { FastifyInstance } from "fastify";
-import * as fs from "fs";
-import * as path from "path";
 
 /**
  * Register vault routes

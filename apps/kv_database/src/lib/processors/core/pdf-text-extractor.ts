@@ -23,6 +23,7 @@ export interface PDFTextExtractionResult {
   };
   confidence: number;
   processingTime: number;
+  pages?: any[]; // PDF.js-extract pages data for OCR processing
 }
 
 export interface PDFExtractionOptions {
@@ -64,8 +65,8 @@ export class PDFTextExtractor {
       cleanText = true,
     } = options;
 
-    let pdfParseResult = null;
-    let pdfExtractResult = null;
+    let pdfParseResult: any = null;
+    let pdfExtractResult: any = null;
 
     // Try pdf-parse method
     if (preferredMethod === "pdf-parse" || preferredMethod === "auto") {
@@ -73,7 +74,9 @@ export class PDFTextExtractor {
         console.log("📄 Trying pdf-parse method...");
         pdfParseResult = await pdfParse(buffer);
         console.log(
-          `✅ pdf-parse successful: ${pdfParseResult.numpages} pages, ${pdfParseResult.text.length} chars`
+          `✅ pdf-parse successful: ${pdfParseResult?.numpages || 0} pages, ${
+            pdfParseResult?.text?.length || 0
+          } chars`
         );
       } catch (error) {
         console.log("⚠️ pdf-parse failed:", (error as Error).message);
@@ -83,7 +86,7 @@ export class PDFTextExtractor {
       }
     }
 
-    // Try pdf.js-extract method
+    // Try pdf.js-extract method (always run on 'auto' to get pages for OCR)
     if (
       preferredMethod === "pdf.js-extract" ||
       preferredMethod === "auto" ||
@@ -97,7 +100,7 @@ export class PDFTextExtractor {
         fs.writeFileSync(tempPath, buffer);
 
         const pdfExtract = await this.getPDFExtract();
-        pdfExtractResult = await new Promise((resolve, reject) => {
+        pdfExtractResult = await new Promise<any>((resolve, reject) => {
           pdfExtract.extract(tempPath, {}, (err, data) => {
             // Clean up temp file
             try {
@@ -116,7 +119,7 @@ export class PDFTextExtractor {
 
         console.log(
           `✅ pdf.js-extract successful: ${
-            pdfExtractResult.pages?.length || 0
+            pdfExtractResult?.pages?.length || 0
           } pages`
         );
       } catch (error) {
@@ -201,11 +204,13 @@ export class PDFTextExtractor {
     pageCount: number;
     method: "pdf-parse" | "pdf.js-extract" | "hybrid";
     metadata?;
+    pages?: any[];
   } {
     let text = "";
     let pageCount = 0;
     let method: "pdf-parse" | "pdf.js-extract" | "hybrid" = "pdf-parse";
     let metadata = {};
+    let pages = undefined;
 
     // Determine the best text extraction method
     const pdfParseTextLength = pdfParseResult?.text?.length || 0;
@@ -228,11 +233,14 @@ export class PDFTextExtractor {
       pageCount = pdfParseResult.numpages || 0;
       metadata = pdfParseResult.info || {};
       method = "pdf-parse";
+      // Still include pages from pdfExtractResult if available for OCR
+      pages = pdfExtractResult?.pages;
     } else if (pdfExtractResult?.pages) {
       // Use pdf.js-extract text
       text = this.extractTextFromPdfJsPages(pdfExtractResult.pages);
       pageCount = pdfExtractResult.pages.length;
       method = "pdf.js-extract";
+      pages = pdfExtractResult.pages;
     } else if (pdfParseResult?.text) {
       // Fallback to pdf-parse even if text is limited
       text = pdfParseResult.text;
@@ -246,6 +254,7 @@ export class PDFTextExtractor {
       pageCount,
       method,
       metadata,
+      pages,
     };
   }
 

@@ -15,8 +15,8 @@ describe("Enhanced OCR Processor", () => {
   it("should fix common OCR artifacts", () => {
     // Test various OCR artifacts
     const artifacts = [
-      { input: "H|ello", expected: "Hlello" }, // Pipe should become I
-      { input: "H e l l 0", expected: "H e l l O" }, // Zero should become O
+      { input: "H|ello", expected: "Hello" }, // Remove pipe artifacts
+      { input: "H e l l 0", expected: "H e l l O" }, // Fix zero, preserve spaces
       { input: "Multiple    spaces", expected: "Multiple spaces" },
       { input: "Line1\n\n\nLine2", expected: "Line1\n\nLine2" }, // Preserve paragraphs
     ];

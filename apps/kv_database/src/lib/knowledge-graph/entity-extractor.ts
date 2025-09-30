@@ -464,8 +464,8 @@ export class KnowledgeGraphEntityExtractor {
 
           if (confidence >= this.config.minRelationshipConfidence) {
             const relationship: KnowledgeGraphRelationship = {
-              sourceEntityId: entity1.id || "",
-              targetEntityId: entity2.id || "",
+              sourceEntityId: entity1.canonicalName,
+              targetEntityId: entity2.canonicalName,
               type: relationshipType,
               isDirectional: false, // Co-occurrence relationships are typically bidirectional
               confidence,
@@ -562,14 +562,16 @@ export class KnowledgeGraphEntityExtractor {
     }
 
     // Look for "also known as" patterns
+    // Match the entity name or its first word (for partial matches)
+    const entityPattern = `(${this.escapeRegex(
+      entityName
+    )}|\\b${this.escapeRegex(entityName.split(" ")[0])}\\b)`;
     const akaRegex = new RegExp(
-      `${this.escapeRegex(
-        entityName
-      )}[^.]*?(?:also known as|aka|a\\.k\\.a\\.)\\s+([^,.;]+)`,
+      `${entityPattern}[^.]*?(?:also known as|aka|a\\.k\\.a\\.)\\s+([^,.;]+)`,
       "gi"
     );
     while ((match = akaRegex.exec(text)) !== null) {
-      aliases.add(match[1].trim());
+      aliases.add(match[2].trim());
     }
 
     // Add common abbreviations if entity is an organization

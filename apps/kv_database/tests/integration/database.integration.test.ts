@@ -222,9 +222,10 @@ describe("TestObsidianDatabase Integration", () => {
 
     it("should filter by content type", async () => {
       const queryEmbedding = createEmbedding();
-      const results = await database.search(queryEmbedding, 10, undefined, [
-        "moc",
-      ]);
+      const results = await database.search(queryEmbedding, {
+        limit: 10,
+        contentType: "moc",
+      });
 
       // Should only return MOC content
       results.forEach((result) => {
@@ -241,16 +242,10 @@ describe("TestObsidianDatabase Integration", () => {
 
     it("should filter by minimum similarity", async () => {
       const queryEmbedding = [0.8, 0.1, 0.2, 0.3, 0.4];
-      const results = await database.search(
-        queryEmbedding,
-        10,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        0.5
-      );
+      const results = await database.search(queryEmbedding, {
+        limit: 10,
+        minSimilarity: 0.5,
+      });
 
       results.forEach((result) => {
         expect(result.cosineSimilarity).toBeGreaterThanOrEqual(0.5);

@@ -3,16 +3,20 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    setupFiles: ["../tests/setup.ts"],
+    setupFiles: ["tests/setup.ts"],
     include: [
       "tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       "tests/integration/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       "tests/contract/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      "apps/kv_database/tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      "apps/kv_database/tests/integration/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      "apps/kv_database/tests/contract/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       ...(process.env.MUTATION_TESTING === "true"
         ? []
         : [
             "tests/e2e/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
             "tests/axe/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+            "apps/kv_database/tests/e2e/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
           ]),
     ],
     exclude: [
@@ -21,6 +25,8 @@ export default defineConfig({
       ".caws",
       "contracts",
       "docs",
+      ".stryker-tmp",
+      "**/.stryker-tmp/**",
       "**/pdf-processor.test.ts",
       ...(process.env.MUTATION_TESTING === "true"
         ? [
@@ -33,7 +39,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html", "lcov"],
-      include: ["src/**/*.ts"],
+      include: ["apps/kv_database/src/**/*.ts"],
       exclude: [
         "node_modules/",
         "dist/",
@@ -60,9 +66,9 @@ export default defineConfig({
       branches: 80,
       statements: 80,
     },
-    testTimeout: 30000, // 30 seconds for integration tests
-    hookTimeout: 60000, // 60 seconds for setup/teardown
-    retry: 2, // Retry flaky tests
+    testTimeout: 15000, // Reduced from 30s to prevent memory accumulation
+    hookTimeout: 30000, // Reduced from 60s to prevent memory accumulation
+    retry: 1, // Reduced from 2 to minimize memory usage
     bail: 1, // Stop on first failure in CI
     reporters: process.env.CI ? ["verbose", "github-actions"] : ["verbose"],
     root: process.cwd(), // Explicitly set root to current working directory

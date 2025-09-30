@@ -62,7 +62,7 @@ export class CawsGateChecker extends CawsBaseTool {
     try {
       const coveragePath = path.join(
         options.workingDirectory || this.getWorkingDirectory(),
-        "coverage/coverage-summary.json"
+        "coverage/coverage-final.json"
       );
 
       if (!this.pathExists(coveragePath)) {
@@ -76,7 +76,7 @@ export class CawsGateChecker extends CawsBaseTool {
         };
       }
 
-      const coverageData = this.readJsonFile<CoverageData>(coveragePath);
+      const coverageData = this.readJsonFile<any>(coveragePath);
       if (!coverageData) {
         return {
           passed: false,
@@ -86,8 +86,45 @@ export class CawsGateChecker extends CawsBaseTool {
         };
       }
 
-      const totals = coverageData.total;
-      const branchCoverage = totals.branches.pct / 100;
+      // Calculate coverage from detailed Vitest data
+      let totalStatements = 0;
+      let coveredStatements = 0;
+      let totalBranches = 0;
+      let coveredBranches = 0;
+      let totalFunctions = 0;
+      let coveredFunctions = 0;
+
+      for (const file of Object.values(coverageData)) {
+        const fileData = file as any;
+        if (fileData.s) {
+          totalStatements += Object.keys(fileData.s).length;
+          coveredStatements += Object.values(fileData.s).filter(
+            (s: number) => s > 0
+          ).length;
+        }
+        if (fileData.b) {
+          for (const branches of Object.values(fileData.b) as number[][]) {
+            totalBranches += branches.length;
+            coveredBranches += branches.filter((b: number) => b > 0).length;
+          }
+        }
+        if (fileData.f) {
+          totalFunctions += Object.keys(fileData.f).length;
+          coveredFunctions += Object.values(fileData.f).filter(
+            (f: number) => f > 0
+          ).length;
+        }
+      }
+
+      // Calculate percentages
+      const statementsPct =
+        totalStatements > 0 ? (coveredStatements / totalStatements) * 100 : 0;
+      const branchesPct =
+        totalBranches > 0 ? (coveredBranches / totalBranches) * 100 : 0;
+      const functionsPct =
+        totalFunctions > 0 ? (coveredFunctions / totalFunctions) * 100 : 0;
+
+      const branchCoverage = branchesPct / 100;
       const policy = this.tierPolicies[options.tier];
       const passed = branchCoverage >= policy.min_branch;
 
@@ -97,9 +134,9 @@ export class CawsGateChecker extends CawsBaseTool {
         details: {
           branch_coverage: branchCoverage,
           required_branch: policy.min_branch,
-          functions_coverage: totals.functions.pct / 100,
-          lines_coverage: totals.lines.pct / 100,
-          statements_coverage: totals.statements.pct / 100,
+          functions_coverage: functionsPct / 100,
+          lines_coverage: statementsPct / 100, // Using statements as lines
+          statements_coverage: statementsPct / 100,
         },
       };
     } catch (error) {

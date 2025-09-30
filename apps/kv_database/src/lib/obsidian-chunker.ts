@@ -1,12 +1,10 @@
 import {
   DocumentChunk,
   DocumentMetadata,
-  ObsidianFile,
   ObsidianDocument,
 } from "../types/index";
 import { LoggerFactory } from "./shared/logger";
 import {
-  createHash,
   extractWikilinks,
   extractObsidianTags,
   cleanMarkdown,
@@ -36,8 +34,8 @@ export class ObsidianChunker {
     const {
       maxChunkSize = 1000,
       chunkOverlap = 100,
-      preserveStructure = true,
-      includeContext = true,
+      _preserveStructure = true,
+      _includeContext = true,
       cleanContent = true,
     } = options;
 

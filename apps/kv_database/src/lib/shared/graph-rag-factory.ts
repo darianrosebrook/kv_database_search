@@ -50,8 +50,8 @@ export class GraphRagServiceFactory {
   async initializeServices(
     pool: Pool,
     embeddingService: ObsidianEmbeddingService,
-    dbConfig: DatabaseConfig,
-    embeddingConfig: EmbeddingConfig
+    _dbConfig: DatabaseConfig,
+    _embeddingConfig: EmbeddingConfig
   ): Promise<GraphRagServices> {
     try {
       this.logger.info("🚀 Initializing Graph RAG services...");

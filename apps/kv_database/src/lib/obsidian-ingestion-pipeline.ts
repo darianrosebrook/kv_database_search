@@ -1,11 +1,5 @@
 import { DocumentDatabase } from "./database";
 import { ObsidianEmbeddingService } from "./embeddings";
-import {
-  DocumentChunk,
-  DocumentMetadata,
-  ObsidianFile,
-  ObsidianDocument,
-} from "../types/index";
 import { LoggerFactory } from "./shared/logger";
 import { ObsidianChunker } from "./obsidian-chunker";
 import { ObsidianFileProcessor } from "./obsidian-file-processor";
@@ -322,7 +316,6 @@ export class ObsidianIngestionPipeline {
     includePatterns: string[],
     excludePatterns: string[]
   ): Promise<string[]> {
-    const fs = await import("fs");
     const path = await import("path");
     const { glob } = await import("glob");
 

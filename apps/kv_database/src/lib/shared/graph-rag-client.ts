@@ -5,7 +5,7 @@
  * Provides a clean interface for proxying Graph RAG requests.
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import axios, { AxiosInstance } from "axios";
 import { Logger } from "./logger.js";
 import type { GraphRagConfig } from "./config.js";
 

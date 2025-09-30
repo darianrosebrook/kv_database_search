@@ -360,7 +360,7 @@ describe("ImageClassificationProcessor", () => {
 
   describe("Performance and Error Handling", () => {
     it("should handle large images gracefully", async () => {
-      const largeImageBuffer = Buffer.alloc(50 * 1024 * 1024); // 50MB
+      const largeImageBuffer = Buffer.alloc(5 * 1024 * 1024); // Reduced from 50MB to 5MB
       const options: ImageClassificationOptions = {
         enableOCR: true,
         enableClassification: true,
@@ -374,6 +374,9 @@ describe("ImageClassificationProcessor", () => {
       // Should either succeed or fail gracefully
       expect(typeof result.success).toBe("boolean");
       expect(result.processingTime).toBeGreaterThan(0);
+
+      // Force cleanup
+      largeImageBuffer.fill(0); // Clear the buffer
     });
 
     it("should handle corrupted images", async () => {

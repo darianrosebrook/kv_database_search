@@ -188,24 +188,62 @@ export class MultiModalContentDetector {
     fileBuffer: Buffer,
     fileName: string
   ): Promise<ContentTypeResult> {
-    // 1. MIME type detection
-    const mimeType = await this.detectMimeType(fileBuffer);
+    // 1. Extension-based MIME type determination
+    const extension = path.extname(fileName).toLowerCase();
+    const extensionMimeMap: Record<string, string> = {
+      ".pdf": "application/pdf",
+      ".docx":
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ".xlsx":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ".pptx":
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".bmp": "image/bmp",
+      ".tiff": "image/tiff",
+      ".webp": "image/webp",
+      ".svg": "image/svg+xml",
+      ".mp3": "audio/mpeg",
+      ".wav": "audio/wav",
+      ".mp4": "video/mp4",
+      ".avi": "video/avi",
+      ".csv": "text/csv",
+      ".tsv": "text/tab-separated-values",
+      ".md": "text/markdown",
+      ".json": "application/json",
+      ".xml": "application/xml",
+      ".yaml": "application/yaml",
+      ".yml": "application/yaml",
+      ".rtf": "text/rtf",
+    };
 
-    // 2. Content analysis
+    // If we have a known extension, use its MIME type
+    let mimeType = extensionMimeMap[extension];
+
+    // 2. MIME type detection (signature-based fallback)
+    if (!mimeType) {
+      mimeType = await this.detectMimeType(fileBuffer);
+    }
+
+    // 3. Content analysis
     const contentAnalysis = await this.analyzeContent(fileBuffer);
 
-    // 3. Extension-based detection (as fallback)
-    const extension = path.extname(fileName).toLowerCase();
+    // 4. Extension-based detection
     const extensionBasedType = this.extensionMap.get(extension);
 
     // 4. Extension validation
     const extensionMatch = this.validateExtension(fileName, mimeType);
 
-    // 5. Final classification - prefer MIME type, fall back to extension, then content analysis
+    // 5. Final classification
     let contentType: ContentType;
-    if (this.mimeTypeMap.has(mimeType)) {
+    if (this.mimeTypeMap.has(mimeType) && mimeType !== "text/plain") {
+      // Use MIME type mapping, but allow override for plain text files
       contentType = this.mimeTypeMap.get(mimeType)!;
     } else if (extensionBasedType) {
+      // Prefer extension-based classification for plain text files
       contentType = extensionBasedType;
     } else {
       contentType = this.classifyContentType(mimeType, contentAnalysis);
@@ -255,9 +293,16 @@ export class MultiModalContentDetector {
         mimeType: "image/tiff",
       }, // TIFF (big-endian)
       {
+        signature: Buffer.from([
+          0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56,
+          0x45,
+        ]),
+        mimeType: "audio/wav",
+      }, // RIFF....WAVE (WAV)
+      {
         signature: Buffer.from([0x52, 0x49, 0x46, 0x46]),
         mimeType: "video/avi",
-      }, // RIFF (AVI)
+      }, // RIFF (AVI - fallback)
       {
         signature: Buffer.from([
           0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70,
@@ -269,6 +314,42 @@ export class MultiModalContentDetector {
         mimeType: "video/mp4",
         offset: 4,
       }, // MP4 (alternative)
+      {
+        signature: Buffer.from([0x3c, 0x73, 0x76, 0x67]),
+        mimeType: "image/svg+xml",
+      }, // <svg
+      {
+        signature: Buffer.from([0x3c, 0x3f, 0x78, 0x6d, 0x6c]),
+        mimeType: "application/xml",
+      }, // <?xml
+      {
+        signature: Buffer.from([0x49, 0x44, 0x33]),
+        mimeType: "audio/mpeg",
+      }, // ID3 (MP3)
+      {
+        signature: Buffer.from([0xff, 0xfb]),
+        mimeType: "audio/mpeg",
+      }, // MP3 frame sync
+      {
+        signature: Buffer.from([0xff, 0xf3]),
+        mimeType: "audio/mpeg",
+      }, // MP3 frame sync (alternative)
+      {
+        signature: Buffer.from([0xff, 0xf2]),
+        mimeType: "audio/mpeg",
+      }, // MP3 frame sync (alternative)
+      {
+        signature: Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+        mimeType: "application/zip",
+      }, // PK.. (ZIP)
+      {
+        signature: Buffer.from([0x7b, 0x5c, 0x72, 0x74, 0x66]),
+        mimeType: "text/rtf",
+      }, // {\rtf (RTF)
+      {
+        signature: Buffer.from([0x7b]),
+        mimeType: "application/json",
+      }, // { (JSON - fallback)
     ];
 
     for (const { signature, mimeType, offset = 0 } of signatures) {
@@ -280,7 +361,12 @@ export class MultiModalContentDetector {
       }
     }
 
-    // Fallback to extension-based detection
+    // Fallback: check if it's text content
+    if (this.detectTextContent(buffer)) {
+      return "text/plain";
+    }
+
+    // Final fallback to extension-based detection
     return "application/octet-stream";
   }
 
@@ -318,28 +404,39 @@ export class MultiModalContentDetector {
   }
 
   private detectTextContent(buffer: Buffer): boolean {
-    // Check if buffer contains mostly printable ASCII characters
-    const sampleSize = Math.min(1024, buffer.length);
-    let printableChars = 0;
-    let totalChars = 0;
+    // Check for common text file signatures and content patterns
+    if (buffer.length === 0) return true; // Empty files are considered text
 
-    for (let i = 0; i < sampleSize; i++) {
-      const byte = buffer[i];
-      totalChars++;
-
-      // Count printable ASCII characters (32-126) and common whitespace
-      if (
-        (byte >= 32 && byte <= 126) ||
-        byte === 9 ||
-        byte === 10 ||
-        byte === 13
-      ) {
-        printableChars++;
-      }
+    // Check for null bytes (binary files often have them)
+    const nullBytes = buffer.toString("binary").match(/\0/g);
+    if (nullBytes && nullBytes.length > buffer.length * 0.01) {
+      return false; // Too many null bytes indicate binary content
     }
 
-    // Consider it text if > 70% printable characters
-    return totalChars > 0 && printableChars / totalChars > 0.7;
+    // Check if buffer is valid UTF-8
+    try {
+      const text = buffer.toString("utf8");
+      // Check for high ratio of printable characters
+      const printableChars = text.match(/[\x20-\x7E\n\r\t]/g);
+      const printableRatio = printableChars
+        ? printableChars.length / text.length
+        : 0;
+
+      return printableRatio > 0.8; // 80% printable characters suggests text
+    } catch {
+      // Not valid UTF-8, try other encodings
+      try {
+        const text = buffer.toString("latin1");
+        const printableChars = text.match(/[\x20-\x7E\n\r\t]/g);
+        const printableRatio = printableChars
+          ? printableChars.length / text.length
+          : 0;
+
+        return printableRatio > 0.7; // Slightly lower threshold for latin1
+      } catch {
+        return false;
+      }
+    }
   }
 
   private detectStructuredData(buffer: Buffer): boolean {
@@ -598,18 +695,19 @@ export class UniversalMetadataExtractor {
       encoding: typeResult.features.encoding,
     };
 
+    // TODO: Implement processor registry for type-specific metadata extraction
     // Use processor registry to extract type-specific metadata
-    if (this.processorRegistry) {
-      const processorResult = await this.processorRegistry.processContent(
-        buffer,
-        typeResult.contentType,
-        { language: typeResult.features.language }
-      );
-
-      if (processorResult.success) {
-        return processorResult.metadata;
-      }
-    }
+    // if (this.processorRegistry) {
+    //   const processorResult = await this.processorRegistry.processContent(
+    //     buffer,
+    //     typeResult.contentType,
+    //     { language: typeResult.features.language }
+    //   );
+    //
+    //   if (processorResult.success) {
+    //     return processorResult.metadata;
+    //   }
+    // }
 
     // Fallback to generic processing for unsupported types
     return this.extractGenericMetadata(buffer, baseMetadata);

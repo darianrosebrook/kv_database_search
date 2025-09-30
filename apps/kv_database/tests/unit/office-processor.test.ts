@@ -28,21 +28,15 @@ vi.mock("pdf-parse", () => ({
 // Mock fs module for ESM
 vi.mock("fs", async () => {
   const actual = await vi.importActual("fs");
-  const mockReadFileSync = vi.fn();
   return {
     ...actual,
-    readFileSync: mockReadFileSync,
-    // Export the mock for testing
-    __mockReadFileSync: mockReadFileSync,
+    readFileSync: vi.fn(),
   };
 });
 
 import * as mammoth from "mammoth";
 import * as XLSX from "xlsx";
-import fs from "fs";
-
-// Access the mock function through the mocked module
-const mockReadFileSync = (fs as any).__mockReadFileSync;
+import { readFileSync } from "fs";
 
 describe("OfficeProcessor", () => {
   let processor: OfficeProcessor;
@@ -209,7 +203,7 @@ describe("OfficeProcessor", () => {
   describe("extractTextFromFile", () => {
     it("should read file and process Office document", async () => {
       // Mock fs.readFileSync
-      mockReadFileSync.mockReturnValue(Buffer.from("file content"));
+      vi.mocked(readFileSync).mockReturnValue(Buffer.from("file content"));
 
       mockMammoth.mockResolvedValue({
         value: "File content extracted",
@@ -225,7 +219,7 @@ describe("OfficeProcessor", () => {
     });
 
     it("should handle file read errors", async () => {
-      mockReadFileSync.mockImplementation(() => {
+      vi.mocked(readFileSync).mockImplementation(() => {
         throw new Error("File not found");
       });
 

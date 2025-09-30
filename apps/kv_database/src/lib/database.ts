@@ -32,9 +32,9 @@ export class DocumentDatabase {
     this.tableName = tableName;
     this.pool = new Pool({
       connectionString,
-      max: 20, // Increased for better concurrency
-      min: 5, // Keep minimum connections for faster response
-      idleTimeoutMillis: 30000,
+      max: 5, // Reduced from 20 to prevent memory issues
+      min: 1, // Reduced from 5 to minimize memory usage
+      idleTimeoutMillis: 10000, // Reduced from 30000 for faster cleanup
       connectionTimeoutMillis: 2000,
       allowExitOnIdle: true,
     });
@@ -336,22 +336,46 @@ export class TestObsidianDatabase {
   public tableName: string;
   public dimension: number;
   private isSQLite: boolean;
+  private connectionString: string;
+  private initialized: boolean = false;
 
-  constructor(connectionString: string, tableName: string = "obsidian_chunks", dimension: number = 768) {
+  constructor(
+    connectionString: string,
+    tableName: string = "obsidian_chunks",
+    dimension: number = 768
+  ) {
     this.tableName = tableName;
     this.dimension = dimension;
-    this.isSQLite = connectionString.startsWith('sqlite:');
+    this.isSQLite = connectionString.startsWith("sqlite:");
+    this.connectionString = connectionString;
+
+    // Don't initialize database in constructor - do it lazily
+    this.db = null;
+  }
+
+  private async initializeDatabase() {
+    if (this.initialized) return;
 
     if (this.isSQLite) {
       // Use in-memory database for testing (avoids native compilation issues)
-      const { InMemoryTestDatabase } = require('../../../tests/in-memory-db');
-      this.db = new InMemoryTestDatabase();
-      // No initialization needed for in-memory
+      try {
+        const { InMemoryTestDatabase } = await import(
+          "../../../../tests/in-memory-db"
+        );
+        this.db = new InMemoryTestDatabase();
+      } catch {
+        // Fallback - create a simple mock
+        this.db = {
+          initialize: async () => "sqlite::memory:",
+          close: async () => {},
+          query: async () => [],
+          execute: async () => {},
+        };
+      }
     } else {
       // Use PostgreSQL
-      const { Pool } = require('pg');
       this.db = new Pool({
-        connectionString,
+        connectionString: this.connectionString,
         max: 5,
         min: 1,
         idleTimeoutMillis: 30000,
@@ -359,11 +383,15 @@ export class TestObsidianDatabase {
         allowExitOnIdle: true,
       });
     }
+
+    this.initialized = true;
   }
 
   // No initialization needed for in-memory database
 
   async initialize(): Promise<void> {
+    await this.initializeDatabase();
+
     if (!this.isSQLite) {
       // For PostgreSQL, we would normally initialize schema here
       // For testing, we'll skip complex schema setup
@@ -371,6 +399,8 @@ export class TestObsidianDatabase {
   }
 
   async close(): Promise<void> {
+    await this.initializeDatabase();
+
     if (this.isSQLite) {
       await this.db.close();
     } else {
@@ -380,6 +410,8 @@ export class TestObsidianDatabase {
 
   // Mock methods for testing - simplified versions
   async upsertChunk(chunk: any): Promise<void> {
+    await this.initializeDatabase();
+
     if (this.isSQLite) {
       await this.db.execute(
         `INSERT OR REPLACE INTO ${this.tableName} (id, content, embedding, metadata, file_path) VALUES (?, ?, ?, ?, ?)`,
@@ -388,7 +420,7 @@ export class TestObsidianDatabase {
           chunk.content,
           chunk.embedding ? JSON.stringify(chunk.embedding) : null,
           chunk.metadata ? JSON.stringify(chunk.metadata) : null,
-          chunk.file_path
+          chunk.file_path,
         ]
       );
     } else {
@@ -396,12 +428,17 @@ export class TestObsidianDatabase {
     }
   }
 
-  async search(query: any): Promise<any[]> {
+  async search(
+    queryEmbedding: number[] | null,
+    options: any = {}
+  ): Promise<any[]> {
+    await this.initializeDatabase();
+
     if (this.isSQLite) {
-      return await this.db.query(
-        `SELECT * FROM ${this.tableName} WHERE content LIKE ? LIMIT ?`,
-        [`%${query.text || ''}%`, query.limit || 10]
-      );
+      // Simple mock search for testing - return some chunks
+      const limit = options.limit || 10;
+      const stmt = this.db.prepare(`SELECT * FROM ${this.tableName} LIMIT ?`);
+      return stmt.all(limit);
     } else {
       // Mock search results
       return [];
@@ -409,16 +446,78 @@ export class TestObsidianDatabase {
   }
 
   async getStats(): Promise<any> {
+    await this.initializeDatabase();
+
     if (this.isSQLite) {
-      const results = await this.db.query(`SELECT COUNT(*) as total_chunks FROM ${this.tableName}`);
-      return { totalChunks: results[0]?.total_chunks || 0 };
+      const stmt = this.db.prepare(
+        `SELECT COUNT(*) as total_chunks FROM ${this.tableName}`
+      );
+      const result = stmt.get();
+      return {
+        totalChunks: result.total_chunks || 0,
+        totalFiles: 0,
+        contentTypes: {},
+        averageChunkSize: 0,
+        byContentType: {},
+        byFolder: {},
+      };
     } else {
-      return { totalChunks: 0 };
+      return {
+        totalChunks: 0,
+        totalFiles: 0,
+        contentTypes: {},
+        averageChunkSize: 0,
+        byContentType: {},
+        byFolder: {},
+      };
     }
   }
 
   // Expose pool for testing
   get pool(): any {
     return this.isSQLite ? null : this.db;
+  }
+
+  // Additional methods for testing
+  async getChunkById(id: string): Promise<any> {
+    await this.initializeDatabase();
+
+    if (this.isSQLite) {
+      const stmt = this.db.prepare(
+        `SELECT * FROM ${this.tableName} WHERE id = ?`
+      );
+      return stmt.get(id);
+    } else {
+      // Mock implementation
+      return null;
+    }
+  }
+
+  async batchUpsertChunks(chunks: any[]): Promise<void> {
+    for (const chunk of chunks) {
+      await this.upsertChunk(chunk);
+    }
+  }
+
+  async getChunksByFile(filePath: string): Promise<any[]> {
+    await this.initializeDatabase();
+
+    if (this.isSQLite) {
+      const stmt = this.db.prepare(
+        `SELECT * FROM ${this.tableName} WHERE file_path = ?`
+      );
+      return stmt.all(filePath);
+    } else {
+      return [];
+    }
+  }
+
+  async deleteChunksByFile(filePath: string): Promise<void> {
+    if (this.isSQLite) {
+      const stmt = this.db.prepare(
+        `DELETE FROM ${this.tableName} WHERE file_path = ?`
+      );
+      stmt.run(filePath);
+    }
   }
 }

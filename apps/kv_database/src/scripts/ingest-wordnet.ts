@@ -322,7 +322,7 @@ class WordNetIngester {
 
       let totalRelationships = 0;
 
-      for (const { file, pos } of dataFiles) {
+      for (const { file, _pos } of dataFiles) {
         const filePath = path.join(this.tempDir, "dict", file);
         if (!fs.existsSync(filePath)) continue;
 
@@ -359,7 +359,7 @@ class WordNetIngester {
               `,
                 [sourceSynsetId, targetSynsetId, relationshipType]
               );
-            } catch (error) {
+            } catch {
               // Skip if constraint violation (duplicate relationship)
             }
           }

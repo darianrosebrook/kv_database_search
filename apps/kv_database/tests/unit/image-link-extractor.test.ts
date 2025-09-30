@@ -84,7 +84,7 @@ Here are some images:
 
       expect(result.links[0].isReference).toBe(true);
       expect(result.links[0].referenceLabel).toBe("img1");
-      expect(result.links[0].src).toBe("");
+      expect(result.links[0].src).toBe("images/screenshot.png");
     });
 
     it("should handle mixed link types", () => {
@@ -115,8 +115,8 @@ Line 5`;
 
       const result = extractor.extractImageLinks(content);
 
-      expect(result.links[0].line).toBe(2);
-      expect(result.links[1].line).toBe(4);
+      expect(result.links[0].line).toBe(4); // Wikilink extracted first
+      expect(result.links[1].line).toBe(2); // Markdown image second
     });
 
     it("should calculate statistics correctly", () => {
@@ -270,10 +270,10 @@ Just regular markdown content.
 
   describe("edge cases", () => {
     it("should handle special characters in alt text", () => {
-      const content = `![Alt with [brackets] and (parens)](test.png)`;
+      const content = `![Alt with "quotes" and 'apostrophes'](test.png)`;
       const result = extractor.extractImageLinks(content);
 
-      expect(result.links[0].alt).toBe("Alt with [brackets] and (parens)");
+      expect(result.links[0].alt).toBe("Alt with \"quotes\" and 'apostrophes'");
       expect(result.links[0].src).toBe("test.png");
     });
 

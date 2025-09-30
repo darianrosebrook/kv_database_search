@@ -12,8 +12,6 @@ import type { KnowledgeGraph } from "../lib/knowledge-graph/knowledge-graph-mana
 import type { MultiHopReasoningEngine } from "../lib/knowledge-graph/multi-hop-reasoning";
 import type { ProvenanceTracker } from "../lib/knowledge-graph/provenance-tracker";
 
-const router = express.Router();
-
 /**
  * Middleware to get services from container
  */
@@ -37,7 +35,9 @@ function getServices(container: DependencyContainer) {
 /**
  * Error handler middleware
  */
-function asyncHandler(fn: Function) {
+function asyncHandler(
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+) {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
@@ -49,7 +49,7 @@ function asyncHandler(fn: Function) {
 export function createHealthRoutes(container: DependencyContainer) {
   const healthRouter = express.Router();
 
-  healthRouter.get("/health", async (req: res, res: Response) => {
+  healthRouter.get("/health", async (req: Request, res: Response) => {
     try {
       const monitoringSystem = container.get(SERVICE_TOKENS.MONITORING_SYSTEM);
       const health = await monitoringSystem?.checkHealth();

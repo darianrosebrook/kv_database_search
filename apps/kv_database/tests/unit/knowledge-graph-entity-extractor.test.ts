@@ -10,26 +10,64 @@ import {
 import { ContentType } from "../../src/types/index.ts";
 
 // Mock the base entity extractor
-vi.mock("../../src/lib/utils.ts", () => ({
-  EntityExtractor: vi.fn().mockImplementation(() => ({
-    extractEntities: vi.fn(),
-    extractRelationships: vi.fn(),
-  })),
+const mockEntityExtractor = {
+  extractEntities: vi.fn(),
+  extractEntitiesAsync: vi.fn(),
+  extractRelationships: vi.fn(),
+  extractRelationshipsAsync: vi.fn(),
+};
+
+vi.mock("../../src/lib/entity-extractor.js", () => ({
+  EntityExtractor: vi.fn().mockImplementation(() => mockEntityExtractor),
 }));
+
+// Helper function to create mock ProcessedEntity objects
+function createMockProcessedEntity(
+  id: string,
+  text: string,
+  primaryType: string,
+  confidence: number,
+  start: number,
+  end: number
+) {
+  return {
+    id,
+    text,
+    type: { primary: primaryType },
+    subtype: primaryType,
+    confidence,
+    position: { start, end },
+    metadata: {},
+    relationships: [],
+    hierarchical: { level: 0, parent: null, children: [] },
+    context: { surroundingText: "", documentSection: "", frequency: 1 },
+    provenance: { source: "test", timestamp: new Date(), method: "mock" },
+  };
+}
 
 describe("KnowledgeGraphEntityExtractor", () => {
   let extractor: KnowledgeGraphEntityExtractor;
-  let mockBaseExtractor;
 
   beforeEach(() => {
+    // Reset mocks
+    vi.clearAllMocks();
+    mockEntityExtractor.extractEntities.mockReset();
+    mockEntityExtractor.extractEntitiesAsync.mockReset();
+    mockEntityExtractor.extractRelationships.mockReset();
+    mockEntityExtractor.extractRelationshipsAsync.mockReset();
+
+    // Set up default mock returns
+    mockEntityExtractor.extractEntitiesAsync.mockResolvedValue({
+      entities: [],
+      relationships: [],
+    });
+    mockEntityExtractor.extractRelationshipsAsync.mockResolvedValue([]);
+
     extractor = new KnowledgeGraphEntityExtractor({
       minEntityConfidence: 0.7,
       minRelationshipConfidence: 0.5,
       enableCooccurrenceAnalysis: true,
     });
-
-    // Get the mocked base extractor
-    mockBaseExtractor = extractor.baseExtractor;
   });
 
   describe("Entity Extraction", () => {
@@ -38,42 +76,44 @@ describe("KnowledgeGraphEntityExtractor", () => {
       const sampleText =
         "John Smith works at Microsoft Corporation developing artificial intelligence systems.";
       const mockEntities = [
-        {
-          text: "John Smith",
-          type: "PERSON",
-          confidence: 0.9,
-          label: "PERSON",
-          startPosition: 0,
-          endPosition: 10,
-        },
-        {
-          text: "Microsoft Corporation",
-          type: "ORG",
-          confidence: 0.85,
-          label: "ORG",
-          startPosition: 20,
-          endPosition: 40,
-        },
-        {
-          text: "artificial intelligence",
-          type: "CONCEPT",
-          confidence: 0.75,
-          label: "CONCEPT",
-          startPosition: 50,
-          endPosition: 72,
-        },
-        {
-          text: "low confidence entity",
-          type: "OTHER",
-          confidence: 0.3,
-          label: "OTHER",
-          startPosition: 80,
-          endPosition: 100,
-        },
+        createMockProcessedEntity(
+          "entity-1",
+          "John Smith",
+          "PERSON",
+          0.9,
+          0,
+          10
+        ),
+        createMockProcessedEntity(
+          "entity-2",
+          "Microsoft Corporation",
+          "ORGANIZATION",
+          0.85,
+          20,
+          40
+        ),
+        createMockProcessedEntity(
+          "entity-3",
+          "artificial intelligence",
+          "CONCEPT",
+          0.75,
+          50,
+          72
+        ),
+        createMockProcessedEntity(
+          "entity-4",
+          "low confidence entity",
+          "OTHER",
+          0.3,
+          80,
+          100
+        ),
       ];
 
-      mockBaseExtractor.extractEntities.mockReturnValue(mockEntities);
-      mockBaseExtractor.extractRelationships.mockReturnValue([]);
+      mockEntityExtractor.extractEntitiesAsync.mockResolvedValue({
+        entities: mockEntities,
+        relationships: [],
+      });
 
       const metadata = {
         contentType: ContentType.PLAIN_TEXT,
@@ -98,26 +138,28 @@ describe("KnowledgeGraphEntityExtractor", () => {
     it("should generate canonical names correctly", async () => {
       // Arrange
       const mockEntities = [
-        {
-          text: "Microsoft Corporation",
-          type: "ORG",
-          confidence: 0.9,
-          label: "ORG",
-          startPosition: 0,
-          endPosition: 20,
-        },
-        {
-          text: "AI/ML Systems",
-          type: "CONCEPT",
-          confidence: 0.8,
-          label: "CONCEPT",
-          startPosition: 25,
-          endPosition: 38,
-        },
+        createMockProcessedEntity(
+          "entity-1",
+          "Microsoft Corporation",
+          "ORGANIZATION",
+          0.9,
+          0,
+          20
+        ),
+        createMockProcessedEntity(
+          "entity-2",
+          "AI/ML Systems",
+          "CONCEPT",
+          0.8,
+          25,
+          38
+        ),
       ];
 
-      mockBaseExtractor.extractEntities.mockReturnValue(mockEntities);
-      mockBaseExtractor.extractRelationships.mockReturnValue([]);
+      mockEntityExtractor.extractEntitiesAsync.mockResolvedValue({
+        entities: mockEntities,
+        relationships: [],
+      });
 
       const metadata = {
         contentType: ContentType.PLAIN_TEXT,
@@ -144,18 +186,20 @@ describe("KnowledgeGraphEntityExtractor", () => {
       const sampleText =
         "Microsoft Corporation (MSFT) is a technology company. Microsoft is also known as MS.";
       const mockEntities = [
-        {
-          text: "Microsoft Corporation",
-          type: "ORG",
-          confidence: 0.9,
-          label: "ORG",
-          startPosition: 0,
-          endPosition: 20,
-        },
+        createMockProcessedEntity(
+          "entity-1",
+          "Microsoft Corporation",
+          "ORGANIZATION",
+          0.9,
+          0,
+          20
+        ),
       ];
 
-      mockBaseExtractor.extractEntities.mockReturnValue(mockEntities);
-      mockBaseExtractor.extractRelationships.mockReturnValue([]);
+      mockEntityExtractor.extractEntitiesAsync.mockResolvedValue({
+        entities: mockEntities,
+        relationships: [],
+      });
 
       const metadata = {
         contentType: ContentType.PLAIN_TEXT,
@@ -180,18 +224,20 @@ describe("KnowledgeGraphEntityExtractor", () => {
       const sampleText =
         "John Smith works at Microsoft. John is a software engineer.";
       const mockEntities = [
-        {
-          text: "John Smith",
-          type: "PERSON",
-          confidence: 0.9,
-          label: "PERSON",
-          startPosition: 0,
-          endPosition: 10,
-        },
+        createMockProcessedEntity(
+          "entity-1",
+          "John Smith",
+          "PERSON",
+          0.9,
+          0,
+          10
+        ),
       ];
 
-      mockBaseExtractor.extractEntities.mockReturnValue(mockEntities);
-      mockBaseExtractor.extractRelationships.mockReturnValue([]);
+      mockEntityExtractor.extractEntitiesAsync.mockResolvedValue({
+        entities: mockEntities,
+        relationships: [],
+      });
 
       const metadata = {
         contentType: ContentType.PLAIN_TEXT,
@@ -217,43 +263,51 @@ describe("KnowledgeGraphEntityExtractor", () => {
     it("should extract relationships with confidence above threshold [INV: Relationship confidence threshold]", async () => {
       // Arrange
       const mockEntities = [
-        {
-          text: "John Smith",
-          type: "PERSON",
-          confidence: 0.9,
-          label: "PERSON",
-          startPosition: 0,
-          endPosition: 10,
-        },
-        {
-          text: "Microsoft",
-          type: "ORG",
-          confidence: 0.85,
-          label: "ORG",
-          startPosition: 20,
-          endPosition: 29,
-        },
+        createMockProcessedEntity(
+          "entity-1",
+          "John Smith",
+          "PERSON",
+          0.9,
+          0,
+          10
+        ),
+        createMockProcessedEntity(
+          "entity-2",
+          "Microsoft",
+          "ORGANIZATION",
+          0.85,
+          20,
+          29
+        ),
       ];
 
       const mockRelationships = [
         {
-          source: "John Smith",
-          target: "Microsoft",
+          id: "rel-1",
+          sourceEntity: "John Smith",
+          targetEntity: "Microsoft",
           type: "WORKS_FOR",
+          strength: 0.8,
           confidence: 0.8,
           context: "John Smith works at Microsoft",
+          evidence: [],
         },
         {
-          source: "John Smith",
-          target: "Microsoft",
+          id: "rel-2",
+          sourceEntity: "John Smith",
+          targetEntity: "Microsoft",
           type: "RELATED_TO",
+          strength: 0.3,
           confidence: 0.3,
           context: "weak relationship",
+          evidence: [],
         },
       ];
 
-      mockBaseExtractor.extractEntities.mockReturnValue(mockEntities);
-      mockBaseExtractor.extractRelationships.mockReturnValue(mockRelationships);
+      mockEntityExtractor.extractEntitiesAsync.mockResolvedValue({
+        entities: mockEntities,
+        relationships: mockRelationships,
+      });
 
       const metadata = {
         contentType: ContentType.PLAIN_TEXT,
@@ -274,36 +328,38 @@ describe("KnowledgeGraphEntityExtractor", () => {
     it("should infer co-occurrence relationships when enabled", async () => {
       // Arrange
       const sampleText =
-        "John Smith and Jane Doe collaborated on the AI project. John and Jane worked together on machine learning algorithms.";
+        "John Smith and Jane Doe collaborated on the AI project. John Smith and Jane Doe worked together on machine learning algorithms. John Smith partnered with Jane Doe on the research.";
       const mockEntities = [
-        {
-          text: "John Smith",
-          type: "PERSON",
-          confidence: 0.9,
-          label: "PERSON",
-          startPosition: 0,
-          endPosition: 10,
-        },
-        {
-          text: "Jane Doe",
-          type: "PERSON",
-          confidence: 0.9,
-          label: "PERSON",
-          startPosition: 15,
-          endPosition: 23,
-        },
-        {
-          text: "AI project",
-          type: "CONCEPT",
-          confidence: 0.8,
-          label: "CONCEPT",
-          startPosition: 45,
-          endPosition: 55,
-        },
+        createMockProcessedEntity(
+          "entity-1",
+          "John Smith",
+          "PERSON",
+          0.9,
+          0,
+          10
+        ),
+        createMockProcessedEntity(
+          "entity-2",
+          "Jane Doe",
+          "PERSON",
+          0.9,
+          15,
+          23
+        ),
+        createMockProcessedEntity(
+          "entity-3",
+          "AI project",
+          "CONCEPT",
+          0.8,
+          45,
+          55
+        ),
       ];
 
-      mockBaseExtractor.extractEntities.mockReturnValue(mockEntities);
-      mockBaseExtractor.extractRelationships.mockReturnValue([]);
+      mockEntityExtractor.extractEntitiesAsync.mockResolvedValue({
+        entities: mockEntities,
+        relationships: [],
+      });
 
       const metadata = {
         contentType: ContentType.PLAIN_TEXT,
@@ -325,9 +381,9 @@ describe("KnowledgeGraphEntityExtractor", () => {
       // Should find John-Jane relationship
       const johnJaneRel = result.relationships.find(
         (r) =>
-          (r.sourceEntityId === "John Smith" &&
-            r.targetEntityId === "Jane Doe") ||
-          (r.sourceEntityId === "Jane Doe" && r.targetEntityId === "John Smith")
+          (r.sourceEntityId === "john smith" &&
+            r.targetEntityId === "jane doe") ||
+          (r.sourceEntityId === "jane doe" && r.targetEntityId === "john smith")
       );
       expect(johnJaneRel).toBeDefined();
       expect(johnJaneRel?.cooccurrenceCount).toBeGreaterThanOrEqual(2);
@@ -336,36 +392,41 @@ describe("KnowledgeGraphEntityExtractor", () => {
     it("should determine relationship directionality correctly", async () => {
       // Arrange
       const mockEntities = [
-        {
-          text: "John Smith",
-          type: "PERSON",
-          confidence: 0.9,
-          label: "PERSON",
-          startPosition: 0,
-          endPosition: 10,
-        },
-        {
-          text: "Microsoft",
-          type: "ORG",
-          confidence: 0.85,
-          label: "ORG",
-          startPosition: 20,
-          endPosition: 29,
-        },
+        createMockProcessedEntity(
+          "entity-1",
+          "John Smith",
+          "PERSON",
+          0.9,
+          0,
+          10
+        ),
+        createMockProcessedEntity(
+          "entity-2",
+          "Microsoft",
+          "ORGANIZATION",
+          0.85,
+          20,
+          29
+        ),
       ];
 
       const mockRelationships = [
         {
-          source: "John Smith",
-          target: "Microsoft",
+          id: "rel-1",
+          sourceEntity: "John Smith",
+          targetEntity: "Microsoft",
           type: "WORKS_FOR",
+          strength: 0.8,
           confidence: 0.8,
           context: "works for",
+          evidence: [],
         },
       ];
 
-      mockBaseExtractor.extractEntities.mockReturnValue(mockEntities);
-      mockBaseExtractor.extractRelationships.mockReturnValue(mockRelationships);
+      mockEntityExtractor.extractEntitiesAsync.mockResolvedValue({
+        entities: mockEntities,
+        relationships: mockRelationships,
+      });
 
       const metadata = {
         contentType: ContentType.PLAIN_TEXT,
@@ -397,42 +458,44 @@ describe("KnowledgeGraphEntityExtractor", () => {
     it("should map entity types correctly", async () => {
       // Arrange
       const mockEntities = [
-        {
-          text: "John Smith",
-          type: "PERSON",
-          confidence: 0.9,
-          label: "PERSON",
-          startPosition: 0,
-          endPosition: 10,
-        },
-        {
-          text: "Microsoft",
-          type: "ORG",
-          confidence: 0.85,
-          label: "ORG",
-          startPosition: 20,
-          endPosition: 29,
-        },
-        {
-          text: "Seattle",
-          type: "GPE",
-          confidence: 0.8,
-          label: "GPE",
-          startPosition: 30,
-          endPosition: 37,
-        },
-        {
-          text: "Unknown Entity",
-          type: "UNKNOWN",
-          confidence: 0.75,
-          label: "UNKNOWN",
-          startPosition: 40,
-          endPosition: 54,
-        },
+        createMockProcessedEntity(
+          "entity-1",
+          "John Smith",
+          "PERSON",
+          0.9,
+          0,
+          10
+        ),
+        createMockProcessedEntity(
+          "entity-2",
+          "Microsoft",
+          "ORGANIZATION",
+          0.85,
+          20,
+          29
+        ),
+        createMockProcessedEntity(
+          "entity-3",
+          "Seattle",
+          "LOCATION",
+          0.8,
+          30,
+          37
+        ),
+        createMockProcessedEntity(
+          "entity-4",
+          "Unknown Entity",
+          "OTHER",
+          0.75,
+          40,
+          54
+        ),
       ];
 
-      mockBaseExtractor.extractEntities.mockReturnValue(mockEntities);
-      mockBaseExtractor.extractRelationships.mockReturnValue([]);
+      mockEntityExtractor.extractEntitiesAsync.mockResolvedValue({
+        entities: mockEntities,
+        relationships: [],
+      });
 
       const metadata = {
         contentType: ContentType.PLAIN_TEXT,
@@ -469,46 +532,52 @@ describe("KnowledgeGraphEntityExtractor", () => {
         minRelationshipConfidence: 0.8,
       });
 
-      const mockBaseExtractor = strictExtractor.baseExtractor;
-
       const mockEntities = [
-        {
-          text: "High Confidence",
-          type: "CONCEPT",
-          confidence: 0.95,
-          label: "CONCEPT",
-          startPosition: 0,
-          endPosition: 15,
-        },
-        {
-          text: "Medium Confidence",
-          type: "CONCEPT",
-          confidence: 0.75,
-          label: "CONCEPT",
-          startPosition: 20,
-          endPosition: 37,
-        },
+        createMockProcessedEntity(
+          "entity-1",
+          "High Confidence",
+          "CONCEPT",
+          0.95,
+          0,
+          15
+        ),
+        createMockProcessedEntity(
+          "entity-2",
+          "Medium Confidence",
+          "CONCEPT",
+          0.75,
+          20,
+          37
+        ),
       ];
 
       const mockRelationships = [
         {
-          source: "High Confidence",
-          target: "Medium Confidence",
+          id: "rel-1",
+          sourceEntity: "High Confidence",
+          targetEntity: "Medium Confidence",
           type: "RELATED_TO",
+          strength: 0.85,
           confidence: 0.85,
           context: "high conf rel",
+          evidence: [],
         },
         {
-          source: "High Confidence",
-          target: "Medium Confidence",
+          id: "rel-2",
+          sourceEntity: "High Confidence",
+          targetEntity: "Medium Confidence",
           type: "SIMILAR_TO",
+          strength: 0.6,
           confidence: 0.6,
           context: "medium conf rel",
+          evidence: [],
         },
       ];
 
-      mockBaseExtractor.extractEntities.mockReturnValue(mockEntities);
-      mockBaseExtractor.extractRelationships.mockReturnValue(mockRelationships);
+      mockEntityExtractor.extractEntitiesAsync.mockResolvedValue({
+        entities: mockEntities,
+        relationships: mockRelationships,
+      });
 
       const metadata = {
         contentType: ContentType.PLAIN_TEXT,
@@ -532,8 +601,8 @@ describe("KnowledgeGraphEntityExtractor", () => {
 
     it("should handle empty text gracefully", async () => {
       // Arrange
-      mockBaseExtractor.extractEntities.mockReturnValue([]);
-      mockBaseExtractor.extractRelationships.mockReturnValue([]);
+      mockEntityExtractor.extractEntities.mockReturnValue([]);
+      mockEntityExtractor.extractRelationships.mockReturnValue([]);
 
       const metadata = {
         contentType: ContentType.PLAIN_TEXT,
@@ -555,7 +624,7 @@ describe("KnowledgeGraphEntityExtractor", () => {
   describe("Performance and Error Handling", () => {
     it("should handle extraction errors gracefully", async () => {
       // Arrange
-      mockBaseExtractor.extractEntities.mockImplementation(() => {
+      mockEntityExtractor.extractEntities.mockImplementation(() => {
         throw new Error("Extraction failed");
       });
 
@@ -579,17 +648,21 @@ describe("KnowledgeGraphEntityExtractor", () => {
     it("should complete extraction within reasonable time", async () => {
       // Arrange
       const largeText = "Large text content. ".repeat(1000);
-      const mockEntities = Array.from({ length: 50 }, (_, i) => ({
-        text: `Entity ${i}`,
-        type: "CONCEPT",
-        confidence: 0.8,
-        label: "CONCEPT",
-        startPosition: i * 20,
-        endPosition: i * 20 + 10,
-      }));
+      const mockEntities = Array.from({ length: 50 }, (_, i) =>
+        createMockProcessedEntity(
+          `entity-${i}`,
+          `Entity ${i}`,
+          "CONCEPT",
+          0.8,
+          i * 20,
+          i * 20 + 10
+        )
+      );
 
-      mockBaseExtractor.extractEntities.mockReturnValue(mockEntities);
-      mockBaseExtractor.extractRelationships.mockReturnValue([]);
+      mockEntityExtractor.extractEntitiesAsync.mockResolvedValue({
+        entities: mockEntities,
+        relationships: [],
+      });
 
       const metadata = {
         contentType: ContentType.PLAIN_TEXT,

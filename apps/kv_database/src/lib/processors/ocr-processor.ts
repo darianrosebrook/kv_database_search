@@ -322,18 +322,40 @@ export class OCRProcessor implements ContentProcessor {
    * Enhanced text cleaning for OCR results
    */
   private enhanceOCRText(text: string): string {
-    return (
-      text
-        // Fix common OCR artifacts
-        .replace(/\|/g, "I") // Fix pipe characters that should be I
-        .replace(/0/g, "O") // Fix zero characters that should be O
-        .replace(/([a-z])\s+([a-z])/g, "$1 $2") // Keep spaces between letters but normalize
-        .replace(/\s+/g, " ") // Normalize remaining whitespace
-        .replace(/\n{3,}/g, "\n\n") // Preserve paragraph breaks
-        // Clean up any remaining artifacts
-        .replace(/\0/g, "")
-        .trim()
-    );
+    let result = text
+      // Fix common OCR artifacts
+      .replace(/\|/g, "") // Remove pipe characters (OCR artifacts)
+      .replace(/\0/g, ""); // Remove null characters
+
+    // Check if this looks like OCR text with word boundaries (multiple spaces)
+    const hasWordBoundaries = / {2,}/.test(result);
+
+    if (hasWordBoundaries) {
+      // Join letters that are separated by single spaces (OCR artifact)
+      // But preserve word boundaries indicated by multiple spaces
+      result = result.replace(/\s{2,}/g, "___WORD_BOUNDARY___"); // Mark word boundaries
+
+      // Repeatedly join letters separated by single spaces
+      let previous;
+      do {
+        previous = result;
+        result = result.replace(/([a-zA-Z])\s([a-zA-Z])/g, "$1$2");
+      } while (result !== previous);
+
+      result = result.replace(/___WORD_BOUNDARY___/g, " "); // Restore word boundaries
+    }
+
+    // Fix common OCR misrecognitions
+    result = result.replace(/0/g, "O"); // Replace zeros with O (context-dependent, but simple fix)
+
+    // Normalize whitespace but preserve newlines
+    result = result
+      .replace(/ {2,}/g, " ") // Normalize multiple spaces to single space
+      .replace(/\t+/g, " ") // Convert tabs to spaces
+      .replace(/\n{3,}/g, "\n\n") // Preserve paragraph breaks (max 2 newlines)
+      .trim();
+
+    return result;
   }
 
   /**
@@ -375,15 +397,15 @@ export class OCRProcessor implements ContentProcessor {
     // Count paragraphs
     paragraphs = text
       .split(/\n\s*\n/)
-      .filter((block) => block.trim().length > 0).length;
+      .filter((block) => block.trim().replace(/\0/g, "").length > 0).length;
 
     // Detect lists (numbered or bulleted)
-    const listPattern = /^[1-9]+\.|^\*|^-|^•/m;
+    const listPattern = /^\s*[1-9]+\.|\s*\*|\s*-|\s*•/gm;
     hasLists = listPattern.test(text);
 
     // Also check for common OCR list artifacts
     if (!hasLists) {
-      const ocrListPattern = /^\d+\.|^\* |^- |^•/m;
+      const ocrListPattern = /^\s*\d+\.|\s*\* |\s*- |\s*•/gm;
       hasLists = ocrListPattern.test(text);
     }
 

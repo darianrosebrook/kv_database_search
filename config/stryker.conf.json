@@ -5,11 +5,26 @@
   "reporters": ["html", "clear-text", "progress", "json"],
   "coverageAnalysis": "off",
   "mutate": [
-    "apps/kv_database/src/lib/utils.ts",
-    "apps/kv_database/src/lib/database.ts",
-    "apps/kv_database/src/lib/embeddings.ts",
-    "apps/kv_database/src/lib/types/**/*.ts",
-    "apps/tools/**/*.ts"
+    "apps/kv_database/src/lib/**/*.ts",
+    "apps/kv_database/src/server/**/*.ts",
+    "!apps/kv_database/src/lib/**/*.test.ts",
+    "!apps/kv_database/src/lib/**/*.spec.ts",
+    "!apps/kv_database/src/**/*.d.ts",
+    "!apps/kv_database/src/lib/__tests__/**/*.ts"
+  ],
+  "ignorePatterns": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.d.ts",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/coverage/**",
+    "**/.caws/**",
+    "**/apps/rag_editor/**",
+    "**/apps/rag_web_search_tool/**",
+    "**/apps/tools/caws/**"
   ],
   "testRunnerOptions": {
     "vitest": {

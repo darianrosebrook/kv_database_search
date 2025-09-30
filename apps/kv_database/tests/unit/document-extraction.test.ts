@@ -1,28 +1,57 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { PDFProcessor } from "../../src/lib/processors/pdf-processor";
 import { OfficeProcessor } from "../../src/lib/processors/office-processor";
 import { ContentType } from "../../src/types/index";
 import * as fs from "fs";
+
+// Mock pdf-parse
+vi.mock("pdf-parse", () => ({
+  default: vi.fn(),
+}));
+
+// Mock mammoth (for DOCX processing)
+vi.mock("mammoth", () => ({
+  extractRawText: vi.fn(),
+}));
+
+// Mock XLSX (for Excel processing)
+vi.mock("xlsx", () => ({
+  read: vi.fn(),
+}));
+
+import pdfParse from "pdf-parse";
+import * as mammoth from "mammoth";
+import * as XLSX from "xlsx";
 
 describe("Enhanced Document Processors", () => {
   const pdfProcessor = new PDFProcessor();
   const officeProcessor = new OfficeProcessor();
 
   it("should enhance PDF processing with improved text extraction", async () => {
-    // Use a simple text buffer since PDF parsing is complex for unit tests
-    const testText = `
-      Enhanced PDF Processing
+    // Mock PDF parsing to return structured data
+    const mockPdfData = {
+      text: `
+        Enhanced PDF Processing
 
-      John Smith works at Apple Inc. and studies MachineLearning.
+        John Smith works at Apple Inc. and studies MachineLearning.
 
-      This document demonstrates:
-      • Person entity extraction
-      • Organization entity extraction
-      • Concept entity extraction
-      • Relationship mapping
-    `;
+        This document demonstrates:
+        • Person entity extraction
+        • Organization entity extraction
+        • Concept entity extraction
+        • Relationship mapping
+      `,
+      numpages: 1,
+      info: {
+        Title: "Test PDF",
+        Author: "Test Author",
+      },
+    };
 
-    const buffer = Buffer.from(testText);
+    vi.mocked(pdfParse).mockResolvedValue(mockPdfData);
+
+    // Use a dummy buffer since we're mocking the PDF parsing
+    const buffer = Buffer.from("dummy pdf content");
 
     // Use extractTextFromBuffer which now includes enhanced processing
     const result = await pdfProcessor.extractTextFromBuffer(buffer);
@@ -37,25 +66,31 @@ describe("Enhanced Document Processors", () => {
   });
 
   it("should enhance Office document processing with improved text extraction", async () => {
-    // Create a simple DOCX buffer for testing
-    const testDocxContent = `
-      Enhanced Office Processing
+    // Mock mammoth to return structured data
+    const mockDocxData = {
+      value: `
+        Enhanced Office Processing
 
-      John Smith works at Apple Inc. and studies MachineLearning.
+        John Smith works at Apple Inc. and studies MachineLearning.
 
-      This document demonstrates:
-      - Person entity extraction
-      - Organization entity extraction
-      - Concept entity extraction
-      - Relationship mapping
+        This document demonstrates:
+        - Person entity extraction
+        - Organization entity extraction
+        - Concept entity extraction
+        - Relationship mapping
 
-      Technical terms include:
-      • ArtificialIntelligence
-      • DeepLearning
-      • NaturalLanguageProcessing
-    `;
+        Technical terms include:
+        • ArtificialIntelligence
+        • DeepLearning
+        • NaturalLanguageProcessing
+      `,
+      messages: [],
+    };
 
-    const buffer = Buffer.from(testDocxContent);
+    vi.mocked(mammoth.extractRawText).mockResolvedValue(mockDocxData);
+
+    // Use a dummy buffer since we're mocking the Office parsing
+    const buffer = Buffer.from("dummy docx content");
 
     const result = await officeProcessor.extractTextFromBuffer(
       buffer,
@@ -88,7 +123,19 @@ describe("Enhanced Document Processors", () => {
       • List item 3
     `;
 
-    const buffer = Buffer.from(testText);
+    // Mock PDF parsing to return the test text
+    const mockPdfData = {
+      text: testText,
+      numpages: 1,
+      info: {
+        Title: "Test PDF",
+        Author: "Test Author",
+      },
+    };
+
+    vi.mocked(pdfParse).mockResolvedValue(mockPdfData);
+
+    const buffer = Buffer.from("dummy pdf content");
 
     // Test PDF processor structure analysis
     const pdfResult = await pdfProcessor.extractTextFromBuffer(buffer);
@@ -97,9 +144,17 @@ describe("Enhanced Document Processors", () => {
     expect(pdfResult.metadata.structure?.paragraphs).toBeGreaterThan(2);
     expect(pdfResult.metadata.structure?.hasLists).toBe(true);
 
+    // Mock Office processing to return the test text
+    const mockOfficeData = {
+      value: testText,
+      messages: [],
+    };
+
+    vi.mocked(mammoth.extractRawText).mockResolvedValue(mockOfficeData);
+
     // Test Office processor structure analysis
     const officeResult = await officeProcessor.extractTextFromBuffer(
-      buffer,
+      Buffer.from("dummy office content"),
       ContentType.OFFICE_DOC
     );
     expect(officeResult.metadata.structure?.headers).toContain(
@@ -113,10 +168,18 @@ describe("Enhanced Document Processors", () => {
   it("should handle document processing errors gracefully", async () => {
     const corruptedBuffer = Buffer.from("This is not a valid document");
 
+    // Mock PDF parsing to fail
+    vi.mocked(pdfParse).mockRejectedValue(new Error("Invalid PDF format"));
+
     // Test PDF processor error handling
     const pdfResult = await pdfProcessor.extractTextFromBuffer(corruptedBuffer);
     expect(pdfResult.metadata.hasText).toBe(false);
     expect(pdfResult.text).toContain("Error");
+
+    // Mock Office processing to fail
+    vi.mocked(mammoth.extractRawText).mockRejectedValue(
+      new Error("Invalid Office document")
+    );
 
     // Test Office processor error handling
     const officeResult = await officeProcessor.extractTextFromBuffer(

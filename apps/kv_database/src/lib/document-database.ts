@@ -31,9 +31,9 @@ export class DocumentDatabase {
     this.tableName = tableName;
     this.pool = new Pool({
       connectionString,
-      max: 20, // Increased for better concurrency
-      min: 5, // Keep minimum connections for faster response
-      idleTimeoutMillis: 30000,
+      max: 5, // Reduced from 20 to prevent memory issues
+      min: 1, // Reduced from 5 to minimize memory usage
+      idleTimeoutMillis: 10000, // Reduced from 30000 for faster cleanup
       connectionTimeoutMillis: 2000,
       allowExitOnIdle: true,
     });
@@ -210,11 +210,13 @@ export class DocumentDatabase {
   async updateFileProcessingStatus(
     filePath: string,
     status: ProcessingStatus["status"],
+    errorMessage?: string,
     retryCount?: number
   ): Promise<void> {
     return this.versionManager.updateFileProcessingStatus(
       filePath,
       status,
+      errorMessage,
       retryCount
     );
   }

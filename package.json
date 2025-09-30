@@ -74,6 +74,12 @@
     "gates:verify": "tsx apps/tools/caws/verify-gates.ts",
     "gates:test": "bash scripts/test-quality-gates.sh",
     "ci": "npm run quality:check && npm run gates:coverage && npm run gates:contracts",
+    "quality:precommit": "bash scripts/precommit-quality-gates.sh precommit",
+    "quality:staging": "bash scripts/precommit-quality-gates.sh staging",
+    "quality:full": "bash scripts/precommit-quality-gates.sh full",
+    "quality:ci": "bash scripts/precommit-quality-gates.sh ci",
+    "test:unit:quick": "vitest run apps/kv_database/tests/unit/utils.test.ts apps/kv_database/tests/unit/entity-extraction.test.ts --reporter=basic",
+    "prepare": "husky install || true",
     "web:dev": "cd apps/rag_web_search_tool && npm run dev",
     "web:build": "cd apps/rag_web_search_tool && npm run build",
     "web:build-safe": "cd apps/rag_web_search_tool && npm run build:safe",
@@ -86,7 +92,11 @@
     "debug:multi-modal": "tsx apps/kv_database/debug/debug-multi-modal.ts",
     "debug:image-classification": "tsx apps/kv_database/debug/demo-enhanced-image-classification.ts",
     "debug:file-types": "tsx apps/kv_database/debug/demo-file-types.ts",
-    "debug:image-processing": "tsx apps/kv_database/debug/demo-image-processing.ts"
+    "debug:image-processing": "tsx apps/kv_database/debug/demo-image-processing.ts",
+    "memory:monitor": "tsx scripts/memory-monitor.ts",
+    "memory:test": "NODE_OPTIONS='--max-old-space-size=4096' tsx scripts/memory-monitor.ts",
+    "memory:stress": "tsx scripts/memory-stress-test.ts",
+    "memory:cleanup": "tsx scripts/memory-cleanup.ts"
   },
   "dependencies": {
     "@codesandbox/sandpack-react": "^2.20.0",
@@ -157,6 +167,8 @@
     "better-sqlite3": "^12.4.1",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
     "js-yaml": "^4.1.0",
     "next": "15.5.4",
     "playwright": "^1.55.1",
@@ -173,6 +185,15 @@
     "pgvector",
     "semantic-search"
   ],
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix"
+    ],
+    "*.{ts,tsx}": [
+      "tsc --noEmit --skipLibCheck",
+      "npm run quality:precommit"
+    ]
+  },
   "author": "darianrosebrook",
   "license": "MIT"
 }

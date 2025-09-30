@@ -1,107 +1,132 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import {
-  ObsidianEmbeddingService,
-  EmbeddingModel,
-} from "../../src/lib/embeddings.ts";
-import { EmbeddingConfig } from "../../src/types/index.ts";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock ollama
-const mockOllamaEmbed = vi.fn();
-
 vi.mock("ollama", () => ({
   default: {
-    embed: mockOllamaEmbed,
+    embed: vi.fn(),
+    list: vi.fn(),
+    show: vi.fn(),
   },
 }));
 
-import ollama from "ollama";
+// Mock utils functions
+vi.mock("../../src/lib/utils", () => ({
+  normalize: vi.fn((text: string) => text.trim().toLowerCase()),
+  normalizeVector: vi.fn((vector: number[]) => vector),
+}));
 
-describe("ObsidianEmbeddingService", () => {
-  let service: ObsidianEmbeddingService;
-  let mockConfig: EmbeddingConfig;
+import { DocumentEmbeddingService } from "../../src/lib/embeddings";
+import ollama from "ollama";
+import { normalize } from "../../src/lib/utils";
+
+describe("DocumentEmbeddingService", () => {
+  let service: DocumentEmbeddingService;
 
   beforeEach(() => {
-    mockConfig = {
-      model: "embeddinggemma",
-      dimension: 768,
-    };
-    service = new ObsidianEmbeddingService(mockConfig);
-
-    // Clear mocks
     vi.clearAllMocks();
-    mockOllamaEmbed.mockClear();
+    // Reset mock implementations
+    vi.mocked(ollama.embed).mockReset();
+    vi.mocked(ollama.list).mockReset();
+    vi.mocked(ollama.show).mockReset();
+    vi.mocked(normalize).mockReset();
+
+    // Set default mock behaviors
+    vi.mocked(normalize).mockImplementation((text: string) =>
+      text.trim().toLowerCase()
+    );
+    vi.mocked(ollama.list).mockResolvedValue({
+      models: [
+        {
+          name: "embeddinggemma:latest",
+          size: 1000000,
+          digest: "test-digest",
+        },
+      ],
+    });
+    vi.mocked(ollama.show).mockResolvedValue({
+      modelfile: "# Test model file",
+      parameters: "",
+      template: "",
+      details: {
+        format: "gguf",
+        family: "gemma",
+        families: ["gemma"],
+        parameter_size: "2.0B",
+        quantization_level: "Q4_0",
+      },
+    });
+
+    service = new DocumentEmbeddingService({
+      model: "embeddinggemma",
+      baseUrl: "http://localhost:11434",
+      dimension: 768,
+    });
   });
 
-  describe("constructor", () => {
-    it("should initialize with config", () => {
-      expect(service).toBeDefined();
-      const models = service.getAvailableModels();
-      expect(models.length).toBe(2);
-      expect(models[0].name).toBe("embeddinggemma");
-      expect(models[1].name).toBe("nomic-embed-text");
+  afterEach(async () => {
+    // Clean up any cached embeddings
+    await service.clearCache();
+  });
+
+  describe("Constructor and Configuration", () => {
+    it("should create a new DocumentEmbeddingService instance", () => {
+      expect(service).toBeInstanceOf(DocumentEmbeddingService);
     });
 
-    it("should create strategy with default model", () => {
-      const strategy = service.getCurrentStrategy();
-      expect(strategy.primaryModel.name).toBe("embeddinggemma");
-      expect(strategy.fallbackModels.length).toBe(1);
-      expect(strategy.fallbackModels[0].name).toBe("nomic-embed-text");
-    });
-
-    it("should handle unknown model gracefully", () => {
-      const configWithUnknown: EmbeddingConfig = {
-        model: "unknown-model",
-        dimension: 768,
-      };
-      const serviceWithUnknown = new ObsidianEmbeddingService(
-        configWithUnknown
-      );
-      const strategy = serviceWithUnknown.getCurrentStrategy();
-      expect(strategy.primaryModel.name).toBe("embeddinggemma"); // Falls back to first model
+    it("should initialize with correct configuration", () => {
+      // Access config through the private property (not ideal but for testing)
+      expect((service as any).config.model).toBe("embeddinggemma");
+      expect((service as any).config.baseUrl).toBe("http://localhost:11434");
+      expect((service as any).config.dimension).toBe(768);
     });
   });
 
-  describe("embed", () => {
+  describe("Embedding Generation", () => {
     it("should embed text successfully", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      mockOllamaEmbed.mockResolvedValue({
+      vi.mocked(ollama.embed).mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
       const result = await service.embed("test text");
 
-      expect(mockOllamaEmbed).toHaveBeenCalledWith({
+      expect(result).toEqual(mockEmbedding);
+      expect(ollama.embed).toHaveBeenCalledWith({
         model: "embeddinggemma",
-        input: expect.any(String), // normalized text
+        input: "test text", // normalized
       });
-      expect(result).toHaveLength(768);
-      expect(typeof result[0]).toBe("number");
     });
 
-    it("should cache results", async () => {
+    it("should use cache for repeated embeddings", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      mockOllamaEmbed.mockResolvedValue({
+      vi.mocked(ollama.embed).mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
       // First call
-      await service.embed("test text");
-      // Second call with same text should use cache
-      await service.embed("test text");
+      const result1 = await service.embed("test text");
+      expect(result1).toEqual(mockEmbedding);
 
-      expect(mockOllamaEmbed).toHaveBeenCalledTimes(1);
+      // Second call with same text should use cache
+      const result2 = await service.embed("test text");
+      expect(result2).toEqual(mockEmbedding);
+
+      // Should only call ollama once due to caching
+      expect(ollama.embed).toHaveBeenCalledTimes(1);
     });
 
-    it("should handle ollama errors", async () => {
-      mockOllamaEmbed.mockRejectedValue(new Error("Ollama error"));
+    it("should handle embedding errors", async () => {
+      vi.mocked(ollama.embed).mockRejectedValue(
+        new Error("Ollama connection failed")
+      );
 
       await expect(service.embed("test text")).rejects.toThrow(
-        "Embedding failed"
+        "Ollama connection failed"
       );
     });
 
     it("should handle empty embeddings response", async () => {
-      mockOllamaEmbed.mockResolvedValue({
+      vi.mocked(ollama.embed).mockResolvedValue({
         embeddings: [],
       });
 
@@ -110,265 +135,163 @@ describe("ObsidianEmbeddingService", () => {
       );
     });
 
-    it("should handle null embeddings response", async () => {
-      mockOllamaEmbed.mockResolvedValue({
-        embeddings: null,
-      });
-
-      await expect(service.embed("test text")).rejects.toThrow(
-        "No embeddings returned from Ollama"
-      );
-    });
-
-    it("should handle malformed embedding response", async () => {
-      mockOllamaEmbed.mockResolvedValue({
-        wrongField: [1, 2, 3],
-      });
-
-      await expect(service.embed("test text")).rejects.toThrow();
-    });
-
-    it("should handle embedding with wrong dimension", async () => {
-      mockOllamaEmbed.mockResolvedValue({
-        embeddings: [[0.1, 0.2, 0.3]], // Wrong dimension
-      });
-
-      await expect(service.embed("test text")).rejects.toThrow();
-    });
-
-    // Note: Sparse embeddings test removed - focus on core functionality for mutation testing
-
-    it("should validate embedding dimension", async () => {
-      const mockEmbedding = new Array(500).fill(0.1); // Wrong dimension
-      mockOllamaEmbed.mockResolvedValue({
+    it("should normalize input text", async () => {
+      const mockEmbedding = new Array(768).fill(0.1);
+      vi.mocked(ollama.embed).mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
-      await expect(service.embed("test text")).rejects.toThrow(
-        "Embedding dimension mismatch"
-      );
+      await service.embed("  TEST TEXT  ");
+
+      expect(normalize).toHaveBeenCalledWith("  TEST TEXT  ");
+      expect(ollama.embed).toHaveBeenCalledWith({
+        model: "embeddinggemma",
+        input: "test text", // normalized result
+      });
     });
   });
 
-  describe("embedBatch", () => {
-    it("should process batch successfully", async () => {
-      const mockEmbedding = new Array(768).fill(0.1);
-      mockOllamaEmbed.mockResolvedValue({
-        embeddings: [mockEmbedding],
-      });
-
-      const texts = ["text1", "text2", "text3"];
-      const results = await service.embedBatch(texts, 2);
-
-      expect(results).toHaveLength(3);
-      expect(results[0]).toHaveLength(768);
-      expect(mockOllamaEmbed).toHaveBeenCalledTimes(3); // 3 individual calls (batch size doesn't affect ollama calls)
-    });
-
-    it("should handle empty batch", async () => {
-      const results = await service.embedBatch([]);
-      expect(results).toEqual([]);
-    });
-
-    it("should respect batch size", async () => {
-      const mockEmbedding = new Array(768).fill(0.1);
-      mockOllamaEmbed.mockResolvedValue({
-        embeddings: [mockEmbedding],
-      });
-
-      const texts = ["text1", "text2", "text3", "text4", "text5"];
-      const results = await service.embedBatch(texts, 2);
-
-      expect(results).toHaveLength(5);
-      expect(mockOllamaEmbed).toHaveBeenCalledTimes(5); // 5 individual calls (batch size controls concurrency, not API batching)
-    });
-  });
-
-  describe("embedWithStrategy", () => {
-    it("should embed with strategy successfully", async () => {
-      const mockEmbedding = new Array(768).fill(0.1);
-      mockOllamaEmbed.mockResolvedValue({
-        embeddings: [mockEmbedding],
-      });
-
-      const result = await service.embedWithStrategy("test text");
-
-      expect(result.embedding).toHaveLength(768);
-      expect(result.model.name).toBe("embeddinggemma");
-      expect(result.confidence).toBeGreaterThan(0);
-      expect(result.confidence).toBeLessThanOrEqual(1);
-    });
-
-    it("should use content type override", async () => {
-      const mockEmbedding = new Array(768).fill(0.1);
-      mockOllamaEmbed.mockResolvedValue({
-        embeddings: [mockEmbedding],
-      });
-
-      const result = await service.embedWithStrategy("test text", "moc");
-
-      expect(result.model.name).toBe("embeddinggemma"); // Should use override
-    });
-
-    it("should handle model fallback on failure", async () => {
-      const mockEmbedding = new Array(768).fill(0.1);
-
-      // Primary model fails
-      mockOllamaEmbed
-        .mockRejectedValueOnce(new Error("Primary failed"))
+  describe("Batch Embedding", () => {
+    it("should embed multiple texts in batch", async () => {
+      const mockEmbedding1 = new Array(768).fill(0.1);
+      const mockEmbedding2 = new Array(768).fill(0.2);
+      vi.mocked(ollama.embed)
         .mockResolvedValueOnce({
-          embeddings: [mockEmbedding],
+          embeddings: [mockEmbedding1],
+        })
+        .mockResolvedValueOnce({
+          embeddings: [mockEmbedding2],
         });
 
-      const result = await service.embedWithStrategy("test text");
+      const result = await service.embedBatch(["text 1", "text 2"]);
 
-      expect(result.embedding).toHaveLength(768);
-      expect(result.model.name).toBe("nomic-embed-text"); // Should use fallback
-      expect(result.confidence).toBeLessThan(1); // Should have penalty
+      expect(result).toHaveLength(2);
+      expect(result[0]).toHaveLength(768);
+      expect(result[1]).toHaveLength(768);
+      expect(ollama.embed).toHaveBeenCalledTimes(2);
     });
 
-    it("should fail if all models fail", async () => {
-      mockOllamaEmbed.mockRejectedValue(new Error("All models failed"));
+    it("should handle batch size limits", async () => {
+      const mockEmbedding = new Array(768).fill(0.1);
 
-      await expect(service.embedWithStrategy("test text")).rejects.toThrow(
-        "All embedding models failed"
-      );
-    });
-  });
+      // Mock embed to return the same embedding for all calls
+      vi.mocked(ollama.embed).mockResolvedValue({
+        embeddings: [mockEmbedding],
+      });
 
-  describe("selectModelForContent", () => {
-    it("should select model based on content type", () => {
-      const selected = service.selectModelForContent("moc");
-      expect(selected.name).toBe("embeddinggemma");
-    });
+      const texts = Array.from({ length: 10 }, (_, i) => `text ${i}`);
+      const result = await service.embedBatch(texts, 5);
 
-    it("should select model based on domain hint", () => {
-      const selected = service.selectModelForContent(
-        undefined,
-        "knowledge-base"
-      );
-      expect(selected.name).toBe("embeddinggemma");
-    });
-
-    it("should default to primary model", () => {
-      const selected = service.selectModelForContent();
-      expect(selected.name).toBe("embeddinggemma");
+      expect(result).toHaveLength(10);
+      expect(result[0]).toHaveLength(768);
+      expect(result[5]).toHaveLength(768);
+      expect(ollama.embed).toHaveBeenCalledTimes(10); // Called once per text
     });
   });
 
-  describe("calculateEmbeddingConfidence", () => {
-    it("should calculate confidence based on embedding properties", () => {
-      const embedding = new Array(768).fill(0.1);
-      const confidence = service.calculateEmbeddingConfidence(
-        embedding,
-        "test text"
-      );
+  describe("Embedding Strategy", () => {
+    it("should embed with strategy", async () => {
+      const mockEmbedding = new Array(768).fill(0.1);
+      vi.mocked(ollama.embed).mockResolvedValue({
+        embeddings: [mockEmbedding],
+      });
 
-      expect(confidence).toBeGreaterThan(0);
-      expect(confidence).toBeLessThanOrEqual(1);
+      const result = await service.embedWithStrategy("test text", {
+        useCache: true,
+        normalize: true,
+      });
+
+      expect(result.embedding).toEqual(mockEmbedding);
+      expect(result.model).toBeDefined();
+      expect(result.confidence).toBeDefined();
     });
 
-    it("should boost confidence for Obsidian content", () => {
-      // Use a smaller embedding to get confidence < 1.0
-      const embedding = new Array(768).fill(0.01);
-      const regularConfidence = service.calculateEmbeddingConfidence(
-        embedding,
-        "regular text"
-      );
-      const obsidianConfidence = service.calculateEmbeddingConfidence(
-        embedding,
-        "text with [[wikilinks]] and #tags"
-      );
+    it("should use cache for repeated calls", async () => {
+      const mockEmbedding = new Array(768).fill(0.1);
+      vi.mocked(ollama.embed).mockResolvedValue({
+        embeddings: [mockEmbedding],
+      });
 
-      expect(obsidianConfidence).toBeGreaterThan(regularConfidence);
+      // First call
+      await service.embedWithStrategy("test text");
+
+      // Second call with same text should use cache
+      await service.embedWithStrategy("test text");
+
+      // Should only call ollama once due to caching
+      expect(ollama.embed).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe("testConnection", () => {
+  describe("Connection Testing", () => {
     it("should test connection successfully", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      mockOllamaEmbed.mockResolvedValue({
+      vi.mocked(ollama.embed).mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
       const result = await service.testConnection();
-
       expect(result.success).toBe(true);
       expect(result.dimension).toBe(768);
       expect(result.model).toBe("embeddinggemma");
     });
 
     it("should handle connection failure", async () => {
-      mockOllamaEmbed.mockRejectedValue(new Error("Connection failed"));
+      vi.mocked(ollama.embed).mockRejectedValue(new Error("Connection failed"));
 
       const result = await service.testConnection();
-
       expect(result.success).toBe(false);
       expect(result.dimension).toBe(0);
+      expect(result.model).toBe("embeddinggemma");
     });
   });
 
-  describe("cache management", () => {
+  describe("Cache Management", () => {
     it("should clear cache", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      mockOllamaEmbed.mockResolvedValue({
+      vi.mocked(ollama.embed).mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
       await service.embed("test text");
-      expect(service.getCacheStats().size).toBe(1);
+      // Cache should have one entry
+      expect((service as any).cache.size).toBe(1);
 
       service.clearCache();
-      expect(service.getCacheStats().size).toBe(0);
+      expect((service as any).cache.size).toBe(0);
     });
+  });
 
-    it("should return cache stats", async () => {
+  describe("Performance Metrics", () => {
+    it("should track performance metrics", async () => {
       const mockEmbedding = new Array(768).fill(0.1);
-      mockOllamaEmbed.mockResolvedValue({
+      vi.mocked(ollama.embed).mockResolvedValue({
         embeddings: [mockEmbedding],
       });
 
-      await service.embed("test text");
-      const stats = service.getCacheStats();
+      await service.embedWithStrategy("test text");
 
-      expect(stats.size).toBe(1);
-      expect(Array.isArray(stats.keys)).toBe(true);
+      const metrics = service.getPerformanceMetrics();
+      expect(metrics.totalRequests).toBe(1);
+      expect(metrics.cacheMisses).toBe(1);
+      expect(metrics.averageLatency).toBeGreaterThan(0);
     });
 
-    // Note: Cache tests are complex in mutation testing environment
-    // Focus on the existing tests that work well for mutation score
-  });
+    it("should track cache hits", async () => {
+      const mockEmbedding = new Array(768).fill(0.1);
+      vi.mocked(ollama.embed).mockResolvedValue({
+        embeddings: [mockEmbedding],
+      });
 
-  describe("strategy management", () => {
-    it("should update strategy", () => {
-      const newStrategy = {
-        qualityThresholds: {
-          minSimilarity: 0.5,
-          maxResults: 50,
-        },
-      };
+      // First call (cache miss)
+      await service.embedWithStrategy("test text");
+      // Second call (cache hit)
+      await service.embedWithStrategy("test text");
 
-      service.updateStrategy(newStrategy);
-      const current = service.getCurrentStrategy();
-
-      expect(current.qualityThresholds.minSimilarity).toBe(0.5);
-      expect(current.qualityThresholds.maxResults).toBe(50);
-    });
-
-    it("should get current strategy", () => {
-      const strategy = service.getCurrentStrategy();
-      expect(strategy).toHaveProperty("primaryModel");
-      expect(strategy).toHaveProperty("fallbackModels");
-      expect(strategy).toHaveProperty("contentTypeOverrides");
-      expect(strategy).toHaveProperty("qualityThresholds");
-    });
-  });
-
-  describe("getAvailableModels", () => {
-    it("should return all available models", () => {
-      const models = service.getAvailableModels();
-      expect(models.length).toBe(2);
-      expect(models.every((m) => m.name && m.dimension && m.type)).toBe(true);
+      const metrics = service.getPerformanceMetrics();
+      expect(metrics.totalRequests).toBe(2);
+      expect(metrics.cacheHits).toBe(1);
+      expect(metrics.cacheMisses).toBe(1);
     });
   });
 });

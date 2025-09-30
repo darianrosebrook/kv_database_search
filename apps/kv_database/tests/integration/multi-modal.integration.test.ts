@@ -333,8 +333,8 @@ describe("MultiModalIngestionPipeline Integration", () => {
     }, 30000);
 
     it("should maintain reasonable memory usage", async () => {
-      // Create a larger file to test memory handling
-      const largeContent = "Large content block. ".repeat(5000);
+      // Create a smaller file to test memory handling (reduced from 5000 to 1000)
+      const largeContent = "Large content block. ".repeat(1000);
       const largeFile = path.join(testDir, "memory-test.txt");
       fs.writeFileSync(largeFile, largeContent);
 
@@ -344,8 +344,18 @@ describe("MultiModalIngestionPipeline Integration", () => {
 
       // Memory usage should not increase dramatically
       const memoryIncrease = finalMemory - initialMemory;
-      expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024); // Less than 50MB increase
-    }, 30000);
+      expect(memoryIncrease).toBeLessThan(20 * 1024 * 1024); // Reduced from 50MB to 20MB
+
+      // Force cleanup
+      if (fs.existsSync(largeFile)) {
+        fs.unlinkSync(largeFile);
+      }
+
+      // Force garbage collection if available
+      if (global.gc) {
+        global.gc();
+      }
+    }, 15000); // Reduced timeout from 30s to 15s
   });
 
   describe("Content type specific behavior", () => {

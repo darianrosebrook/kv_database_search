@@ -24,7 +24,7 @@ const mockEmbeddingService = {
 
 // Mock pool and client
 const mockClient = {
-  query: vi.fn(),
+  query: vi.fn().mockResolvedValue({ rows: [] }),
   release: vi.fn(),
 };
 
@@ -37,6 +37,9 @@ describe("KnowledgeGraph", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock to default empty responses
+    mockClient.query.mockResolvedValue({ rows: [] });
+
     manager = new KnowledgeGraph(mockPool, mockEmbeddingService, {
       similarityThreshold: 0.8,
       enableAutoMerge: false,
@@ -177,41 +180,123 @@ describe("KnowledgeGraph", () => {
         metadata: {},
       };
 
-      // Mock duplicate found
-      mockClient.query
-        .mockResolvedValueOnce({ command: "BEGIN" })
-        .mockResolvedValueOnce({
-          // findExactNameMatches
-          rows: [
-            {
-              id: "entity-123",
-              name: "John Smith",
-              canonical_name: "john smith",
-              type: "PERSON",
-              aliases: ["J. Smith"],
-              confidence: 0.9,
-              extraction_confidence: 0.9,
-              validation_status: "unvalidated",
-              occurrence_count: 3,
-              document_frequency: 1,
-              source_files: ["test1.txt"],
-              extraction_methods: ["text_extraction"],
-              first_seen: new Date(),
-              last_updated: new Date(),
-              last_occurrence: new Date(),
-              metadata: {},
-            },
-          ],
-        })
-        .mockResolvedValueOnce({
-          // updateExistingEntity
-          rows: [existingEntity],
-        })
-        .mockResolvedValueOnce({ command: "INSERT" }) // createEntityChunkMappings
-        .mockResolvedValueOnce({ command: "COMMIT" });
+      // Mock duplicate found - set up all database queries that will be called
+      mockClient.query.mockImplementation((sql: string) => {
+        console.log("Mock called with SQL:", sql.trim().substring(0, 120));
+        if (sql.includes("BEGIN")) {
+          return Promise.resolve({ command: "BEGIN" });
+        }
+        if (sql.includes("WHERE name ILIKE $1 OR $1 = ANY(aliases)")) {
+          // findExactNameMatches - return empty for this test (to test canonical matching)
+          return Promise.resolve({ rows: [] });
+        }
+        if (
+          sql.trim().startsWith("SELECT * FROM knowledge_graph_entities") &&
+          sql.includes("canonical_name")
+        ) {
+          // findCanonicalNameMatches
+          console.log("Returning canonical match for:", sql.trim());
+          return Promise.resolve({
+            rows: [
+              {
+                id: "entity-123",
+                name: "John Smith",
+                canonical_name: "john smith",
+                type: "PERSON",
+                aliases: ["J. Smith"],
+                confidence: 0.9,
+                extraction_confidence: 0.9,
+                validation_status: "unvalidated",
+                occurrence_count: 3,
+                document_frequency: 1,
+                source_files: ["test1.txt"],
+                extraction_methods: ["text_extraction"],
+                first_seen: new Date(),
+                last_updated: new Date(),
+                last_occurrence: new Date(),
+                metadata: {},
+              },
+            ],
+          });
+        }
+        if (sql.includes("WHERE $1 = ANY(aliases)")) {
+          // findAliasMatches - return empty for this test
+          return Promise.resolve({ rows: [] });
+        }
+        if (sql.trim().startsWith("UPDATE knowledge_graph_entities")) {
+          // updateExistingEntity - return the updated row
+          return Promise.resolve({
+            rows: [
+              {
+                id: existingEntity.id,
+                name: existingEntity.name,
+                canonical_name: existingEntity.canonicalName,
+                type: existingEntity.type,
+                aliases: existingEntity.aliases,
+                confidence: existingEntity.confidence,
+                extraction_confidence: existingEntity.extractionConfidence,
+                validation_status: existingEntity.validationStatus,
+                occurrence_count: existingEntity.occurrenceCount,
+                document_frequency: existingEntity.documentFrequency,
+                source_files: existingEntity.sourceFiles,
+                extraction_methods: existingEntity.extractionMethods,
+                first_seen: existingEntity.firstSeen,
+                last_updated: existingEntity.lastUpdated,
+                last_occurrence: existingEntity.lastOccurrence,
+                metadata: existingEntity.metadata,
+              },
+            ],
+          });
+        }
+        if (sql.includes("INSERT INTO knowledge_graph_entities")) {
+          console.log("INSERT INTO knowledge_graph_entities called");
+          // createEntity - return the created entity
+          return Promise.resolve({
+            rows: [
+              {
+                id: "new-entity-" + Math.random().toString(36).substr(2, 9),
+                canonical_name: "test",
+                first_seen: new Date(),
+                last_updated: new Date(),
+                last_occurrence: new Date(),
+              },
+            ],
+          });
+        }
+        if (sql.includes("INSERT INTO entity_chunk_mappings")) {
+          return Promise.resolve({ command: "INSERT" });
+        }
+        if (sql.includes("COMMIT")) {
+          return Promise.resolve({ command: "COMMIT" });
+        }
+        // Default empty response
+        return Promise.resolve({ rows: [] });
+      });
 
       // Act
       const result = await manager.processExtractionResult(extractionResult);
+
+      // Debug logging
+      console.log("Test result:", {
+        entitiesCreated: result.entitiesCreated,
+        entitiesUpdated: result.entitiesUpdated,
+        duplicatesFound: result.duplicatesFound,
+      });
+
+      // Check what duplicates were found
+      const testEntity = extractionResult.entities[0];
+      const duplicates = await manager.findDuplicateEntities(
+        testEntity,
+        mockClient
+      );
+      console.log(
+        "Duplicates found:",
+        duplicates.length,
+        duplicates.map((d) => ({
+          name: d.entity.name,
+          similarity: d.similarity,
+        }))
+      );
 
       // Assert
       expect(result.entitiesCreated).toBe(0);
@@ -334,8 +419,8 @@ describe("KnowledgeGraph", () => {
         ],
         relationships: [
           {
-            sourceEntityId: "entity-1",
-            targetEntityId: "entity-2",
+            sourceEntityId: "John Smith",
+            targetEntityId: "Microsoft",
             type: RelationshipType.WORKS_FOR,
             isDirectional: true,
             confidence: 0.8,
@@ -361,59 +446,46 @@ describe("KnowledgeGraph", () => {
       };
 
       // Mock entity processing and relationship creation
-      mockClient.query
-        .mockResolvedValueOnce({ command: "BEGIN" })
-        // Entity 1 - no duplicates
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              id: "entity-1",
-              canonical_name: "john smith",
-              first_seen: new Date(),
-              last_updated: new Date(),
-              last_occurrence: new Date(),
-            },
-          ],
-        })
-        // Entity 2 - no duplicates
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              id: "entity-2",
-              canonical_name: "microsoft",
-              first_seen: new Date(),
-              last_updated: new Date(),
-              last_occurrence: new Date(),
-            },
-          ],
-        })
-        // Relationship - no existing relationship
-        .mockResolvedValueOnce({ rows: [] })
-        // Create relationship
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              id: "rel-123",
-              created_at: new Date(),
-              updated_at: new Date(),
-              last_observed: new Date(),
-            },
-          ],
-        })
-        // Entity chunk mappings
-        .mockResolvedValueOnce({ command: "INSERT" })
-        .mockResolvedValueOnce({ command: "INSERT" })
-        .mockResolvedValueOnce({ command: "COMMIT" });
+      mockClient.query.mockReset();
+      mockClient.query.mockImplementation((sql: string) => {
+        if (sql.includes("BEGIN")) {
+          return Promise.resolve({ command: "BEGIN" });
+        }
+        if (sql.includes("COMMIT")) {
+          return Promise.resolve({ command: "COMMIT" });
+        }
+        if (sql.includes("INSERT INTO knowledge_graph_entities")) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "entity-" + Math.random().toString(36).substr(2, 9),
+                canonical_name: "test",
+                first_seen: new Date(),
+                last_updated: new Date(),
+                last_occurrence: new Date(),
+              },
+            ],
+          });
+        }
+        if (sql.includes("INSERT INTO knowledge_graph_relationships")) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "rel-123",
+                created_at: new Date(),
+                updated_at: new Date(),
+                last_observed: new Date(),
+              },
+            ],
+          });
+        }
+        if (sql.includes("INSERT INTO entity_chunk_mappings")) {
+          return Promise.resolve({ command: "INSERT" });
+        }
+
+        // Default: return empty rows for SELECT queries
+        return Promise.resolve({ rows: [] });
+      });
 
       // Act
       const result = await manager.processExtractionResult(extractionResult);
@@ -468,8 +540,8 @@ describe("KnowledgeGraph", () => {
         ],
         relationships: [
           {
-            sourceEntityId: "entity-1",
-            targetEntityId: "entity-2",
+            sourceEntityId: "John Smith",
+            targetEntityId: "Microsoft",
             type: RelationshipType.WORKS_FOR,
             isDirectional: true,
             confidence: 0.85,
@@ -495,83 +567,109 @@ describe("KnowledgeGraph", () => {
       };
 
       // Mock existing entities and existing relationship
-      mockClient.query
-        .mockResolvedValueOnce({ command: "BEGIN" })
-        // Entities already exist (mock as duplicates found and updated)
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              id: "entity-1",
-              name: "John Smith",
-              canonical_name: "john smith",
-              type: "PERSON",
-              aliases: [],
-              confidence: 0.9,
-              extraction_confidence: 0.9,
-              validation_status: "unvalidated",
-              occurrence_count: 1,
-              document_frequency: 1,
-              source_files: ["test.txt"],
-              extraction_methods: ["text_extraction"],
-              first_seen: new Date(),
-              last_updated: new Date(),
-              last_occurrence: new Date(),
-              metadata: {},
-            },
-          ],
-        })
-        .mockResolvedValueOnce({ rows: [{ id: "entity-1" }] })
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              id: "entity-2",
-              name: "Microsoft",
-              canonical_name: "microsoft",
-              type: "ORGANIZATION",
-              aliases: [],
-              confidence: 0.85,
-              extraction_confidence: 0.85,
-              validation_status: "unvalidated",
-              occurrence_count: 1,
-              document_frequency: 1,
-              source_files: ["test.txt"],
-              extraction_methods: ["text_extraction"],
-              first_seen: new Date(),
-              last_updated: new Date(),
-              last_occurrence: new Date(),
-              metadata: {},
-            },
-          ],
-        })
-        .mockResolvedValueOnce({ rows: [{ id: "entity-2" }] })
-        // Existing relationship found
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              id: "rel-123",
-              source_entity_id: "entity-1",
-              target_entity_id: "entity-2",
-              type: "WORKS_FOR",
-              is_directional: true,
-              confidence: 0.8,
-              strength: 0.9,
-              cooccurrence_count: 1,
-              source_chunk_ids: ["chunk-123"],
-              extraction_context: "previous context",
-              supporting_text: ["previous text"],
-              created_at: new Date(),
-              updated_at: new Date(),
-              last_observed: new Date(),
-              metadata: {},
-            },
-          ],
-        })
-        // Update relationship
-        .mockResolvedValueOnce({ command: "UPDATE" })
-        // Entity chunk mappings
-        .mockResolvedValueOnce({ command: "INSERT" })
-        .mockResolvedValueOnce({ command: "INSERT" })
-        .mockResolvedValueOnce({ command: "COMMIT" });
+      mockClient.query.mockReset();
+      let entityQueryCount = 0;
+      mockClient.query.mockImplementation((sql: string) => {
+        if (sql.includes("BEGIN")) {
+          return Promise.resolve({ command: "BEGIN" });
+        }
+        if (sql.includes("COMMIT")) {
+          return Promise.resolve({ command: "COMMIT" });
+        }
+        // Return existing entities for duplicate detection
+        if (
+          sql.includes("knowledge_graph_entities") &&
+          (sql.includes("WHERE") || sql.includes("canonical_name"))
+        ) {
+          entityQueryCount++;
+          if (entityQueryCount % 2 === 1) {
+            // First entity
+            return Promise.resolve({
+              rows: [
+                {
+                  id: "entity-1",
+                  name: "John Smith",
+                  canonical_name: "john smith",
+                  type: "PERSON",
+                  aliases: [],
+                  confidence: 0.9,
+                  extraction_confidence: 0.9,
+                  validation_status: "unvalidated",
+                  occurrence_count: 1,
+                  document_frequency: 1,
+                  source_files: ["test.txt"],
+                  extraction_methods: ["text_extraction"],
+                  first_seen: new Date(),
+                  last_updated: new Date(),
+                  last_occurrence: new Date(),
+                  metadata: {},
+                },
+              ],
+            });
+          } else {
+            // Second entity
+            return Promise.resolve({
+              rows: [
+                {
+                  id: "entity-2",
+                  name: "Microsoft",
+                  canonical_name: "microsoft",
+                  type: "ORGANIZATION",
+                  aliases: [],
+                  confidence: 0.85,
+                  extraction_confidence: 0.85,
+                  validation_status: "unvalidated",
+                  occurrence_count: 1,
+                  document_frequency: 1,
+                  source_files: ["test.txt"],
+                  extraction_methods: ["text_extraction"],
+                  first_seen: new Date(),
+                  last_updated: new Date(),
+                  last_occurrence: new Date(),
+                  metadata: {},
+                },
+              ],
+            });
+          }
+        }
+        // Return existing relationship
+        if (sql.includes("knowledge_graph_relationships")) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "rel-123",
+                source_entity_id: "entity-1",
+                target_entity_id: "entity-2",
+                type: "WORKS_FOR",
+                is_directional: true,
+                confidence: 0.8,
+                strength: 0.9,
+                cooccurrence_count: 1,
+                source_chunk_ids: ["chunk-123"],
+                extraction_context: "previous context",
+                supporting_text: ["previous text"],
+                created_at: new Date(),
+                updated_at: new Date(),
+                last_observed: new Date(),
+                metadata: {},
+              },
+            ],
+          });
+        }
+        // Handle updates
+        if (sql.includes("UPDATE knowledge_graph_entities")) {
+          return Promise.resolve({ rows: [{ id: "entity-updated" }] });
+        }
+        if (sql.includes("UPDATE knowledge_graph_relationships")) {
+          return Promise.resolve({ rows: [{ id: "rel-updated" }] });
+        }
+        if (sql.includes("INSERT INTO entity_chunk_mappings")) {
+          return Promise.resolve({ command: "INSERT" });
+        }
+
+        // Default: return empty rows
+        return Promise.resolve({ rows: [] });
+      });
 
       // Act
       const result = await manager.processExtractionResult(extractionResult);
@@ -667,35 +765,38 @@ describe("KnowledgeGraph", () => {
         mentionContexts: [],
       };
 
-      mockClient.query
-        .mockResolvedValueOnce({ rows: [] }) // findExactNameMatches
-        .mockResolvedValueOnce({ rows: [] }) // findCanonicalNameMatches
-        .mockResolvedValueOnce({ rows: [] }) // findAliasMatches
-        .mockResolvedValueOnce({
-          // findFuzzyMatches
-          rows: [
-            {
-              id: "similar-entity",
-              name: "Microsoft Corporation",
-              canonical_name: "microsoft corporation",
-              type: "ORGANIZATION",
-              sim_score: 0.85,
-              aliases: [],
-              confidence: 0.9,
-              extraction_confidence: 0.9,
-              validation_status: "validated",
-              occurrence_count: 3,
-              document_frequency: 2,
-              source_files: ["doc1.txt"],
-              extraction_methods: ["text_extraction"],
-              first_seen: new Date(),
-              last_updated: new Date(),
-              last_occurrence: new Date(),
-              metadata: {},
-            },
-          ],
-        })
-        .mockResolvedValueOnce({ rows: [] }); // findVectorSimilarMatches
+      mockClient.query.mockReset();
+      mockClient.query.mockImplementation((sql: string) => {
+        // findFuzzyMatches - return fuzzy match
+        if (sql.includes("similarity(name")) {
+          return Promise.resolve({
+            rows: [
+              {
+                id: "similar-entity",
+                name: "Microsoft Corporation",
+                canonical_name: "microsoft corporation",
+                type: "ORGANIZATION",
+                sim_score: 0.85,
+                aliases: [],
+                confidence: 0.9,
+                extraction_confidence: 0.9,
+                validation_status: "validated",
+                occurrence_count: 3,
+                document_frequency: 2,
+                source_files: ["doc1.txt"],
+                extraction_methods: ["text_extraction"],
+                first_seen: new Date(),
+                last_updated: new Date(),
+                last_occurrence: new Date(),
+                metadata: {},
+              },
+            ],
+          });
+        }
+
+        // Default: return empty rows for other queries
+        return Promise.resolve({ rows: [] });
+      });
 
       // Act
       const duplicates = await manager.findDuplicateEntities(
@@ -778,6 +879,7 @@ describe("KnowledgeGraph", () => {
   describe("Graph Statistics", () => {
     it("should calculate comprehensive graph statistics", async () => {
       // Arrange
+      mockClient.query.mockReset();
       mockClient.query
         .mockResolvedValueOnce({
           // Entity statistics
@@ -859,6 +961,7 @@ describe("KnowledgeGraph", () => {
       };
 
       // Mock transaction failure
+      mockClient.query.mockReset();
       mockClient.query
         .mockResolvedValueOnce({ command: "BEGIN" })
         .mockResolvedValueOnce({ rows: [] }) // No duplicates

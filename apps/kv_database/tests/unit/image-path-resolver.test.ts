@@ -1,26 +1,23 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+
+// Hoist the mock functions so they're available during module initialization
+const { mockStatSync, mockExistsSync } = vi.hoisted(() => ({
+  mockStatSync: vi.fn(),
+  mockExistsSync: vi.fn(),
+}));
+
+// Mock fs before importing the module that uses it
+vi.mock("fs", () => ({
+  statSync: mockStatSync,
+  existsSync: mockExistsSync,
+}));
+
 import {
   ImagePathResolver,
   ResolvedImagePath,
   PathResolutionResult,
 } from "../../src/lib/image-path-resolver";
-import fs from "fs";
 import path from "path";
-
-// Mock fs module for ESM
-const mockStatSync = vi.fn();
-const mockExistsSync = vi.fn();
-
-vi.mock("fs", () => ({
-  default: {
-    statSync: mockStatSync,
-    existsSync: mockExistsSync,
-  },
-  statSync: mockStatSync,
-  existsSync: mockExistsSync,
-}));
-
-import fs from "fs";
 
 describe("ImagePathResolver", () => {
   let resolver: ImagePathResolver;
@@ -36,9 +33,8 @@ describe("ImagePathResolver", () => {
       const imagePaths = ["/test/vault/images/test.png"];
       const sourceFilePath = "/test/vault/notes/document.md";
 
-      // Mock file exists
-      fs.statSync.mockReturnValue({ size: 1024 });
-      fs.existsSync.mockReturnValue(true);
+      // Mock file exists - statSync should return valid stat
+      mockStatSync.mockReturnValue({ size: 1024 } as any);
 
       const result = resolver.resolvePaths(imagePaths, sourceFilePath);
 
@@ -59,8 +55,7 @@ describe("ImagePathResolver", () => {
       const sourceFilePath = "/test/vault/notes/document.md";
 
       // Mock file doesn't exist in any location
-      fs.existsSync.mockReturnValue(false);
-      fs.statSync.mockImplementation(() => {
+      mockStatSync.mockImplementation(() => {
         throw new Error("File not found");
       });
 
@@ -75,10 +70,12 @@ describe("ImagePathResolver", () => {
       const imagePaths = ["images/screenshot.png"];
       const sourceFilePath = "/test/vault/notes/document.md";
 
-      // Mock file exists at resolved location
-      fs.statSync.mockReturnValue({ size: 2048 });
-      fs.existsSync.mockImplementation((path: string) => {
-        return path === "/test/vault/notes/images/screenshot.png";
+      // Mock file exists at resolved location - only succeed for the correct path
+      mockStatSync.mockImplementation((path: string) => {
+        if (path === "/test/vault/notes/images/screenshot.png") {
+          return { size: 2048 } as any;
+        }
+        throw new Error("File not found");
       });
 
       const result = resolver.resolvePaths(imagePaths, sourceFilePath);
@@ -265,11 +262,18 @@ describe("ImagePathResolver", () => {
       const sourceFilePath = "/test/vault/notes/document.md";
       const imagePaths = ["screenshot.png"];
 
-      // Mock that direct path doesn't exist, but attachments path does
-      fs.existsSync.mockImplementation((path: string) => {
+      // Mock existsSync to return true for the attachments path
+      mockExistsSync.mockImplementation((path: string) => {
         return path === "/test/vault/attachments/screenshot.png";
       });
-      fs.statSync.mockReturnValue({ size: 1024 });
+
+      // Mock statSync to only succeed for the attachments path
+      mockStatSync.mockImplementation((path: string) => {
+        if (path === "/test/vault/attachments/screenshot.png") {
+          return { size: 1024 } as any;
+        }
+        throw new Error("File not found");
+      });
 
       const result = resolver.resolvePaths(imagePaths, sourceFilePath);
 
@@ -283,11 +287,18 @@ describe("ImagePathResolver", () => {
       const sourceFilePath = "/test/vault/notes/document.md";
       const imagePaths = ["screenshot.png"];
 
-      // Mock that direct path doesn't exist, but assets path does
-      fs.existsSync.mockImplementation((path: string) => {
+      // Mock existsSync to return true only for the assets prefix path
+      mockExistsSync.mockImplementation((path: string) => {
         return path === "/test/vault/notes/assets/screenshot.png";
       });
-      fs.statSync.mockReturnValue({ size: 1024 });
+
+      // Mock statSync to only succeed for the assets path
+      mockStatSync.mockImplementation((path: string) => {
+        if (path === "/test/vault/notes/assets/screenshot.png") {
+          return { size: 1024 } as any;
+        }
+        throw new Error("File not found");
+      });
 
       const result = resolver.resolvePaths(imagePaths, sourceFilePath);
 

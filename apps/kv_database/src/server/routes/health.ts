@@ -101,8 +101,7 @@ export function registerHealthRoutes(server: FastifyInstance): void {
    * Statistics endpoint
    */
   server.get("/stats", async (request, reply): Promise<StatsResponse> => {
-    const { database, searchService, ingestionPipeline } =
-      request.server.services;
+    const { database, searchService } = request.server.services;
 
     try {
       const stats: StatsResponse = {

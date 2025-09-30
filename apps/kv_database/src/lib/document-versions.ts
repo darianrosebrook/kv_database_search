@@ -79,25 +79,28 @@ export class DocumentVersionManager {
         [filePath]
       );
 
-      return result.rows.map((row) => ({
-        versionId: row.id,
-        contentHash: this.generateContentHash(row.content),
-        embeddingHash: this.generateEmbeddingHash(row.content),
-        createdAt: row.createdAt,
-        parentVersion: undefined, // TODO: Implement parent version tracking
-        changeSummary: `Version ${row.versionNumber}`,
-        changeType: "modified",
-        metadata: row.metadata || {},
-        processingMetadata: {
-          processedAt: row.createdAt,
-          processor: "obsidian-processor",
-          version: "1.0.0",
-          parameters: {},
-          processingTime: 0,
-          success: true,
-        },
-        chunks: 1, // TODO: Calculate actual chunk count
-      } as DocumentVersion));
+      return result.rows.map(
+        (row) =>
+          ({
+            versionId: row.id,
+            contentHash: this.generateContentHash(row.content),
+            embeddingHash: this.generateEmbeddingHash(row.content),
+            createdAt: row.createdAt,
+            parentVersion: undefined, // TODO: Implement parent version tracking
+            changeSummary: `Version ${row.versionNumber}`,
+            changeType: "modified",
+            metadata: row.metadata || {},
+            processingMetadata: {
+              processedAt: row.createdAt,
+              processor: "obsidian-processor",
+              version: "1.0.0",
+              parameters: {},
+              processingTime: 0,
+              success: true,
+            },
+            chunks: 1, // TODO: Calculate actual chunk count
+          } as DocumentVersion)
+      );
     } finally {
       client.release();
     }
@@ -236,6 +239,7 @@ export class DocumentVersionManager {
   async updateFileProcessingStatus(
     filePath: string,
     status: ProcessingStatus["status"],
+    errorMessage?: string,
     retryCount?: number
   ): Promise<void> {
     const client = await this.pool.connect();

@@ -51,7 +51,7 @@ export interface ImageLinkExtractionResult {
  */
 export class ImageLinkExtractor {
   private readonly wikilinkRegex = /!\[\[([^\]]+)\]\]/g;
-  private readonly markdownImageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  private readonly markdownImageRegex = /!\[([^\]]*)\]\(([^)]*)\)/g;
   private readonly referenceImageRegex = /!\[([^\]]*)\]\[([^\]]+)\]/g;
 
   /**
@@ -61,17 +61,38 @@ export class ImageLinkExtractor {
     const links: ImageLink[] = [];
     const linesWithImages = new Set<number>();
 
+    // Remove code blocks from content for extraction
+    const contentWithoutCodeBlocks = this.removeCodeBlocks(content);
+
     // Track positions for accurate line/column reporting
     const lines = content.split("\n");
 
     // Extract wikilinks (Obsidian-style)
-    this.extractWikilinks(content, lines, links, linesWithImages);
+    this.extractWikilinks(
+      contentWithoutCodeBlocks,
+      lines,
+      links,
+      linesWithImages
+    );
 
     // Extract markdown-style image links
-    this.extractMarkdownImages(content, lines, links, linesWithImages);
+    this.extractMarkdownImages(
+      contentWithoutCodeBlocks,
+      lines,
+      links,
+      linesWithImages
+    );
 
     // Extract reference-style image links
-    this.extractReferenceImages(content, lines, links, linesWithImages);
+    this.extractReferenceImages(
+      contentWithoutCodeBlocks,
+      lines,
+      links,
+      linesWithImages
+    );
+
+    // Resolve reference definitions (use original content for this)
+    this.resolveReferenceDefinitions(content, links);
 
     // Calculate statistics
     const stats = this.calculateStats(links);
@@ -218,6 +239,48 @@ export class ImageLinkExtractor {
       referenceLinks: links.filter((link) => link.isReference).length,
       uniquePaths,
     };
+  }
+
+  private removeCodeBlocks(content: string): string {
+    // Remove fenced code blocks (```)
+    const fencedCodeBlockRegex = /```[\s\S]*?```/g;
+    content = content.replace(fencedCodeBlockRegex, "");
+
+    // Remove indented code blocks (4+ spaces)
+    const lines = content.split("\n");
+    const filteredLines = lines.filter(
+      (line) => !line.startsWith("    ") && !line.startsWith("\t")
+    );
+    content = filteredLines.join("\n");
+
+    return content;
+  }
+
+  private resolveReferenceDefinitions(
+    content: string,
+    links: ImageLink[]
+  ): void {
+    // Extract reference definitions: [label]: url
+    const referenceRegex = /^\[([^\]]+)\]:\s*([^\s]+)/gm;
+    const references = new Map<string, string>();
+
+    let match;
+    while ((match = referenceRegex.exec(content)) !== null) {
+      const label = match[1];
+      const url = match[2];
+      references.set(label, url);
+    }
+
+    // Resolve reference links
+    for (const link of links) {
+      if (
+        link.isReference &&
+        link.referenceLabel &&
+        references.has(link.referenceLabel)
+      ) {
+        link.src = references.get(link.referenceLabel)!;
+      }
+    }
   }
 
   /**
