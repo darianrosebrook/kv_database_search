@@ -22,6 +22,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { fetchVaultFiles, type VaultFilesResponse } from "@/lib/api";
 import { useChatState } from "@/hooks/use-chat-state";
+import styles from "./sidebar.module.scss";
 
 interface SidebarProps {
   className?: string;
@@ -73,40 +74,34 @@ function FileTreeNode({
       : FileText;
 
   return (
-    <div>
+    <div className={styles.fileTreeNode}>
       <div
-        className={cn(
-          "flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer",
-          "hover:bg-accent/50 transition-colors group",
-          "text-sm"
-        )}
+        className={styles.nodeContent}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
         onClick={handleToggle}
       >
         {item.type === "folder" && (
-          <button className="p-0.5 hover:bg-accent rounded">
+          <button className={styles.toggleButton}>
             {item.isLoading ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className={cn(styles.toggleIcon, styles.loading)} />
             ) : isOpen ? (
-              <ChevronDown className="h-3 w-3" />
+              <ChevronDown className={styles.toggleIcon} />
             ) : (
-              <ChevronRight className="h-3 w-3" />
+              <ChevronRight className={styles.toggleIcon} />
             )}
           </button>
         )}
         <Icon
-          className={cn(
-            "h-4 w-4 flex-shrink-0",
-            item.type === "folder" ? "text-blue-500" : "text-muted-foreground",
-            item.isLoading && "animate-pulse"
-          )}
+          className={cn(styles.nodeIcon, {
+            [styles.folder]: item.type === "folder",
+            [styles.file]: item.type === "file",
+            [styles.loading]: item.isLoading,
+          })}
         />
-        <span className="truncate text-foreground group-hover:text-foreground">
-          {item.name}
-        </span>
+        <span className={styles.nodeName}>{item.name}</span>
       </div>
       {item.type === "folder" && isOpen && item.children && (
-        <div className="animate-in">
+        <div className={styles.nodeChildren}>
           {item.children.map((child) => (
             <FileTreeNode
               key={child.id}
@@ -256,52 +251,45 @@ export function Sidebar({ className }: SidebarProps) {
   };
 
   return (
-    <div
-      className={cn(
-        "w-64 h-full bg-card border-r border-border flex flex-col",
-        className
-      )}
-    >
+    <div className={cn(styles.sidebar, className)}>
       {/* Header */}
-      <div className="p-4 border-b border-border top-0 sticky">
-        <div className="flex items-center justify-between mb-4">
+      <div className={styles.sidebarHeader}>
+        <div className={styles.headerContent}>
           <Title className="text-lg">
             <a href="/workspace">Workspace</a>
           </Title>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className={styles.settingsButton}>
             <Settings className="h-4 w-4" />
           </Button>
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className={styles.searchContainer}>
+          <Search className={styles.searchIcon} />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleSearch}
             placeholder="Search files..."
-            className="w-full pl-10 pr-3 py-2 bg-input border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className={styles.searchInput}
           />
         </div>
       </div>
 
       {/* File Tree, grows to fill the space */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-2">
-          <div className="flex items-center justify-between px-2 py-2">
+      <div className={styles.sidebarContent}>
+        <div className={cn(styles.section, styles.filesSection)}>
+          <div className={styles.sectionHeader}>
             <Micro className="text-muted-foreground">Files</Micro>
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
               <Plus className="h-3 w-3" />
             </Button>
           </div>
-          <div className="space-y-0.5">
+          <div className={styles.sectionItems}>
             {isLoadingFiles ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <div className={styles.loadingState}>
+                <Loader2 className={styles.loadingIcon} />
               </div>
             ) : fileTreeError ? (
-              <div className="text-center py-4 text-destructive text-sm">
-                {fileTreeError}
-              </div>
+              <div className={styles.errorState}>{fileTreeError}</div>
             ) : fileTreeData.length > 0 ? (
               fileTreeData.map((item) => (
                 <FileTreeNode
@@ -312,16 +300,14 @@ export function Sidebar({ className }: SidebarProps) {
                 />
               ))
             ) : (
-              <div className="text-center py-4 text-muted-foreground text-sm">
-                No files found
-              </div>
+              <div className={styles.emptyState}>No files found</div>
             )}
           </div>
         </div>
 
         {/* Recent Chats */}
-        <div className="flex-1 p-2 border-t border-border bottom-0">
-          <div className="flex items-center justify-between px-2 py-2">
+        <div className={cn(styles.section, styles.chatsSection)}>
+          <div className={styles.sectionHeader}>
             <Micro className="text-muted-foreground">Recent Chats</Micro>
             <Button
               variant="ghost"
@@ -332,16 +318,16 @@ export function Sidebar({ className }: SidebarProps) {
               <Plus className="h-3 w-3" />
             </Button>
           </div>
-          <div className="space-y-0.5">
+          <div className={styles.sectionItems}>
             {isLoadingChats ? (
-              <div className="px-2 py-1 text-xs text-muted-foreground">
+              <div className={cn(styles.chatItem, styles.loading)}>
                 Loading chats...
               </div>
             ) : getRecentChats(5).length > 0 ? (
               getRecentChats(5).map((chat) => (
                 <div
                   key={chat.id}
-                  className="px-2 py-1.5 text-xs hover:bg-accent rounded cursor-pointer truncate"
+                  className={styles.chatItem}
                   onClick={() => router.push(`/chat/${chat.id}`)}
                   title={chat.title}
                 >
@@ -349,7 +335,7 @@ export function Sidebar({ className }: SidebarProps) {
                 </div>
               ))
             ) : (
-              <div className="px-2 py-1 text-xs text-muted-foreground">
+              <div className={cn(styles.chatItem, styles.loading)}>
                 No recent chats
               </div>
             )}
@@ -358,14 +344,14 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       {/* User Menu */}
-      <div className="p-4 border-t border-border bottom-0">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-accent/50 cursor-pointer transition-colors">
-          <div className="w-8 h-8 bg-workspace-accent rounded-full flex items-center justify-center">
-            <User className="h-4 w-4 text-workspace-accent-foreground" />
+      <div className={styles.sidebarFooter}>
+        <div className={styles.userMenu}>
+          <div className={styles.userAvatar}>
+            <User className={styles.userIcon} />
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium truncate">User</div>
-            <Caption className="truncate">Not signed in</Caption>
+          <div className={styles.userInfo}>
+            <div className={styles.userName}>User</div>
+            <Caption className={styles.userStatus}>Not signed in</Caption>
           </div>
         </div>
       </div>
