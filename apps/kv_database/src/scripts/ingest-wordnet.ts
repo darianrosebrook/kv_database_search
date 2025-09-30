@@ -223,6 +223,17 @@ class WordNetIngester {
         const synsetData = this.parseSynsetLine(line);
         if (!synsetData || synsetData.partOfSpeech !== pos) continue;
 
+        // Check if synset already exists (globally unique synset_id)
+        const existingSynset = await client.query(
+          `SELECT id FROM synsets WHERE synset_id = $1`,
+          [synsetData.synsetId]
+        );
+
+        if (existingSynset.rows.length > 0) {
+          // Synset already exists, skip this one
+          continue;
+        }
+
         // Insert synset
         const synsetResult = await client.query(
           `

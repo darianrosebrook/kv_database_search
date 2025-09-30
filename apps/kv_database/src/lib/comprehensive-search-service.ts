@@ -13,6 +13,7 @@ import { SemanticSearchEngine, SearchQuery } from "./semantic-search";
 import { SearchResult } from "../types/index";
 import { ObsidianDatabase } from "./database";
 import { ObsidianEmbeddingService } from "./embeddings";
+import { DictionaryService } from "./dictionary-service";
 import {
   ObsidianSearchOptions,
   ObsidianSearchResponse,
@@ -154,18 +155,25 @@ export class ComprehensiveSearchService {
   private advancedSearch: SemanticSearchEngine;
   private db: ObsidianDatabase;
   private embeddings: ObsidianEmbeddingService;
+  private dictionaryService?: DictionaryService;
 
   // Cache for repeated queries
   private queryCache = new Map<string, ComprehensiveSearchResponse>();
 
   constructor(
     database: ObsidianDatabase,
-    embeddingService: ObsidianEmbeddingService
+    embeddingService: ObsidianEmbeddingService,
+    dictionaryService?: DictionaryService
   ) {
     this.db = database;
     this.embeddings = embeddingService;
+    this.dictionaryService = dictionaryService;
     this.obsidianSearch = new ObsidianSearchService(database, embeddingService);
-    this.advancedSearch = new SemanticSearchEngine(database, embeddingService);
+    this.advancedSearch = new SemanticSearchEngine(
+      database,
+      embeddingService,
+      dictionaryService
+    );
   }
 
   /**
@@ -277,13 +285,13 @@ export class ComprehensiveSearchService {
       reranking: 0,
     };
 
-    // Build advanced query
+    // Build advanced query with dictionary integration enabled by default
     const advancedQuery: SearchQuery = {
       text: query.text,
       strategy: "hybrid",
       expansion: {
-        semantic: query.options?.experimental?.queryExpansion || false,
-        entity: query.options?.experimental?.entityLinking || false,
+        semantic: query.options?.experimental?.queryExpansion !== false, // Enable by default
+        entity: query.options?.experimental?.entityLinking !== false, // Enable by default
         graph: false,
       },
       options: query.options,

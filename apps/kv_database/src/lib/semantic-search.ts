@@ -25,6 +25,7 @@ import {
   // ObsidianSearchResponse, // Not used
   ContentType,
 } from "../types/index";
+import { DictionaryService } from "./dictionary-service";
 
 // Search interfaces
 export interface SearchQuery {
@@ -161,14 +162,17 @@ export class SemanticSearchEngine {
   private db: ObsidianDatabase;
   private embeddings: ObsidianEmbeddingService;
   private entityExtractor: EntityExtractor;
+  private dictionaryService?: DictionaryService;
 
   constructor(
     database: ObsidianDatabase,
-    embeddingService: ObsidianEmbeddingService
+    embeddingService: ObsidianEmbeddingService,
+    dictionaryService?: DictionaryService
   ) {
     this.db = database;
     this.embeddings = embeddingService;
     this.entityExtractor = new EntityExtractor();
+    this.dictionaryService = dictionaryService;
   }
 
   /**
@@ -428,7 +432,10 @@ export class SemanticSearchEngine {
     results: SemanticSearchResult[],
     analyzedQuery
   ): Promise<SemanticSearchResult[]> {
-    return results.map((result) => {
+    // Process results sequentially to handle async entity extraction
+    const augmentedResults: SemanticSearchResult[] = [];
+
+    for (const result of results) {
       // Extract entities from result content
       const resultExtraction = await this.entityExtractor.extractEntities(
         result.text
@@ -446,12 +453,16 @@ export class SemanticSearchEngine {
         analyzedQuery.entities
       );
 
-      return {
+      const scoring = await this.calculateScoring(result, analyzedQuery);
+
+      augmentedResults.push({
         ...result,
-        scoring: this.calculateScoring(result, analyzedQuery),
+        scoring,
         graphContext,
-      } as SemanticSearchResult;
-    });
+      } as SemanticSearchResult);
+    }
+
+    return augmentedResults;
   }
 
   /**
@@ -545,11 +556,34 @@ export class SemanticSearchEngine {
     text: string,
     entities: ExtractedEntity[]
   ): Promise<string[]> {
-    // Simplified semantic expansion
-    // In production, this would use a thesaurus, word embeddings, or language models
     const expanded = [text];
 
-    // Add entity texts as expansion terms
+    try {
+      // Use dictionary service for semantic expansion
+      const dictionaryService = this.getDictionaryService();
+      if (dictionaryService) {
+        // Expand the main query text
+        const expansionResults = await dictionaryService.expandSearchTerms({
+          queryTerms: [text],
+          expansionTypes: ["synonyms", "hypernyms", "hyponyms"],
+          maxExpansionsPerTerm: 3,
+        });
+
+        // Add expanded terms
+        expansionResults.forEach((result) => {
+          result.expandedTerms.forEach((term) => {
+            if (!expanded.includes(term.term) && term.relevanceScore > 0.5) {
+              expanded.push(term.term);
+            }
+          });
+        });
+      }
+    } catch (error) {
+      console.warn("⚠️ Dictionary expansion failed:", error);
+      // Fall back to simple entity-based expansion
+    }
+
+    // Add entity texts as expansion terms (fallback)
     entities.forEach((entity) => {
       if (!expanded.includes(entity.text)) {
         expanded.push(entity.text);
@@ -557,6 +591,10 @@ export class SemanticSearchEngine {
     });
 
     return expanded;
+  }
+
+  private getDictionaryService(): DictionaryService | null {
+    return this.dictionaryService || null;
   }
 
   private findRelatedTerms(
@@ -650,7 +688,7 @@ export class SemanticSearchEngine {
     );
   }
 
-  private calculateScoring(result: SemanticSearchResult, analyzedQuery) {
+  private async calculateScoring(result: SemanticSearchResult, analyzedQuery) {
     const vectorScore = result.cosineSimilarity || 0;
 
     // Entity overlap score
@@ -670,7 +708,7 @@ export class SemanticSearchEngine {
     const qualityScore = this.calculateQualityScore(result);
 
     // Graph centrality (simplified)
-    const graphScore = this.calculateGraphScore(result);
+    const graphScore = await this.calculateGraphScore(result);
 
     // Combined score using weighted average
     const combined =
@@ -735,7 +773,9 @@ export class SemanticSearchEngine {
     return (lengthScore + densityScore) / 2;
   }
 
-  private calculateGraphScore(result: SemanticSearchResult): number {
+  private async calculateGraphScore(
+    result: SemanticSearchResult
+  ): Promise<number> {
     // Simplified graph scoring based on entity count and relationships
     const extraction = await this.entityExtractor.extractEntities(result.text);
     const entities = extraction.entities;
@@ -824,7 +864,7 @@ export class SemanticSearchEngine {
     return multiModalMeta.quality?.overallScore || 0.5;
   }
 
-  private findInterResultConnection(
+  private async findInterResultConnection(
     result1: SemanticSearchResult,
     result2: SemanticSearchResult
   ): { type: string; strength: number } | null {

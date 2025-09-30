@@ -23,6 +23,7 @@ import { FederatedSearchAPI } from "../lib/federated-search-api";
 import { WorkspaceAPI } from "../lib/workspace-api";
 import { GraphQueryAPI } from "../lib/graph-query-api";
 import { GraphRagClient } from "../lib/shared/graph-rag-client";
+import { ComprehensiveSearchService } from "../lib/comprehensive-search-service";
 
 // Load environment variables
 dotenvConfig();
@@ -38,11 +39,17 @@ const {
   DEFAULT_PORT = 3001,
 } = process.env;
 
+// Use PORT environment variable if provided, otherwise use DEFAULT_PORT
+const TARGET_PORT = process.env.PORT
+  ? parseInt(process.env.PORT)
+  : DEFAULT_PORT;
+
 // Service container interface
 interface AppServices {
   database: ObsidianDatabase;
   embeddingService: ObsidianEmbeddingService;
   searchService: ObsidianSearchService;
+  comprehensiveSearchService?: ComprehensiveSearchService;
   // ingestionPipeline: ObsidianIngestionPipeline;
   webSearchService?: WebSearchService;
   contextManager?: ContextManager;
@@ -145,6 +152,24 @@ async function buildServices(): Promise<AppServices> {
     const error = asError(e);
     console.error("❌ Search service initialization failed:", error.message);
     throw error;
+  }
+
+  // Initialize comprehensive search service
+  let comprehensiveSearchService: ComprehensiveSearchService | undefined;
+  try {
+    comprehensiveSearchService = new ComprehensiveSearchService(
+      database,
+      embeddingService,
+      dictionaryAPI
+    );
+    console.log("✅ Comprehensive search service initialized");
+  } catch (e) {
+    const error = asError(e);
+    console.error(
+      "❌ Comprehensive search service initialization failed:",
+      error.message
+    );
+    console.error("💡 Dictionary-enhanced search features will be limited");
   }
 
   // Initialize ingestion pipeline
@@ -328,6 +353,7 @@ async function buildServices(): Promise<AppServices> {
     database,
     embeddingService,
     searchService,
+    comprehensiveSearchService,
     ingestionPipeline,
     webSearchService,
     contextManager,
@@ -381,8 +407,8 @@ export async function startServer(server: FastifyInstance): Promise<void> {
     console.log(`🧠 LLM: ${LLM_MODEL}`);
     console.log(`📁 Obsidian Vault: ${OBSIDIAN_VAULT_PATH}`);
 
-    // Find an available port dynamically
-    const PORT = await findAvailablePort(DEFAULT_PORT);
+    // Use the target port (from PORT env var or default)
+    const PORT = TARGET_PORT;
     console.log(`📡 Starting on port: ${PORT}`);
 
     await server.listen({ port: PORT, host: HOST });

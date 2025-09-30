@@ -807,15 +807,34 @@ export class DictionaryService {
     try {
       const client = await this.db.pool.connect();
       try {
+        // First check if the term exists in any synset
+        const termCheck = await client.query(
+          `
+          SELECT s.id, s.lemma, s.synset_id, le.word_form
+          FROM synsets s
+          JOIN lexical_entries le ON s.id = le.synset_id
+          WHERE le.word_form ILIKE $1
+          LIMIT 5
+        `,
+          [term]
+        );
+
+        console.log(
+          `Found ${termCheck.rows.length} synsets for term "${term}":`,
+          termCheck.rows
+        );
+
         const result = await client.query(
           `
           SELECT DISTINCT
-            le.word_form as synonym,
+            le2.word_form as synonym,
             s.confidence
           FROM lexical_entries le
           JOIN synsets s ON le.synset_id = s.id
-          WHERE le.word_form != $1
-          AND s.source_id IN (SELECT id FROM dictionary_sources WHERE name IN ('wordnet', 'openthesaurus') AND status = 'available')
+          JOIN lexical_entries le2 ON s.id = le2.synset_id
+          WHERE le.word_form ILIKE $1
+          AND le2.word_form != le.word_form
+          AND s.source_id = (SELECT id FROM dictionary_sources WHERE name = 'wordnet' AND status = 'available' LIMIT 1)
           ORDER BY s.confidence DESC
           LIMIT $2
         `,
