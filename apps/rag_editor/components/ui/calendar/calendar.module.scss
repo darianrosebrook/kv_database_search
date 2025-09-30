@@ -1,6 +1,7 @@
 .calendar {
   background-color: var(--background);
   padding: 0.75rem;
+  width: fit-content;
 
   &[data-slot="card-content"] {
     background-color: transparent;
@@ -326,4 +327,14 @@
 /* Hidden days */
 .calendarDay[data-hidden="true"] {
   visibility: hidden;
+}
+
+/* Week number cell styling */
+.calendarWeekNumberCell {
+  display: flex;
+  width: var(--cell-size, 2rem);
+  height: var(--cell-size, 2rem);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }

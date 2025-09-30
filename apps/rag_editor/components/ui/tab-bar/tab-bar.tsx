@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "../button";
+import styles from "./tab-bar.module.scss";
 import {
   X,
   Plus,
@@ -114,62 +115,42 @@ export function TabBar({ className }: TabBarProps) {
   const getTabIcon = (type: AppTab["type"]) => {
     switch (type) {
       case "search":
-        return (
-          <Search className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-        );
+        return <Search className={styles.tabIcon} />;
       case "chat":
-        return (
-          <MessageSquare className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-        );
+        return <MessageSquare className={styles.tabIcon} />;
       case "document":
-        return (
-          <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-        );
+        return <FileText className={styles.tabIcon} />;
       case "workspace":
-        return (
-          <FolderOpen className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-        );
+        return <FolderOpen className={styles.tabIcon} />;
       default:
-        return (
-          <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-        );
+        return <FileText className={styles.tabIcon} />;
     }
   };
 
   return (
     <>
-      <div
-        className={cn(
-          "flex items-center bg-card border-b border-border relative",
-          className
-        )}
-      >
+      <div className={cn(styles.tabBar, className)}>
         {/* Scroll Left Button */}
         {showScrollLeft && (
           <Button
             variant="ghost"
             size="sm"
-            className="h-full px-2 border-r border-border rounded-none"
+            className={styles.scrollButton}
             onClick={scrollLeft}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className={styles.iconMd} />
           </Button>
         )}
 
         {/* Tabs Container */}
-        <div
-          ref={scrollContainerRef}
-          className="flex items-center overflow-x-auto scrollbar-none flex-1"
-        >
+        <div ref={scrollContainerRef} className={styles.tabsContainer}>
           {tabs.length > 0 ? (
             tabs.map((tab, index) => (
               <div
                 key={tab.id}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-3 border-r border-border cursor-pointer",
-                  "hover:bg-accent/50 transition-colors group min-w-0 relative",
-                  activeTabId === tab.id &&
-                    "bg-background border-b-2 border-b-workspace-accent"
+                  styles.tab,
+                  activeTabId === tab.id && styles.active
                 )}
                 onClick={() => switchToTab(tab.id)}
                 onContextMenu={(e) => handleContextMenu(e, tab.id)}
@@ -191,29 +172,27 @@ export function TabBar({ className }: TabBarProps) {
                 }}
               >
                 {getTabIcon(tab.type)}
-                <span className="text-sm truncate max-w-32">
+                <span className={styles.tabContent}>
                   {tab.title}
                   {tab.isDirty && (
-                    <span className="text-workspace-accent ml-1">•</span>
+                    <span className={styles.tabDirtyIndicator}>•</span>
                   )}
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className={styles.tabCloseButton}
                   onClick={(e) => {
                     e.stopPropagation();
                     closeTab(tab.id);
                   }}
                 >
-                  <X className="h-3 w-3" />
+                  <X className={styles.iconSm} />
                 </Button>
               </div>
             ))
           ) : (
-            <div className="px-4 py-3 text-sm text-muted-foreground">
-              No tabs open
-            </div>
+            <div className={styles.emptyState}>No tabs open</div>
           )}
         </div>
 
@@ -222,10 +201,10 @@ export function TabBar({ className }: TabBarProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-full px-2 border-l border-border rounded-none"
+            className={styles.scrollButton}
             onClick={scrollRight}
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className={styles.iconMd} />
           </Button>
         )}
 
@@ -233,10 +212,10 @@ export function TabBar({ className }: TabBarProps) {
         <Button
           variant="ghost"
           size="sm"
-          className="ml-2 mr-4"
+          className={styles.addButton}
           onClick={addNewTab}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className={styles.iconMd} />
         </Button>
       </div>
 
@@ -244,26 +223,29 @@ export function TabBar({ className }: TabBarProps) {
       {contextMenu && (
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 z-50" onClick={closeContextMenu} />
+          <div
+            className={styles.contextMenuBackdrop}
+            onClick={closeContextMenu}
+          />
           {/* Menu */}
           <div
-            className="fixed z-50 bg-popover border border-border rounded-md shadow-md p-1 min-w-[160px]"
+            className={styles.contextMenu}
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
             <button
-              className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-sm"
+              className={styles.contextMenuItem}
               onClick={() => handleContextMenuAction("close")}
             >
               Close Tab
             </button>
             <button
-              className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-sm"
+              className={styles.contextMenuItem}
               onClick={() => handleContextMenuAction("closeOthers")}
             >
               Close Other Tabs
             </button>
             <button
-              className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-sm"
+              className={styles.contextMenuItem}
               onClick={() => handleContextMenuAction("closeToRight")}
             >
               Close Tabs to the Right

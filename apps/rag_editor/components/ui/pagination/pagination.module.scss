@@ -46,3 +46,15 @@
     height: 1rem;
   }
 }
+
+.paginationButton {
+  display: flex;
+  gap: 0.25rem;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+
+  @media (min-width: 640px) {
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+  }
+}

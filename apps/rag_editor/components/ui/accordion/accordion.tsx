@@ -32,14 +32,14 @@ function AccordionTrigger({
   ...props
 }: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
   return (
-    <AccordionPrimitive.Header className="flex">
+    <AccordionPrimitive.Header className={styles.accordionHeader}>
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(styles.accordionTrigger, className)}
         {...props}
       >
         {children}
-        <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
+        <ChevronDownIcon />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   );
@@ -56,7 +56,7 @@ function AccordionContent({
       className={styles.accordionContent}
       {...props}
     >
-      <div className={cn("pt-0 pb-4", className)}>{children}</div>
+      <div className={className}>{children}</div>
     </AccordionPrimitive.Content>
   );
 }

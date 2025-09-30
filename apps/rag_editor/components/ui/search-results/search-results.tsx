@@ -35,11 +35,15 @@ export function SearchResults({
   const getIcon = (sourceType: SearchResult["source"]["type"]) => {
     switch (sourceType) {
       case "documentation":
-        return <FileText className={cn(styles.resultIcon, styles.documentation)} />;
+        return (
+          <FileText className={cn(styles.resultIcon, styles.documentation)} />
+        );
       case "component":
         return <FileText className={cn(styles.resultIcon, styles.component)} />;
       case "guideline":
-        return <Lightbulb className={cn(styles.resultIcon, styles.guideline)} />;
+        return (
+          <Lightbulb className={cn(styles.resultIcon, styles.guideline)} />
+        );
       case "note":
         return <MessageSquare className={cn(styles.resultIcon, styles.note)} />;
       case "article":
@@ -47,7 +51,11 @@ export function SearchResults({
       case "book":
         return <FileText className={cn(styles.resultIcon, styles.book)} />;
       case "conversation":
-        return <MessageSquare className={cn(styles.resultIcon, styles.conversation)} />;
+        return (
+          <MessageSquare
+            className={cn(styles.resultIcon, styles.conversation)}
+          />
+        );
       case "moc":
         return <Lightbulb className={cn(styles.resultIcon, styles.moc)} />;
       default:
@@ -86,9 +94,9 @@ export function SearchResults({
         <div className={styles.loadingState}>
           {[...Array(3)].map((_, i) => (
             <div key={i} className={styles.loadingItem}>
-              <div className={cn(styles.loadingLine, "h-4 w-3/4 mb-2")} />
-              <div className={cn(styles.loadingLine, "h-3 w-full mb-1")} />
-              <div className={cn(styles.loadingLine, "h-3 w-2/3")} />
+              <div className={cn(styles.loadingLine, styles.size4x3quarter)} />
+              <div className={cn(styles.loadingLine, styles.size3xFull)} />
+              <div className={cn(styles.loadingLine, styles.size3x2quarter)} />
             </div>
           ))}
         </div>
@@ -100,9 +108,7 @@ export function SearchResults({
     return (
       <div className={cn(styles.searchResults, className)}>
         <div className={styles.emptyState}>
-          <div className={styles.emptyText}>
-            No results found for "{query}"
-          </div>
+          <div className={styles.emptyText}>No results found for "{query}"</div>
         </div>
       </div>
     );
@@ -138,16 +144,19 @@ export function SearchResults({
               <div className={styles.resultInfo}>
                 {getIcon(result.source.type)}
                 <div className={styles.resultDetails}>
-                  <Title className={styles.resultTitle}>
-                    {result.title}
-                  </Title>
-                  <Caption className={styles.resultPath}>{result.source.path}</Caption>
+                  <Title className={styles.resultTitle}>{result.title}</Title>
+                  <Caption className={styles.resultPath}>
+                    {result.source.path}
+                  </Caption>
                 </div>
               </div>
               <div className={styles.resultActions}>
                 <Badge
                   variant="secondary"
-                  className={cn(styles.confidenceBadge, getConfidenceColor(result.confidenceScore))}
+                  className={cn(
+                    styles.confidenceBadge,
+                    getConfidenceColor(result.confidenceScore)
+                  )}
                 >
                   {Math.round(result.confidenceScore * 100)}%
                 </Badge>
@@ -160,7 +169,7 @@ export function SearchResults({
                     onViewDocument?.(result);
                   }}
                 >
-                  <FileText className="h-3 w-3" />
+                  <FileText className={styles.size3x3} />
                 </Button>
               </div>
             </div>
@@ -182,7 +191,7 @@ export function SearchResults({
                         <Badge
                           key={index}
                           variant="outline"
-                          className="text-xs"
+                          className={styles.textXs}
                         >
                           {highlight}
                         </Badge>
@@ -198,7 +207,7 @@ export function SearchResults({
                         <Badge
                           key={index}
                           variant="outline"
-                          className="text-xs"
+                          className={styles.textXs}
                         >
                           {tag}
                         </Badge>
@@ -209,7 +218,7 @@ export function SearchResults({
               </div>
               {result.lastUpdated && (
                 <div className={styles.resultDate}>
-                  <Clock className="h-3 w-3" />
+                  <Clock className={styles.size3x3} />
                   <Caption>
                     {new Date(result.lastUpdated).toLocaleDateString()}
                   </Caption>

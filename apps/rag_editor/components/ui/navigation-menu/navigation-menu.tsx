@@ -1,10 +1,10 @@
-import * as React from 'react'
-import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu'
-import { cva } from 'class-variance-authority'
-import { ChevronDownIcon } from 'lucide-react'
+import * as React from "react";
+import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
+import { cva } from "class-variance-authority";
+import { ChevronDownIcon } from "lucide-react";
 
-import { cn } from '@/lib/utils'
-import styles from './navigation-menu.module.scss'
+import { cn } from "@/lib/utils";
+import styles from "./navigation-menu.module.scss";
 
 function NavigationMenu({
   className,
@@ -12,7 +12,7 @@ function NavigationMenu({
   viewport = true,
   ...props
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Root> & {
-  viewport?: boolean
+  viewport?: boolean;
 }) {
   return (
     <NavigationMenuPrimitive.Root
@@ -24,7 +24,7 @@ function NavigationMenu({
       {children}
       {viewport && <NavigationMenuViewport />}
     </NavigationMenuPrimitive.Root>
-  )
+  );
 }
 
 function NavigationMenuList({
@@ -37,7 +37,7 @@ function NavigationMenuList({
       className={cn(styles.navigationMenuList, className)}
       {...props}
     />
-  )
+  );
 }
 
 function NavigationMenuItem({
@@ -50,10 +50,10 @@ function NavigationMenuItem({
       className={cn(styles.navigationMenuItem, className)}
       {...props}
     />
-  )
+  );
 }
 
-const navigationMenuTriggerStyle = cva(styles.navigationMenuTrigger)
+const navigationMenuTriggerStyle = cva(styles.navigationMenuTrigger);
 
 function NavigationMenuTrigger({
   className,
@@ -63,16 +63,12 @@ function NavigationMenuTrigger({
   return (
     <NavigationMenuPrimitive.Trigger
       data-slot="navigation-menu-trigger"
-      className={cn(navigationMenuTriggerStyle(), 'group', className)}
+      className={cn(navigationMenuTriggerStyle(), className)}
       {...props}
     >
-      {children}{' '}
-      <ChevronDownIcon
-        className="relative top-[1px] ml-1 size-3 transition duration-300 group-data-[state=open]:rotate-180"
-        aria-hidden="true"
-      />
+      {children} <ChevronDownIcon aria-hidden="true" />
     </NavigationMenuPrimitive.Trigger>
-  )
+  );
 }
 
 function NavigationMenuContent({
@@ -85,7 +81,7 @@ function NavigationMenuContent({
       className={cn(styles.navigationMenuContent, className)}
       {...props}
     />
-  )
+  );
 }
 
 function NavigationMenuViewport({
@@ -93,16 +89,14 @@ function NavigationMenuViewport({
   ...props
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Viewport>) {
   return (
-    <div
-      className={'absolute top-full left-0 isolate z-50 flex justify-center'}
-    >
+    <div className={styles.navigationMenuViewportWrapper}>
       <NavigationMenuPrimitive.Viewport
         data-slot="navigation-menu-viewport"
         className={cn(styles.navigationMenuViewport, className)}
         {...props}
       />
     </div>
-  )
+  );
 }
 
 function NavigationMenuLink({
@@ -115,7 +109,7 @@ function NavigationMenuLink({
       className={cn(styles.navigationMenuLink, className)}
       {...props}
     />
-  )
+  );
 }
 
 function NavigationMenuIndicator({
@@ -128,9 +122,9 @@ function NavigationMenuIndicator({
       className={cn(styles.navigationMenuIndicator, className)}
       {...props}
     >
-      <div className="bg-border relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm shadow-md" />
+      <div className={styles.navigationMenuIndicatorArrow} />
     </NavigationMenuPrimitive.Indicator>
-  )
+  );
 }
 
 export {
@@ -143,4 +137,4 @@ export {
   NavigationMenuIndicator,
   NavigationMenuViewport,
   navigationMenuTriggerStyle,
-}
+};

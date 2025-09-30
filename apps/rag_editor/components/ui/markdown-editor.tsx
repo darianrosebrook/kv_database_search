@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { Caption } from "./typography";
+import styles from "./markdown-editor/markdown-editor.module.scss";
 import {
   Bold,
   Italic,
@@ -119,43 +120,47 @@ export function MarkdownEditor({
   return (
     <div
       className={cn(
-        "h-full flex flex-col bg-background",
-        isFullscreen && "fixed inset-0 z-50",
+        styles.markdownEditor,
+        isFullscreen && styles.fullscreen,
         className
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <div className="flex-1 min-w-0">
+      <div className={styles.editorHeader}>
+        <div className={styles.titleSection}>
           <input
             value={documentTitle}
             onChange={(e) => handleTitleChange(e.target.value)}
-            className="text-title font-medium bg-transparent border-none outline-none w-full truncate focus:ring-0"
+            className={styles.documentTitle}
             placeholder="Document title..."
           />
-          <div className="flex items-center gap-2">
+          <div className={styles.statusBar}>
             {isSaving && (
-              <Caption className="text-muted-foreground">Saving...</Caption>
+              <Caption className={styles.statusSaving}>Saving...</Caption>
             )}
             {saveError && (
-              <Caption className="text-destructive">
+              <Caption className={styles.statusError}>
                 Save failed: {saveError}
               </Caption>
             )}
-            {!isSaving && !saveError && <Caption>Last edited recently</Caption>}
+            {!isSaving && !saveError && (
+              <Caption className={styles.statusDefault}>
+                Last edited recently
+              </Caption>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className={styles.headerActions}>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsPreview(!isPreview)}
-            className={cn(isPreview && "bg-accent")}
+            className={cn(styles.toggleButton, isPreview && styles.active)}
           >
             {isPreview ? (
-              <Edit3 className="h-4 w-4" />
+              <Edit3 className={styles.iconMd} />
             ) : (
-              <Eye className="h-4 w-4" />
+              <Eye className={styles.iconMd} />
             )}
             {isPreview ? "Edit" : "Preview"}
           </Button>
@@ -164,21 +169,21 @@ export function MarkdownEditor({
             size="sm"
             onClick={() => setIsFullscreen(!isFullscreen)}
           >
-            <Maximize2 className="h-4 w-4" />
+            <Maximize2 className={styles.iconMd} />
           </Button>
         </div>
       </div>
 
       {/* Toolbar */}
       {!isPreview && (
-        <div className="flex items-center gap-1 p-2 border-b border-border">
+        <div className={styles.toolbar}>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => insertMarkdown("**", "**")}
             title="Bold"
           >
-            <Bold className="h-4 w-4" />
+            <Bold className={styles.iconMd} />
           </Button>
           <Button
             variant="ghost"
@@ -186,7 +191,7 @@ export function MarkdownEditor({
             onClick={() => insertMarkdown("*", "*")}
             title="Italic"
           >
-            <Italic className="h-4 w-4" />
+            <Italic className={styles.iconMd} />
           </Button>
           <Button
             variant="ghost"
@@ -194,16 +199,16 @@ export function MarkdownEditor({
             onClick={() => insertMarkdown("`", "`")}
             title="Code"
           >
-            <Code className="h-4 w-4" />
+            <Code className={styles.iconMd} />
           </Button>
-          <div className="w-px h-6 bg-border mx-1" />
+          <div className={styles.toolbarDivider} />
           <Button
             variant="ghost"
             size="sm"
             onClick={() => insertMarkdown("[", "](url)")}
             title="Link"
           >
-            <Link className="h-4 w-4" />
+            <Link className={styles.iconMd} />
           </Button>
           <Button
             variant="ghost"
@@ -211,7 +216,7 @@ export function MarkdownEditor({
             onClick={() => insertMarkdown("- ", "")}
             title="Bullet List"
           >
-            <List className="h-4 w-4" />
+            <List className={styles.iconMd} />
           </Button>
           <Button
             variant="ghost"
@@ -219,7 +224,7 @@ export function MarkdownEditor({
             onClick={() => insertMarkdown("1. ", "")}
             title="Numbered List"
           >
-            <ListOrdered className="h-4 w-4" />
+            <ListOrdered className={styles.iconMd} />
           </Button>
           <Button
             variant="ghost"
@@ -227,17 +232,17 @@ export function MarkdownEditor({
             onClick={() => insertMarkdown("> ", "")}
             title="Quote"
           >
-            <Quote className="h-4 w-4" />
+            <Quote className={styles.iconMd} />
           </Button>
         </div>
       )}
 
       {/* Editor/Preview */}
-      <div className="flex-1 overflow-hidden">
+      <div className={styles.editorContainer}>
         {isPreview ? (
-          <div className="h-full overflow-y-auto p-6">
+          <div className={styles.editorContent}>
             <div
-              className="prose prose-neutral dark:prose-invert max-w-none"
+              className={styles.proseContent}
               dangerouslySetInnerHTML={{ __html: formatMarkdown(content) }}
             />
           </div>
@@ -258,7 +263,7 @@ export function MarkdownEditor({
               }
             }}
             placeholder="Start writing your thoughts..."
-            className="w-full h-full p-6 bg-transparent border-none outline-none resize-none font-mono text-body leading-relaxed focus:ring-0"
+            className={styles.editorTextarea}
             style={{ fontFamily: "var(--font-jetbrains-mono)" }}
           />
         )}

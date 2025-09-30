@@ -40,9 +40,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} ${playfair.variable} ${merriweather.variable} antialiased`}
     >
-      <body className="bg-background text-foreground font-sans">
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "../button";
 import { Badge } from "../badge";
 import { Title, Body, Caption, Micro } from "../typography";
+import styles from "./chat-interface.module.scss";
 import {
   Send,
   Paperclip,
@@ -192,22 +193,22 @@ export function ChatInterface({
   };
 
   return (
-    <div className={cn("h-full flex flex-col bg-background", className)}>
+    <div className={cn(styles.chatInterface, className)}>
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-workspace-accent rounded-lg flex items-center justify-center">
-              <Bot className="h-4 w-4 text-workspace-accent-foreground" />
+      <div className={styles.chatHeader}>
+        <div className={styles.headerContent}>
+          <div className={styles.headerLeft}>
+            <div className={styles.botAvatar}>
+              <Bot className={styles.botIcon} />
             </div>
-            <div>
-              <Title className="text-lg">AI Assistant</Title>
-              <Caption>
+            <div className={styles.botInfo}>
+              <Title className={styles.botTitle}>AI Assistant</Title>
+              <Caption className={styles.botSubtitle}>
                 Powered by {selectedModel?.name || "No model selected"}
               </Caption>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className={styles.headerRight}>
             {models.length > 0 && (
               <select
                 value={selectedModel?.id || ""}
@@ -216,7 +217,7 @@ export function ChatInterface({
                     models.find((m) => m.id === e.target.value) || models[0]
                   )
                 }
-                className="px-3 py-1.5 bg-input border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className={styles.modelSelector}
               >
                 {models.map((model) => (
                   <option key={model.id} value={model.id}>
@@ -226,87 +227,68 @@ export function ChatInterface({
               </select>
             )}
             <Button variant="ghost" size="sm">
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal className={styles.iconMd} />
             </Button>
           </div>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className={styles.messagesContainer}>
         {messages.map((message) => (
           <div
             key={message.id}
             className={cn(
-              "flex gap-3",
-              message.type === "user" && "flex-row-reverse"
+              styles.message,
+              message.type === "user" && styles.user
             )}
           >
             <div
               className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
-                message.type === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : message.type === "error"
-                  ? "bg-destructive text-destructive-foreground"
-                  : "bg-workspace-accent text-workspace-accent-foreground"
+                styles.messageAvatar,
+                message.type === "user" && styles.user,
+                message.type === "error" &&
+                  "bg-destructive text-destructive-foreground",
+                message.type === "assistant" && styles.assistant
               )}
             >
               {message.type === "user" ? (
-                <User className="h-4 w-4" />
+                <User className={styles.messageIcon} />
               ) : message.type === "error" ? (
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className={styles.messageIcon} />
               ) : (
-                <Bot className="h-4 w-4" />
+                <Bot className={styles.messageIcon} />
               )}
             </div>
-            <div
-              className={cn(
-                "flex-1 space-y-2",
-                message.type === "user" && "flex flex-col items-end"
-              )}
-            >
+            <div className={styles.messageContent}>
               <div
                 className={cn(
-                  "max-w-3xl p-4 rounded-lg",
-                  message.type === "user"
-                    ? "bg-primary text-primary-foreground ml-12"
-                    : message.type === "error"
-                    ? "bg-destructive/10 border border-destructive/20 text-destructive mr-12"
-                    : "bg-card border border-border mr-12"
+                  styles.messageContent,
+                  message.type === "user" && styles.user,
+                  message.type === "error" &&
+                    "bg-destructive/10 border border-destructive/20 text-destructive",
+                  message.type === "assistant" && styles.assistant
                 )}
               >
-                <Body
-                  className={cn(
-                    "whitespace-pre-wrap",
-                    message.type === "user" && "text-primary-foreground"
-                  )}
-                >
-                  {message.content}
-                </Body>
+                <Body className="whitespace-pre-wrap">{message.content}</Body>
               </div>
 
               {/* Search Results */}
               {message.searchResults && message.searchResults.length > 0 && (
-                <div className="max-w-3xl mr-12 space-y-2">
-                  <Micro className="text-muted-foreground">Sources</Micro>
-                  <div className="grid gap-2">
+                <div className={styles.messageSources}>
+                  <Micro className={styles.sourcesHeader}>Sources</Micro>
+                  <div className={styles.sourcesGrid}>
                     {message.searchResults.slice(0, 3).map((result) => (
-                      <div
-                        key={result.id}
-                        className="p-3 bg-card border border-border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-start justify-between mb-1">
-                          <span className="text-sm font-medium">
+                      <div key={result.id} className={styles.sourceCard}>
+                        <div className={styles.sourceHeader}>
+                          <span className={styles.sourceTitle}>
                             {result.title}
                           </span>
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className={styles.textXs}>
                             {Math.round(result.confidenceScore * 100)}%
                           </Badge>
                         </div>
-                        <Body className="text-sm text-muted-foreground line-clamp-2">
-                          {result.summary}
-                        </Body>
+                        <Body className={styles.textSm}>{result.summary}</Body>
                       </div>
                     ))}
                   </div>
@@ -315,28 +297,39 @@ export function ChatInterface({
 
               {/* Message Actions */}
               {message.type === "assistant" && (
-                <div className="flex items-center gap-2 mr-12">
-                  <Button variant="ghost" size="sm" className="h-7 px-2">
-                    <Copy className="h-3 w-3" />
+                <div className={styles.messageActions}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={styles.buttonIconSm}
+                  >
+                    <Copy className={styles.iconSm} />
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 px-2">
-                    <ThumbsUp className="h-3 w-3" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={styles.buttonIconSm}
+                  >
+                    <ThumbsUp className={styles.iconSm} />
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 px-2">
-                    <ThumbsDown className="h-3 w-3" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={styles.buttonIconSm}
+                  >
+                    <ThumbsDown className={styles.iconSm} />
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 px-2">
-                    <RefreshCw className="h-3 w-3" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={styles.buttonIconSm}
+                  >
+                    <RefreshCw className={styles.iconSm} />
                   </Button>
                 </div>
               )}
 
-              <Caption
-                className={cn(
-                  "text-xs",
-                  message.role === "user" && "text-right mr-12"
-                )}
-              >
+              <Caption className={styles.textXs}>
                 {message.timestamp.toLocaleTimeString()}
               </Caption>
             </div>
@@ -344,23 +337,17 @@ export function ChatInterface({
         ))}
 
         {isLoading && (
-          <div className="flex gap-3">
-            <div className="w-8 h-8 bg-workspace-accent rounded-lg flex items-center justify-center">
-              <Bot className="h-4 w-4 text-workspace-accent-foreground" />
+          <div className={styles.message}>
+            <div className={cn(styles.messageAvatar, styles.assistant)}>
+              <Bot className={styles.messageIcon} />
             </div>
-            <div className="flex-1">
-              <div className="max-w-3xl p-4 bg-card border border-border rounded-lg mr-12">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-workspace-accent rounded-full animate-bounce" />
-                    <div
-                      className="w-2 h-2 bg-workspace-accent rounded-full animate-bounce"
-                      style={{ animationDelay: "0.1s" }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-workspace-accent rounded-full animate-bounce"
-                      style={{ animationDelay: "0.2s" }}
-                    />
+            <div className={styles.messageContent}>
+              <div className={cn(styles.messageContent, styles.assistant)}>
+                <div className={styles.flexCenter + " " + styles.gap2}>
+                  <div className={styles.loadingDots}>
+                    <div className={styles.loadingDot} />
+                    <div className={styles.loadingDot} />
+                    <div className={styles.loadingDot} />
                   </div>
                   <Caption>Thinking...</Caption>
                 </div>
@@ -374,19 +361,19 @@ export function ChatInterface({
 
       {/* Quick Actions */}
       {messages.length === 1 && quickActions.length > 0 && (
-        <div className="px-4 py-2 border-t border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-4 w-4 text-workspace-accent" />
+        <div className={styles.quickActions}>
+          <div className={styles.flexCenter + " gap-2 mb-2"}>
+            <Sparkles className={styles.iconMd} />
             <Micro className="text-muted-foreground">Quick Actions</Micro>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className={styles.flexWrap + " gap-2"}>
             {quickActions.map((action, index) => (
               <Button
                 key={index}
                 variant="outline"
                 size="sm"
                 onClick={() => handleQuickAction(action)}
-                className="bg-transparent"
+                className={styles.quickActionButton}
               >
                 {action}
               </Button>
@@ -396,20 +383,37 @@ export function ChatInterface({
       )}
 
       {/* Input Area */}
-      <div className="p-4 border-t border-border">
+      <div className={styles.inputArea}>
         {/* Attachments */}
         {attachments.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div
+            className={styles.mb3 + " " + styles.flexWrap + " " + styles.gap2}
+          >
             {attachments.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center gap-2 px-3 py-1 bg-accent rounded-md"
+                className={
+                  styles.flexCenter +
+                  " " +
+                  styles.gap2 +
+                  " " +
+                  styles.px3 +
+                  " " +
+                  styles.py1 +
+                  " bg-accent rounded-md"
+                }
               >
-                <span className="text-sm truncate max-w-32">{file.name}</span>
+                <span
+                  className={
+                    styles.textSm + " " + styles.truncate + " " + styles.maxW32
+                  }
+                >
+                  {file.name}
+                </span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-5 w-5 p-0"
+                  className={styles.h5 + " " + styles.w5 + " p-0"}
                   onClick={() => removeAttachment(index)}
                 >
                   ×
@@ -419,13 +423,13 @@ export function ChatInterface({
           </div>
         )}
 
-        <div className="flex items-end gap-2">
-          <div className="flex-1 relative">
+        <div className={styles.inputContainer}>
+          <div className={styles.relative}>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask me anything about your knowledge base..."
-              className="w-full p-3 pr-12 bg-input border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px] max-h-32"
+              className={styles.inputField}
               rows={1}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -437,18 +441,26 @@ export function ChatInterface({
             <Button
               variant="ghost"
               size="sm"
-              className="absolute right-2 bottom-2 h-7 w-7 p-0"
+              className={
+                styles.absolute +
+                " " +
+                styles.right2 +
+                " " +
+                styles.bottom2 +
+                " " +
+                styles.buttonIcon
+              }
               onClick={() => fileInputRef.current?.click()}
             >
-              <Paperclip className="h-4 w-4" />
+              <Paperclip className={styles.iconMd} />
             </Button>
           </div>
           <Button
             onClick={handleSend}
             disabled={!input.trim() && attachments.length === 0}
-            className="h-11 px-4"
+            className={styles.sendButton}
           >
-            <Send className="h-4 w-4" />
+            <Send className={styles.iconMd} />
           </Button>
         </div>
 

@@ -35,8 +35,8 @@ export function MobileNavigation({ className }: MobileNavigationProps) {
               activeItem === item.id && styles.active
             )}
           >
-            <item.icon className="h-4 w-4" />
-            <span className="text-xs">{item.label}</span>
+            <item.icon />
+            <span>{item.label}</span>
           </Button>
         ))}
       </div>

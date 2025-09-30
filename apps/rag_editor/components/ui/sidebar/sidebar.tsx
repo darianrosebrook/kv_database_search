@@ -255,11 +255,11 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Header */}
       <div className={styles.sidebarHeader}>
         <div className={styles.headerContent}>
-          <Title className="text-lg">
+          <Title className={styles.textLg}>
             <a href="/workspace">Workspace</a>
           </Title>
           <Button variant="ghost" size="sm" className={styles.settingsButton}>
-            <Settings className="h-4 w-4" />
+            <Settings className={styles.size4x4} />
           </Button>
         </div>
         <div className={styles.searchContainer}>
@@ -278,9 +278,9 @@ export function Sidebar({ className }: SidebarProps) {
       <div className={styles.sidebarContent}>
         <div className={cn(styles.section, styles.filesSection)}>
           <div className={styles.sectionHeader}>
-            <Micro className="text-muted-foreground">Files</Micro>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-              <Plus className="h-3 w-3" />
+            <Micro className={styles.textMutedForeground}>Files</Micro>
+            <Button variant="ghost" size="sm" className={styles.buttonIcon}>
+              <Plus className={styles.size3x3} />
             </Button>
           </div>
           <div className={styles.sectionItems}>
@@ -308,14 +308,14 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Recent Chats */}
         <div className={cn(styles.section, styles.chatsSection)}>
           <div className={styles.sectionHeader}>
-            <Micro className="text-muted-foreground">Recent Chats</Micro>
+            <Micro className={styles.textMutedForeground}>Recent Chats</Micro>
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
+              className={styles.buttonIcon}
               onClick={() => router.push("/chat")}
             >
-              <Plus className="h-3 w-3" />
+              <Plus className={styles.size3x3} />
             </Button>
           </div>
           <div className={styles.sectionItems}>

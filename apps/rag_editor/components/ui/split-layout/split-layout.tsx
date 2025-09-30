@@ -80,9 +80,9 @@ export function SplitLayout({
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsLeftCollapsed(true)}
-                className="bg-background/80 backdrop-blur-sm"
+                className={styles.backdropBlur}
               >
-                <PanelLeftClose className="h-4 w-4" />
+                <PanelLeftClose className={styles.iconMd} />
               </Button>
             </div>
           </>
@@ -91,10 +91,7 @@ export function SplitLayout({
 
       {/* Resize Handle */}
       {!isLeftCollapsed && !isRightCollapsed && (
-        <div
-          className={styles.resizeHandle}
-          onMouseDown={handleMouseDown}
-        />
+        <div className={styles.resizeHandle} onMouseDown={handleMouseDown} />
       )}
 
       {/* Right Panel */}
@@ -105,7 +102,7 @@ export function SplitLayout({
             ? 0
             : isLeftCollapsed
             ? "100%"
-            : `${100 - leftWidth}%`
+            : `${100 - leftWidth}%`,
         }}
       >
         {!isRightCollapsed && (
@@ -117,9 +114,9 @@ export function SplitLayout({
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsRightCollapsed(true)}
-                  className="bg-background/80 backdrop-blur-sm"
+                  className={styles.backdropBlur}
                 >
-                  <PanelRightClose className="h-4 w-4" />
+                  <PanelRightClose className={styles.iconMd} />
                 </Button>
               </div>
             )}
@@ -133,9 +130,9 @@ export function SplitLayout({
           variant="ghost"
           size="sm"
           onClick={() => setIsLeftCollapsed(false)}
-          className={styles.collapsedToggleLeft + " bg-background/80 backdrop-blur-sm"}
+          className={styles.collapsedToggleLeft + " " + styles.collapsedToggle}
         >
-          <PanelLeftClose className="h-4 w-4 rotate-180" />
+          <PanelLeftClose className={styles.iconMd + " rotate-180"} />
         </Button>
       )}
 
@@ -144,9 +141,9 @@ export function SplitLayout({
           variant="ghost"
           size="sm"
           onClick={() => setIsRightCollapsed(false)}
-          className={styles.collapsedToggleRight + " bg-background/80 backdrop-blur-sm"}
+          className={styles.collapsedToggleRight + " " + styles.collapsedToggle}
         >
-          <PanelRightClose className="h-4 w-4 rotate-180" />
+          <PanelRightClose className={styles.iconMd + " rotate-180"} />
         </Button>
       )}
     </div>

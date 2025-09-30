@@ -164,3 +164,38 @@
     width: 1.25rem;
   }
 }
+
+/* Additional cmdk overrides */
+.command {
+  [cmdk-group-heading] {
+    color: var(--muted-foreground);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-weight: 500;
+  }
+
+  [cmdk-input-wrapper] {
+    height: 3rem;
+
+    svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+
+  [cmdk-input] {
+    height: 3rem;
+  }
+
+  [cmdk-item] {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+
+    svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+}

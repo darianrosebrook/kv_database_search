@@ -231,6 +231,27 @@
   }
 }
 
+.navigationMenuViewportWrapper {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  isolation: isolate;
+  z-index: 50;
+}
+
+.navigationMenuIndicatorArrow {
+  background-color: var(--border);
+  position: relative;
+  top: 60%;
+  height: 0.5rem;
+  width: 0.5rem;
+  transform: rotate(45deg);
+  border-radius: 0.125rem 0 0 0;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
 /* Focus ring overrides for links */
 .navigationMenuContent [data-slot="navigation-menu-link"] {
   &:focus-visible {
