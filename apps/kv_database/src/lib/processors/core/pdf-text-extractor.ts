@@ -32,10 +32,22 @@ export interface PDFExtractionOptions {
 }
 
 export class PDFTextExtractor {
-  private pdfExtract: PDFExtract;
+  private pdfExtract: PDFExtract | null = null;
 
   constructor() {
-    this.pdfExtract = new PDFExtract();
+    // Lazy initialization to prevent hanging during server startup
+    // this.pdfExtract = new PDFExtract();
+  }
+
+  /**
+   * Get or create PDFExtract instance lazily
+   */
+  private async getPDFExtract(): Promise<PDFExtract> {
+    if (!this.pdfExtract) {
+      const { PDFExtract } = await import("pdf.js-extract");
+      this.pdfExtract = new PDFExtract();
+    }
+    return this.pdfExtract;
   }
 
   /**
@@ -84,8 +96,9 @@ export class PDFTextExtractor {
         const tempPath = `/tmp/temp_pdf_${Date.now()}.pdf`;
         fs.writeFileSync(tempPath, buffer);
 
+        const pdfExtract = await this.getPDFExtract();
         pdfExtractResult = await new Promise((resolve, reject) => {
-          this.pdfExtract.extract(tempPath, {}, (err, data) => {
+          pdfExtract.extract(tempPath, {}, (err, data) => {
             // Clean up temp file
             try {
               fs.unlinkSync(tempPath);

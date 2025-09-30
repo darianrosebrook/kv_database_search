@@ -5,12 +5,10 @@
  * Uses dependency injection for clean service management.
  */
 
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import { config as dotenvConfig } from "dotenv";
 import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
-import { DependencyContainer } from "../lib/shared";
-import { DatabaseFactory } from "../lib/shared/database-factory";
 import { config, LoggerFactory } from "../lib/shared";
 import { ObsidianDatabase } from "../lib/database";
 import { ObsidianEmbeddingService } from "../lib/embeddings";
@@ -45,7 +43,7 @@ interface AppServices {
   database: ObsidianDatabase;
   embeddingService: ObsidianEmbeddingService;
   searchService: ObsidianSearchService;
-  ingestionPipeline: ObsidianIngestionPipeline;
+  // ingestionPipeline: ObsidianIngestionPipeline;
   webSearchService?: WebSearchService;
   contextManager?: ContextManager;
   dictionaryAPI?: DictionaryAPI;
@@ -74,13 +72,14 @@ const asError = (e: unknown): Error =>
  * Find an available port dynamically
  */
 async function findAvailablePort(startPort: number): Promise<number> {
-  const net = await import("net");
+  const { createServer, AddressInfo } = await import("net");
+  const net = { createServer };
 
   return new Promise((resolve) => {
     const server = net.createServer();
 
     server.listen(startPort, () => {
-      const port = (server.address() as net.AddressInfo).port;
+      const port = (server.address() as AddressInfo).port;
       server.close(() => resolve(port));
     });
 
@@ -149,9 +148,9 @@ async function buildServices(): Promise<AppServices> {
   }
 
   // Initialize ingestion pipeline
-  let ingestionPipeline: ObsidianIngestionPipeline;
+  let _ingestionPipeline: ObsidianIngestionPipeline;
   try {
-    ingestionPipeline = new ObsidianIngestionPipeline(
+    _ingestionPipeline = new ObsidianIngestionPipeline(
       database,
       embeddingService,
       OBSIDIAN_VAULT_PATH
@@ -166,7 +165,8 @@ async function buildServices(): Promise<AppServices> {
     console.error(
       "💡 Make sure OBSIDIAN_VAULT_PATH points to a valid Obsidian vault"
     );
-    throw error;
+    // Don't throw - allow server to start with limited functionality
+    ingestionPipeline = null as any;
   }
 
   // Initialize optional services
@@ -206,6 +206,7 @@ async function buildServices(): Promise<AppServices> {
   // Initialize dictionary service
   try {
     dictionaryAPI = new DictionaryAPI(database);
+    await dictionaryAPI.initialize();
     console.log("✅ Dictionary service initialized");
   } catch (e) {
     const error = asError(e);
@@ -326,7 +327,7 @@ async function buildServices(): Promise<AppServices> {
     database,
     embeddingService,
     searchService,
-    ingestionPipeline,
+    ingestionPipeline: _ingestionPipeline,
     webSearchService,
     contextManager,
     dictionaryAPI,
@@ -349,7 +350,7 @@ export async function createServer(): Promise<FastifyInstance> {
 
   // Register CORS
   await server.register(cors, {
-    origin: config.getMainServerConfig().corsOrigins,
+    origin: ["http://localhost:3000", "http://localhost:3001"],
     credentials: true,
   });
 
