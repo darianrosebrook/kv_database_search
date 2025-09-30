@@ -8,6 +8,7 @@ import {
   fetchVaultDocument,
   saveVaultDocument,
   type VaultDocument,
+  getApiBaseUrl,
 } from "@/lib/api";
 import { fetchRecentDocuments } from "@/lib/api";
 import { useAppState } from "@/hooks/use-app-state";
@@ -71,7 +72,11 @@ const getDocument = async (id: string): Promise<DocumentData> => {
   }
 };
 
-export default function DocumentPage({ params }: { params: { id: string } }) {
+export default function DocumentPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const [isAsideOpen, setIsAsideOpen] = useState(false);
   const [selectedText, setSelectedText] = useState<string>();
   const [relatedItems, setRelatedItems] = useState<any[]>([]);
@@ -83,12 +88,15 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
 
   const { openDocumentTab, tabs, switchToTab } = useAppState();
 
+  // Unwrap the params Promise using React.use()
+  const { id } = React.use(params);
+
   React.useEffect(() => {
     const loadDocument = async () => {
       setIsLoading(true);
       try {
         // Decode the URL-encoded document ID
-        const decodedId = decodeURIComponent(params.id);
+        const decodedId = decodeURIComponent(id);
         const doc = await getDocument(decodedId);
         setDocument(doc);
 
@@ -112,7 +120,7 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
     };
 
     loadDocument();
-  }, [params.id, tabs, openDocumentTab, switchToTab]);
+  }, [id, tabs, openDocumentTab, switchToTab]);
 
   const handleTextSelectionAndSearch = async (selectedText: string) => {
     setSelectedText(selectedText);
@@ -120,21 +128,21 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
     setIsSearchingRelated(true);
 
     try {
+      // Get the API base URL dynamically
+      const apiBaseUrl = await getApiBaseUrl();
+
       // Use the search API to find semantically similar documents
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002"}/search`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: selectedText,
-            limit: 5,
-            mode: "comprehensive",
-          }),
-        }
-      );
+      const response = await fetch(`${apiBaseUrl}/search`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: selectedText,
+          limit: 5,
+          mode: "comprehensive",
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`Search failed: ${response.status}`);
@@ -144,7 +152,7 @@ export default function DocumentPage({ params }: { params: { id: string } }) {
 
       // Convert search results to related items format
       const relatedItems = (searchData.results || [])
-        .filter((result: any) => result.id !== params.id) // Exclude current document
+        .filter((result: any) => result.id !== id) // Exclude current document
         .slice(0, 5)
         .map((result: any) => ({
           id: result.id || result.filePath || `result-${Math.random()}`,

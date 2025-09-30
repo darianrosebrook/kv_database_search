@@ -25,6 +25,8 @@ dotenvConfig();
 const DATABASE_URL = process.env.DATABASE_URL;
 const WORDNET_ARCHIVE = path.join(
   process.cwd(),
+  "..",
+  "..",
   "external-resources",
   "wn3.1.dict.tar.gz"
 );
@@ -99,24 +101,32 @@ class WordNetIngester {
 
     const client = await this.pool.connect();
     try {
-      const result = await client.query(`
-        INSERT INTO dictionary_sources (
-          name, version, language, status, description, capabilities, entry_count
-        ) VALUES (
-          'wordnet', '3.1', 'en', 'available',
-          'Princeton WordNet 3.1 lexical database',
-          ARRAY['definitions', 'synonyms', 'relationships'],
-          0
-        )
-        ON CONFLICT (name, version, language) DO UPDATE SET
-          status = EXCLUDED.status,
-          description = EXCLUDED.description,
-          capabilities = EXCLUDED.capabilities
-        RETURNING id
+      // First check if source already exists
+      const existingResult = await client.query(`
+        SELECT id FROM dictionary_sources
+        WHERE name = 'wordnet' AND version = '3.1' AND language = 'en'
       `);
 
-      const sourceId = result.rows[0].id;
-      console.log(`✅ Dictionary source inserted with ID: ${sourceId}`);
+      let sourceId: string;
+      if (existingResult.rows.length > 0) {
+        sourceId = existingResult.rows[0].id;
+        console.log(`✅ WordNet source already exists with ID: ${sourceId}`);
+      } else {
+        // Insert new source
+        const insertResult = await client.query(`
+          INSERT INTO dictionary_sources (
+            name, version, language, status, capabilities, entry_count
+          ) VALUES (
+            'wordnet', '3.1', 'en', 'available',
+            ARRAY['definitions', 'synonyms', 'relationships'],
+            0
+          )
+          RETURNING id
+        `);
+        sourceId = insertResult.rows[0].id;
+        console.log(`✅ Dictionary source inserted with ID: ${sourceId}`);
+      }
+
       return sourceId;
     } finally {
       client.release();
@@ -218,14 +228,10 @@ class WordNetIngester {
           `
           INSERT INTO synsets (
             synset_id, source_id, lemma, part_of_speech, definition,
-            confidence, usage_frequency
+            confidence
           ) VALUES (
-            $1, $2, $3, $4, $5, 0.9, 1
+            $1, $2, $3, $4, $5, 0.9
           )
-          ON CONFLICT (synset_id, source_id) DO UPDATE SET
-            lemma = EXCLUDED.lemma,
-            part_of_speech = EXCLUDED.part_of_speech,
-            definition = EXCLUDED.definition
           RETURNING id
         `,
           [
@@ -244,13 +250,12 @@ class WordNetIngester {
           await client.query(
             `
             INSERT INTO lexical_entries (
-              synset_id, word_form, canonical_form
+              synset_id, word_form
             ) VALUES (
-              $1, $2, $3
+              $1, $2
             )
-            ON CONFLICT (synset_id, word_form) DO NOTHING
           `,
-            [synsetDbId, lemma, synsetData.lemmas[0]]
+            [synsetDbId, lemma]
           );
         }
 
@@ -340,9 +345,8 @@ class WordNetIngester {
                 ) VALUES (
                   $1, $2, $3, 0.8
                 )
-                ON CONFLICT (source_synset_id, target_synset_id, relationship_type, source_id) DO NOTHING
               `,
-                [sourceSynsetId, targetSynsetId, relationshipType, sourceId]
+                [sourceSynsetId, targetSynsetId, relationshipType]
               );
             } catch (error) {
               // Skip if constraint violation (duplicate relationship)
@@ -438,6 +442,54 @@ class WordNetIngester {
     }
   }
 
+  async clearExistingWordNetData(sourceId: string): Promise<void> {
+    console.log("🗑️ Clearing existing WordNet data...");
+
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Get count of existing synsets for logging
+      const countResult = await client.query(
+        `SELECT COUNT(*) as count FROM synsets WHERE source_id = $1`,
+        [sourceId]
+      );
+      const existingCount = parseInt(countResult.rows[0].count);
+
+      if (existingCount > 0) {
+        console.log(`🗑️ Found ${existingCount} existing synsets to clear`);
+
+        // Delete lexical entries first (due to foreign key constraints)
+        await client.query(
+          `
+          DELETE FROM lexical_entries
+          WHERE synset_id IN (SELECT id FROM synsets WHERE source_id = $1)
+        `,
+          [sourceId]
+        );
+
+        // Delete synsets
+        await client.query(
+          `
+          DELETE FROM synsets WHERE source_id = $1
+        `,
+          [sourceId]
+        );
+
+        console.log(`✅ Cleared ${existingCount} existing synsets`);
+      } else {
+        console.log("✅ No existing WordNet data to clear");
+      }
+
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async cleanup(): Promise<void> {
     console.log("🧹 Cleaning up temporary files...");
 
@@ -454,6 +506,9 @@ class WordNetIngester {
       await this.extractWordNetData();
 
       const sourceId = await this.insertDictionarySource();
+
+      // Clear existing WordNet data before ingesting
+      await this.clearExistingWordNetData(sourceId);
 
       // Process each part of speech
       const dataFiles = [

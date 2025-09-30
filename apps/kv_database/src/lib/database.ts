@@ -1275,6 +1275,58 @@ export class DocumentDatabase {
       client.release();
     }
   }
+
+  /**
+   * Get recent documents from chat sessions
+   */
+  async getRecentDocuments(
+    limit: number = 20,
+    since?: Date
+  ): Promise<
+    Array<{
+      id: string;
+      title: string;
+      description: string;
+      lastAccessed: string;
+      tags?: string[];
+    }>
+  > {
+    const client = await this.pool.connect();
+    try {
+      let whereClause = "";
+      const params = [limit];
+
+      if (since) {
+        whereClause = "WHERE updated_at >= $2";
+        params.push(since.toISOString());
+      }
+
+      const query = `
+        SELECT
+          id,
+          title,
+          summary as description,
+          updated_at as last_accessed,
+          topics as tags
+        FROM chat_sessions
+        ${whereClause}
+        ORDER BY updated_at DESC
+        LIMIT $1
+      `;
+
+      const result = await client.query(query, params);
+
+      return result.rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description || "No description available",
+        lastAccessed: row.last_accessed,
+        tags: row.tags || [],
+      }));
+    } finally {
+      client.release();
+    }
+  }
 }
 
 /**

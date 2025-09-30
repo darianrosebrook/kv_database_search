@@ -2,7 +2,110 @@
  * API utilities for connecting to the backend
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+// Cache for discovered server configuration
+let cachedServerConfig: { url: string; timestamp: number } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Discover the backend server by checking common ports for the health endpoint
+ */
+async function discoverBackendServer(): Promise<string> {
+  // Check cache first
+  if (
+    cachedServerConfig &&
+    Date.now() - cachedServerConfig.timestamp < CACHE_DURATION
+  ) {
+    return cachedServerConfig.url;
+  }
+
+  const commonPorts = [3001, 3002, 3003, 3004, 3005];
+  const protocols = ["http://", "https://"];
+
+  for (const protocol of protocols) {
+    for (const port of commonPorts) {
+      const baseUrl = `${protocol}localhost:${port}`;
+
+      try {
+        const response = await fetch(`${baseUrl}/health`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          // Short timeout to avoid hanging
+          signal: AbortSignal.timeout(2000),
+        });
+
+        if (response.ok) {
+          const healthData = await response.json();
+
+          // Verify this is our backend server by checking for expected fields
+          if (healthData.services && healthData.version) {
+            console.log(`✅ Discovered backend server at ${baseUrl}`);
+
+            // Cache the result
+            cachedServerConfig = {
+              url: baseUrl,
+              timestamp: Date.now(),
+            };
+
+            return baseUrl;
+          }
+        }
+      } catch (error) {
+        // Continue to next port
+        continue;
+      }
+    }
+  }
+
+  // If no server found, fall back to default
+  console.warn(
+    "⚠️ Could not discover backend server, using default localhost:3001"
+  );
+  return "http://localhost:3001";
+}
+
+/**
+ * Get the API base URL, discovering the server if needed
+ */
+export async function getApiBaseUrl(): Promise<string> {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  return await discoverBackendServer();
+}
+
+// Initialize API_BASE_URL
+let API_BASE_URL: string;
+getApiBaseUrl()
+  .then((url) => {
+    API_BASE_URL = url;
+  })
+  .catch((error) => {
+    console.error("Failed to discover API server:", error);
+    API_BASE_URL = "http://localhost:3001"; // Fallback
+  });
+
+/**
+ * Clear the cached server configuration to force rediscovery
+ */
+export function clearServerCache(): void {
+  cachedServerConfig = null;
+  console.log("🗑️ Cleared server cache - will rediscover on next request");
+}
+
+/**
+ * Manually refresh server discovery
+ */
+export async function refreshServerDiscovery(): Promise<string> {
+  clearServerCache();
+  const url = await getApiBaseUrl();
+  if (API_BASE_URL) {
+    API_BASE_URL = url;
+  }
+  return url;
+}
 
 export interface RecentDocument {
   id: string;
@@ -99,6 +202,11 @@ export interface ChatResponse {
  */
 export async function fetchRecentDocuments(): Promise<RecentDocumentsResponse> {
   try {
+    // Ensure API_BASE_URL is initialized
+    if (!API_BASE_URL) {
+      API_BASE_URL = await getApiBaseUrl();
+    }
+
     const response = await fetch(`${API_BASE_URL}/api/recent-documents`, {
       method: "GET",
       headers: {
@@ -139,6 +247,11 @@ export async function fetchVaultDocument(
   documentPath: string
 ): Promise<VaultDocumentResponse> {
   try {
+    // Ensure API_BASE_URL is initialized
+    if (!API_BASE_URL) {
+      API_BASE_URL = await getApiBaseUrl();
+    }
+
     // URL encode the path to handle special characters and spaces
     const encodedPath = encodeURIComponent(documentPath);
     const response = await fetch(
@@ -190,6 +303,11 @@ export async function saveVaultDocument(
   frontmatter?: Record<string, unknown>
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Ensure API_BASE_URL is initialized
+    if (!API_BASE_URL) {
+      API_BASE_URL = await getApiBaseUrl();
+    }
+
     const encodedPath = encodeURIComponent(documentPath);
     const response = await fetch(
       `${API_BASE_URL}/api/vault/file/${encodedPath}`,
@@ -227,6 +345,11 @@ export async function fetchVaultFiles(
   path?: string
 ): Promise<VaultFilesResponse> {
   try {
+    // Ensure API_BASE_URL is initialized
+    if (!API_BASE_URL) {
+      API_BASE_URL = await getApiBaseUrl();
+    }
+
     const queryParams = path ? `?path=${encodeURIComponent(path)}` : "";
     const response = await fetch(
       `${API_BASE_URL}/api/vault/files${queryParams}`,
@@ -293,6 +416,11 @@ export async function sendChatMessage(
   request: ChatRequest
 ): Promise<ChatResponse> {
   try {
+    // Ensure API_BASE_URL is initialized
+    if (!API_BASE_URL) {
+      API_BASE_URL = await getApiBaseUrl();
+    }
+
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: "POST",
       headers: {
@@ -329,6 +457,11 @@ export async function getChatContext(
   limit: number = 5
 ): Promise<SearchResult[]> {
   try {
+    // Ensure API_BASE_URL is initialized
+    if (!API_BASE_URL) {
+      API_BASE_URL = await getApiBaseUrl();
+    }
+
     // First perform a search to get relevant documents using embeddings
     const searchResponse = await fetch(`${API_BASE_URL}/search`, {
       method: "POST",

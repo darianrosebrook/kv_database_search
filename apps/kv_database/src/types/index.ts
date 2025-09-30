@@ -669,11 +669,15 @@ export interface HealthResponse {
   status: "healthy" | "degraded" | "unhealthy";
   timestamp: string;
   version: string;
+  server?: {
+    port: number;
+    host: string;
+  };
   services: {
-    database: boolean;
-    embeddings: boolean;
-    search: boolean;
-    ingestion: boolean;
+    database: string;
+    embeddings: string;
+    search: string;
+    ingestion: string;
   };
   database?: {
     totalChunks: number;

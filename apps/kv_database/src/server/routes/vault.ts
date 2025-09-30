@@ -27,6 +27,18 @@ export function registerVaultRoutes(server: FastifyInstance): void {
       limit?: number;
     };
 
+    // Check if ingestion pipeline is available
+    if (!ingestionPipeline) {
+      reply.code(503);
+      return {
+        files: [],
+        total: 0,
+        folder: folder || "/",
+        recursive,
+        error: "Ingestion pipeline not available",
+      };
+    }
+
     try {
       const files = await ingestionPipeline.listFiles(folder, {
         recursive,
@@ -61,6 +73,15 @@ export function registerVaultRoutes(server: FastifyInstance): void {
     const { ingestionPipeline } = request.server.services;
     const filePath = (request.params as any)["*"];
 
+    // Check if ingestion pipeline is available
+    if (!ingestionPipeline) {
+      reply.code(503);
+      return {
+        path: filePath,
+        error: "Ingestion pipeline not available",
+      };
+    }
+
     try {
       const content = await ingestionPipeline.readFile(filePath);
 
@@ -88,6 +109,16 @@ export function registerVaultRoutes(server: FastifyInstance): void {
     const { ingestionPipeline } = request.server.services;
     const filePath = (request.params as any)["*"];
     const { content } = request.body as { content: string };
+
+    // Check if ingestion pipeline is available
+    if (!ingestionPipeline) {
+      reply.code(503);
+      return {
+        success: false,
+        path: filePath,
+        error: "Ingestion pipeline not available",
+      };
+    }
 
     try {
       const result = await ingestionPipeline.writeFile(filePath, content);
@@ -117,6 +148,16 @@ export function registerVaultRoutes(server: FastifyInstance): void {
     const { ingestionPipeline } = request.server.services;
     const filePath = (request.params as any)["*"];
 
+    // Check if ingestion pipeline is available
+    if (!ingestionPipeline) {
+      reply.code(503);
+      return {
+        success: false,
+        path: filePath,
+        error: "Ingestion pipeline not available",
+      };
+    }
+
     try {
       const result = await ingestionPipeline.deleteFile(filePath);
 
@@ -144,6 +185,16 @@ export function registerVaultRoutes(server: FastifyInstance): void {
   server.post("/api/vault/directory/*", async (request, reply) => {
     const { ingestionPipeline } = request.server.services;
     const dirPath = (request.params as any)["*"];
+
+    // Check if ingestion pipeline is available
+    if (!ingestionPipeline) {
+      reply.code(503);
+      return {
+        success: false,
+        path: dirPath,
+        error: "Ingestion pipeline not available",
+      };
+    }
 
     try {
       const result = await ingestionPipeline.createDirectory(dirPath);
@@ -182,6 +233,19 @@ export function registerVaultRoutes(server: FastifyInstance): void {
       fileTypes?: string[];
       limit?: number;
     };
+
+    // Check if ingestion pipeline is available
+    if (!ingestionPipeline) {
+      reply.code(503);
+      return {
+        query,
+        results: [],
+        total: 0,
+        folder,
+        fileTypes,
+        error: "Ingestion pipeline not available",
+      };
+    }
 
     try {
       const results = await ingestionPipeline.searchFiles(query, {
