@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 import { Button } from "../button";
 import { Title, Body, Caption, Micro } from "../typography";
 import {
@@ -69,19 +70,64 @@ export function SearchResults({
     return styles.low;
   };
 
-  const highlightText = (text: string, highlights: string[] = []) => {
+  const highlightText = (text: string, highlights: string[] = []): ReactNode => {
     if (!highlights.length) return text;
 
-    let highlightedText = text;
-    highlights.forEach((highlight) => {
-      const regex = new RegExp(`(${highlight})`, "gi");
-      highlightedText = highlightedText.replace(
-        regex,
-        '<mark class="bg-search-highlight/30 text-search-highlight-foreground px-1 rounded">$1</mark>'
-      );
+    const normalizedHighlights = highlights
+      .filter((highlight) => highlight && highlight.trim().length > 0)
+      .map((highlight) => highlight.toLowerCase());
+
+    if (!normalizedHighlights.length) return text;
+
+    const source = text.toLowerCase();
+    const matches: Array<{ start: number; end: number }> = [];
+
+    normalizedHighlights.forEach((highlight) => {
+      let index = 0;
+      while (index < source.length) {
+        const foundIndex = source.indexOf(highlight, index);
+        if (foundIndex === -1) break;
+        matches.push({ start: foundIndex, end: foundIndex + highlight.length });
+        index = foundIndex + highlight.length;
+      }
     });
 
-    return highlightedText;
+    if (!matches.length) return text;
+
+    matches.sort((a, b) => a.start - b.start);
+
+    const merged: Array<{ start: number; end: number }> = [];
+    matches.forEach((match) => {
+      const last = merged[merged.length - 1];
+      if (last && match.start <= last.end) {
+        last.end = Math.max(last.end, match.end);
+      } else {
+        merged.push({ ...match });
+      }
+    });
+
+    const segments: ReactNode[] = [];
+    let currentIndex = 0;
+
+    merged.forEach((match, index) => {
+      if (match.start > currentIndex) {
+        segments.push(text.slice(currentIndex, match.start));
+      }
+
+      segments.push(
+        <mark key={`${match.start}-${match.end}-${index}`}>
+          {text.slice(match.start, match.end)}
+        </mark>
+      );
+
+      currentIndex = match.end;
+    });
+
+    if (currentIndex < text.length) {
+      segments.push(text.slice(currentIndex));
+    }
+
+    return segments;
   };
 
   const getHighlightsForDisplay = (result: SearchResult): string[] => {
@@ -174,12 +220,9 @@ export function SearchResults({
               </div>
             </div>
 
-            <div
-              className={styles.resultContent}
-              dangerouslySetInnerHTML={{
-                __html: highlightText(displayText, highlights),
-              }}
-            />
+            <div className={styles.resultContent}>
+              {highlightText(displayText, highlights)}
+            </div>
 
             <div className={styles.resultFooter}>
               <div className={styles.resultMetadata}>

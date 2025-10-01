@@ -10,6 +10,7 @@ import { SearchResults } from "./ui/search-results";
 import { Menu, X, FileText, MessageSquare, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppState } from "@/hooks/use-app-state";
+import styles from "./workspace-layout.module.scss";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -146,42 +147,46 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
           };
 
           return (
-            <div className="flex flex-col h-full">
-              <div className="flex items-center gap-3 p-6 border-b border-border">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-blue-600" />
+            <div className={styles.tabPanel}>
+              <div className={styles.tabHeader}>
+                <div className={cn(styles.tabIcon, styles.tabIconSearch)}>
+                  <FileText />
                 </div>
-                <div className="flex-1">
-                  <h1 className="text-xl font-semibold">{activeTab.title}</h1>
-                  <p className="text-sm text-muted-foreground">
+                <div className={styles.tabHeaderContent}>
+                  <h1 className={styles.tabTitle}>{activeTab.title}</h1>
+                  <p className={styles.tabMeta}>
                     {searchResults.length} results for "{query}"
                   </p>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-hidden">
+              <div className={styles.tabBody}>
                 {isLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-5 w-5 animate-spin" />
+                  <div className={styles.centerContent}>
+                    <div className={styles.loadingIndicator}>
+                      <Loader2 className={styles.loadingSpinner} />
                       <span>Searching...</span>
                     </div>
                   </div>
                 ) : error ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center text-destructive">
-                      <p className="font-medium">Search failed</p>
-                      <p className="text-sm text-muted-foreground">{error}</p>
+                  <div className={styles.centerContent}>
+                    <div className={styles.errorMessage}>
+                      <span className={styles.placeholderEmphasis}>
+                        Search failed
+                      </span>
+                      <span className={styles.errorDetails}>{error}</span>
                     </div>
                   </div>
                 ) : (
-                  <SearchResults
-                    results={searchResults}
-                    query={query}
-                    isLoading={false}
-                    onResultClick={handleResultClick}
-                    onViewDocument={handleResultClick}
-                  />
+                  <div className={styles.tabScroll}>
+                    <SearchResults
+                      results={searchResults}
+                      query={query}
+                      isLoading={false}
+                      onResultClick={handleResultClick}
+                      onViewDocument={handleResultClick}
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -193,16 +198,16 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
       case "chat":
         return (
-          <div className="flex flex-col h-full p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <MessageSquare className="h-4 w-4 text-green-600" />
+          <div className={styles.panelContent}>
+            <div className={styles.panelHeaderBlock}>
+              <div className={cn(styles.tabIcon, styles.tabIconChat)}>
+                <MessageSquare />
               </div>
-              <h1 className="text-2xl font-semibold">{activeTab.title}</h1>
+              <h1 className={styles.panelHeadingLarge}>{activeTab.title}</h1>
             </div>
-            <div className="flex-1">
+            <div className={styles.panelBodyLarge}>
               {/* TODO: Implement chat tab content when chat feature is developed */}
-              <div className="text-center text-muted-foreground py-12">
+              <div className={styles.panelPlaceholder}>
                 Chat tab content for session:{" "}
                 {activeTab.content?.sessionId || "New session"}
               </div>
@@ -212,16 +217,16 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
       case "document":
         return (
-          <div className="flex flex-col h-full p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <FileText className="h-4 w-4 text-purple-600" />
+          <div className={styles.panelContent}>
+            <div className={styles.panelHeaderBlock}>
+              <div className={cn(styles.tabIcon, styles.tabIconDocument)}>
+                <FileText />
               </div>
-              <h1 className="text-2xl font-semibold">{activeTab.title}</h1>
+              <h1 className={styles.panelHeadingLarge}>{activeTab.title}</h1>
             </div>
-            <div className="flex-1">
+            <div className={styles.panelBodyLarge}>
               {/* TODO: Implement document tab content when document viewer is developed */}
-              <div className="text-center text-muted-foreground py-12">
+              <div className={styles.panelPlaceholder}>
                 Document content for:{" "}
                 {activeTab.content?.documentPath ||
                   activeTab.content?.documentId ||
@@ -233,16 +238,16 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
       case "workspace":
         return (
-          <div className="flex flex-col h-full p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <FileText className="h-4 w-4 text-orange-600" />
+          <div className={styles.panelContent}>
+            <div className={styles.panelHeaderBlock}>
+              <div className={cn(styles.tabIcon, styles.tabIconWorkspace)}>
+                <FileText />
               </div>
-              <h1 className="text-2xl font-semibold">{activeTab.title}</h1>
+              <h1 className={styles.panelHeadingLarge}>{activeTab.title}</h1>
             </div>
-            <div className="flex-1">
+            <div className={styles.panelBodyLarge}>
               {/* TODO: Implement workspace tab content when workspace management is developed */}
-              <div className="text-center text-muted-foreground py-12">
+              <div className={styles.panelPlaceholder}>
                 Workspace content for:{" "}
                 {activeTab.content?.workspaceId || "Default workspace"}
               </div>
@@ -256,11 +261,11 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   };
 
   return (
-    <div className="h-screen flex bg-background relative">
+    <div className={styles.layout}>
       {/* Mobile Sidebar Overlay */}
       {isMobile && isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
+          className={styles.mobileOverlay}
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -268,41 +273,34 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "transition-transform duration-200 ease-in-out z-50",
-          isMobile
-            ? cn(
-                "fixed left-0 top-0 h-full",
-                isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-              )
-            : "relative"
+          styles.sidebarWrapper,
+          isMobile ? styles.sidebarMobile : styles.sidebarDesktop,
+          isMobile &&
+            (isSidebarOpen ? styles.sidebarOpen : styles.sidebarClosed)
         )}
       >
-        <Sidebar className={cn(isMobile && "shadow-lg")} />
+        <Sidebar className={cn(isMobile && styles.sidebarShadow)} />
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={styles.main}>
         {/* Mobile Header */}
         {isMobile && (
-          <div className="flex items-center justify-between p-4 border-b border-border md:hidden">
+          <div className={styles.mobileHeader}>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             >
-              {isSidebarOpen ? (
-                <X className="h-4 w-4" />
-              ) : (
-                <Menu className="h-4 w-4" />
-              )}
+              {isSidebarOpen ? <X /> : <Menu />}
             </Button>
-            <span className="text-title font-medium">Obsidian Editor</span>
-            <div className="w-8" /> {/* Spacer for centering */}
+            <span className={styles.mobileTitle}>Obsidian Editor</span>
+            <div className={styles.headerSpacer} />
           </div>
         )}
 
-        <TabBar className="hidden md:flex" />
-        <main className="flex-1 overflow-hidden">{renderTabContent()}</main>
+        <TabBar className={styles.desktopTabBar} />
+        <main className={styles.tabArea}>{renderTabContent()}</main>
       </div>
     </div>
   );

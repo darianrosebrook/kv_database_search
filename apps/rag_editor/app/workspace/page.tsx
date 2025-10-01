@@ -4,23 +4,24 @@ import { WorkspaceLayout } from "@/components/workspace-layout"
 import { Display, BodyLarge } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import { FileText, MessageSquare } from "lucide-react"
+import styles from "./page.module.scss"
 
 export default function WorkspacePage() {
   return (
     <WorkspaceLayout>
-      <div className="h-full flex items-center justify-center p-8">
-        <div className="text-center space-y-6 max-w-md">
-          <Display className="text-4xl">Welcome Back</Display>
-          <BodyLarge className="text-muted-foreground">
+      <div className={styles.workspacePage}>
+        <div className={styles.content}>
+          <Display className={styles.heading}>Welcome Back</Display>
+          <BodyLarge className={styles.description}>
             Select a document from the sidebar or create something new to get started.
           </BodyLarge>
-          <div className="flex gap-3 justify-center">
-            <Button className="gap-2">
-              <FileText className="h-4 w-4" />
+          <div className={styles.actions}>
+            <Button className={styles.primaryButton}>
+              <FileText className={styles.icon} />
               New Document
             </Button>
-            <Button variant="outline" className="gap-2 bg-transparent">
-              <MessageSquare className="h-4 w-4" />
+            <Button variant="outline" className={styles.secondaryButton}>
+              <MessageSquare className={styles.icon} />
               Start Chat
             </Button>
           </div>

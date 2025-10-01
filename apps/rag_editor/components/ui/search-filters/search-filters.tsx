@@ -13,6 +13,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { useState } from "react";
+import styles from "./search-filters.module.scss";
 
 interface SearchFiltersProps {
   className?: string;
@@ -75,19 +76,19 @@ export function SearchFilters({
     filters.confidence !== 0.7;
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn(styles.filters, className)}>
       {/* Filter Toggle */}
-      <div className="flex items-center justify-between">
+      <div className={styles.toggleRow}>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="gap-2 text-muted-foreground"
+          className={styles.toggleButton}
         >
-          <Filter className="h-4 w-4" />
+          <Filter className={styles.iconMd} />
           Filters
           {hasActiveFilters && (
-            <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+            <Badge variant="secondary" className={styles.toggleBadge}>
               {filters.types.length +
                 (filters.dateRange !== "all" ? 1 : 0) +
                 (filters.confidence !== 0.7 ? 1 : 0)}
@@ -99,9 +100,9 @@ export function SearchFilters({
             variant="ghost"
             size="sm"
             onClick={clearFilters}
-            className="gap-1 text-xs"
+            className={styles.clearButton}
           >
-            <X className="h-3 w-3" />
+            <X className={styles.iconSmall} />
             Clear
           </Button>
         )}
@@ -109,42 +110,45 @@ export function SearchFilters({
 
       {/* Active Filters */}
       {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2">
+        <div className={styles.activeFilters}>
           {filters.types.map((type) => {
             const typeConfig = contentTypes.find((t) => t.id === type);
             return (
-              <Badge key={type} variant="secondary" className="gap-1">
-                {typeConfig && <typeConfig.icon className="h-3 w-3" />}
+              <Badge key={type} variant="secondary" className={styles.activeBadge}>
+                {typeConfig && <typeConfig.icon className={styles.iconSmall} />}
                 {typeConfig?.label}
                 <button
+                  type="button"
                   onClick={() => toggleType(type)}
-                  className="ml-1 hover:bg-muted rounded"
+                  className={styles.badgeRemove}
                 >
-                  <X className="h-3 w-3" />
+                  <X className={styles.iconSmall} />
                 </button>
               </Badge>
             );
           })}
           {filters.dateRange !== "all" && (
-            <Badge variant="secondary" className="gap-1">
-              <Calendar className="h-3 w-3" />
+            <Badge variant="secondary" className={styles.activeBadge}>
+              <Calendar className={styles.iconSmall} />
               {dateRanges.find((d) => d.id === filters.dateRange)?.label}
               <button
+                type="button"
                 onClick={() => updateFilters({ dateRange: "all" })}
-                className="ml-1 hover:bg-muted rounded"
+                className={styles.badgeRemove}
               >
-                <X className="h-3 w-3" />
+                <X className={styles.iconSmall} />
               </button>
             </Badge>
           )}
           {filters.confidence !== 0.7 && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className={styles.activeBadge}>
               Confidence: {Math.round(filters.confidence * 100)}%+
               <button
+                type="button"
                 onClick={() => updateFilters({ confidence: 0.7 })}
-                className="ml-1 hover:bg-muted rounded"
+                className={styles.badgeRemove}
               >
-                <X className="h-3 w-3" />
+                <X className={styles.iconSmall} />
               </button>
             </Badge>
           )}
@@ -153,11 +157,11 @@ export function SearchFilters({
 
       {/* Expanded Filters */}
       {isExpanded && (
-        <div className="space-y-4 p-4 bg-card border border-border rounded-lg animate-in">
+        <div className={styles.expandedPanel}>
           {/* Content Types */}
-          <div>
-            <Micro className="text-muted-foreground mb-2">Content Type</Micro>
-            <div className="flex flex-wrap gap-2">
+          <div className={styles.section}>
+            <Micro className={styles.sectionLabel}>Content Type</Micro>
+            <div className={styles.optionGroup}>
               {contentTypes.map((type) => (
                 <Button
                   key={type.id}
@@ -166,11 +170,11 @@ export function SearchFilters({
                   }
                   size="sm"
                   onClick={() => toggleType(type.id)}
-                  className="gap-2 bg-transparent"
+                  className={styles.contentButton}
                 >
-                  <type.icon className="h-3 w-3" />
+                  <type.icon className={styles.iconSmall} />
                   {type.label}
-                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-xs">
+                  <Badge variant="secondary" className={styles.optionBadge}>
                     {type.count}
                   </Badge>
                 </Button>
@@ -179,9 +183,9 @@ export function SearchFilters({
           </div>
 
           {/* Date Range */}
-          <div>
-            <Micro className="text-muted-foreground mb-2">Date Range</Micro>
-            <div className="flex flex-wrap gap-2">
+          <div className={styles.section}>
+            <Micro className={styles.sectionLabel}>Date Range</Micro>
+            <div className={styles.optionGroup}>
               {dateRanges.map((range) => (
                 <Button
                   key={range.id}
@@ -190,7 +194,7 @@ export function SearchFilters({
                   }
                   size="sm"
                   onClick={() => updateFilters({ dateRange: range.id })}
-                  className="bg-transparent"
+                  className={styles.contentButton}
                 >
                   {range.label}
                 </Button>
@@ -199,8 +203,8 @@ export function SearchFilters({
           </div>
 
           {/* Confidence Threshold */}
-          <div>
-            <Micro className="text-muted-foreground mb-2">
+          <div className={styles.section}>
+            <Micro className={styles.sectionLabel}>
               Minimum Confidence: {Math.round(filters.confidence * 100)}%
             </Micro>
             <input
@@ -212,9 +216,9 @@ export function SearchFilters({
               onChange={(e) =>
                 updateFilters({ confidence: Number.parseFloat(e.target.value) })
               }
-              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+              className={styles.slider}
             />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <div className={styles.sliderMarks}>
               <span>50%</span>
               <span>100%</span>
             </div>

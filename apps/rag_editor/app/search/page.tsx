@@ -9,6 +9,7 @@ import { Display, BodyLarge, Caption } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Sparkles, TrendingUp } from "lucide-react";
 import { useAppState } from "@/hooks/use-app-state";
+import styles from "./page.module.scss";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -72,13 +73,13 @@ export default function SearchPage() {
 
   return (
     <WorkspaceLayout>
-      <div className="h-full flex flex-col">
+      <div className={styles.searchPage}>
         {/* Search Header */}
-        <div className="p-6 border-b border-border">
-          <div className="max-w-4xl mx-auto space-y-4">
+        <div className={styles.searchHeader}>
+          <div className={styles.searchHeaderContent}>
             <SearchInput
               placeholder="Search your knowledge base..."
-              className="text-lg py-4"
+              className={styles.searchInput}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleSearch(e.currentTarget.value);
@@ -86,16 +87,16 @@ export default function SearchPage() {
               }}
             />
             {!hasSearched && suggestedQueries.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className={styles.suggestionList}>
                 {suggestedQueries.map((suggestion, index) => (
                   <Button
                     key={suggestion + index}
                     variant="outline"
                     size="sm"
                     onClick={() => handleSearch(suggestion)}
-                    className="gap-2 bg-transparent"
+                    className={styles.suggestionButton}
                   >
-                    <Sparkles className="h-3 w-3" />
+                    <Sparkles className={styles.suggestionIcon} />
                     {suggestion}
                   </Button>
                 ))}
@@ -105,14 +106,16 @@ export default function SearchPage() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className={styles.searchBody}>
           {!hasSearched ? (
             /* Welcome State */
-            <div className="h-full flex items-center justify-center p-8">
-              <div className="text-center space-y-8 max-w-2xl">
-                <div className="space-y-4">
-                  <Display className="text-4xl">Semantic Search</Display>
-                  <BodyLarge className="text-muted-foreground">
+            <div className={styles.welcomeState}>
+              <div className={styles.welcomeContent}>
+                <div className={styles.welcomeText}>
+                  <Display className={styles.welcomeHeadline}>
+                    Semantic Search
+                  </Display>
+                  <BodyLarge className={styles.welcomeDescription}>
                     Find information across your knowledge base using natural
                     language. Our AI understands context and relationships
                     between ideas.
@@ -121,22 +124,22 @@ export default function SearchPage() {
 
                 {/* Trending Topics */}
                 {trendingTopics.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                      <TrendingUp className="h-4 w-4" />
+                  <div className={styles.trendingSection}>
+                    <div className={styles.trendingHeader}>
+                      <TrendingUp className={styles.trendingIcon} />
                       <Caption>Trending in your workspace</Caption>
                     </div>
-                    <div className="flex flex-wrap gap-2 justify-center">
+                    <div className={styles.trendingList}>
                       {trendingTopics.map((topic, index) => (
                         <Button
                           key={index + topic.query}
                           variant="ghost"
                           size="sm"
                           onClick={() => handleSearch(topic.query)}
-                          className="gap-2"
+                          className={styles.trendingButton}
                         >
                           {topic.query}
-                          <span className="text-xs text-muted-foreground">
+                          <span className={styles.trendCount}>
                             ({topic.count})
                           </span>
                         </Button>
@@ -148,8 +151,8 @@ export default function SearchPage() {
             </div>
           ) : (
             /* Search Results */
-            <div className="h-full overflow-y-auto">
-              <div className="max-w-4xl mx-auto p-6 space-y-6">
+            <div className={styles.resultsContainer}>
+              <div className={styles.resultsInner}>
                 <SearchFilters />
                 <SearchResults
                   results={[]}

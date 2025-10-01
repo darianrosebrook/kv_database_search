@@ -9,6 +9,7 @@ import { ChatInterface } from "../chat-interface";
 import { Button } from "../button";
 import { MessageSquare, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import styles from "./responsive-search.module.scss";
 
 interface ResponsiveSearchProps {
   className?: string;
@@ -43,12 +44,12 @@ export function ResponsiveSearch({ className }: ResponsiveSearchProps) {
   };
 
   const searchPanel = (
-    <div className="h-full flex flex-col">
+    <div className={styles.container}>
       {/* Search Header */}
-      <div className="p-4 border-b border-border">
+      <div className={styles.searchHeader}>
         <SearchInput
           placeholder="Search your knowledge base..."
-          className="mb-4"
+          className={styles.searchInput}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               handleSearch(e.currentTarget.value);
@@ -59,7 +60,7 @@ export function ResponsiveSearch({ className }: ResponsiveSearchProps) {
       </div>
 
       {/* Search Results */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className={styles.searchBody}>
         <SearchResults
           results={[]}
           query={query}
@@ -73,7 +74,7 @@ export function ResponsiveSearch({ className }: ResponsiveSearchProps) {
   );
 
   const chatPanel = (
-    <div className="h-full">
+    <div className={styles.chatPanel}>
       <ChatInterface
         onSendMessage={(message, attachments) => {
           console.log("Chat message:", message, attachments);
@@ -84,33 +85,33 @@ export function ResponsiveSearch({ className }: ResponsiveSearchProps) {
 
   if (isMobile) {
     return (
-      <div className={cn("h-full", className)}>
+      <div className={cn(styles.mobileContainer, className)}>
         {!isChatOpen ? (
-          <div className="h-full flex flex-col">
+          <div className={styles.container}>
             {searchPanel}
-            <div className="p-4 border-t border-border">
+            <div className={styles.mobileActions}>
               <Button
                 onClick={() => setIsChatOpen(true)}
-                className="w-full gap-2"
+                className={styles.mobileButton}
               >
-                <MessageSquare className="h-4 w-4" />
+                <MessageSquare />
                 Ask AI Assistant
               </Button>
             </div>
           </div>
         ) : (
-          <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <span className="text-title font-medium">AI Assistant</span>
+          <div className={styles.container}>
+            <div className={styles.mobileHeader}>
+              <span className={styles.mobileTitle}>AI Assistant</span>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsChatOpen(false)}
               >
-                <X className="h-4 w-4" />
+                <X />
               </Button>
             </div>
-            <div className="flex-1 overflow-hidden">{chatPanel}</div>
+            <div className={styles.chatContent}>{chatPanel}</div>
           </div>
         )}
       </div>
@@ -118,7 +119,7 @@ export function ResponsiveSearch({ className }: ResponsiveSearchProps) {
   }
 
   return (
-    <div className={cn("h-full", className)}>
+    <div className={cn(styles.desktopContainer, className)}>
       <SplitLayout
         leftPanel={searchPanel}
         rightPanel={chatPanel}

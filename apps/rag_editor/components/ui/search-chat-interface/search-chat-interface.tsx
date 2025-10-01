@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dictionaryClient } from "@/lib/services/dictionary-client";
+import { getModels } from "@/lib/api";
+import styles from "./search-chat-interface.module.scss";
 
 interface SearchChatInterfaceProps {
   searchQuery?: string;
@@ -256,8 +258,24 @@ export function SearchChatInterface({
   const { refinements: suggestedRefinements, isLoading: isLoadingRefinements } =
     useSuggestedRefinements(searchQuery, searchResults);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("gpt-4");
+  const [selectedModel, setSelectedModel] = useState<string>("");
   const [welcomeInitialized, setWelcomeInitialized] = useState(false);
+
+  // Load available models from Ollama
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await getModels();
+        if (response.models.length > 0 && !selectedModel) {
+          setSelectedModel(response.models[0].name);
+        }
+      } catch (err) {
+        console.error("Failed to load models:", err);
+      }
+    };
+
+    fetchModels();
+  }, []);
 
   useEffect(() => {
     if (searchQuery && !welcomeInitialized && searchResults.length > 0) {
@@ -323,18 +341,14 @@ export function SearchChatInterface({
   };
 
   return (
-    <div className="h-full flex flex-col bg-card">
+    <div className={styles.container}>
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-3">
-          <Title className="text-lg">AI Assistant</Title>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs bg-transparent"
-            >
-              <ChevronDown className="h-3 w-3 ml-1" />
+      <div className={styles.header}>
+        <div className={styles.headerTop}>
+          <Title className={styles.title}>AI Assistant</Title>
+          <div className={styles.modelGroup}>
+            <Button variant="outline" size="sm" className={styles.modelButton}>
+              <ChevronDown className={styles.modelIcon} />
               {selectedModel.toUpperCase()}
             </Button>
           </div>
@@ -342,9 +356,9 @@ export function SearchChatInterface({
 
         {/* Context Status */}
         {selectedContext.length > 0 && (
-          <div className="flex items-center gap-2 text-sm">
-            <div className="flex items-center gap-1 text-workspace-accent">
-              <FileText className="h-3 w-3" />
+          <div className={styles.contextInfo}>
+            <div className={styles.contextBadge}>
+              <FileText className={styles.contextIcon} />
               <span>{selectedContext.length} documents as context</span>
             </div>
           </div>
@@ -352,54 +366,47 @@ export function SearchChatInterface({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className={styles.messages}>
         {messages.map((message) => (
           <div
             key={message.id}
             className={cn(
-              "flex gap-3",
-              message.role === "user" ? "justify-end" : "justify-start"
+              styles.messageRow,
+              message.role === "user" && styles.messageRowUser
             )}
           >
             {message.role === "assistant" && (
-              <div className="w-8 h-8 bg-workspace-accent rounded-full flex items-center justify-center flex-shrink-0">
-                <Sparkles className="h-4 w-4 text-workspace-accent-foreground" />
+              <div className={styles.avatar}>
+                <Sparkles className={styles.avatarIcon} />
               </div>
             )}
 
             <div
               className={cn(
-                "max-w-[80%] space-y-2",
-                message.role === "user" ? "items-end" : "items-start"
+                styles.messageContent,
+                message.role === "user" && styles.messageContentUser
               )}
             >
               <div
                 className={cn(
-                  "px-4 py-3 rounded-lg",
-                  message.role === "user"
-                    ? "bg-workspace-accent text-workspace-accent-foreground ml-auto"
-                    : "bg-muted"
+                  styles.bubble,
+                  message.role === "user" && styles.bubbleUser
                 )}
               >
-                <Body className="text-sm leading-relaxed">
-                  {message.content}
-                </Body>
+                <Body className={styles.messageText}>{message.content}</Body>
               </div>
 
               {message.sources && message.sources.length > 0 && (
-                <div className="flex flex-wrap gap-1">
+                <div className={styles.sourceList}>
                   {message.sources.map((source, idx) => (
-                    <Caption
-                      key={idx}
-                      className="px-2 py-1 bg-accent rounded text-xs"
-                    >
+                    <Caption key={idx} className={styles.sourceBadge}>
                       {source}
                     </Caption>
                   ))}
                 </div>
               )}
 
-              <Caption className="text-xs text-muted-foreground">
+              <Caption className={styles.timestamp}>
                 {message.timestamp.toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -410,21 +417,15 @@ export function SearchChatInterface({
         ))}
 
         {isLoading && (
-          <div className="flex gap-3">
-            <div className="w-8 h-8 bg-workspace-accent rounded-full flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-workspace-accent-foreground animate-pulse" />
+          <div className={styles.typingRow}>
+            <div className={cn(styles.avatar, styles.avatarPulse)}>
+              <Sparkles className={styles.avatarIcon} />
             </div>
-            <div className="bg-muted px-4 py-3 rounded-lg">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                <div
-                  className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                  style={{ animationDelay: "0.1s" }}
-                />
-                <div
-                  className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                  style={{ animationDelay: "0.2s" }}
-                />
+            <div className={styles.typingBubble}>
+              <div className={styles.typingDots}>
+                <div className={styles.dot} />
+                <div className={styles.dot} />
+                <div className={styles.dot} />
               </div>
             </div>
           </div>
@@ -433,27 +434,19 @@ export function SearchChatInterface({
 
       {/* Suggested Refinements */}
       {messages.length <= 1 && (
-        <div className="px-4 py-2 border-t border-border">
-          <Caption className="text-xs text-muted-foreground mb-2">
+        <div className={styles.refinementSection}>
+          <Caption className={styles.refinementLabel}>
             Suggested questions:
           </Caption>
-          <div className="flex flex-wrap gap-2">
+          <div className={styles.refinementList}>
             {isLoadingRefinements ? (
               // Loading state
-              <>
-                <div className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground">
-                  <div className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce" />
-                  <div
-                    className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  />
-                  <div
-                    className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  />
-                  <span>Generating suggestions...</span>
-                </div>
-              </>
+              <div className={styles.refinementSkeleton}>
+                <div className={styles.refinementDot} />
+                <div className={styles.refinementDot} />
+                <div className={styles.refinementDot} />
+                <span>Generating suggestions...</span>
+              </div>
             ) : (
               // Render suggestions
               suggestedRefinements.map((refinement, idx) => (
@@ -461,7 +454,7 @@ export function SearchChatInterface({
                   key={idx}
                   variant="outline"
                   size="sm"
-                  className="text-xs h-7 bg-transparent"
+                  className={styles.refinementButton}
                   onClick={() => handleSuggestedRefinement(refinement)}
                 >
                   {refinement}
@@ -473,30 +466,30 @@ export function SearchChatInterface({
       )}
 
       {/* Input */}
-      <div className="p-4 border-t border-border">
-        <div className="relative">
+      <div className={styles.inputSection}>
+        <div className={styles.inputWrapper}>
           <textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Ask questions about your search results or request refinements..."
-            className="w-full pl-4 pr-20 py-3 bg-input border border-border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px] max-h-32"
+            className={styles.inputField}
             rows={1}
           />
-          <div className="absolute right-2 top-2 flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <Paperclip className="h-4 w-4" />
+          <div className={styles.inputActions}>
+            <Button variant="ghost" size="sm" className={styles.actionButton}>
+              <Paperclip className={styles.actionIcon} />
             </Button>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <Mic className="h-4 w-4" />
+            <Button variant="ghost" size="sm" className={styles.actionButton}>
+              <Mic className={styles.actionIcon} />
             </Button>
             <Button
               size="sm"
-              className="h-8 w-8 p-0"
+              className={styles.actionButton}
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isLoading}
             >
-              <Send className="h-4 w-4" />
+              <Send className={styles.actionIcon} />
             </Button>
           </div>
         </div>

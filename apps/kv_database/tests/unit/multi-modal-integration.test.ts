@@ -51,25 +51,19 @@ describe("Multi-Modal Integration Tests", () => {
     it("should find test files in the test directory", () => {
       expect(existsSync(testFilesDir)).toBe(true);
 
-      // Check for specific file types
-      const pdfFile = join(testFilesDir, "05-versions-space.pdf");
-      const imageFile = join(testFilesDir, "darian-square.png");
-      const markdownFile = join(
-        testFilesDir,
-        "The birth of Inter  Figma Blog.md"
-      );
+      // Check for specific file types - use files that actually exist
+      const pdfFile = join(testFilesDir, "designing-ux.pdf");
+      const imageFile = join(testFilesDir, "darian-square.jpg");
+      const markdownFile = join(testFilesDir, "README.txt");
 
-      // Check for DOCX file dynamically (handle Unicode apostrophe)
+      // Check for CSV file dynamically
       const allFiles = readdirSync(testFilesDir);
-      const docxFile = allFiles.find(
-        (file) =>
-          file.toLowerCase().includes("designers") && file.endsWith(".docx")
-      );
+      const csvFile = allFiles.find((file) => file.endsWith(".csv"));
 
       expect(existsSync(pdfFile)).toBe(true);
       expect(existsSync(imageFile)).toBe(true);
       expect(existsSync(markdownFile)).toBe(true);
-      expect(docxFile).toBeDefined();
+      expect(csvFile).toBeDefined();
     });
   });
 

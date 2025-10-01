@@ -25,6 +25,7 @@ import { useChatState } from "@/hooks/use-chat-state";
 import { searchService } from "@/lib/services/search-service";
 import { generateUniqueId } from "@/lib/utils";
 import type { SearchResult, EnhancedMessage } from "@/lib/types";
+import { getModels, type OllamaModel } from "@/lib/api";
 
 // Use our standardized types
 type Message = EnhancedMessage;
@@ -33,42 +34,6 @@ interface ChatInterfaceProps {
   className?: string;
   onSendMessage?: (message: string, attachments?: File[]) => void;
 }
-
-// TODO: Replace with actual sources from backend
-const sourcesData: Source[] = [];
-
-// Available AI models for chat
-const models: Array<{
-  id: string;
-  name: string;
-  provider: string;
-  description?: string;
-}> = [
-  {
-    id: "llama3.1",
-    name: "Llama 3.1",
-    provider: "Meta",
-    description: "Latest Llama model with excellent reasoning capabilities",
-  },
-  {
-    id: "gpt-4",
-    name: "GPT-4",
-    provider: "OpenAI",
-    description: "Advanced GPT model for complex reasoning tasks",
-  },
-  {
-    id: "claude-3",
-    name: "Claude 3",
-    provider: "Anthropic",
-    description: "Safety-focused model with strong analysis capabilities",
-  },
-  {
-    id: "gemini-pro",
-    name: "Gemini Pro",
-    provider: "Google",
-    description: "Google's multimodal model for diverse tasks",
-  },
-];
 
 // Quick action prompts for common chat scenarios
 const quickActions: string[] = [
@@ -90,24 +55,52 @@ export function ChatInterface({
   const {
     sessions,
     currentSession,
-    messages,
-    isLoading,
+    isLoading: isSaving,
     error,
     loadChatHistory,
     saveCurrentChat,
-    addMessage,
     clearError,
   } = useChatState();
 
   const [input, setInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState<{
-    id: string;
-    name: string;
-    provider: string;
-  } | null>({ id: "llama3.1", name: "Llama 3.1", provider: "Meta" });
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [models, setModels] = useState<OllamaModel[]>([]);
+  const [loadingModels, setLoadingModels] = useState(true);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string>("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load available models from Ollama
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        setLoadingModels(true);
+        setModelsError(null);
+        const response = await getModels();
+
+        if (response.error) {
+          setModelsError(response.error);
+        } else {
+          setModels(response.models);
+          // Set first model as default if available
+          if (response.models.length > 0 && !selectedModel) {
+            setSelectedModel(response.models[0].name);
+          }
+        }
+      } catch (err) {
+        setModelsError(
+          err instanceof Error ? err.message : "Failed to load models"
+        );
+      } finally {
+        setLoadingModels(false);
+      }
+    };
+
+    fetchModels();
+  }, []);
 
   // Load chat history on mount
   useEffect(() => {
@@ -133,15 +126,16 @@ export function ChatInterface({
     };
 
     // Add user message to state
-    addMessage(userMessage);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    setIsLoading(true);
 
     try {
       // Use our enhanced chat service with dictionary integration
       const response = await searchService.enhancedChat(input, {
         useDictionary: true,
         enhanceWithDictionary: true,
-        model: selectedModel?.id || "llama3.1",
+        model: selectedModel || models[0]?.name || "llama3.1",
       });
 
       const assistantMessage: Message = {
@@ -150,15 +144,17 @@ export function ChatInterface({
         content: response.response,
         timestamp: new Date(),
         entities: response.entities,
-        searchResults: response.searchResults,
+        ...(response.searchResults && response.searchResults.length > 0
+          ? { searchResults: response.searchResults }
+          : {}),
       };
 
-      addMessage(assistantMessage);
+      setMessages((prev) => [...prev, assistantMessage]);
 
       // Save conversation to history
       await saveCurrentChat(
         [...messages, userMessage, assistantMessage],
-        selectedModel?.id
+        selectedModel
       );
     } catch (error) {
       console.error("Chat error:", error);
@@ -172,7 +168,9 @@ export function ChatInterface({
         timestamp: new Date(),
       };
 
-      addMessage(errorMessage);
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
 
     onSendMessage?.(input, attachments);
@@ -204,27 +202,39 @@ export function ChatInterface({
             <div className={styles.botInfo}>
               <Title className={styles.botTitle}>AI Assistant</Title>
               <Caption className={styles.botSubtitle}>
-                Powered by {selectedModel?.name || "No model selected"}
+                {loadingModels
+                  ? "Loading models..."
+                  : modelsError
+                  ? "Model loading failed"
+                  : selectedModel
+                  ? `Powered by ${selectedModel}`
+                  : "No model selected"}
               </Caption>
             </div>
           </div>
           <div className={styles.headerRight}>
-            {models.length > 0 && (
+            {loadingModels ? (
+              <Loader2 className={cn(styles.iconMd, styles.spinner)} />
+            ) : modelsError ? (
+              <Caption className={cn(styles.destructiveText, styles.textSm)}>
+                ⚠️ {modelsError}
+              </Caption>
+            ) : models.length > 0 ? (
               <select
-                value={selectedModel?.id || ""}
-                onChange={(e) =>
-                  setSelectedModel(
-                    models.find((m) => m.id === e.target.value) || models[0]
-                  )
-                }
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
                 className={styles.modelSelector}
               >
                 {models.map((model) => (
-                  <option key={model.id} value={model.id}>
+                  <option key={model.name} value={model.name}>
                     {model.name}
                   </option>
                 ))}
               </select>
+            ) : (
+              <Caption className={cn(styles.mutedText, styles.textSm)}>
+                No models available
+              </Caption>
             )}
             <Button variant="ghost" size="sm">
               <MoreHorizontal className={styles.iconMd} />
@@ -235,21 +245,22 @@ export function ChatInterface({
 
       {/* Messages */}
       <div className={styles.messagesContainer}>
-        {messages.map((message) => (
+        {messages.map((message: Message) => (
           <div
             key={message.id}
             className={cn(
               styles.message,
-              message.type === "user" && styles.user
+              message.type === "user" && styles.messageUser,
+              message.type === "assistant" && styles.messageAssistant,
+              message.type === "error" && styles.messageError
             )}
           >
             <div
               className={cn(
                 styles.messageAvatar,
-                message.type === "user" && styles.user,
-                message.type === "error" &&
-                  "bg-destructive text-destructive-foreground",
-                message.type === "assistant" && styles.assistant
+                message.type === "user" && styles.messageAvatarUser,
+                message.type === "assistant" && styles.messageAvatarAssistant,
+                message.type === "error" && styles.messageAvatarError
               )}
             >
               {message.type === "user" ? (
@@ -260,17 +271,16 @@ export function ChatInterface({
                 <Bot className={styles.messageIcon} />
               )}
             </div>
-            <div className={styles.messageContent}>
+            <div className={styles.messageBody}>
               <div
                 className={cn(
-                  styles.messageContent,
-                  message.type === "user" && styles.user,
-                  message.type === "error" &&
-                    "bg-destructive/10 border border-destructive/20 text-destructive",
-                  message.type === "assistant" && styles.assistant
+                  styles.messageBubble,
+                  message.type === "user" && styles.messageBubbleUser,
+                  message.type === "assistant" && styles.messageBubbleAssistant,
+                  message.type === "error" && styles.messageBubbleError
                 )}
               >
-                <Body className="whitespace-pre-wrap">{message.content}</Body>
+                <Body className={styles.preWrap}>{message.content}</Body>
               </div>
 
               {/* Search Results */}
@@ -278,19 +288,26 @@ export function ChatInterface({
                 <div className={styles.messageSources}>
                   <Micro className={styles.sourcesHeader}>Sources</Micro>
                   <div className={styles.sourcesGrid}>
-                    {message.searchResults.slice(0, 3).map((result) => (
-                      <div key={result.id} className={styles.sourceCard}>
-                        <div className={styles.sourceHeader}>
-                          <span className={styles.sourceTitle}>
-                            {result.title}
-                          </span>
-                          <Badge variant="secondary" className={styles.textXs}>
-                            {Math.round(result.confidenceScore * 100)}%
-                          </Badge>
+                    {message.searchResults
+                      .slice(0, 3)
+                      .map((result: SearchResult) => (
+                        <div key={result.id} className={styles.sourceCard}>
+                          <div className={styles.sourceHeader}>
+                            <span className={styles.sourceTitle}>
+                              {result.title}
+                            </span>
+                            <Badge
+                              variant="secondary"
+                              className={styles.textXs}
+                            >
+                              {Math.round((result.confidenceScore ?? 0) * 100)}%
+                            </Badge>
+                          </div>
+                          <Body className={styles.textSm}>
+                            {result.summary}
+                          </Body>
                         </div>
-                        <Body className={styles.textSm}>{result.summary}</Body>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               )}
@@ -337,19 +354,19 @@ export function ChatInterface({
         ))}
 
         {isLoading && (
-          <div className={styles.message}>
-            <div className={cn(styles.messageAvatar, styles.assistant)}>
+          <div className={cn(styles.message, styles.messageAssistant)}>
+            <div className={cn(styles.messageAvatar, styles.messageAvatarAssistant)}>
               <Bot className={styles.messageIcon} />
             </div>
-            <div className={styles.messageContent}>
-              <div className={cn(styles.messageContent, styles.assistant)}>
-                <div className={styles.flexCenter + " " + styles.gap2}>
+            <div className={styles.messageBody}>
+              <div className={cn(styles.messageBubble, styles.messageBubbleAssistant)}>
+                <div className={styles.loadingState}>
                   <div className={styles.loadingDots}>
                     <div className={styles.loadingDot} />
                     <div className={styles.loadingDot} />
                     <div className={styles.loadingDot} />
                   </div>
-                  <Caption>Thinking...</Caption>
+                  <Caption className={styles.mutedText}>Thinking...</Caption>
                 </div>
               </div>
             </div>
@@ -362,11 +379,11 @@ export function ChatInterface({
       {/* Quick Actions */}
       {messages.length === 1 && quickActions.length > 0 && (
         <div className={styles.quickActions}>
-          <div className={styles.flexCenter + " gap-2 mb-2"}>
+          <div className={styles.quickActionsHeader}>
             <Sparkles className={styles.iconMd} />
-            <Micro className="text-muted-foreground">Quick Actions</Micro>
+            <Micro className={styles.mutedText}>Quick Actions</Micro>
           </div>
-          <div className={styles.flexWrap + " gap-2"}>
+          <div className={styles.quickActionsList}>
             {quickActions.map((action, index) => (
               <Button
                 key={index}
@@ -386,34 +403,16 @@ export function ChatInterface({
       <div className={styles.inputArea}>
         {/* Attachments */}
         {attachments.length > 0 && (
-          <div
-            className={styles.mb3 + " " + styles.flexWrap + " " + styles.gap2}
-          >
+          <div className={styles.attachmentList}>
             {attachments.map((file, index) => (
-              <div
-                key={index}
-                className={
-                  styles.flexCenter +
-                  " " +
-                  styles.gap2 +
-                  " " +
-                  styles.px3 +
-                  " " +
-                  styles.py1 +
-                  " bg-accent rounded-md"
-                }
-              >
-                <span
-                  className={
-                    styles.textSm + " " + styles.truncate + " " + styles.maxW32
-                  }
-                >
+              <div key={index} className={styles.attachmentChip}>
+                <span className={styles.attachmentName}>
                   {file.name}
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={styles.h5 + " " + styles.w5 + " p-0"}
+                  className={styles.removeAttachmentButton}
                   onClick={() => removeAttachment(index)}
                 >
                   ×
@@ -442,12 +441,9 @@ export function ChatInterface({
               variant="ghost"
               size="sm"
               className={
-                styles.absolute +
-                " " +
-                styles.right2 +
-                " " +
-                styles.bottom2 +
-                " " +
+                styles.absolute,
+                styles.right2,
+                styles.bottom2,
                 styles.buttonIcon
               }
               onClick={() => fileInputRef.current?.click()}
@@ -468,7 +464,7 @@ export function ChatInterface({
           ref={fileInputRef}
           type="file"
           multiple
-          className="hidden"
+          className={styles.hiddenInput}
           onChange={handleFileSelect}
           accept=".pdf,.doc,.docx,.txt,.md"
         />

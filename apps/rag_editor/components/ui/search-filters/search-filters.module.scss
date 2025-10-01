@@ -1,0 +1,146 @@
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.toggleButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+}
+
+.toggleBadge {
+  margin-left: 0.25rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  font-size: 0.75rem;
+}
+
+.clearButton {
+  gap: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.activeFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.activeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.badgeRemove {
+  margin-left: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--muted);
+  }
+}
+
+.expandedPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  animation: fadeIn 0.2s ease both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sectionLabel {
+  color: var(--muted-foreground);
+  margin-bottom: 0.25rem;
+}
+
+.optionGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.contentButton {
+  gap: 0.5rem;
+  background-color: transparent;
+}
+
+.optionBadge {
+  margin-left: 0.25rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  font-size: 0.75rem;
+}
+
+.slider {
+  width: 100%;
+  height: 0.5rem;
+  background-color: var(--muted);
+  border-radius: 9999px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background-color: var(--primary);
+  border: 2px solid var(--background);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+}
+
+.slider::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background-color: var(--primary);
+  border: 2px solid var(--background);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+}
+
+.sliderMarks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-top: 0.25rem;
+}
+
+.iconSmall {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.iconMd {
+  width: 1rem;
+  height: 1rem;
+}

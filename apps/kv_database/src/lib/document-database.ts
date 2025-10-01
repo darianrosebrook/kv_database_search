@@ -18,7 +18,7 @@ import { WorkspaceManager } from "./workspace-management";
  * Main database facade that coordinates all database operations
  * @darianrosebrook
  */
-export class DocumentDatabase {
+export class DatabaseFacade {
   protected pool: Pool;
   protected readonly tableName: string;
   private schemaManager: DatabaseSchemaManager;
@@ -301,9 +301,9 @@ export class DocumentDatabase {
 
 /**
  * Backward compatibility class for Obsidian-specific usage
- * @deprecated Use DocumentDatabase instead
+ * @deprecated Use DatabaseFacade instead
  */
-export class ObsidianDatabase extends DocumentDatabase {
+export class ObsidianDatabase extends DatabaseFacade {
   constructor(connectionString: string) {
     super(connectionString, "obsidian_chunks");
   }

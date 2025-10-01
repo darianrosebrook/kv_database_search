@@ -13,6 +13,7 @@ import {
   formatRelativeTime,
   type RecentDocument,
 } from "@/lib/api";
+import styles from "./page.module.scss";
 
 export default function MobilePage() {
   const [isMobile, setIsMobile] = useState(false);
@@ -63,10 +64,10 @@ export default function MobilePage() {
 
   if (!isMobile) {
     return (
-      <div className="h-screen flex items-center justify-center p-8">
-        <div className="text-center space-y-4">
-          <Display className="text-2xl">Mobile View</Display>
-          <BodyLarge className="text-muted-foreground">
+      <div className={styles.desktopNotice}>
+        <div className={styles.desktopContent}>
+          <Display className={styles.desktopTitle}>Mobile View</Display>
+          <BodyLarge className={styles.desktopDescription}>
             Resize your browser to mobile width to see the mobile interface.
           </BodyLarge>
         </div>
@@ -75,91 +76,89 @@ export default function MobilePage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className={styles.mobilePage}>
       {/* Header */}
-      <header className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-workspace-accent rounded-md" />
-            <span className="text-lg font-medium">Obsidian</span>
+      <header className={styles.header}>
+        <div className={styles.headerTop}>
+          <div className={styles.brand}>
+            <div className={styles.brandIcon} />
+            <span className={styles.brandName}>Obsidian</span>
           </div>
           <Button variant="ghost" size="sm">
-            <Plus className="h-4 w-4" />
+            <Plus />
           </Button>
         </div>
         <SearchInput placeholder="Search..." showShortcut={false} />
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 space-y-6">
+      <main className={styles.content}>
         {/* Welcome */}
-        <div className="text-center space-y-2">
-          <Display className="text-2xl">Welcome Back</Display>
-          <BodyLarge className="text-muted-foreground">
+        <div className={styles.welcome}>
+          <Display className={styles.welcomeTitle}>Welcome Back</Display>
+          <BodyLarge className={styles.welcomeSubtitle}>
             Continue where you left off
           </BodyLarge>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className={styles.quickActions}>
           <Button
             variant="outline"
-            className="h-20 flex flex-col gap-2 bg-transparent"
+            className={styles.quickActionButton}
           >
-            <Plus className="h-5 w-5" />
-            <span className="text-sm">New Doc</span>
+            <Plus className={styles.quickActionIcon} />
+            <span className={styles.quickActionLabel}>New Doc</span>
           </Button>
           <Button
             variant="outline"
-            className="h-20 flex flex-col gap-2 bg-transparent"
+            className={styles.quickActionButton}
           >
-            <TrendingUp className="h-5 w-5" />
-            <span className="text-sm">Trending</span>
+            <TrendingUp className={styles.quickActionIcon} />
+            <span className={styles.quickActionLabel}>Trending</span>
           </Button>
         </div>
 
         {/* Recent Documents */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
+        <div className={styles.recentSection}>
+          <div className={styles.recentHeader}>
+            <Clock className={styles.recentIcon} />
             <Caption>Recent</Caption>
           </div>
 
           {isLoading && (
-            <div className="space-y-3">
+            <div className={styles.loadingList}>
               {[...Array(2)].map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className="h-16 bg-muted rounded-lg"></div>
-                </div>
+                <div key={index} className={styles.loadingItem} />
               ))}
             </div>
           )}
 
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <AlertCircle className="h-4 w-4 text-destructive" />
-              <Caption className="text-destructive text-sm">
+            <div className={styles.errorBox}>
+              <AlertCircle className={styles.errorIcon} />
+              <Caption className={styles.errorText}>
                 Failed to load documents
               </Caption>
             </div>
           )}
 
           {!isLoading && !error && recentDocuments.length === 0 && (
-            <div className="text-center py-6 text-muted-foreground">
-              <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <Caption className="text-sm">No recent documents</Caption>
+            <div className={styles.emptyState}>
+              <FileText className={styles.emptyIcon} />
+              <Caption className={styles.emptyLabel}>No recent documents</Caption>
             </div>
           )}
 
           {!isLoading && !error && recentDocuments.length > 0 && (
-            <div className="space-y-3">
+            <div className={styles.loadingList}>
               {recentDocuments.map((doc, index) => (
                 <WorkspaceCard
                   key={doc.id || index}
                   title={doc.title}
                   description={doc.description}
                   lastAccessed={formatRelativeTime(doc.lastAccessed)}
-                  className="p-3"
+                  className={styles.cardCompact}
                   onClick={() => handleDocumentClick(doc.id)}
                 />
               ))}

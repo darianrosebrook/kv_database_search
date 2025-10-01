@@ -1,0 +1,247 @@
+.splash {
+  min-height: 100vh;
+  background-color: var(--background);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+}
+
+.headerInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brandIcon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.75rem;
+  background-color: var(--workspace-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brandLogo {
+  width: 1rem;
+  height: 1rem;
+  color: var(--workspace-accent-foreground);
+}
+
+.brandName {
+  font-family: var(--font-sans, inherit);
+  font-size: 1.5rem;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.mainContent {
+  width: 100%;
+  max-width: 42rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.hero {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.heroTitle {
+  text-wrap: balance;
+}
+
+.heroDescription {
+  color: var(--muted-foreground);
+  margin: 0 auto;
+  max-width: 32rem;
+}
+
+.searchSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.searchInput {
+  font-size: 1.125rem;
+  padding-block: 1rem;
+}
+
+.divider {
+  height: 1px;
+  width: 100%;
+  background-color: var(--border);
+}
+
+.ctaSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ctaActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.createButton {
+  background-color: var(--workspace-accent);
+  color: var(--workspace-accent-foreground);
+  font-weight: 500;
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  gap: 0.75rem;
+
+  &:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--workspace-accent) 90%,
+      transparent
+    );
+    transform: scale(1.05);
+  }
+}
+
+.ctaButtonIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.recentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.recentHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+}
+
+.recentIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.recentList {
+  display: grid;
+  gap: 1rem;
+}
+
+.loadingList {
+  display: grid;
+  gap: 1rem;
+}
+
+.skeletonCard {
+  height: 5rem;
+  border-radius: 0.75rem;
+  background-color: var(--muted);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.errorBox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background-color: color-mix(
+    in srgb,
+    var(--destructive) 10%,
+    transparent
+  );
+  border: 1px solid color-mix(
+    in srgb,
+    var(--destructive) 20%,
+    transparent
+  );
+}
+
+.errorIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--destructive);
+}
+
+.errorTitle {
+  color: var(--destructive);
+  font-weight: 600;
+}
+
+.errorMessage {
+  color: color-mix(
+    in srgb,
+    var(--destructive) 80%,
+    transparent
+  );
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem 0;
+  color: var(--muted-foreground);
+}
+
+.emptyIcon {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 1rem;
+  opacity: 0.5;
+}
+
+.emptyTitle {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.emptySubtitle {
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 2.5rem 1.25rem 3rem;
+  }
+
+  .createButton {
+    width: 100%;
+  }
+}

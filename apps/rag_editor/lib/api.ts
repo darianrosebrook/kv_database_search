@@ -500,3 +500,152 @@ export async function getChatContext(
     return [];
   }
 }
+
+/**
+ * Model information from Ollama
+ */
+export interface OllamaModel {
+  name: string;
+  size: number;
+  modified_at: string;
+  digest?: string;
+  details?: {
+    format?: string;
+    family?: string;
+    parameter_size?: string;
+    quantization_level?: string;
+  };
+}
+
+export interface ModelsResponse {
+  models: OllamaModel[];
+  total: number;
+  error?: string;
+}
+
+/**
+ * Get available Ollama models from the backend
+ */
+export async function getModels(): Promise<ModelsResponse> {
+  try {
+    // Ensure API_BASE_URL is initialized
+    if (!API_BASE_URL) {
+      API_BASE_URL = await getApiBaseUrl();
+    }
+
+    const response = await fetch(`${API_BASE_URL}/models`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch models:", error);
+    return {
+      models: [],
+      total: 0,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Health check response
+ */
+export interface HealthResponse {
+  status: string;
+  version: string;
+  services: {
+    database: boolean;
+    search: boolean;
+    embeddings: boolean;
+  };
+  timestamp: string;
+}
+
+/**
+ * Check backend server health
+ */
+export async function getHealth(): Promise<HealthResponse | null> {
+  try {
+    // Ensure API_BASE_URL is initialized
+    if (!API_BASE_URL) {
+      API_BASE_URL = await getApiBaseUrl();
+    }
+
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch health:", error);
+    return null;
+  }
+}
+
+/**
+ * Statistics response
+ */
+export interface StatsResponse {
+  totalDocuments: number;
+  totalChunks: number;
+  totalEmbeddings: number;
+  indexSize: number;
+  lastUpdated: string;
+  performance?: {
+    avgQueryTime: number;
+    totalQueries: number;
+    cacheHitRate: number;
+  };
+  storage?: {
+    totalSize: number;
+    databaseSize: number;
+    indexSize: number;
+  };
+  error?: string;
+}
+
+/**
+ * Get backend statistics
+ */
+export async function getStats(): Promise<StatsResponse | null> {
+  try {
+    // Ensure API_BASE_URL is initialized
+    if (!API_BASE_URL) {
+      API_BASE_URL = await getApiBaseUrl();
+    }
+
+    const response = await fetch(`${API_BASE_URL}/stats`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch stats:", error);
+    return null;
+  }
+}

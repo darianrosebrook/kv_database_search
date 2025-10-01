@@ -14,6 +14,7 @@ import {
   formatRelativeTime,
   type RecentDocument,
 } from "@/lib/api";
+import styles from "./page.module.scss";
 
 export default function SplashScreen() {
   const [isMobile, setIsMobile] = useState(false);
@@ -90,106 +91,104 @@ export default function SplashScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={styles.splash}>
       {/* Header */}
-      <header className="border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-workspace-accent rounded-lg flex items-center justify-center">
-              <FileText className="h-4 w-4 text-workspace-accent-foreground" />
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <div className={styles.brand}>
+            <div className={styles.brandIcon}>
+              <FileText className={styles.brandLogo} />
             </div>
-            <span className="text-title font-medium font-sans">
-              {"Knowledge Vector"}
-            </span>
+            <span className={styles.brandName}>{"Knowledge Vector"}</span>
           </div>
           <Button variant="ghost" size="sm" onClick={handleNewWorkspace}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus />
             New Workspace
           </Button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-        <div className="w-full max-w-2xl space-y-12">
+      <main className={styles.main}>
+        <div className={styles.mainContent}>
           {/* Hero Section */}
-          <div className="text-center space-y-6">
-            <Display className="text-balance">
+          <div className={styles.hero}>
+            <Display className={styles.heroTitle}>
               Knowledge Without
               <br />
               Limitation
             </Display>
-            <BodyLarge className="text-muted-foreground max-w-lg mx-auto">
+            <BodyLarge className={styles.heroDescription}>
               Transform your thoughts into interconnected knowledge with
               AI-powered insights and semantic search.
             </BodyLarge>
           </div>
 
           {/* Search */}
-          <div className="space-y-4">
+          <div className={styles.searchSection}>
             <SearchInput
               placeholder="Search your knowledge base..."
-              className="text-lg py-4"
+              className={styles.searchInput}
               onKeyDown={handleSearchKeyDown}
             />
-            <div className="h-px bg-border" />
+            <div className={styles.divider} />
           </div>
 
-          <div className="space-y-6">
-            <div className="flex items-center justify-center">
+          <div className={styles.ctaSection}>
+            <div className={styles.ctaActions}>
               <Button
                 onClick={handleNewDocument}
                 size="lg"
-                className="bg-workspace-accent hover:bg-workspace-accent/90 text-workspace-accent-foreground font-medium px-8 py-3 rounded-xl transition-all duration-200 hover:scale-105"
+                className={styles.createButton}
               >
-                <PenTool className="h-5 w-5 mr-3" />
+                <PenTool className={styles.ctaButtonIcon} />
                 Create New Document
               </Button>
             </div>
-            <div className="h-px bg-border" />
+            <div className={styles.divider} />
           </div>
 
           {/* Recent Documents */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4" />
+          <div className={styles.recentSection}>
+            <div className={styles.recentHeader}>
+              <Clock className={styles.recentIcon} />
               <Caption>Recently Accessed</Caption>
             </div>
 
             {isLoading && (
-              <div className="grid gap-4">
+              <div className={styles.loadingList}>
                 {[...Array(3)].map((_, index) => (
-                  <div key={index} className="animate-pulse">
-                    <div className="h-20 bg-muted rounded-lg"></div>
-                  </div>
+                  <div key={index} className={styles.skeletonCard} />
                 ))}
               </div>
             )}
 
             {error && (
-              <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-destructive" />
+              <div className={styles.errorBox}>
+                <AlertCircle className={styles.errorIcon} />
                 <div>
-                  <Caption className="text-destructive font-medium">
+                  <Caption className={styles.errorTitle}>
                     Failed to load recent documents
                   </Caption>
-                  <Caption className="text-destructive/80">{error}</Caption>
+                  <Caption className={styles.errorMessage}>{error}</Caption>
                 </div>
               </div>
             )}
 
             {!isLoading && !error && recentDocuments.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <Caption>No recent documents found</Caption>
-                <Caption className="text-sm">
+              <div className={styles.emptyState}>
+                <FileText className={styles.emptyIcon} />
+                <Caption className={styles.emptyTitle}>
+                  No recent documents found
+                </Caption>
+                <Caption className={styles.emptySubtitle}>
                   Start by creating or importing some documents
                 </Caption>
               </div>
             )}
 
             {!isLoading && !error && recentDocuments.length > 0 && (
-              <div className="grid gap-4">
+              <div className={styles.recentList}>
                 {recentDocuments.map((doc, index) => (
                   <WorkspaceCard
                     key={doc.id || index}

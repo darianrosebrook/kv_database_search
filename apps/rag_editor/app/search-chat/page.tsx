@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Title, Caption } from "@/components/ui/typography";
 import { searchService } from "@/lib/services/search-service";
 import { SearchResult } from "@/lib/types";
+import styles from "./page.module.scss";
 
 // Generate refinement options based on search query
 const getRefinementOptions = (query: string): string[] => {
@@ -96,13 +97,13 @@ export default function SearchChatPage() {
   const getFileIcon = (type: string) => {
     switch (type) {
       case "pdf":
-        return <FileText className="w-4 h-4" />;
+        return <FileText className={styles.fileIcon} />;
       case "csv":
-        return <FileSpreadsheet className="w-4 h-4" />;
+        return <FileSpreadsheet className={styles.fileIcon} />;
       case "image":
-        return <ImageIcon className="w-4 h-4" />;
+        return <ImageIcon className={styles.fileIcon} />;
       default:
-        return <File className="w-4 h-4" />;
+        return <File className={styles.fileIcon} />;
     }
   };
 
@@ -117,7 +118,7 @@ export default function SearchChatPage() {
       parts.push(
         <mark
           key={text.slice(start, end) + index}
-          className="bg-workspace-accent/30 text-workspace-accent-foreground px-0.5 rounded"
+          className={styles.previewHighlight}
         >
           {text.slice(start, end)}
         </mark>
@@ -148,38 +149,38 @@ export default function SearchChatPage() {
   };
 
   const searchResultsPanel = (
-    <div className="h-full flex flex-col bg-card">
+    <div className={styles.resultsPanel}>
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-4">
-          <Title className="text-lg">Search Results</Title>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-2">
-              <Zap className="w-4 h-4" />
+      <div className={styles.resultsHeader}>
+        <div className={styles.resultsHeaderTop}>
+          <Title className={styles.resultsTitle}>Search Results</Title>
+          <div className={styles.resultsMeta}>
+            <span className={styles.resultsMetaItem}>
+              <Zap className={styles.metaIcon} />
               {searchResults.length} results
             </span>
-            <span className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+            <span className={styles.resultsMetaItem}>
+              <Clock className={styles.metaIcon} />
               {(searchTime / 1000).toFixed(2)}s
             </span>
           </div>
         </div>
-        <div className="font-mono text-sm text-muted-foreground mb-4">
+        <div className={styles.queryPreview}>
           {searchQuery}
         </div>
 
         {/* Refinement Options */}
-        <div className="space-y-2">
-          <Caption className="text-xs uppercase tracking-wider text-muted-foreground">
+        <div className={styles.refinementSection}>
+          <Caption className={styles.refinementLabel}>
             Refine
           </Caption>
-          <div className="flex flex-wrap gap-2">
+          <div className={styles.refinementList}>
             {getRefinementOptions(searchQuery).map((option, idx) => (
               <Button
                 key={idx}
                 variant="outline"
                 size="sm"
-                className="text-xs h-7 bg-transparent"
+                className={styles.refinementButton}
                 onClick={() => handleRefineSearch(option)}
               >
                 {option}
@@ -190,28 +191,26 @@ export default function SearchChatPage() {
       </div>
 
       {/* Results */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className={styles.resultsContent}>
         {isLoading ? (
-          <div className="space-y-3">
+          <div className={styles.loadingList}>
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-muted animate-pulse rounded-lg h-32" />
+              <div key={i} className={styles.loadingItem} />
             ))}
           </div>
         ) : (
           searchResults.map((result) => (
             <div
               key={result.id}
-              className="bg-card border border-border rounded-lg p-4 hover:border-border-hover transition-all group"
+              className={styles.resultCard}
             >
               {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-start gap-3 flex-1">
-                  <div className="text-muted-foreground">
-                    {getFileIcon(result.source.type)}
-                  </div>
-                  <div className="flex-1">
-                    <Title className="text-base mb-1">{result.title}</Title>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
+              <div className={styles.resultHeader}>
+                <div className={styles.resultInfo}>
+                  {getFileIcon(result.source.type)}
+                  <div className={styles.resultDetails}>
+                    <Title className={styles.resultTitle}>{result.title}</Title>
+                    <div className={styles.resultMeta}>
                       <span>{result.source.path}</span>
                       {result.lastUpdated && (
                         <>
@@ -226,12 +225,12 @@ export default function SearchChatPage() {
                 </div>
 
                 {/* Confidence & Context Toggle */}
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <div className="text-xl font-light">
+                <div className={styles.resultConfidence}>
+                  <div className={styles.confidenceBlock}>
+                    <div className={styles.confidenceValue}>
                       {Math.round(result.confidenceScore * 100)}
                     </div>
-                    <Caption className="text-xs uppercase tracking-wider">
+                    <Caption className={styles.confidenceLabel}>
                       Match
                     </Caption>
                   </div>
@@ -242,7 +241,7 @@ export default function SearchChatPage() {
                         : "outline"
                     }
                     size="sm"
-                    className="h-8 w-8 p-0"
+                    className={styles.contextToggle}
                     onClick={() =>
                       selectedContext.includes(result.id)
                         ? handleRemoveContext(result.id)
@@ -250,16 +249,16 @@ export default function SearchChatPage() {
                     }
                   >
                     {selectedContext.includes(result.id) ? (
-                      <Minus className="h-3 w-3" />
+                      <Minus className={styles.contextToggleIcon} />
                     ) : (
-                      <Plus className="h-3 w-3" />
+                      <Plus className={styles.contextToggleIcon} />
                     )}
                   </Button>
                 </div>
               </div>
 
               {/* Preview */}
-              <div className="mb-3 p-3 bg-muted border border-border rounded font-mono text-xs text-muted-foreground leading-relaxed">
+              <div className={styles.preview}>
                 {highlightText(
                   result.text || result.summary,
                   result.highlights || []
@@ -267,23 +266,31 @@ export default function SearchChatPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-between">
+              <div className={styles.resultFooter}>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleOpenDocument(result)}
-                  className="gap-2"
+                  className={styles.openButton}
                 >
                   Open
-                  <ArrowUpRight className="w-3 h-3" />
+                  <ArrowUpRight className={styles.openIcon} />
                 </Button>
 
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <ThumbsUp className="w-3 h-3" />
+                <div className={styles.feedbackGroup}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={styles.feedbackButton}
+                  >
+                    <ThumbsUp className={styles.feedbackIcon} />
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <ThumbsDown className="w-3 h-3" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={styles.feedbackButton}
+                  >
+                    <ThumbsDown className={styles.feedbackIcon} />
                   </Button>
                 </div>
               </div>

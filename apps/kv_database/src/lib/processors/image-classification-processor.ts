@@ -220,9 +220,13 @@ export class ImageClassificationProcessor implements ContentProcessor {
 
       // Step 1: OCR Text Extraction (if enabled)
       if (enableOCR) {
-        ocrResult = await this.ocrProcessor.extractTextFromBuffer(buffer, {
+        const ocrData = await this.ocrProcessor.extractTextFromBuffer(buffer, {
           confidence: options.confidence || 30,
         });
+        ocrResult = {
+          text: ocrData.text,
+          confidence: ocrData.metadata.confidence,
+        };
       }
 
       // Step 2: Scene Classification (if enabled)
@@ -265,9 +269,10 @@ export class ImageClassificationProcessor implements ContentProcessor {
         processingTime: Date.now() - startTime,
         confidence: Math.min(
           Number.isNaN(ocrResult.confidence) ? 0 : ocrResult.confidence,
-          Number.isNaN(sceneDescription?.confidence)
-            ? 1
-            : sceneDescription?.confidence || 1
+          sceneDescription?.confidence != null &&
+            !Number.isNaN(sceneDescription?.confidence)
+            ? sceneDescription?.confidence
+            : 1
         ),
         features: {
           hasText: ocrResult.text.length > 0,

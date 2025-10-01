@@ -207,6 +207,7 @@ export interface BaseMessage {
 export interface EnhancedMessage extends BaseMessage {
   entities?: GraphRagEntity[];
   reasoning?: ReasoningResult;
+  searchResults?: SearchResult[];
   searchCount?: number;
   confidence?: number;
   provenance?: {

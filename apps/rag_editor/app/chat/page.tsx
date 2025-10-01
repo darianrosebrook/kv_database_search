@@ -6,6 +6,7 @@ import { Display, BodyLarge } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Sparkles, Brain, Search } from "lucide-react";
 import { useAppState } from "@/hooks/use-app-state";
+import styles from "./page.module.scss";
 
 // Chat templates for different conversation types
 const chatTemplates: Array<{
@@ -74,11 +75,11 @@ export default function ChatHomePage() {
 
   return (
     <WorkspaceLayout>
-      <div className="h-full flex items-center justify-center p-8">
-        <div className="text-center space-y-8 max-w-2xl">
-          <div className="space-y-4">
-            <Display className="text-4xl">AI Assistant</Display>
-            <BodyLarge className="text-muted-foreground">
+      <div className={styles.chatPage}>
+        <div className={styles.content}>
+          <div className={styles.intro}>
+            <Display className={styles.title}>AI Assistant</Display>
+            <BodyLarge className={styles.description}>
               Start a conversation with your AI assistant. Ask questions about
               your documents, get insights, or explore connections in your
               knowledge base.
@@ -86,20 +87,20 @@ export default function ChatHomePage() {
           </div>
 
           {chatTemplates.length > 0 && (
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className={styles.templates}>
               {chatTemplates.map((template, index) => (
                 <div
                   key={index}
-                  className="p-6 bg-card border border-border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors group"
+                  className={styles.templateCard}
                   onClick={() => handleTemplateClick(template)}
                 >
-                  <div className="flex flex-col items-center text-center space-y-3">
-                    <div className="w-12 h-12 bg-workspace-accent/20 rounded-lg flex items-center justify-center group-hover:bg-workspace-accent/30 transition-colors">
-                      <template.icon className="h-6 w-6 text-workspace-accent" />
+                  <div className={styles.templateContent}>
+                    <div className={styles.templateIconWrapper}>
+                      <template.icon className={styles.templateIcon} />
                     </div>
-                    <div className="space-y-1">
-                      <h3 className="font-medium">{template.title}</h3>
-                      <p className="text-sm text-muted-foreground">
+                    <div className={styles.templateBody}>
+                      <h3 className={styles.templateTitle}>{template.title}</h3>
+                      <p className={styles.templateDescription}>
                         {template.description}
                       </p>
                     </div>
@@ -109,8 +110,12 @@ export default function ChatHomePage() {
             </div>
           )}
 
-          <Button className="gap-2" size="lg" onClick={() => handleStartChat()}>
-            <MessageSquare className="h-4 w-4" />
+          <Button
+            className={styles.startButton}
+            size="lg"
+            onClick={() => handleStartChat()}
+          >
+            <MessageSquare className={styles.startIcon} />
             Start New Chat
           </Button>
         </div>

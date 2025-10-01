@@ -15,13 +15,10 @@ vi.mock("pdf-parse", () => ({
   }),
 }));
 
-// Create mock function before mocking
-let mockReadFileSync: any;
-
 // Mock fs module for ESM
 vi.mock("fs", async () => {
   const actual = await vi.importActual("fs");
-  mockReadFileSync = vi.fn();
+  const mockReadFileSync = vi.fn();
   return {
     ...actual,
     readFileSync: mockReadFileSync,
@@ -30,6 +27,9 @@ vi.mock("fs", async () => {
 
 import { createWorker } from "tesseract.js";
 import fs from "fs";
+
+// Export mock for use in tests
+export const mockFsReadFileSync = vi.mocked(fs.readFileSync);
 
 describe("OCRProcessor", () => {
   let processor: OCRProcessor;
@@ -130,7 +130,7 @@ describe("OCRProcessor", () => {
   describe("extractTextFromFile", () => {
     it("should read file and perform OCR", async () => {
       // Mock fs.readFileSync
-      mockReadFileSync.mockReturnValue(Buffer.from("image data"));
+      mockFsReadFileSync.mockReturnValue(Buffer.from("image data"));
 
       mockWorker.recognize.mockResolvedValue({
         data: {
@@ -146,7 +146,7 @@ describe("OCRProcessor", () => {
     });
 
     it("should handle file read errors", async () => {
-      mockReadFileSync.mockImplementation(() => {
+      vi.mocked(fs.readFileSync).mockImplementation(() => {
         throw new Error("File not found");
       });
 

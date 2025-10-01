@@ -9,20 +9,27 @@ import {
 import fs from "fs";
 
 // Mock fs module for ESM
-const mockStatSync = vi.fn();
-const mockReadFileSync = vi.fn();
-const mockExistsSync = vi.fn();
+vi.mock("fs", () => {
+  const mockStatSync = vi.fn();
+  const mockReadFileSync = vi.fn();
+  const mockExistsSync = vi.fn();
 
-vi.mock("fs", () => ({
-  default: {
+  return {
+    default: {
+      statSync: mockStatSync,
+      readFileSync: mockReadFileSync,
+      existsSync: mockExistsSync,
+    },
     statSync: mockStatSync,
     readFileSync: mockReadFileSync,
     existsSync: mockExistsSync,
-  },
-  statSync: mockStatSync,
-  readFileSync: mockReadFileSync,
-  existsSync: mockExistsSync,
-}));
+  };
+});
+
+// Export mocks for use in tests
+export const mockFsStatSync = vi.mocked(fs.statSync);
+export const mockFsReadFileSync = vi.mocked(fs.readFileSync);
+export const mockFsExistsSync = vi.mocked(fs.existsSync);
 
 describe("MultiModalContentDetector", () => {
   let detector: MultiModalContentDetector;
@@ -162,14 +169,14 @@ describe("UniversalMetadataExtractor", () => {
 
     beforeEach(() => {
       // Mock fs.statSync
-      mockStatSync.mockReturnValue({
+      mockFsStatSync.mockReturnValue({
         size: 100,
         birthtime: new Date("2023-01-01"),
         mtime: new Date("2023-01-02"),
       });
 
       // Mock fs.readFileSync
-      mockReadFileSync.mockReturnValue(Buffer.from("test content"));
+      mockFsReadFileSync.mockReturnValue(Buffer.from("test content"));
     });
 
     afterEach(() => {

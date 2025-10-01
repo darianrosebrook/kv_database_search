@@ -12,6 +12,7 @@ import {
 } from "@/lib/api";
 import { fetchRecentDocuments } from "@/lib/api";
 import { useAppState } from "@/hooks/use-app-state";
+import styles from "./page.module.scss";
 
 interface DocumentData {
   id: string;
@@ -228,8 +229,8 @@ export default function DocumentPage({
   if (isLoading) {
     return (
       <WorkspaceLayout>
-        <div className="h-full flex items-center justify-center">
-          <div className="text-muted-foreground">Loading document...</div>
+        <div className={styles.loadingState}>
+          <div className={styles.loadingMessage}>Loading document...</div>
         </div>
       </WorkspaceLayout>
     );
@@ -238,10 +239,10 @@ export default function DocumentPage({
   if (!document) {
     return (
       <WorkspaceLayout>
-        <div className="h-full flex items-center justify-center">
-          <div className="text-center space-y-2">
-            <div className="text-destructive">Failed to load document</div>
-            <div className="text-sm text-muted-foreground">
+        <div className={styles.errorState}>
+          <div className={styles.errorContent}>
+            <div className={styles.errorTitle}>Failed to load document</div>
+            <div className={styles.errorMessage}>
               Document not found or access denied
             </div>
           </div>
@@ -252,8 +253,8 @@ export default function DocumentPage({
 
   return (
     <WorkspaceLayout>
-      <div className="h-full flex">
-        <div className="flex-1 min-w-0">
+      <div className={styles.documentLayout}>
+        <div className={styles.editorPane}>
           <MarkdownEditor
             initialContent={document.content}
             title={document.title}

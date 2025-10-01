@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Loader2,
 } from "lucide-react";
+import styles from "./related-content-aside.module.scss";
 
 interface RelatedItem {
   id: string;
@@ -44,71 +45,64 @@ export function RelatedContentAside({
   const getIcon = (type: RelatedItem["type"]) => {
     switch (type) {
       case "document":
-        return <FileText className="h-4 w-4" />;
+        return <FileText className={styles.itemIcon} />;
       case "chat":
-        return <MessageSquare className="h-4 w-4" />;
+        return <MessageSquare className={styles.itemIcon} />;
       case "insight":
-        return <Lightbulb className="h-4 w-4" />;
+        return <Lightbulb className={styles.itemIcon} />;
     }
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.9) return "text-green-500";
-    if (confidence >= 0.8) return "text-yellow-500";
-    return "text-orange-500";
+    if (confidence >= 0.9) return styles.confidenceHigh;
+    if (confidence >= 0.8) return styles.confidenceMedium;
+    return styles.confidenceLow;
   };
 
   return (
-    <div
-      className={cn(
-        "w-80 bg-card border-l border-border flex flex-col animate-in",
-        className
-      )}
-    >
+    <div className={cn(styles.aside, className)}>
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <Title className="text-lg">Related Content</Title>
+      <div className={styles.header}>
+        <div className={styles.headerTop}>
+          <Title className={styles.headerTitle}>Related Content</Title>
           <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-4 w-4" />
+            <X />
           </Button>
         </div>
         {selectedText && (
-          <div className="mt-2 p-2 bg-accent/50 rounded-md">
-            <Caption className="text-xs uppercase tracking-wide mb-1">
+          <div className={styles.selectedContainer}>
+            <Caption className={styles.selectedLabel}>
               Selected Text
             </Caption>
-            <Body className="text-sm italic">"{selectedText}"</Body>
+            <Body className={styles.selectedText}>"{selectedText}"</Body>
           </div>
         )}
       </div>
 
       {/* Related Items */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className={styles.body}>
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
+          <div className={styles.loadingContainer}>
+            <div className={styles.loadingIndicator}>
+              <Loader2 className={styles.loadingSpinner} />
               <span>Finding related content...</span>
             </div>
           </div>
         ) : relatedItems.length > 0 ? (
-          relatedItems.map((item) => (
-            <div
-              key={item.id}
-              className="p-3 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors group"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  {getIcon(item.type)}
-                  <span className="text-sm font-medium truncate">
+          <div className={styles.itemList}>
+            {relatedItems.map((item) => (
+              <div key={item.id} className={styles.item}>
+                <div className={styles.itemHeader}>
+                  <div className={styles.itemMeta}>
+                    {getIcon(item.type)}
+                  <span className={styles.itemTitle}>
                     {item.title}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className={styles.itemActions}>
                   <span
                     className={cn(
-                      "text-xs font-mono",
+                      styles.confidence,
                       getConfidenceColor(item.confidence)
                     )}
                   >
@@ -117,32 +111,35 @@ export function RelatedContentAside({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+                    className={styles.itemActionButton}
                   >
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className={styles.itemActionIcon} />
                   </Button>
                 </div>
               </div>
-              <Body className="text-sm text-muted-foreground line-clamp-3 mb-2">
+              <Body className={styles.itemExcerpt}>
                 {item.excerpt}
               </Body>
               {item.lastModified && (
-                <Caption>Modified {item.lastModified}</Caption>
+                <Caption className={styles.itemFooter}>
+                  Modified {item.lastModified}
+                </Caption>
               )}
             </div>
-          ))
-        ) : (
-          <div className="text-center py-8">
-            <div className="text-muted-foreground text-sm">
-              No related content found
-            </div>
+            ))}
           </div>
+        ) : (
+          <div className={styles.emptyState}>No related content found</div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-border">
-        <Button variant="outline" size="sm" className="w-full bg-transparent">
+      <div className={styles.footer}>
+        <Button
+          variant="outline"
+          size="sm"
+          className={styles.footerButton}
+        >
           Search for More
         </Button>
       </div>

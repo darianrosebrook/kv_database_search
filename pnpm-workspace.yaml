@@ -4,6 +4,7 @@ packages:
 onlyBuiltDependencies:
   - '@swc/core'
   - '@tailwindcss/oxide'
+  - better-sqlite3
   - canvas
   - es5-ext
   - protobufjs
