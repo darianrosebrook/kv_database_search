@@ -5,6 +5,8 @@
 
 import { vi } from "vitest";
 import crypto from "node:crypto";
+import type { SearchResult } from "../src/types/index";
+import type { ObsidianDocument } from "../src/lib/obsidian-models";
 
 // =============================================================================
 // MOCK DATA GENERATORS
@@ -211,7 +213,7 @@ export function mockFileSystem(overrides: Partial = {}) {
   };
 
   // Set default mock implementations
-  mockFs.statSync.mockImplementation((path: string) => ({
+  mockFs.statSync.mockImplementation((_path: string) => ({
     isFile: () => true,
     isDirectory: () => false,
     size: 1024,
@@ -264,21 +266,21 @@ export function mockExternalDependencies() {
 
     // Speech processing
     sherpaOnnx: {
-      createModel: vi.fn().mockReturnValue({
+      createOnlineRecognizer: vi.fn().mockReturnValue({
         createStream: vi.fn().mockReturnValue({
           acceptWaveform: vi.fn(),
           inputFinished: vi.fn(),
+          reset: vi.fn(),
+          isEndpoint: vi.fn().mockReturnValue(false),
         }),
-      }),
-      createRecognizer: vi.fn().mockReturnValue({
-        createStream: vi.fn().mockReturnValue({
-          acceptWaveform: vi.fn(),
-          inputFinished: vi.fn(),
-          decode: vi.fn().mockReturnValue({
-            text: "Mock speech transcription",
-            tokens: ["Mock", "speech", "transcription"],
-          }),
+        decode: vi.fn(),
+        getResult: vi.fn().mockReturnValue({
+          text: "Mock speech transcription",
+          tokens: ["Mock", "speech", "transcription"],
         }),
+        isReady: vi.fn().mockReturnValue(true),
+        reset: vi.fn(),
+        free: vi.fn(),
       }),
     },
 
@@ -311,8 +313,8 @@ export function mockExternalDependencies() {
 /**
  * Validate that an object has required properties
  */
-export function validateObject(obj, requiredProps: string[]): boolean {
-  return requiredProps.every((prop) => obj.hasOwnProperty(prop));
+export function validateObject(obj: Record<string, unknown>, requiredProps: string[]): boolean {
+  return requiredProps.every((prop) => Object.prototype.hasOwnProperty.call(obj, prop));
 }
 
 /**
@@ -373,7 +375,8 @@ export function createPerformanceSuite(
 /**
  * Type guard for search results
  */
-export function isSearchResult(obj): obj is SearchResult {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isSearchResult(obj: any): obj is SearchResult {
   return (
     obj &&
     typeof obj.id === "string" &&
@@ -387,7 +390,8 @@ export function isSearchResult(obj): obj is SearchResult {
 /**
  * Type guard for Obsidian documents
  */
-export function isObsidianDocument(obj): obj is ObsidianDocument {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isObsidianDocument(obj: any): obj is ObsidianDocument {
   return (
     obj &&
     typeof obj.id === "string" &&

@@ -17,8 +17,12 @@
     "types": ["node"],
     "downlevelIteration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "baseUrl": "..",
+    "paths": {
+      "@obsidian-rag/media-processing": ["packages/media-processing/src/index.ts"]
+    }
   },
-  "include": ["apps/kv_database/src/**/*", "apps/tools/**/*"],
+  "include": ["apps/kv_database/src/**/*", "apps/tools/**/*", "packages/*/src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "apps/rag_web_search_tool/**/*"]
 }

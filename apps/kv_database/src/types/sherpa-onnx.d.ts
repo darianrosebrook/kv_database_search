@@ -1,7 +1,11 @@
 declare module "sherpa-onnx" {
-  interface SpeechRecognitionConfig {
-    model?: {
-      transducer: {
+  interface OnlineRecognizerConfig {
+    featConfig?: {
+      sampleRate?: number;
+      featureDim?: number;
+    };
+    modelConfig?: {
+      transducer?: {
         encoder: string;
         decoder: string;
         joiner: string;
@@ -9,8 +13,12 @@ declare module "sherpa-onnx" {
       tokens: string;
       numThreads?: number;
       provider?: string;
+      debug?: number;
     };
-    maxActivePaths?: number;
+    decoderConfig?: {
+      decodingMethod?: string;
+      maxActivePaths?: number;
+    };
     enableEndpoint?: boolean;
     rule1MinTrailingSilence?: number;
     rule2MinTrailingSilence?: number;
@@ -19,42 +27,38 @@ declare module "sherpa-onnx" {
 
   interface SpeechRecognitionResult {
     text: string;
-    tokens: string[];
-    timestamps: number[];
-    sampleRate: number;
+    tokens?: string[];
+    timestamps?: number[];
+    sampleRate?: number;
   }
 
-  class SpeechRecognizer {
-    constructor(config: SpeechRecognitionConfig);
+  interface OnlineStream {
     acceptWaveform(samples: Float32Array): void;
-    isReady(): boolean;
-    getResult(): SpeechRecognitionResult;
+    inputFinished(): void;
+    isEndpoint(): boolean;
     reset(): void;
   }
 
-  // Export functions that might exist in the module
-  function createModel(config);
-  function createRecognizer(config);
-
-  // Export interfaces/types that might exist
-  interface ModelConfig {
-    modelPath?: string;
-    modelType?: "transducer" | "paraNet";
+  class OnlineRecognizer {
+    constructor(config: OnlineRecognizerConfig);
+    createStream(): OnlineStream;
+    isReady(stream: OnlineStream): boolean;
+    decode(stream: OnlineStream): void;
+    getResult(stream: OnlineStream): SpeechRecognitionResult;
+    reset(stream: OnlineStream): void;
+    free(): void;
   }
 
-  interface RecognizerConfig {
-    modelConfig?: ModelConfig;
-    sampleRate?: number;
-    featureDim?: number;
-  }
+  function createOnlineRecognizer(config: OnlineRecognizerConfig): OnlineRecognizer;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function createOfflineRecognizer(config: any): any;
 
   export {
-    SpeechRecognizer,
-    SpeechRecognitionConfig,
+    OnlineRecognizer,
+    OnlineRecognizerConfig,
+    OnlineStream,
     SpeechRecognitionResult,
-    createModel,
-    createRecognizer,
-    ModelConfig,
-    RecognizerConfig,
+    createOnlineRecognizer,
+    createOfflineRecognizer,
   };
 }

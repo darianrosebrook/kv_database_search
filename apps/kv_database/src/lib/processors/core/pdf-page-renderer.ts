@@ -1,11 +1,9 @@
 /**
  * PDF Page Renderer - Renders PDF pages to images for OCR on scanned PDFs
- * Handles PDFs where pages are rasterized images rather than embedded vector content
+ * Uses pdfjs-dist + node-canvas for rendering (no system dependencies required)
  */
 
-import { fromBuffer } from "pdf2pic";
-import * as fs from "fs";
-import * as path from "path";
+import { createCanvas, type Canvas } from "canvas";
 
 export interface RenderedPage {
   pageNumber: number;
@@ -24,7 +22,7 @@ export interface PageRenderOptions {
 export class PDFPageRenderer {
   /**
    * Render PDF pages to images for OCR processing
-   * Used for scanned/rasterized PDFs where each page is an image
+   * Uses pdfjs-dist to render pages to node-canvas
    */
   async renderPagesToImages(
     pdfBuffer: Buffer,
@@ -33,7 +31,6 @@ export class PDFPageRenderer {
     const {
       density = 150, // 150 DPI is good balance for OCR
       format = "png",
-      quality = 90,
       maxPages,
     } = options;
 
@@ -41,89 +38,68 @@ export class PDFPageRenderer {
     const renderedPages: RenderedPage[] = [];
 
     try {
-      // Create temporary file for pdf2pic
-      const tempPdfPath = `/tmp/pdf_render_${Date.now()}.pdf`;
-      const tempOutputDir = `/tmp/pdf_render_output_${Date.now()}`;
-
-      fs.writeFileSync(tempPdfPath, pdfBuffer);
-      fs.mkdirSync(tempOutputDir, { recursive: true });
-
       console.log(`📸 Rendering PDF pages at ${density} DPI...`);
 
-      // Configure pdf2pic
-      const converter = fromBuffer(pdfBuffer, {
-        density,
-        saveFilename: "page",
-        savePath: tempOutputDir,
-        format,
-        width: undefined, // Let it use density
-        height: undefined,
-        quality,
-      });
+      // Import pdfjs-dist dynamically (ESM module)
+      const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
-      // Get page count first
-      const pdfParse = await import("pdf-parse");
-      const pdfData = await pdfParse.default(pdfBuffer);
-      const totalPages = pdfData.numpages;
+      // Load the PDF document
+      const data = new Uint8Array(pdfBuffer);
+      const loadingTask = pdfjsLib.getDocument({ data });
+      const pdfDoc = await loadingTask.promise;
+
+      const totalPages = pdfDoc.numPages;
       const pagesToRender = maxPages
         ? Math.min(totalPages, maxPages)
         : totalPages;
 
       console.log(`📄 Rendering ${pagesToRender} of ${totalPages} pages...`);
 
-      // Render pages
+      // Scale factor: pdfjs-dist uses 72 DPI internally
+      const scale = density / 72;
+
       for (let pageNum = 1; pageNum <= pagesToRender; pageNum++) {
         try {
-          const result = await converter(pageNum);
+          const page = await pdfDoc.getPage(pageNum);
+          const viewport = page.getViewport({ scale });
+
+          const width = Math.floor(viewport.width);
+          const height = Math.floor(viewport.height);
+
+          // Create a canvas for this page
+          const canvas: Canvas = createCanvas(width, height);
+          const context = canvas.getContext("2d");
+
+          // Render the page to canvas
+           
+          const renderContext = {
+            canvasContext: context as any,
+            viewport,
+          };
+
+          await page.render(renderContext).promise;
+
+          // Export canvas to buffer
+          let imageBuffer: Buffer;
+          if (format === "jpg") {
+            imageBuffer = canvas.toBuffer("image/jpeg");
+          } else {
+            imageBuffer = canvas.toBuffer("image/png");
+          }
+
+          renderedPages.push({
+            pageNumber: pageNum,
+            buffer: imageBuffer,
+            width,
+            height,
+          });
 
           console.log(
-            `  📋 Page ${pageNum} result type:`,
-            typeof result,
-            "keys:",
-            Object.keys(result || {})
+            `  ✅ Page ${pageNum} rendered: ${width}x${height}, buffer size: ${imageBuffer.length}`
           );
-
-          if (result) {
-            // pdf2pic might save to file, need to read it
-            let imageBuffer: Buffer;
-
-            if (result.buffer) {
-              imageBuffer = result.buffer as Buffer;
-            } else if (result.path && fs.existsSync(result.path)) {
-              // Read from saved file
-              imageBuffer = fs.readFileSync(result.path);
-            } else {
-              console.warn(`  ⚠️ No buffer or path for page ${pageNum}`);
-              continue;
-            }
-
-            // Get image dimensions (approximate from DPI)
-            // At 150 DPI, standard letter: 1275x1650 pixels
-            const estimatedWidth = Math.round(8.5 * density);
-            const estimatedHeight = Math.round(11 * density);
-
-            renderedPages.push({
-              pageNumber: pageNum,
-              buffer: imageBuffer,
-              width: estimatedWidth,
-              height: estimatedHeight,
-            });
-
-            console.log(
-              `  ✅ Page ${pageNum} rendered, buffer size: ${imageBuffer.length}`
-            );
-          }
         } catch (pageError) {
           console.error(`  ❌ Failed to render page ${pageNum}:`, pageError);
         }
-      }
-
-      // Cleanup temp files
-      try {
-        fs.unlinkSync(tempPdfPath);
-        fs.rmSync(tempOutputDir, { recursive: true, force: true });
-      } catch (cleanupError) {
-        console.warn("Failed to cleanup temp files:", cleanupError);
       }
 
       const processingTime = Date.now() - startTime;

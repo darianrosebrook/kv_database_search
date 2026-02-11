@@ -17,6 +17,14 @@ import {
 } from "./base-processor.ts";
 import { OCRProcessor } from "./ocr-processor.ts";
 import { AudioTranscriptionProcessor } from "./audio-transcription-processor.ts";
+import {
+  AdaptiveFrameExtractor,
+  SceneDetector,
+  FrameExtractor,
+  FrameDeduplicator,
+  PerceptualHasher,
+  VideoMetadataExtractor,
+} from "@obsidian-rag/media-processing";
 
 export interface VideoMetadata {
   duration: number; // in seconds
@@ -118,6 +126,8 @@ export class VideoProcessor extends BaseContentProcessor {
   private entityExtractor: EntityExtractor;
   private ocrProcessor: OCRProcessor;
   private audioProcessor: AudioTranscriptionProcessor;
+  private adaptiveExtractor: AdaptiveFrameExtractor;
+  private metadataExtractor: VideoMetadataExtractor;
   private tempDir: string;
 
   constructor() {
@@ -125,6 +135,19 @@ export class VideoProcessor extends BaseContentProcessor {
     this.entityExtractor = new EntityExtractor();
     this.ocrProcessor = new OCRProcessor();
     this.audioProcessor = new AudioTranscriptionProcessor();
+    this.metadataExtractor = new VideoMetadataExtractor();
+
+    const sceneDetector = new SceneDetector();
+    const frameExtractor = new FrameExtractor();
+    const hasher = new PerceptualHasher();
+    const deduplicator = new FrameDeduplicator(hasher);
+    this.adaptiveExtractor = new AdaptiveFrameExtractor(
+      sceneDetector,
+      frameExtractor,
+      deduplicator,
+      this.metadataExtractor,
+    );
+
     this.tempDir = "/tmp/video-processing";
 
     // Ensure temp directory exists
@@ -208,15 +231,33 @@ export class VideoProcessor extends BaseContentProcessor {
         try {
           // Extract video metadata
           console.log("📊 Extracting video metadata...");
-          const videoMetadata = await this.extractVideoMetadata(tempVideoPath);
+          const videoMetadata = await this.metadataExtractor.extract(tempVideoPath);
 
-          // Extract frames at strategic intervals
-          console.log("🖼️ Extracting video frames...");
-          const frames = await this.extractFrames(
+          // Extract frames using adaptive scene detection
+          console.log("🖼️ Extracting video frames (adaptive scene detection)...");
+          const extractionResult = await this.adaptiveExtractor.extract(
             tempVideoPath,
-            videoMetadata,
-            options
+            {
+              sceneThreshold: 0.3,
+              minSceneLength: 1.0,
+              enableDeduplication: true,
+              maxFrames: (options as VideoProcessorOptions)?.maxFramesToExtract ?? 200,
+              fallbackInterval: (options as VideoProcessorOptions)?.frameExtractionInterval ?? 30,
+              outputDir: this.tempDir,
+              outputFormat: "png",
+            }
           );
+          console.log(
+            `  📈 Strategy: ${extractionResult.stats.strategy}, ` +
+            `scenes: ${extractionResult.stats.scenesDetected}, ` +
+            `frames: ${extractionResult.stats.framesExtracted}, ` +
+            `deduped: ${extractionResult.stats.duplicatesRemoved}`
+          );
+          const frames: ExtractedFrame[] = extractionResult.frames.map((f) => ({
+            frameNumber: f.frameNumber,
+            timestamp: f.timestamp,
+            imagePath: f.imagePath,
+          }));
 
           // Perform OCR on extracted frames
           console.log("🔍 Performing OCR on frames...");
@@ -388,128 +429,6 @@ export class VideoProcessor extends BaseContentProcessor {
 
     result.processingTime = time;
     return result;
-  }
-
-  /**
-   * Extract video metadata using FFmpeg
-   */
-  private async extractVideoMetadata(
-    videoPath: string
-  ): Promise<VideoMetadata> {
-    return new Promise((resolve, reject) => {
-      ffmpeg.ffprobe(videoPath, (err, metadata) => {
-        if (err) {
-          reject(new Error(`FFprobe failed: ${err.message}`));
-          return;
-        }
-
-        try {
-          const videoStream = metadata.streams.find(
-            (stream) => stream.codec_type === "video"
-          );
-          const audioStream = metadata.streams.find(
-            (stream) => stream.codec_type === "audio"
-          );
-
-          if (!videoStream) {
-            reject(new Error("No video stream found"));
-            return;
-          }
-
-          const duration = parseFloat(String(metadata.format.duration || "0"));
-          const width = videoStream.width || 0;
-          const height = videoStream.height || 0;
-          const frameRate = eval(videoStream.r_frame_rate || "0") || 0;
-          const aspectRatio =
-            videoStream.display_aspect_ratio || `${width}:${height}`;
-
-          resolve({
-            duration,
-            width,
-            height,
-            frameRate,
-            codec: videoStream.codec_name || "unknown",
-            bitrate: parseInt(String(videoStream.bit_rate || "0")) || undefined,
-            format: metadata.format.format_name || "unknown",
-            size: parseInt(String(metadata.format.size || "0")),
-            aspectRatio,
-            audioCodec: audioStream?.codec_name,
-            hasAudio: !!audioStream,
-            creationTime: metadata.format.tags?.creation_time
-              ? new Date(metadata.format.tags.creation_time)
-              : undefined,
-          });
-        } catch (parseError) {
-          reject(new Error(`Metadata parsing failed: ${parseError}`));
-        }
-      });
-    });
-  }
-
-  /**
-   * Extract frames from video at strategic intervals
-   */
-  private async extractFrames(
-    videoPath: string,
-    videoMetadata: VideoMetadata,
-    _options?: ProcessorOptions
-  ): Promise<ExtractedFrame[]> {
-    const frames: ExtractedFrame[] = [];
-
-    // Calculate frame extraction strategy
-    const maxFrames = 20; // Limit to avoid processing too many frames
-    const duration = videoMetadata.duration;
-    const interval = Math.max(1, duration / maxFrames); // Extract every N seconds
-
-    console.log(
-      `  📈 Extracting frames every ${interval.toFixed(
-        1
-      )}s from ${duration.toFixed(1)}s video`
-    );
-
-    for (let i = 0; i < maxFrames && i * interval < duration; i++) {
-      const timestamp = i * interval;
-      const frameNumber = Math.floor(timestamp * videoMetadata.frameRate);
-      const framePath = path.join(this.tempDir, `frame_${Date.now()}_${i}.png`);
-
-      try {
-        await this.extractSingleFrame(videoPath, timestamp, framePath);
-
-        frames.push({
-          frameNumber,
-          timestamp,
-          imagePath: framePath,
-        });
-      } catch (frameError) {
-        console.warn(
-          `⚠️ Failed to extract frame at ${timestamp}s:`,
-          frameError
-        );
-        // Continue with other frames
-      }
-    }
-
-    console.log(`  ✅ Extracted ${frames.length} frames`);
-    return frames;
-  }
-
-  /**
-   * Extract a single frame at specific timestamp
-   */
-  private extractSingleFrame(
-    videoPath: string,
-    timestamp: number,
-    outputPath: string
-  ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      ffmpeg(videoPath)
-        .seekInput(timestamp)
-        .frames(1)
-        .output(outputPath)
-        .on("end", () => resolve())
-        .on("error", (err) => reject(err))
-        .run();
-    });
   }
 
   /**

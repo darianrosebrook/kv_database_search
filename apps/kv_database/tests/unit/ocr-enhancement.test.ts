@@ -5,18 +5,18 @@ describe("Enhanced OCR Processor", () => {
   const ocrProcessor = new OCRProcessor();
 
   it("should enhance OCR text processing", () => {
-    // Test OCR artifact correction
+    // Test whitespace normalization (no longer joins single-spaced letters)
     const rawOcrText = "H e l l o   W o r l d";
     const enhancedText = ocrProcessor.enhanceOCRText(rawOcrText);
 
-    expect(enhancedText).toBe("Hello World");
+    expect(enhancedText).toBe("H e l l o W o r l d");
   });
 
   it("should fix common OCR artifacts", () => {
     // Test various OCR artifacts
     const artifacts = [
       { input: "H|ello", expected: "Hello" }, // Remove pipe artifacts
-      { input: "H e l l 0", expected: "H e l l O" }, // Fix zero, preserve spaces
+      { input: "H e l l 0", expected: "H e l l 0" }, // Preserve zeros (no 0→O replacement)
       { input: "Multiple    spaces", expected: "Multiple spaces" },
       { input: "Line1\n\n\nLine2", expected: "Line1\n\nLine2" }, // Preserve paragraphs
     ];

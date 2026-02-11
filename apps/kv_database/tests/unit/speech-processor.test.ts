@@ -4,8 +4,7 @@ import { ContentType } from "../../src/lib/multi-modal.ts";
 
 // Mock sherpa-onnx
 vi.mock("sherpa-onnx", () => ({
-  createModel: vi.fn(),
-  createRecognizer: vi.fn(),
+  createOnlineRecognizer: vi.fn(),
 }));
 
 // Mock pdf-parse to prevent initialization issues
@@ -26,14 +25,13 @@ vi.mock("fs", async () => {
   };
 });
 
-import { createModel, createRecognizer } from "sherpa-onnx";
+import { createOnlineRecognizer } from "sherpa-onnx";
 import { readFileSync } from "fs";
 
 describe("SpeechProcessor", () => {
   let processor: SpeechProcessor;
-  let mockModel;
-  let mockRecognizer;
-  let mockStream;
+  let mockRecognizer: any;
+  let mockStream: any;
 
   beforeEach(() => {
     processor = new SpeechProcessor();
@@ -41,21 +39,20 @@ describe("SpeechProcessor", () => {
     mockStream = {
       acceptWaveform: vi.fn(),
       inputFinished: vi.fn(),
+      reset: vi.fn(),
+      isEndpoint: vi.fn().mockReturnValue(false),
     };
 
     mockRecognizer = {
-      reset: vi.fn(),
       createStream: vi.fn().mockReturnValue(mockStream),
+      decode: vi.fn(),
       getResult: vi.fn(),
+      isReady: vi.fn().mockReturnValue(true),
+      reset: vi.fn(),
       free: vi.fn(),
     };
 
-    mockModel = {
-      free: vi.fn(),
-    };
-
-    createModel.mockReturnValue(mockModel);
-    createRecognizer.mockReturnValue(mockRecognizer);
+    vi.mocked(createOnlineRecognizer).mockReturnValue(mockRecognizer);
   });
 
   describe("transcribeFromBuffer", () => {
@@ -273,8 +270,7 @@ describe("SpeechProcessor", () => {
 
       await processor.transcribeFromBuffer(Buffer.from("test"));
 
-      expect(createModel).toHaveBeenCalled();
-      expect(createRecognizer).toHaveBeenCalled();
+      expect(createOnlineRecognizer).toHaveBeenCalled();
       expect(processor.isReady()).toBe(true);
     });
 
@@ -282,8 +278,7 @@ describe("SpeechProcessor", () => {
       mockRecognizer.getResult.mockReturnValue({ text: "test" });
 
       // Clear previous mock calls
-      createModel.mockClear();
-      createRecognizer.mockClear();
+      vi.mocked(createOnlineRecognizer).mockClear();
 
       // Mock the audio conversion
       const mockAudioData = new Float32Array([0.1, 0.2, 0.3]);
@@ -295,8 +290,7 @@ describe("SpeechProcessor", () => {
       await processor.transcribeFromBuffer(Buffer.from("test2"));
 
       // Should be called at least once but allow for test isolation issues
-      expect(createModel).toHaveBeenCalled();
-      expect(createRecognizer).toHaveBeenCalled();
+      expect(createOnlineRecognizer).toHaveBeenCalled();
     });
 
     it("should cleanup resources", async () => {
@@ -305,7 +299,6 @@ describe("SpeechProcessor", () => {
       await processor.cleanup();
 
       expect(mockRecognizer.free).toHaveBeenCalled();
-      expect(mockModel.free).toHaveBeenCalled();
       expect(processor.isReady()).toBe(false);
     });
   });

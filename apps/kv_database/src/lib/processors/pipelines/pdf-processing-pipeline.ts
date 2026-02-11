@@ -144,124 +144,78 @@ export class PDFProcessingPipeline {
       let hasImages = false;
       let imageCount = 0;
 
-      // Check if text extraction was sufficient to potentially skip OCR
+      // Use word count on trimmed text to determine sufficiency (not raw char length)
+      const trimmedText = textResult.text.trim();
+      const extractedWordCount = trimmedText
+        .split(/\s+/)
+        .filter((w) => w.length > 0).length;
       const hasSufficientTextContent =
-        textResult.text.length > 100 && textResult.confidence > 0.7;
-      const shouldAttemptOCR = strategy.includeOCR && !hasSufficientTextContent;
+        extractedWordCount > 50 && textResult.confidence > 0.7;
 
-      if (strategy.includeOCR) {
-        if (hasSufficientTextContent) {
+      // Determine whether to run OCR:
+      // - text-focused: skip OCR if text extraction is sufficient
+      // - hybrid/image-heavy/ocr-fallback: always render and OCR pages
+      const shouldSkipOCR =
+        !strategy.includeOCR ||
+        (hasSufficientTextContent && strategy.approach === "text-focused");
+
+      if (shouldSkipOCR) {
+        if (strategy.includeOCR) {
           console.log(
-            "📝 Text extraction successful - skipping OCR for performance"
+            `📝 Text extraction sufficient (${extractedWordCount} words) - skipping OCR for text-focused strategy`
           );
-        } else {
-          console.log("🔍 Text extraction insufficient - attempting OCR...");
+        }
+      } else {
+        console.log(
+          `🔍 Running page-rendering OCR (strategy: ${strategy.approach}, extracted words: ${extractedWordCount})...`
+        );
 
-          // First, try to extract embedded images from PDF (most efficient approach)
-          let embeddedImageOcrResults = null;
-
-          if (textResult.pages && textResult.pages.length > 0) {
-            console.log("🖼️ Attempting to extract embedded images for OCR...");
-
-            try {
-              // Extract images from PDF pages and perform OCR
-              embeddedImageOcrResults =
-                await this.ocrExtractor.extractFromPDFPages(textResult.pages);
-
-              if (embeddedImageOcrResults.images.length > 0) {
-                console.log(
-                  `🔍 Embedded image OCR complete: ${embeddedImageOcrResults.imageCount} images processed, ` +
-                    `${embeddedImageOcrResults.combinedText.length} characters extracted, ` +
-                    `confidence: ${(
-                      embeddedImageOcrResults.totalConfidence * 100
-                    ).toFixed(1)}%`
-                );
-              } else {
-                console.log("⚠️ No embedded images found in PDF");
-              }
-            } catch (error) {
-              console.error("❌ Embedded image OCR failed:", error);
-              embeddedImageOcrResults = null;
+        try {
+          // Render PDF pages to images
+          const renderedPages = await this.pageRenderer.renderPagesToImages(
+            buffer,
+            {
+              density: 150,
+              format: "png",
+              maxPages: 50, // Limit to first 50 pages for performance
             }
-          }
+          );
 
-          // Check if embedded image OCR provided sufficient content
-          const hasSufficientEmbeddedContent =
-            embeddedImageOcrResults &&
-            embeddedImageOcrResults.combinedText.length > 50 &&
-            embeddedImageOcrResults.totalConfidence > 0.3;
+          if (renderedPages.length > 0) {
+            // Convert rendered pages to ImageInfo format
+            const imageInfos = renderedPages.map((page) => ({
+              pageNumber: page.pageNumber,
+              width: page.width,
+              height: page.height,
+              data: page.buffer.toString("base64"),
+            }));
 
-          if (hasSufficientEmbeddedContent) {
-            // Use embedded image OCR results
+            // Perform OCR on rendered page images
+            const pageOcrResults =
+              await this.ocrExtractor.extractFromImages(imageInfos);
+
             hasImages = true;
-            imageCount = embeddedImageOcrResults.images.length;
+            imageCount = renderedPages.length;
+
             ocrResults = {
-              combinedText: embeddedImageOcrResults.combinedText,
-              totalConfidence: embeddedImageOcrResults.totalConfidence,
-              imageCount: embeddedImageOcrResults.images.length,
+              combinedText: pageOcrResults.combinedText,
+              totalConfidence: pageOcrResults.totalConfidence,
+              imageCount: renderedPages.length,
             };
-          } else {
-            // Fall back to rendering entire pages (for scanned PDFs or PDFs with insufficient embedded content)
+
             console.log(
-              "📸 Insufficient embedded image content - rendering pages for OCR..."
+              `🔍 Page rendering OCR complete: ${ocrResults.imageCount} pages processed, ` +
+                `${ocrResults.combinedText.length} characters extracted, ` +
+                `confidence: ${(ocrResults.totalConfidence * 100).toFixed(1)}%`
             );
-
-            try {
-              // Render PDF pages to images
-              const renderedPages = await this.pageRenderer.renderPagesToImages(
-                buffer,
-                {
-                  density: 150,
-                  format: "png",
-                  maxPages: 50, // Limit to first 50 pages for performance
-                }
-              );
-
-              if (renderedPages.length > 0) {
-                // Convert rendered pages to ImageInfo format
-                const imageInfos = renderedPages.map((page) => {
-                  const base64Data = page.buffer.toString("base64");
-                  console.log(
-                    `📋 Page ${page.pageNumber}: buffer size ${page.buffer.length}, base64 length ${base64Data.length}`
-                  );
-                  return {
-                    pageNumber: page.pageNumber,
-                    width: page.width,
-                    height: page.height,
-                    data: base64Data,
-                  };
-                });
-
-                // Perform OCR on rendered page images
-                const pageOcrResults =
-                  await this.ocrExtractor.extractFromImages(imageInfos);
-
-                hasImages = true;
-                imageCount = renderedPages.length;
-
-                ocrResults = {
-                  combinedText: pageOcrResults.combinedText,
-                  totalConfidence: pageOcrResults.totalConfidence,
-                  imageCount: renderedPages.length,
-                };
-
-                console.log(
-                  `🔍 Page rendering OCR complete: ${ocrResults.imageCount} pages processed, ` +
-                    `${ocrResults.combinedText.length} characters extracted, ` +
-                    `confidence: ${(ocrResults.totalConfidence * 100).toFixed(
-                      1
-                    )}%`
-                );
-              }
-            } catch (error) {
-              console.error("❌ Page rendering OCR failed:", error);
-              ocrResults = {
-                combinedText: "",
-                totalConfidence: 0,
-                imageCount: 0,
-              };
-            }
           }
+        } catch (error) {
+          console.error("❌ Page rendering OCR failed:", error);
+          ocrResults = {
+            combinedText: "",
+            totalConfidence: 0,
+            imageCount: 0,
+          };
         }
       }
 

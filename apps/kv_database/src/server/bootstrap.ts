@@ -107,18 +107,67 @@ async function buildServices(): Promise<AppServices> {
   // Initialize database with better error handling
   let database: ObsidianDatabase;
   try {
+    if (!DATABASE_URL) {
+      throw new Error("DATABASE_URL environment variable is not set");
+    }
+
     database = new ObsidianDatabase(DATABASE_URL);
     await database.initialize();
     console.log("✅ Database initialized");
   } catch (e) {
     const error = asError(e);
     console.error("❌ Database initialization failed:", error.message);
-    console.error(
-      "💡 Make sure PostgreSQL is running and DATABASE_URL is correct"
-    );
-    console.error(
-      "💡 Example: postgresql://username:password@localhost:5432/obsidian_rag"
-    );
+
+    // Extract connection details for diagnostics
+    let dbHost = "localhost";
+    let dbPort = "5432";
+    if (DATABASE_URL) {
+      try {
+        // eslint-disable-next-line no-undef
+        const url = new URL(DATABASE_URL);
+        dbHost = url.hostname;
+        dbPort = url.port || "5432";
+      } catch {
+        const match = DATABASE_URL.match(/@([^:]+):(\d+)/);
+        if (match) {
+          dbHost = match[1];
+          dbPort = match[2];
+        }
+      }
+    }
+
+    // Check if it's a connection refused error (handle AggregateError cases)
+    const isConnectionRefused =
+      error.message.includes("ECONNREFUSED") ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (error as any).code === "ECONNREFUSED" ||
+      (e instanceof AggregateError &&
+       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       e.errors.some((err: any) => err.code === "ECONNREFUSED"));
+
+    if (isConnectionRefused) {
+      console.error(`\n🔍 Connection Diagnostics:`);
+      console.error(`   Attempting to connect to: ${dbHost}:${dbPort}`);
+      console.error(`   Error: Connection refused`);
+      console.error(`\n💡 Troubleshooting steps:`);
+      console.error(`   1. Check if PostgreSQL is running:`);
+      console.error(`      pg_isready -h ${dbHost} -p ${dbPort}`);
+      console.error(`   2. Verify the port in DATABASE_URL matches your PostgreSQL port`);
+      console.error(`   3. Check PostgreSQL is listening on the correct port:`);
+      console.error(`      lsof -i :${dbPort}`);
+      if (dbPort !== "5432") {
+        console.error(`\n⚠️  Note: You're using port ${dbPort}, but PostgreSQL default is 5432`);
+        console.error(`   If PostgreSQL is running on 5432, update DATABASE_URL:`);
+        console.error(`   DATABASE_URL=postgresql://user:pass@${dbHost}:5432/dbname`);
+      }
+    } else {
+      console.error(
+        "💡 Make sure PostgreSQL is running and DATABASE_URL is correct"
+      );
+      console.error(
+        "💡 Example: postgresql://username:password@localhost:5432/obsidian_rag"
+      );
+    }
     throw error;
   }
 

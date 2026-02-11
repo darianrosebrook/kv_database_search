@@ -126,9 +126,9 @@ export class PDFProcessingStrategyEngine {
       reasoning.push("Will rely primarily on OCR");
     } else if (
       characteristics.textDensity > 200 &&
-      characteristics.fileSizeToTextRatio < 5 * 1024
+      characteristics.fileSizeToTextRatio < 2 * 1024
     ) {
-      // Text-focused PDF
+      // Text-focused PDF (pure text, low file-size-to-text ratio)
       approach = "text-focused";
       includeOCR = false;
       textExtractionMethod = "pdf-parse"; // Faster for text-heavy docs
@@ -139,6 +139,26 @@ export class PDFProcessingStrategyEngine {
         `Text density: ${characteristics.textDensity.toFixed(1)} chars/page`
       );
       reasoning.push("Optimizing for text extraction");
+    } else if (
+      characteristics.textDensity > 200 &&
+      characteristics.fileSizeToTextRatio < 5 * 1024
+    ) {
+      // Hybrid PDF - has good text but file size suggests embedded images/graphics
+      approach = "hybrid";
+      includeOCR = true;
+      textExtractionMethod = "auto";
+      confidence = 0.8;
+
+      reasoning.push("High text density with significant embedded content");
+      reasoning.push(
+        `Text density: ${characteristics.textDensity.toFixed(1)} chars/page`
+      );
+      reasoning.push(
+        `File size ratio: ${(
+          characteristics.fileSizeToTextRatio / 1024
+        ).toFixed(1)}KB/char suggests images/graphics`
+      );
+      reasoning.push("Using hybrid approach to capture image content via OCR");
     } else {
       // Hybrid approach - has text but might have images too
       approach = "hybrid";

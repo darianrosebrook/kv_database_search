@@ -123,10 +123,10 @@ describe("MultiModalContentDetector", () => {
       }
     });
 
-    it("should fallback to octet-stream for unknown signatures", async () => {
+    it("should fallback to text/plain for printable content without known signature", async () => {
       const buffer = Buffer.from("unknown content");
       const mimeType = await detector["detectMimeType"](buffer);
-      expect(mimeType).toBe("application/octet-stream");
+      expect(mimeType).toBe("text/plain");
     });
   });
 
@@ -287,31 +287,32 @@ describe("UniversalMetadataExtractor", () => {
       const buffer = Buffer.from("Hello world\nThis is a test.");
       const base = { type: ContentType.PLAIN_TEXT };
 
-      const result = await extractor["extractTextMetadata"](buffer, base);
+      const result = extractor["extractGenericMetadata"](buffer, base);
 
       expect(result.wordCount).toBe(6); // "Hello world This is a test."
       expect(result.characterCount).toBe(27); // "Hello world\nThis is a test."
-      expect(result.pageCount).toBe(1);
     });
 
     it("should extract JSON metadata", async () => {
       const buffer = Buffer.from('{"items": [1, 2, 3], "active": true}');
       const base = { type: ContentType.JSON };
 
-      const result = await extractor["extractStructuredMetadata"](buffer, base);
+      const result = extractor["extractGenericMetadata"](buffer, base);
 
-      expect(result.wordCount).toBe(6); // JSON contains words like "items", "active", "true"
-      expect(result.characterCount).toBe(36); // '{"items": [1, 2, 3], "active": true}'
+      // extractGenericMetadata splits by whitespace: '{"items":', '[1,', '2,', '3],', '"active":', 'true}'
+      expect(result.wordCount).toBe(6);
+      expect(result.characterCount).toBe(36);
     });
 
     it("should extract CSV metadata", async () => {
       const buffer = Buffer.from("name,age,city\nJohn,25,NYC\nJane,30,LA");
       const base = { type: ContentType.CSV };
 
-      const result = await extractor["extractStructuredMetadata"](buffer, base);
+      const result = extractor["extractGenericMetadata"](buffer, base);
 
-      expect(result.wordCount).toBe(3); // CSV split by whitespace gives 3 segments
-      expect(result.characterCount).toBe(36); // "name,age,city\nJohn,25,NYC\nJane,30,LA"
+      // extractGenericMetadata splits by whitespace: "name,age,city", "John,25,NYC", "Jane,30,LA"
+      expect(result.wordCount).toBe(3);
+      expect(result.characterCount).toBe(36);
     });
   });
 
@@ -321,7 +322,7 @@ describe("UniversalMetadataExtractor", () => {
       const id2 = extractor["generateFileId"]("/path/to/file.txt");
 
       expect(id1).toBe(id2);
-      expect(id1).toMatch(/^file_[a-f0-9]{8}$/);
+      expect(id1).toMatch(/^file_[a-f0-9]{32}$/);
     });
 
     it("should generate checksums", () => {

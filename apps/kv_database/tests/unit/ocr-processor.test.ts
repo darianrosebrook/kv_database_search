@@ -21,15 +21,25 @@ vi.mock("fs", async () => {
   const mockReadFileSync = vi.fn();
   return {
     ...actual,
+    default: {
+      ...(actual as any).default,
+      readFileSync: mockReadFileSync,
+      writeFileSync: (actual as any).writeFileSync ?? vi.fn(),
+      unlinkSync: (actual as any).unlinkSync ?? vi.fn(),
+      existsSync: (actual as any).existsSync ?? vi.fn(),
+    },
     readFileSync: mockReadFileSync,
+    writeFileSync: (actual as any).writeFileSync ?? vi.fn(),
+    unlinkSync: (actual as any).unlinkSync ?? vi.fn(),
+    existsSync: (actual as any).existsSync ?? vi.fn(),
   };
 });
 
 import { createWorker } from "tesseract.js";
-import fs from "fs";
+import * as fs from "fs";
 
-// Export mock for use in tests
-export const mockFsReadFileSync = vi.mocked(fs.readFileSync);
+// Access the mock function
+const mockFsReadFileSync = vi.mocked(fs.readFileSync);
 
 describe("OCRProcessor", () => {
   let processor: OCRProcessor;

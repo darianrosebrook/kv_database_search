@@ -1,0 +1,33 @@
+{
+  "name": "@obsidian-rag/media-processing",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "peerDependencies": {
+    "fluent-ffmpeg": "^2.1.3"
+  },
+  "dependencies": {
+    "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "@types/fluent-ffmpeg": "^2.1.27",
+    "@types/node": "^22.0.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

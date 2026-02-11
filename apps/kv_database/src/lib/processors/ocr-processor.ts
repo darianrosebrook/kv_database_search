@@ -327,27 +327,6 @@ export class OCRProcessor implements ContentProcessor {
       .replace(/\|/g, "") // Remove pipe characters (OCR artifacts)
       .replace(/\0/g, ""); // Remove null characters
 
-    // Check if this looks like OCR text with word boundaries (multiple spaces)
-    const hasWordBoundaries = / {2,}/.test(result);
-
-    if (hasWordBoundaries) {
-      // Join letters that are separated by single spaces (OCR artifact)
-      // But preserve word boundaries indicated by multiple spaces
-      result = result.replace(/\s{2,}/g, "___WORD_BOUNDARY___"); // Mark word boundaries
-
-      // Repeatedly join letters separated by single spaces
-      let previous;
-      do {
-        previous = result;
-        result = result.replace(/([a-zA-Z])\s([a-zA-Z])/g, "$1$2");
-      } while (result !== previous);
-
-      result = result.replace(/___WORD_BOUNDARY___/g, " "); // Restore word boundaries
-    }
-
-    // Fix common OCR misrecognitions
-    result = result.replace(/0/g, "O"); // Replace zeros with O (context-dependent, but simple fix)
-
     // Normalize whitespace but preserve newlines
     result = result
       .replace(/ {2,}/g, " ") // Normalize multiple spaces to single space

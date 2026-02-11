@@ -1,9 +1,9 @@
 // Import sherpa-onnx - will be mocked in tests
 import {
-  createModel,
-  createRecognizer,
-  type ModelConfig,
-  type RecognizerConfig,
+  createOnlineRecognizer,
+  type OnlineRecognizerConfig,
+  type OnlineRecognizer,
+  type OnlineStream as _OnlineStream,
 } from "sherpa-onnx";
 
 /**
@@ -89,8 +89,7 @@ export interface SpeechContentMetadata extends ContentMetadata {
 }
 
 export class SpeechProcessor implements ContentProcessor {
-  private model = null;
-  private recognizer = null;
+  private recognizer: OnlineRecognizer | null = null;
   private initialized = false;
 
   /**
@@ -102,32 +101,37 @@ export class SpeechProcessor implements ContentProcessor {
     try {
       // Configure the model for speech recognition
       // Using a pre-built model configuration for English
-      const modelConfig: ModelConfig = {
-        encoder:
-          "./models/sherpa-onnx-streaming-zipformer-en-2023-06-26/encoder-epoch-99-avg-1.onnx",
-        decoder:
-          "./models/sherpa-onnx-streaming-zipformer-en-2023-06-26/decoder-epoch-99-avg-1.onnx",
-        joiner:
-          "./models/sherpa-onnx-streaming-zipformer-en-2023-06-26/joiner-epoch-99-avg-1.onnx",
-        tokens:
-          "./models/sherpa-onnx-streaming-zipformer-en-2023-06-26/tokens.txt",
-        numThreads: 2,
-        provider: "cpu",
-      };
-
-      const recognizerConfig: RecognizerConfig = {
-        modelConfig,
-        decodingMethod: "greedy_search",
-        maxActivePaths: 4,
+      const recognizerConfig: OnlineRecognizerConfig = {
+        featConfig: {
+          sampleRate: 16000,
+          featureDim: 80,
+        },
+        modelConfig: {
+          transducer: {
+            encoder:
+              "./models/sherpa-onnx-streaming-zipformer-en-2023-06-26/encoder-epoch-99-avg-1.onnx",
+            decoder:
+              "./models/sherpa-onnx-streaming-zipformer-en-2023-06-26/decoder-epoch-99-avg-1.onnx",
+            joiner:
+              "./models/sherpa-onnx-streaming-zipformer-en-2023-06-26/joiner-epoch-99-avg-1.onnx",
+          },
+          tokens:
+            "./models/sherpa-onnx-streaming-zipformer-en-2023-06-26/tokens.txt",
+          numThreads: 2,
+          provider: "cpu",
+        },
+        decoderConfig: {
+          decodingMethod: "greedy_search",
+          maxActivePaths: 4,
+        },
         enableEndpoint: true,
         rule1MinTrailingSilence: 2.4,
         rule2MinTrailingSilence: 1.2,
         rule3MinUtteranceLength: 20,
       };
 
-      // Create model and recognizer
-      this.model = createModel(modelConfig);
-      this.recognizer = createRecognizer(recognizerConfig);
+      // Create recognizer
+      this.recognizer = createOnlineRecognizer(recognizerConfig);
 
       this.initialized = true;
     } catch (error) {
@@ -170,21 +174,22 @@ export class SpeechProcessor implements ContentProcessor {
         return this.createFallbackResult("Unsupported audio format", startTime);
       }
 
-      // Reset recognizer for new audio
-      this.recognizer.reset();
-
-      // Process audio in chunks
+      // Create a new stream for this audio
       const stream = this.recognizer.createStream();
       const samplesPerChunk = 1024; // Process in chunks
 
+      // Process audio in chunks
       for (let i = 0; i < audioData.length; i += samplesPerChunk) {
         const chunk = audioData.slice(i, i + samplesPerChunk);
         stream.acceptWaveform(chunk);
+        // Decode incrementally
+        this.recognizer.decode(stream);
       }
 
       // Get the final result
       stream.inputFinished();
-      const result = this.recognizer.getResult();
+      this.recognizer.decode(stream);
+      const result = this.recognizer.getResult(stream);
 
       const processingTime = Date.now() - startTime;
       const text = result.text?.trim() || "";
@@ -349,10 +354,6 @@ export class SpeechProcessor implements ContentProcessor {
     if (this.recognizer) {
       this.recognizer.free();
       this.recognizer = null;
-    }
-    if (this.model) {
-      this.model.free();
-      this.model = null;
     }
     this.initialized = false;
   }
