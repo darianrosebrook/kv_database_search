@@ -46,6 +46,7 @@ export interface VideoProcessorOptions extends ProcessorOptions {
   frameExtractionInterval?: number; // seconds between frame extractions
   maxFramesToExtract?: number;
   enableOCR?: boolean;
+  outputDir?: string; // If set, export artifacts (keyframes, transcript, manifest) to this directory
 }
 
 export interface ExtractedFrame {
@@ -219,6 +220,8 @@ export class VideoProcessor extends BaseContentProcessor {
   ): Promise<ProcessorResult> {
     const { result, time } = await this.measureTime(async () => {
       try {
+        const pipelineStart = Date.now();
+        const stageTime = () => ((Date.now() - pipelineStart) / 1000).toFixed(1);
         console.log("🎬 Starting video processing...");
 
         // Write buffer to temporary file
@@ -230,11 +233,14 @@ export class VideoProcessor extends BaseContentProcessor {
 
         try {
           // Extract video metadata
-          console.log("📊 Extracting video metadata...");
+          console.log(`[${stageTime()}s] 📊 Extracting video metadata...`);
+          const metaStart = Date.now();
           const videoMetadata = await this.metadataExtractor.extract(tempVideoPath);
+          console.log(`  ✅ Metadata extracted in ${((Date.now() - metaStart) / 1000).toFixed(1)}s (${videoMetadata.duration?.toFixed(1)}s, ${videoMetadata.width}x${videoMetadata.height})`);
 
           // Extract frames using adaptive scene detection
-          console.log("🖼️ Extracting video frames (adaptive scene detection)...");
+          console.log(`[${stageTime()}s] 🖼️ Extracting video frames (adaptive scene detection)...`);
+          const frameStart = Date.now();
           const extractionResult = await this.adaptiveExtractor.extract(
             tempVideoPath,
             {
@@ -248,7 +254,8 @@ export class VideoProcessor extends BaseContentProcessor {
             }
           );
           console.log(
-            `  📈 Strategy: ${extractionResult.stats.strategy}, ` +
+            `  ✅ Frame extraction in ${((Date.now() - frameStart) / 1000).toFixed(1)}s — ` +
+            `strategy: ${extractionResult.stats.strategy}, ` +
             `scenes: ${extractionResult.stats.scenesDetected}, ` +
             `frames: ${extractionResult.stats.framesExtracted}, ` +
             `deduped: ${extractionResult.stats.duplicatesRemoved}`
@@ -260,7 +267,7 @@ export class VideoProcessor extends BaseContentProcessor {
           }));
 
           // Perform OCR on extracted frames
-          console.log("🔍 Performing OCR on frames...");
+          console.log(`[${stageTime()}s] 🔍 Performing OCR on ${frames.length} frames...`);
           const processedFrames = await this.processFramesWithOCR(
             frames,
             options
@@ -272,7 +279,8 @@ export class VideoProcessor extends BaseContentProcessor {
             videoMetadata.hasAudio &&
             options?.enableSpeechTranscription !== false
           ) {
-            console.log("🎤 Extracting and transcribing audio...");
+            console.log(`[${stageTime()}s] 🎤 Extracting and transcribing audio (${videoMetadata.duration?.toFixed(0)}s of audio)...`);
+            const audioStart = Date.now();
             try {
               const audioResult =
                 await this.audioProcessor.extractAudioFromVideo(buffer, {
@@ -297,11 +305,12 @@ export class VideoProcessor extends BaseContentProcessor {
                     audioMeta.qualityMetrics?.averageConfidence || 0,
                 };
                 console.log(
-                  `  🎯 Audio transcription: ${
+                  `  ✅ Audio transcription in ${((Date.now() - audioStart) / 1000).toFixed(1)}s: ${
                     audioMeta.wordCount || 0
                   } words extracted`
                 );
               } else {
+                console.log(`  ⚠️ No speech detected (${((Date.now() - audioStart) / 1000).toFixed(1)}s)`);
                 audioTranscription = {
                   text: "No speech detected in audio",
                   hasAudio: true,
@@ -311,7 +320,7 @@ export class VideoProcessor extends BaseContentProcessor {
                 };
               }
             } catch (audioError) {
-              console.warn("⚠️ Audio transcription failed:", audioError);
+              console.warn(`  ⚠️ Audio transcription failed after ${((Date.now() - audioStart) / 1000).toFixed(1)}s:`, audioError);
               audioTranscription = {
                 text: "Audio transcription failed",
                 hasAudio: true,
@@ -333,15 +342,18 @@ export class VideoProcessor extends BaseContentProcessor {
           const characterCount = countCharacters(allText);
 
           // Extract entities and relationships
-          console.log("🏷️ Extracting entities and relationships...");
+          console.log(`[${stageTime()}s] 🏷️ Extracting entities and relationships...`);
+          const entityStart = Date.now();
           const entities = this.entityExtractor.extractEntities(allText);
           const relationships = this.entityExtractor.extractRelationships(
             allText,
             entities
           );
+          console.log(`  ✅ Entities in ${((Date.now() - entityStart) / 1000).toFixed(1)}s: ${entities.length} entities, ${relationships.length} relationships`);
 
           // Analyze content and classify
-          console.log("🎯 Classifying video content...");
+          console.log(`[${stageTime()}s] 🎯 Classifying video content...`);
+          const classifyStart = Date.now();
           const contentClassification = this.classifyVideoContent(
             processedFrames,
             allText
@@ -350,6 +362,7 @@ export class VideoProcessor extends BaseContentProcessor {
 
           // Detect keyframes
           const keyframes = this.detectKeyframes(processedFrames);
+          console.log(`  ✅ Classification + keyframes in ${((Date.now() - classifyStart) / 1000).toFixed(1)}s`);
 
           const metadata: VideoContentMetadata = {
             type: ContentType.VIDEO,
@@ -388,7 +401,7 @@ export class VideoProcessor extends BaseContentProcessor {
           };
 
           console.log(
-            `✅ Video processing complete: ${processedFrames.length} frames, ${wordCount} words extracted`
+            `\n✅ Video processing complete in ${stageTime()}s: ${processedFrames.length} frames, ${wordCount} words extracted`
           );
 
           return {
@@ -436,11 +449,16 @@ export class VideoProcessor extends BaseContentProcessor {
    */
   private async processFramesWithOCR(
     frames: ExtractedFrame[],
-    _options?: ProcessorOptions
+    _options?: ProcessorOptions,
+    preserveFrames: boolean = false
   ): Promise<ExtractedFrame[]> {
     const processedFrames: ExtractedFrame[] = [];
+    const totalFrames = frames.length;
+    const ocrStartTime = Date.now();
 
-    for (const frame of frames) {
+    for (let i = 0; i < frames.length; i++) {
+      const frame = frames[i];
+      const frameStart = Date.now();
       try {
         // Read frame image buffer
         const frameBuffer = fs.readFileSync(frame.imagePath);
@@ -460,20 +478,34 @@ export class VideoProcessor extends BaseContentProcessor {
           entities,
         };
 
+        const frameElapsed = ((Date.now() - frameStart) / 1000).toFixed(1);
+        const textLen = ocrResult.text.trim().length;
+        console.log(
+          `  🔍 OCR frame ${i + 1}/${totalFrames} ` +
+          `@ ${frame.timestamp.toFixed(1)}s ` +
+          `(${frameElapsed}s, ${textLen} chars)`
+        );
+
         processedFrames.push(processedFrame);
       } catch (ocrError) {
-        console.warn(`⚠️ OCR failed for frame ${frame.frameNumber}:`, ocrError);
+        const frameElapsed = ((Date.now() - frameStart) / 1000).toFixed(1);
+        console.warn(`  ⚠️ OCR failed for frame ${i + 1}/${totalFrames} (${frameElapsed}s):`, ocrError);
         // Include frame without OCR data
         processedFrames.push(frame);
       } finally {
-        // Clean up frame file
-        try {
-          fs.unlinkSync(frame.imagePath);
-        } catch (cleanupError) {
-          console.warn("⚠️ Failed to clean up frame file:", cleanupError);
+        // Clean up frame file unless we need to preserve for export
+        if (!preserveFrames) {
+          try {
+            fs.unlinkSync(frame.imagePath);
+          } catch (cleanupError) {
+            console.warn("⚠️ Failed to clean up frame file:", cleanupError);
+          }
         }
       }
     }
+
+    const totalOcrTime = ((Date.now() - ocrStartTime) / 1000).toFixed(1);
+    console.log(`  ✅ OCR complete: ${totalFrames} frames in ${totalOcrTime}s`);
 
     return processedFrames;
   }
@@ -545,36 +577,53 @@ export class VideoProcessor extends BaseContentProcessor {
     hasUI = uiMatches > 3;
     confidence += uiMatches * 0.05;
 
-    // Code indicators
-    const codePatterns = [
-      "function",
-      "var",
-      "const",
-      "class",
-      "import",
-      "export",
-      "console",
-      "error",
+    // Code indicators — look for actual code syntax, not just spoken keywords
+    const codeSyntaxPatterns = [
+      /[a-z]+\([^)]*\)\s*\{/,        // function calls with braces: foo() {
+      /[a-z]+\.[a-z]+\(/,             // method calls: obj.method(
+      /\b(?:const|let|var)\s+\w+\s*=/, // variable declarations: const x =
+      /=>\s*\{/,                        // arrow functions: => {
+      /import\s+\{[^}]+\}\s+from/,     // import statements: import { x } from
+      /if\s*\([^)]+\)\s*\{/,           // if statements with braces
+      /\bclass\s+[A-Z]\w+/,            // class declarations: class Foo
+      /\breturn\s+[^;]+;/,             // return statements
     ];
-    const codeMatches = codePatterns.filter((pattern) =>
-      text.includes(pattern)
+    const codeMatches = codeSyntaxPatterns.filter((pattern) =>
+      pattern.test(text)
     ).length;
     hasCode = codeMatches > 2;
     confidence += codeMatches * 0.1;
 
-    // Presentation indicators
+    // Presentation indicators — expanded to match natural presenter language
     const presentationPatterns = [
       "slide",
       "presentation",
       "agenda",
       "overview",
       "conclusion",
+      "talk",
+      "audience",
+      "demo",
+      "demonstration",
+      "walkthrough",
+      "let me show",
+      "as you can see",
+      "questions",
+      "thank you",
+      "welcome",
+      "conference",
     ];
     const presentationMatches = presentationPatterns.filter((pattern) =>
       text.includes(pattern)
     ).length;
     hasPresentation = presentationMatches > 1;
     confidence += presentationMatches * 0.15;
+
+    // If presentation detected but code was only marginally matched,
+    // it's likely a talk ABOUT code, not a screen recording of code
+    if (hasPresentation && codeMatches <= 3) {
+      hasCode = false;
+    }
 
     return {
       isScreenRecording,
@@ -673,12 +722,14 @@ export class VideoProcessor extends BaseContentProcessor {
   }
 
   /**
-   * Extract text from file path
+   * Extract text from file path (avoids loading entire video into memory)
    */
-  async extractText(filePath: string): Promise<ProcessorResult> {
+  async extractText(
+    filePath: string,
+    options?: VideoProcessorOptions
+  ): Promise<ProcessorResult> {
     try {
-      const buffer = fs.readFileSync(filePath);
-      return await this.extractFromBuffer(buffer);
+      return await this.extractFromFilePath(filePath, options);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -686,6 +737,476 @@ export class VideoProcessor extends BaseContentProcessor {
         `Failed to read video file: ${errorMessage}`
       );
     }
+  }
+
+  /**
+   * Process video directly from file path without loading into JS heap.
+   * Uses fs.copyFileSync which is an OS-level copy (copy-on-write on APFS).
+   */
+  private async extractFromFilePath(
+    filePath: string,
+    options?: VideoProcessorOptions
+  ): Promise<ProcessorResult> {
+    const { result, time } = await this.measureTime(async () => {
+      try {
+        const pipelineStart = Date.now();
+        const stageTime = () => ((Date.now() - pipelineStart) / 1000).toFixed(1);
+        console.log("🎬 Starting video processing (path-based)...");
+
+        // OS-level copy to temp dir — no JS heap allocation
+        const tempVideoPath = path.join(
+          this.tempDir,
+          `video_${Date.now()}.mp4`
+        );
+        fs.copyFileSync(filePath, tempVideoPath);
+
+        try {
+          // Extract video metadata
+          console.log(`[${stageTime()}s] 📊 Extracting video metadata...`);
+          const metaStart = Date.now();
+          const videoMetadata = await this.metadataExtractor.extract(tempVideoPath);
+          console.log(`  ✅ Metadata extracted in ${((Date.now() - metaStart) / 1000).toFixed(1)}s (${videoMetadata.duration?.toFixed(1)}s, ${videoMetadata.width}x${videoMetadata.height})`);
+
+          // Extract frames using adaptive scene detection
+          console.log(`[${stageTime()}s] 🖼️ Extracting video frames (adaptive scene detection)...`);
+          const frameStart = Date.now();
+          const extractionResult = await this.adaptiveExtractor.extract(
+            tempVideoPath,
+            {
+              sceneThreshold: 0.3,
+              minSceneLength: 1.0,
+              enableDeduplication: true,
+              maxFrames: (options as VideoProcessorOptions)?.maxFramesToExtract ?? 200,
+              fallbackInterval: (options as VideoProcessorOptions)?.frameExtractionInterval ?? 30,
+              outputDir: this.tempDir,
+              outputFormat: "png",
+            }
+          );
+          console.log(
+            `  ✅ Frame extraction in ${((Date.now() - frameStart) / 1000).toFixed(1)}s — ` +
+            `strategy: ${extractionResult.stats.strategy}, ` +
+            `scenes: ${extractionResult.stats.scenesDetected}, ` +
+            `frames: ${extractionResult.stats.framesExtracted}, ` +
+            `deduped: ${extractionResult.stats.duplicatesRemoved}`
+          );
+          const frames: ExtractedFrame[] = extractionResult.frames.map((f) => ({
+            frameNumber: f.frameNumber,
+            timestamp: f.timestamp,
+            imagePath: f.imagePath,
+          }));
+
+          // Perform OCR on extracted frames
+          const exportMode = !!(options as VideoProcessorOptions)?.outputDir;
+          console.log(`[${stageTime()}s] 🔍 Performing OCR on ${frames.length} frames...`);
+          const processedFrames = await this.processFramesWithOCR(
+            frames,
+            options,
+            exportMode // preserve frame images for export
+          );
+
+          // Extract and transcribe audio if the video has audio
+          let audioTranscription: VideoContentMetadata["audioTranscription"];
+          if (
+            videoMetadata.hasAudio &&
+            options?.enableSpeechTranscription !== false
+          ) {
+            console.log(`[${stageTime()}s] 🎤 Extracting and transcribing audio (${videoMetadata.duration?.toFixed(0)}s of audio)...`);
+            const audioStart = Date.now();
+            try {
+              // Use path-based extraction to avoid loading video into memory
+              const audioResult =
+                await this.audioProcessor.extractAudioFromVideoPath(tempVideoPath, {
+                  useTimestamps: true,
+                  enableSpeakerDetection: true,
+                });
+
+              if (audioResult.success) {
+                const audioMeta = audioResult.metadata;
+                audioTranscription = {
+                  text: audioResult.text,
+                  hasAudio: true,
+                  segments: audioMeta.segments?.map((seg: { start: number; end: number; text: string; confidence: number }) => ({
+                    start: seg.start,
+                    end: seg.end,
+                    text: seg.text,
+                    confidence: seg.confidence,
+                  })),
+                  wordCount: audioMeta.wordCount || 0,
+                  speechDuration: audioMeta.qualityMetrics?.speechDuration || 0,
+                  qualityScore:
+                    audioMeta.qualityMetrics?.averageConfidence || 0,
+                };
+                console.log(
+                  `  ✅ Audio transcription in ${((Date.now() - audioStart) / 1000).toFixed(1)}s: ${
+                    audioMeta.wordCount || 0
+                  } words extracted`
+                );
+              } else {
+                console.log(`  ⚠️ No speech detected (${((Date.now() - audioStart) / 1000).toFixed(1)}s)`);
+                audioTranscription = {
+                  text: "No speech detected in audio",
+                  hasAudio: true,
+                  wordCount: 0,
+                  speechDuration: 0,
+                  qualityScore: 0,
+                };
+              }
+            } catch (audioError) {
+              console.warn(`  ⚠️ Audio transcription failed after ${((Date.now() - audioStart) / 1000).toFixed(1)}s:`, audioError);
+              audioTranscription = {
+                text: "Audio transcription failed",
+                hasAudio: true,
+                wordCount: 0,
+                speechDuration: 0,
+                qualityScore: 0,
+              };
+            }
+          }
+
+          // Combine all text content (OCR + audio transcription)
+          const ocrText = this.combineTextFromFrames(processedFrames);
+          const audioText = audioTranscription?.text || "";
+          const allText = [ocrText, audioText]
+            .filter((t) => t.trim())
+            .join("\n\n");
+          const hasText = allText.length > 0;
+          const wordCount = countWords(allText);
+          const characterCount = countCharacters(allText);
+
+          // Extract entities and relationships
+          console.log(`[${stageTime()}s] 🏷️ Extracting entities and relationships...`);
+          const entityStart = Date.now();
+          const entities = this.entityExtractor.extractEntities(allText);
+          const relationships = this.entityExtractor.extractRelationships(
+            allText,
+            entities
+          );
+          console.log(`  ✅ Entities in ${((Date.now() - entityStart) / 1000).toFixed(1)}s: ${entities.length} entities, ${relationships.length} relationships`);
+
+          // Analyze content and classify
+          console.log(`[${stageTime()}s] 🎯 Classifying video content...`);
+          const classifyStart = Date.now();
+          const contentClassification = this.classifyVideoContent(
+            processedFrames,
+            allText
+          );
+          const textSummary = this.createTextSummary(processedFrames);
+
+          // Detect keyframes
+          const keyframes = this.detectKeyframes(processedFrames);
+          console.log(`  ✅ Classification + keyframes in ${((Date.now() - classifyStart) / 1000).toFixed(1)}s`);
+
+          const metadata: VideoContentMetadata = {
+            type: ContentType.VIDEO,
+            language: options?.language || detectLanguage(allText),
+            duration: videoMetadata.duration,
+            wordCount,
+            characterCount,
+            videoMetadata: {
+              duration: videoMetadata.duration,
+              frameRate: videoMetadata.frameRate,
+              resolution: `${videoMetadata.width}x${videoMetadata.height}`,
+              keyframesExtracted: keyframes?.count || 0,
+              audioAvailable: videoMetadata.hasAudio,
+              subtitlesAvailable: false,
+              width: videoMetadata.width,
+              height: videoMetadata.height,
+              codec: videoMetadata.codec,
+              bitrate: videoMetadata.bitrate,
+              format: videoMetadata.format,
+              size: videoMetadata.size,
+              aspectRatio: videoMetadata.aspectRatio,
+              audioCodec: videoMetadata.audioCodec,
+              hasAudio: videoMetadata.hasAudio,
+              creationTime: videoMetadata.creationTime,
+            },
+            hasText,
+            frameCount: processedFrames.length,
+            extractedFrames: processedFrames,
+            audioTranscription,
+            entities,
+            relationships,
+            keyframes,
+            textSummary,
+            contentClassification,
+          };
+
+          console.log(
+            `\n✅ Video processing complete in ${stageTime()}s: ${processedFrames.length} frames, ${wordCount} words extracted`
+          );
+
+          // Export artifacts if outputDir is set
+          if (exportMode) {
+            const outputDir = (options as VideoProcessorOptions).outputDir!;
+            console.log(`📦 Exporting artifacts to ${outputDir}...`);
+            this.exportArtifacts(
+              outputDir,
+              metadata,
+              path.basename(filePath)
+            );
+            // Clean up preserved frame temp files now that they've been copied
+            for (const frame of processedFrames) {
+              try {
+                if (frame.imagePath && fs.existsSync(frame.imagePath)) {
+                  fs.unlinkSync(frame.imagePath);
+                }
+              } catch {
+                // ignore cleanup errors
+              }
+            }
+          }
+
+          return {
+            success: true,
+            text: hasText
+              ? allText
+              : `Video: ${path.basename(filePath)} (${
+                  videoMetadata.duration
+                }s, ${processedFrames.length} frames processed)`,
+            metadata,
+            processingTime: 0,
+          };
+        } finally {
+          // Clean up temporary video file
+          try {
+            fs.unlinkSync(tempVideoPath);
+          } catch (cleanupError) {
+            console.warn(
+              "⚠️ Failed to clean up temp video file:",
+              cleanupError
+            );
+          }
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        console.error("❌ Video processing failed:", errorMessage);
+
+        const errorResult = this.createErrorResult(
+          `Video processing error: ${errorMessage}`
+        );
+        return {
+          ...errorResult,
+          error: errorMessage,
+        };
+      }
+    });
+
+    result.processingTime = time;
+    return result;
+  }
+
+  /**
+   * Format seconds as HH:MM:SS
+   */
+  private formatTimestamp(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return `${h.toString().padStart(2, "0")}:${m
+      .toString()
+      .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  }
+
+  /**
+   * Export processing artifacts to a structured output directory.
+   * Writes keyframe images, manifest.json, transcript_segments.json,
+   * and a canonical transcript.md that interleaves frames and speech.
+   */
+  private exportArtifacts(
+    outputDir: string,
+    metadata: VideoContentMetadata,
+    sourceFileName: string
+  ): void {
+    const keyframesDir = path.join(outputDir, "keyframes");
+    fs.mkdirSync(keyframesDir, { recursive: true });
+
+    // Determine which frames are keyframes
+    const keyframeTimestamps = new Set(
+      metadata.keyframes?.intervals ?? metadata.extractedFrames.map((f) => f.timestamp)
+    );
+
+    // Copy keyframe images and build index
+    const keyframeFiles = new Map<number, string>();
+    const frameIndex: Array<{
+      frameNumber: number;
+      timestamp: number;
+      filename: string | null;
+      ocrText: string | null;
+      ocrConfidence: number;
+      isKeyframe: boolean;
+    }> = [];
+
+    for (const frame of metadata.extractedFrames) {
+      const isKeyframe = keyframeTimestamps.has(frame.timestamp);
+      let filename: string | null = null;
+
+      if (isKeyframe && frame.imagePath && fs.existsSync(frame.imagePath)) {
+        filename = `frame_${String(frame.frameNumber).padStart(3, "0")}_${frame.timestamp.toFixed(1)}s.png`;
+        fs.copyFileSync(frame.imagePath, path.join(keyframesDir, filename));
+        keyframeFiles.set(frame.timestamp, filename);
+      }
+
+      frameIndex.push({
+        frameNumber: frame.frameNumber,
+        timestamp: frame.timestamp,
+        filename,
+        ocrText: frame.ocrText?.trim() || null,
+        ocrConfidence: frame.ocrConfidence ?? 0,
+        isKeyframe,
+      });
+    }
+
+    // Write manifest.json
+    const manifest = {
+      source: sourceFileName,
+      exportedAt: new Date().toISOString(),
+      video: metadata.videoMetadata,
+      contentClassification: metadata.contentClassification,
+      summary: {
+        duration: metadata.duration,
+        wordCount: metadata.wordCount,
+        frameCount: metadata.frameCount,
+        keyframeCount: keyframeFiles.size,
+        language: metadata.language,
+        segmentCount: metadata.audioTranscription?.segments?.length ?? 0,
+      },
+      frames: frameIndex,
+      entities: metadata.entities,
+      relationships: metadata.relationships,
+    };
+    fs.writeFileSync(
+      path.join(outputDir, "manifest.json"),
+      JSON.stringify(manifest, null, 2)
+    );
+
+    // Write transcript_segments.json
+    const segments = metadata.audioTranscription?.segments ?? [];
+    fs.writeFileSync(
+      path.join(outputDir, "transcript_segments.json"),
+      JSON.stringify(segments, null, 2)
+    );
+
+    // Write canonical transcript.md
+    const transcript = this.generateCanonicalTranscript(
+      metadata,
+      keyframeFiles,
+      sourceFileName
+    );
+    fs.writeFileSync(path.join(outputDir, "transcript.md"), transcript);
+
+    console.log(
+      `  📄 Exported: manifest.json, transcript.md, transcript_segments.json, ${keyframeFiles.size} keyframes`
+    );
+  }
+
+  /**
+   * Generate a canonical markdown transcript that interleaves keyframe
+   * references (with OCR text) and speech transcript segments on a
+   * unified timeline.
+   */
+  private generateCanonicalTranscript(
+    metadata: VideoContentMetadata,
+    keyframeFiles: Map<number, string>,
+    sourceFileName: string
+  ): string {
+    const lines: string[] = [];
+
+    // Header
+    lines.push(`# Video Transcript: ${sourceFileName}`);
+    lines.push("");
+    lines.push("## Video Info");
+    const vm = metadata.videoMetadata;
+    const durationStr = `${vm.duration.toFixed(1)}s (${this.formatTimestamp(vm.duration)})`;
+    lines.push(`- **Duration:** ${durationStr}`);
+    lines.push(`- **Resolution:** ${vm.resolution}`);
+    lines.push(`- **Codec:** ${vm.codec}`);
+    lines.push(`- **Frame rate:** ${vm.frameRate.toFixed(2)} fps`);
+    lines.push(`- **Has audio:** ${vm.hasAudio}`);
+    if (metadata.contentClassification) {
+      const cc = metadata.contentClassification;
+      const tags = [];
+      if (cc.hasPresentation) tags.push("presentation");
+      if (cc.hasCode) tags.push("code");
+      if (cc.isScreenRecording) tags.push("screen recording");
+      if (cc.hasUI) tags.push("UI");
+      if (tags.length > 0) lines.push(`- **Content type:** ${tags.join(", ")}`);
+    }
+    lines.push(`- **Words extracted:** ${metadata.wordCount}`);
+    lines.push(`- **Frames extracted:** ${metadata.frameCount}`);
+    lines.push(`- **Keyframes:** ${keyframeFiles.size}`);
+    lines.push("");
+
+    // Build unified timeline of events
+    type TimelineEvent =
+      | { type: "keyframe"; timestamp: number; filename: string; ocrText: string | null; frameNumber: number }
+      | { type: "speech"; start: number; end: number; text: string; confidence?: number };
+
+    const events: TimelineEvent[] = [];
+
+    // Add keyframe events
+    for (const frame of metadata.extractedFrames) {
+      const filename = keyframeFiles.get(frame.timestamp);
+      if (filename) {
+        events.push({
+          type: "keyframe",
+          timestamp: frame.timestamp,
+          filename,
+          ocrText: frame.ocrText?.trim() || null,
+          frameNumber: frame.frameNumber,
+        });
+      }
+    }
+
+    // Add speech segments
+    const segments = metadata.audioTranscription?.segments ?? [];
+    for (const seg of segments) {
+      events.push({
+        type: "speech",
+        start: seg.start,
+        end: seg.end,
+        text: seg.text,
+        confidence: seg.confidence,
+      });
+    }
+
+    // Sort by timestamp (keyframe.timestamp or speech.start)
+    events.sort((a, b) => {
+      const tA = a.type === "keyframe" ? a.timestamp : a.start;
+      const tB = b.type === "keyframe" ? b.timestamp : b.start;
+      if (tA !== tB) return tA - tB;
+      // Keyframes appear before speech at the same timestamp
+      return a.type === "keyframe" ? -1 : 1;
+    });
+
+    // Render timeline
+    lines.push("## Timeline");
+    lines.push("");
+
+    for (const event of events) {
+      if (event.type === "keyframe") {
+        const ts = this.formatTimestamp(event.timestamp);
+        lines.push(`### [${ts}] Keyframe: ${event.filename}`);
+        lines.push("");
+        lines.push(`![${event.filename}](keyframes/${event.filename})`);
+        lines.push("");
+        if (event.ocrText && !event.ocrText.startsWith("Image OCR:")) {
+          // Render OCR text as blockquote, each line prefixed
+          const ocrLines = event.ocrText.split("\n").filter((l) => l.trim());
+          for (const ocrLine of ocrLines) {
+            lines.push(`> ${ocrLine}`);
+          }
+          lines.push("");
+        }
+      } else {
+        const startTs = this.formatTimestamp(event.start);
+        const endTs = this.formatTimestamp(event.end);
+        lines.push(`**[${startTs} - ${endTs}]** ${event.text}`);
+        lines.push("");
+      }
+    }
+
+    return lines.join("\n");
   }
 
   /**

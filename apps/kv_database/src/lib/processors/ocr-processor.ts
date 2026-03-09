@@ -1,4 +1,5 @@
-import { createWorker, Worker } from "tesseract.js";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { ContentType, ContentMetadata } from "../../types/index";
 import {
   detectLanguage,
@@ -7,11 +8,15 @@ import {
   EntityRelationship,
 } from "../utils";
 import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
 import {
   ContentProcessor,
   ProcessorResult,
   ProcessorOptions,
 } from "./base-processor";
+
+const execFileAsync = promisify(execFile);
 
 export interface OCRMetadata {
   confidence: number;
@@ -37,19 +42,110 @@ export interface OCRContentMetadata extends ContentMetadata {
 }
 
 export class OCRProcessor implements ContentProcessor {
-  private worker: Worker | null = null;
+  private tesseractPath: string | null = null;
   private entityExtractor: EntityExtractor;
+  private static readonly RECOGNIZE_TIMEOUT_MS = 30_000; // 30s per image
 
   constructor() {
     this.entityExtractor = new EntityExtractor();
   }
 
   /**
-   * Initialize the OCR worker
+   * Find and validate the native tesseract binary
    */
   async initialize(): Promise<void> {
-    if (!this.worker) {
-      this.worker = await createWorker("eng"); // Default to English
+    if (this.tesseractPath) return;
+
+    const possiblePaths = [
+      "/opt/homebrew/bin/tesseract",  // Homebrew on Apple Silicon
+      "/usr/local/bin/tesseract",     // Homebrew on Intel
+      "/usr/bin/tesseract",           // Linux
+      "tesseract",                    // System PATH
+    ];
+
+    for (const p of possiblePaths) {
+      try {
+        await execFileAsync(p, ["--version"], { timeout: 5000 });
+        this.tesseractPath = p;
+        return;
+      } catch {
+        continue;
+      }
+    }
+
+    throw new Error(
+      "Native tesseract not found. Install with: brew install tesseract"
+    );
+  }
+
+  /**
+   * Run native tesseract on an image file and return the raw text + confidence
+   */
+  private async runTesseract(
+    imagePath: string,
+    language: string = "eng"
+  ): Promise<{ text: string; confidence: number }> {
+    if (!this.tesseractPath) {
+      await this.initialize();
+    }
+
+    // tesseract <input> stdout -l <lang> --psm 3 tsv  -> gives confidence per word
+    // For simplicity: get text from stdout, get confidence from tsv output
+    const tsvOutputBase = path.join(
+      os.tmpdir(),
+      `ocr-tsv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
+
+    try {
+      // Run tesseract to get text
+      const { stdout: text } = await execFileAsync(
+        this.tesseractPath!,
+        [imagePath, "stdout", "-l", language, "--psm", "3"],
+        { timeout: OCRProcessor.RECOGNIZE_TIMEOUT_MS, maxBuffer: 10 * 1024 * 1024 }
+      );
+
+      // Run tesseract to get confidence via TSV
+      let confidence = 0;
+      try {
+        await execFileAsync(
+          this.tesseractPath!,
+          [imagePath, tsvOutputBase, "-l", language, "--psm", "3", "tsv"],
+          { timeout: OCRProcessor.RECOGNIZE_TIMEOUT_MS }
+        );
+
+        const tsvPath = `${tsvOutputBase}.tsv`;
+        if (fs.existsSync(tsvPath)) {
+          const tsvContent = fs.readFileSync(tsvPath, "utf-8");
+          const lines = tsvContent.split("\n").slice(1); // skip header
+          const confidences: number[] = [];
+          for (const line of lines) {
+            const cols = line.split("\t");
+            // TSV format: level, page_num, block_num, par_num, line_num, word_num, left, top, width, height, conf, text
+            if (cols.length >= 12) {
+              const conf = parseFloat(cols[10]);
+              if (!isNaN(conf) && conf >= 0) {
+                confidences.push(conf);
+              }
+            }
+          }
+          if (confidences.length > 0) {
+            confidence =
+              confidences.reduce((a, b) => a + b, 0) / confidences.length;
+          }
+          fs.unlinkSync(tsvPath);
+        }
+      } catch {
+        // Confidence extraction is best-effort
+      }
+
+      return { text: text.trim(), confidence };
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("timed out")) {
+        throw new Error(
+          `OCR timed out after ${(OCRProcessor.RECOGNIZE_TIMEOUT_MS / 1000).toFixed(0)}s`
+        );
+      }
+      throw error;
     }
   }
 
@@ -66,36 +162,33 @@ export class OCRProcessor implements ContentProcessor {
     text: string;
     metadata: OCRContentMetadata;
   }> {
+    // Write buffer to temp file for native tesseract
+    const tempPath = path.join(
+      os.tmpdir(),
+      `ocr-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`
+    );
+
     try {
-      await this.initialize();
-
-      if (!this.worker) {
-        throw new Error("OCR worker not initialized");
-      }
-
-      // Load language if specified
-      if (options.language && options.language !== "eng") {
-        await this.worker.setParameters({
-          tessedit_ocr_engine_mode: "1", // Use LSTM OCR engine
-        });
-      }
+      fs.writeFileSync(tempPath, buffer);
 
       const startTime = Date.now();
+      const language = options.language || "eng";
 
-      // Perform OCR
-      const result = await this.worker.recognize(buffer);
+      const result = await this.runTesseract(tempPath, language);
 
       const processingTime = Date.now() - startTime;
-      const rawText = result.data.text.trim();
-      const confidence = result.data.confidence ?? 0; // Handle NaN values from Tesseract
+      const rawText = result.text;
+      const confidence = result.confidence;
 
       // Enhanced text processing
       const enhancedText = this.enhanceOCRText(rawText);
-      const words = enhancedText.split(/\s+/).filter((word) => word.length > 0);
+      const words = enhancedText
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
       const hasText = enhancedText.length > 0 && words.length > 0;
 
       // Check if confidence meets minimum threshold
-      const minConfidence = options.confidence || 30; // Default minimum confidence
+      const minConfidence = options.confidence || 50;
       const isConfident = confidence >= minConfidence;
 
       // Extract entities and relationships
@@ -111,8 +204,8 @@ export class OCRProcessor implements ContentProcessor {
       const ocrMetadata: OCRMetadata = {
         confidence,
         processingTime,
-        language: options.language || "eng",
-        version: "tesseract.js",
+        language,
+        version: "tesseract-native",
       };
 
       const contentMetadata: OCRContentMetadata = {
@@ -161,6 +254,12 @@ export class OCRProcessor implements ContentProcessor {
         text: `Image OCR Error: ${errorMessage}`,
         metadata: contentMetadata,
       };
+    } finally {
+      try {
+        fs.unlinkSync(tempPath);
+      } catch {
+        // ignore cleanup errors
+      }
     }
   }
 
@@ -231,13 +330,10 @@ export class OCRProcessor implements ContentProcessor {
   }
 
   /**
-   * Clean up OCR worker
+   * Clean up (no-op for native tesseract — no persistent worker)
    */
   async terminate(): Promise<void> {
-    if (this.worker) {
-      await this.worker.terminate();
-      this.worker = null;
-    }
+    // Native tesseract has no persistent state to clean up
   }
 
   /**
@@ -263,21 +359,16 @@ export class OCRProcessor implements ContentProcessor {
    */
   async extractFromBuffer(
     buffer: Buffer,
-    options?: ProcessorOptions
+    _options?: ProcessorOptions
   ): Promise<ProcessorResult> {
-    // Convert buffer to temporary file path for processing
-    const tempPath = `/tmp/ocr-${Date.now()}.png`;
-    try {
-      fs.writeFileSync(tempPath, buffer);
-      return await this.extractFromFile(tempPath, options);
-    } finally {
-      // Clean up temp file
-      try {
-        fs.unlinkSync(tempPath);
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
+    const result = await this.extractTextFromBuffer(buffer);
+    return {
+      text: result.text,
+      metadata: result.metadata,
+      success: true,
+      processingTime: result.metadata.ocrMetadata?.processingTime || 0,
+      confidence: result.metadata.confidence,
+    };
   }
 
   /**
@@ -334,7 +425,29 @@ export class OCRProcessor implements ContentProcessor {
       .replace(/\n{3,}/g, "\n\n") // Preserve paragraph breaks (max 2 newlines)
       .trim();
 
-    return result;
+    // Filter out lines that are predominantly noise
+    const lines = result.split("\n");
+    const cleanedLines = lines.filter((line) => {
+      const trimmed = line.trim();
+      if (trimmed.length === 0) return true; // preserve blank lines for structure
+
+      // Reject lines that are mostly non-alphanumeric characters
+      const alphanumCount = (trimmed.match(/[a-zA-Z0-9]/g) || []).length;
+      const ratio = alphanumCount / trimmed.length;
+      if (ratio < 0.5 && trimmed.length > 3) return false;
+
+      // Reject lines dominated by single-character "words" (OCR fragments)
+      const words = trimmed.split(/\s+/);
+      const singleCharWords = words.filter(
+        (w) => w.length === 1 && !/^[aAI]$/.test(w)
+      );
+      if (words.length > 2 && singleCharWords.length / words.length > 0.5)
+        return false;
+
+      return true;
+    });
+
+    return cleanedLines.join("\n").trim();
   }
 
   /**
@@ -365,7 +478,8 @@ export class OCRProcessor implements ContentProcessor {
         const isHeader =
           trimmed.length > 5 &&
           !/[.!?]$/.test(trimmed) &&
-          (trimmed === trimmed.toUpperCase() || /^[A-Z][^.!?]*$/.test(trimmed));
+          (trimmed === trimmed.toUpperCase() ||
+            /^[A-Z][^.!?]*$/.test(trimmed));
 
         if (isHeader) {
           headers.push(trimmed);
