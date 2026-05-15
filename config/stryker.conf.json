@@ -22,8 +22,6 @@
     "**/tests/**",
     "**/coverage/**",
     "**/.caws/**",
-    "**/apps/rag_editor/**",
-    "**/apps/rag_web_search_tool/**",
     "**/apps/tools/caws/**"
   ],
   "testRunnerOptions": {

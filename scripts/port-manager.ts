@@ -13,9 +13,8 @@
  * - Health checking and monitoring
  */
 
-import { execSync, spawn, ChildProcess } from "child_process";
+import { execSync, spawn } from "child_process";
 import { existsSync, writeFileSync, readFileSync, unlinkSync } from "fs";
-import { join } from "path";
 
 interface PortInfo {
   port: number;
@@ -54,13 +53,6 @@ class PortManager {
       healthEndpoint: "/health",
       startupTimeout: 10000,
     },
-    {
-      name: "rag-editor",
-      script: "apps/rag_editor",
-      defaultPort: 3000,
-      fallbackPorts: [3001, 3002, 3003, 3004],
-      startupTimeout: 15000,
-    },
   ];
 
   /**
@@ -87,7 +79,7 @@ class PortManager {
         command,
         service: this.identifyService(command, pid),
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -106,7 +98,6 @@ class PortManager {
         return "kv-database";
       if (commandLine.includes("apps/kv_database/src/graph-rag-server.ts"))
         return "graph-rag";
-      if (commandLine.includes("apps/rag_editor")) return "rag-editor";
       if (commandLine.includes("tsx")) return "tsx-process";
       if (commandLine.includes("node")) return "node-process";
 
@@ -147,7 +138,7 @@ class PortManager {
       }
 
       return this.checkPort(port) === null;
-    } catch (error) {
+    } catch {
       console.log(`   ✅ Port ${port} is already free`);
       return true;
     }
@@ -256,18 +247,8 @@ class PortManager {
   ): Promise<number> {
     const env = { ...process.env, PORT: port.toString() };
 
-    let command: string;
-    let args: string[];
-
-    if (server.name === "rag-editor") {
-      // Next.js app
-      command = "npm";
-      args = ["run", "dev"];
-    } else {
-      // TypeScript server
-      command = "tsx";
-      args = watch ? ["watch", server.script] : [server.script];
-    }
+    const command = "tsx";
+    const args = watch ? ["watch", server.script] : [server.script];
 
     console.log(`   Running: ${command} ${args.join(" ")}`);
     console.log(`   Environment: PORT=${port}`);
@@ -466,7 +447,6 @@ async function main() {
     console.log("Servers:");
     console.log("  kv-database  - Main KV database server");
     console.log("  graph-rag    - Graph RAG server");
-    console.log("  rag-editor    - RAG editor frontend");
     console.log("");
     console.log("Options:");
     console.log("  --force      - Force kill existing processes");

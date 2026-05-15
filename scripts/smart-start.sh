@@ -249,7 +249,7 @@ list_servers() {
         return 0
     fi
     
-    local servers=("kv-database" "graph-rag" "rag-editor")
+    local servers=("kv-database" "graph-rag")
     
     for server in "${servers[@]}"; do
         local pid=$(jq -r ".\"$server\" // empty" "$PROJECT_ROOT/.server.pid" 2>/dev/null || echo "")
@@ -264,9 +264,6 @@ list_servers() {
                 "graph-rag")
                     port_info=$(lsof -i :3002 -P 2>/dev/null | grep ":$pid" | head -1 | awk '{print $9}' | cut -d: -f2)
                     ;;
-                "rag-editor")
-                    port_info=$(lsof -i :3000 -P 2>/dev/null | grep ":$pid" | head -1 | awk '{print $9}' | cut -d: -f2)
-                    ;;
             esac
             print_success "$server: Running (PID: $pid, Port: ${port_info:-unknown})"
         else
@@ -280,7 +277,7 @@ cleanup_all() {
     print_status "Cleaning up all servers..."
     
     if [ -f "$PROJECT_ROOT/.server.pid" ]; then
-        local servers=("kv-database" "graph-rag" "rag-editor")
+        local servers=("kv-database" "graph-rag")
         
         for server in "${servers[@]}"; do
             stop_server "$server"
@@ -306,12 +303,9 @@ case "${1:-help}" in
             "graph-rag")
                 start_server "graph-rag" 3002 "apps/kv_database/src/graph-rag-server.ts" "$watch_mode" "$force_kill"
                 ;;
-            "rag-editor")
-                start_server "rag-editor" 3000 "apps/rag_editor" "$watch_mode" "$force_kill"
-                ;;
             *)
                 print_error "Unknown server: $server_name"
-                print_status "Available servers: kv-database, graph-rag, rag-editor"
+                print_status "Available servers: kv-database, graph-rag"
                 exit 1
                 ;;
         esac
@@ -347,7 +341,6 @@ case "${1:-help}" in
         echo "Servers:"
         echo "  kv-database  - Main KV database server (port 3001)"
         echo "  graph-rag    - Graph RAG server (port 3002)"
-        echo "  rag-editor    - RAG editor frontend (port 3000)"
         echo ""
         echo "Options:"
         echo "  force        - Force kill existing processes"

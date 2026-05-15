@@ -71,26 +71,6 @@ module.exports = [
       "local/no-hype-identifiers": "error", // Purpose-first naming rule
     },
   },
-  // Specific config for rag_web_search_tool UI components
-  {
-    files: ["apps/rag_web_search_tool/**/*.{ts,tsx}"],
-    languageOptions: {
-      parser: tsparser,
-      parserOptions: {
-        ecmaVersion: 2022,
-        sourceType: "module",
-        jsx: true,
-      },
-      globals: {
-        HTMLTextAreaElement: "readonly",
-        Event: "readonly",
-        setTimeout: "readonly",
-      },
-    },
-    rules: {
-      "@typescript-eslint/no-unused-vars": "off", // Allow unused vars in interfaces
-    },
-  },
   {
     ignores: [
       "node_modules/**",

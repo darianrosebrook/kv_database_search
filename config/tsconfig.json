@@ -22,5 +22,5 @@
     "noEmit": true
   },
   "include": ["../apps/kv_database/src/**/*", "../apps/tools/**/*", "../packages/*/src/**/*"],
-  "exclude": ["../node_modules", "../dist", "**/*.test.ts", "../apps/rag_web_search_tool/**/*"]
+  "exclude": ["../node_modules", "../dist", "**/*.test.ts"]
 }

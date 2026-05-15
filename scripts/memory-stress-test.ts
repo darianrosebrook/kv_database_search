@@ -69,17 +69,12 @@ class StressTestMonitor {
     console.log("👀 Starting file watchers...");
 
     // Watch multiple directories like Cursor does
-    const watchDirs = [
-      "apps/kv_database/src",
-      "apps/rag_editor",
-      "tests",
-      "scripts",
-    ];
+    const watchDirs = ["apps/kv_database/src", "tests", "scripts"];
 
     watchDirs.forEach((dir) => {
       if (fs.existsSync(dir)) {
         const watcher = chokidar.watch(dir, {
-          ignored: /(^|[\/\\])\../, // ignore dotfiles
+          ignored: /(^|[/\\])\../, // ignore dotfiles
           persistent: true,
           ignoreInitial: true,
         });
