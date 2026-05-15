@@ -1,0 +1,13 @@
+{
+  "name": "@kv/database",
+  "version": "0.1.0",
+  "private": true,
+  "description": "KV-backed multi-modal ingestion and retrieval engine",
+  "type": "module",
+  "bin": {
+    "video-extract": "./bin/video-extract.mjs"
+  },
+  "scripts": {
+    "video-extract": "tsx src/cli/video-extract.ts"
+  }
+}
