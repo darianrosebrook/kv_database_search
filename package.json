@@ -56,8 +56,8 @@
     "test:performance": "tsx apps/tools/benchmark/performance.ts",
     "test:multi-modal": "vitest run tests/unit/*multi-modal*.test.ts tests/unit/*pdf-processor*.test.ts tests/unit/*ocr-processor*.test.ts tests/unit/*office-processor*.test.ts tests/unit/*speech-processor*.test.ts",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:contract",
-    "lint": "eslint apps/kv_database/src apps/tools",
-    "lint:fix": "eslint apps/kv_database/src apps/tools --fix",
+    "lint": "eslint apps/kv_database/src apps/tools packages/*/src",
+    "lint:fix": "eslint apps/kv_database/src apps/tools packages/*/src --fix",
     "typecheck": "tsc -p config/tsconfig.json --noEmit",
     "dep:check": "npx depcheck",
     "dep:audit": "npm audit",
@@ -195,7 +195,6 @@
       "eslint --fix"
     ],
     "*.{ts,tsx}": [
-      "bash -c 'tsc --noEmit --skipLibCheck'",
       "npm run quality:precommit"
     ]
   },
