@@ -2,120 +2,91 @@
 
 ## Overview
 
-Successfully implemented OCR (Optical Character Recognition) extraction for images embedded in PDF files. The system now properly extracts and processes both text and images from PDFs, enabling full-text search across all PDF content including text hidden in images.
+The PDF processing pipeline extracts text from all types of PDFs — text-based documents, scanned/rasterized pages, and mixed-content documents with both text and embedded images (diagrams, charts, screenshots).
 
-## What Was Changed
+## Architecture
 
-### 1. PDF Text Extractor (`pdf-text-extractor.ts`)
+### Processing Strategy Engine
 
-**Changes:**
-- Added `pages?: any[]` field to `PDFTextExtractionResult` interface to store raw PDF.js-extract page data
-- Modified `selectBestExtractionResult()` to preserve pages data from pdf.js-extract
-- Updated extraction logic to always run pdf.js-extract on 'auto' mode to ensure pages data is available for OCR
-- Fixed type safety issues with proper typing for pdfParseResult and pdfExtractResult
+The `PDFProcessingStrategyEngine` analyzes each PDF and selects one of four strategies:
 
-**Key Behavior:**
-- When using `pdf-parse` (text-focused), it still runs `pdf.js-extract` to get pages data for OCR
-- Pages data includes image information that can be processed by OCR
-- No performance penalty for PDFs without images as OCR only runs when images are detected
+| Strategy | When Used | OCR Behavior |
+|----------|-----------|--------------|
+| `text-focused` | High text density (>200 chars/page), low file-size-to-text ratio (<2KB/char) | Skips OCR — text extraction is sufficient |
+| `hybrid` | Moderate text density with higher file-size-to-text ratio (2-5KB/char) | Runs both text extraction AND page-rendering OCR |
+| `image-heavy` | Low text density (<50 chars/page) or very high file-size ratio | Renders all pages and OCRs them |
+| `ocr-fallback` | Near-zero extractable text (<100 chars total) | Full page-rendering OCR |
 
-### 2. PDF Processing Pipeline (`pdf-processing-pipeline.ts`)
+### Text Sufficiency Check
 
-**Changes:**
-- Implemented actual OCR extraction logic (replaced placeholder)
-- Integrated `ImageOCRExtractor.extractFromPDFPages()` to process images from PDF pages
-- Added comprehensive error handling for OCR failures
-- Enhanced logging to show OCR progress and results
+The pipeline determines whether extracted text is "sufficient" using **word count on trimmed text**, not raw character length:
 
-**OCR Flow:**
-1. Check if OCR is enabled in strategy
-2. Verify pages data is available from text extraction
-3. Extract images from PDF pages
-4. Perform OCR on each image using Tesseract
-5. Combine OCR text with regular text extraction
-6. Track metadata (image count, confidence scores)
+```typescript
+const trimmedText = textResult.text.trim();
+const wordCount = trimmedText.split(/\s+/).filter(w => w.length > 0).length;
+const hasSufficientTextContent = wordCount > 50 && textResult.confidence > 0.7;
+```
 
-### 3. Processing Strategy
+This prevents scanned PDFs with whitespace-only extraction (e.g., 608 chars of newlines from a 68-page slide deck) from being incorrectly classified as having text content.
 
-**Hybrid Approach:**
-- PDFs with mixed content (text + images) use "hybrid" strategy
-- Image-heavy PDFs use "image-heavy" strategy with OCR enabled
-- Text-focused PDFs can still extract images if present
-- OCR results are combined with regular text extraction
-
-## How It Works
+### OCR Decision Logic
 
 ```
-┌─────────────┐
-│  PDF File   │
-└─────┬───────┘
+PDF File
+   │
+   ├─ Text Extraction (pdf-parse + pdf.js-extract)
+   │
+   ├─ Strategy Engine determines approach
+   │
+   ├─ IF strategy is "text-focused" AND hasSufficientTextContent
+   │  └─ Return extracted text only (skip OCR)
+   │
+   └─ OTHERWISE (hybrid, image-heavy, ocr-fallback)
       │
-      ▼
-┌─────────────────────┐
-│ PDF Text Extractor  │
-│ - pdf-parse (text)  │
-│ - pdf.js-extract    │
-│   (text + pages)    │
-└─────┬───────────────┘
-      │
-      ├─── Text ─────────────┐
-      │                      │
-      └─── Pages Data ───────┤
-                             │
-                             ▼
-                    ┌────────────────────┐
-                    │ Image OCR Extractor│
-                    │ - Find images      │
-                    │ - Extract buffers  │
-                    │ - Run Tesseract    │
-                    └────────┬───────────┘
-                             │
-                             ▼
-                    ┌─────────────────┐
-                    │  Combined Text  │
-                    │ (Text + OCR)    │
-                    └─────────────────┘
+      ├─ Render pages to PNG via pdfjs-dist + canvas
+      ├─ OCR each rendered page with Tesseract.js
+      ├─ Combine extracted text + OCR text
+      └─ Return combined result
 ```
 
-## Image Processing Pipeline
+### PDF Page Rendering
 
-For each PDF page:
-1. **Image Detection**: Scan page content for items with `type === "image"`
-2. **Image Extraction**: Extract image buffer data, dimensions, and page number
-3. **OCR Processing**: Use Tesseract.js to extract text from each image
-4. **Confidence Scoring**: Track OCR confidence for quality assessment
-5. **Text Combination**: Merge OCR text with regular PDF text extraction
+Pages are rendered using `pdfjs-dist` and `canvas` (Node.js packages) — no system dependencies like GraphicsMagick or Ghostscript are needed.
 
-## Testing
-
-### Test Script
-
-A test script has been created at `test-pdf-ocr.ts`:
-
-```bash
-# Run the test with your PDF
-tsx test-pdf-ocr.ts ~/path/to/your.pdf
-
-# Example with your specific PDF
-tsx test-pdf-ocr.ts ~/Downloads/ai-first-product-design.pdf
+```
+Algorithm:
+1. Load PDF with pdfjs-dist getDocument()
+2. For each page:
+   a. Get page viewport at target scale (density / 72 DPI)
+   b. Create node-canvas at viewport dimensions
+   c. Render page to canvas context
+   d. Export canvas to PNG buffer
+3. Return RenderedPage[] with actual dimensions from viewport
 ```
 
-### Expected Output
+### OCR Text Enhancement
 
-The test will show:
-- Processing strategy used
-- Text extraction method
-- Image count detected
-- OCR results (characters extracted, confidence)
-- Sample text from both regular extraction and OCR
-- Quality metrics
-- Entity analysis results
+The `enhanceOCRText()` function applies minimal, safe post-processing to OCR output:
+- Remove pipe characters (`|`) — common OCR artifacts
+- Remove null characters
+- Normalize excessive whitespace (collapse multiple spaces, limit consecutive newlines)
+
+Previously, this function also replaced all `0` characters with `O` and aggressively joined single-spaced letters. Both of these were removed because they caused more harm than good — destroying numeric data and corrupting acronyms.
+
+## Components
+
+| Component | File | Responsibility |
+|-----------|------|----------------|
+| `PDFProcessingPipeline` | `pipelines/pdf-processing-pipeline.ts` | Orchestrates the full pipeline |
+| `PDFProcessingStrategyEngine` | `strategies/pdf-processing-strategy.ts` | Selects processing strategy |
+| `PDFTextExtractor` | `core/pdf-text-extractor.ts` | Text extraction via pdf-parse and pdf.js-extract |
+| `PDFPageRenderer` | `core/pdf-page-renderer.ts` | Renders PDF pages to images via pdfjs-dist+canvas |
+| `ImageOCRExtractor` | `core/image-ocr-extractor.ts` | Runs Tesseract.js OCR on rendered page images |
+| `OCRProcessor` | `ocr-processor.ts` | OCR with text enhancement |
 
 ## Configuration
 
 ### Enable/Disable OCR
-
-OCR can be controlled via options:
 
 ```typescript
 const result = await pdfProcessor.process(buffer, {
@@ -125,9 +96,7 @@ const result = await pdfProcessor.process(buffer, {
 });
 ```
 
-### Strategy Override
-
-Force a specific processing strategy:
+### Force a Specific Strategy
 
 ```typescript
 const result = await pdfProcessor.process(buffer, {
@@ -136,101 +105,46 @@ const result = await pdfProcessor.process(buffer, {
 });
 ```
 
-## Use Cases
+## Performance
 
-### 1. Scanned Documents
-PDFs created from scanned images will now be fully searchable
+- **Text-focused PDFs**: Fast — only text extraction, no rendering
+- **Page rendering**: ~50ms per page at 150 DPI
+- **OCR per page**: 2-5 seconds (Tesseract.js WASM)
+- **44-page scanned PDF**: ~1.5-3.5 minutes total
+- **Page limit**: Default 50 pages max for OCR
 
-### 2. Mixed Content PDFs
-Documents with both regular text and embedded images (charts, diagrams with labels)
+### Optimization Options
 
-### 3. Image-Heavy Presentations
-Slide decks with text in images will have all content extracted
+```typescript
+// Faster (lower quality)
+{ density: 100, maxPages: 10 }
 
-### 4. Technical Documents
-Engineering docs with diagrams containing annotations
+// Better quality (slower)
+{ density: 200, format: 'png' }
+```
 
-## Performance Considerations
+## Dependencies
 
-### OCR Overhead
-- OCR processing adds time proportional to number of images
-- Tesseract initialization happens once per pipeline instance
-- Images are processed sequentially to manage memory
+All processing uses Node.js packages — no system-level dependencies required for PDF processing:
 
-### Optimization
-- OCR only runs when strategy determines it's beneficial
-- Small images (<50x50px) are typically skipped
-- Confidence thresholds filter low-quality extractions
-
-### Memory Usage
-- PDF.js-extract loads entire PDF into memory
-- Image buffers are processed one at a time
-- Tesseract worker is reused across images
-
-## Architecture Benefits
-
-### Separation of Concerns
-- PDF text extraction: `PDFTextExtractor`
-- Image OCR: `ImageOCRExtractor`
-- Strategy decision: `PDFProcessingStrategyEngine`
-- Orchestration: `PDFProcessingPipeline`
-
-### Reusability
-- `ImageOCRExtractor.extractFromPDFPages()` can be used independently
-- Same OCR logic works for standalone images and PDF-embedded images
-- Strategy engine can be tuned without affecting extraction logic
-
-### Extensibility
-- Easy to add new text extraction methods
-- OCR can be swapped for different engines
-- Strategy logic can be enhanced with ML models
-
-## Next Steps
-
-1. ✅ Test with `ai-first-product-design.pdf`
-2. Tune OCR confidence thresholds based on results
-3. Add image preprocessing for better OCR accuracy
-4. Consider parallel image processing for faster OCR
-5. Add caching for processed PDFs
+- `pdfjs-dist` — PDF parsing and page rendering
+- `canvas` — Node.js canvas for rendering PDF pages
+- `tesseract.js` — WASM-based OCR engine
+- `pdf-parse` — Fast text extraction
 
 ## Troubleshooting
 
 ### No OCR Results
+- Check that the strategy allows OCR (not `text-focused`)
+- Force OCR: `enableOCR: true` with `forceStrategy: 'hybrid'`
+- Check logs for page rendering or Tesseract errors
 
-**Possible causes:**
-- Strategy disabled OCR (check logs for reasoning)
-- pdf.js-extract failed to extract pages
-- No images found in PDF pages
-- Images too small or low quality
-
-**Solutions:**
-- Force OCR: `enableOCR: true` in options
-- Force strategy: `forceStrategy: 'hybrid'`
-- Check logs for extraction method used
-
-### Low OCR Confidence
-
-**Possible causes:**
-- Poor image quality
-- Complex layouts
-- Unusual fonts
-- Low resolution images
-
-**Solutions:**
-- Try different PDF extraction method
-- Preprocess images before OCR
-- Adjust confidence thresholds
-- Use external OCR service for better accuracy
+### Low OCR Quality
+- Increase rendering DPI: `density: 200` or higher
+- Check source PDF quality (low-resolution scans produce poor OCR)
+- Verify `canvas` package is properly installed
 
 ### Performance Issues
-
-**Possible causes:**
-- Many images in PDF
-- Large image files
-- High resolution images
-
-**Solutions:**
-- Limit images processed per PDF
-- Downsample large images
-- Use faster OCR engine for bulk processing
-- Process PDFs in background queue
+- Reduce `maxPages` to limit OCR scope
+- Lower `density` for faster rendering
+- Use `text-focused` strategy for text-heavy PDFs that don't need OCR

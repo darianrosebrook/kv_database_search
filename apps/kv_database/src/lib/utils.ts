@@ -318,15 +318,50 @@ export class EntityExtractor {
     "shall",
   ]);
 
+  // Common words that appear capitalized in titles/headings but are not person names.
+  // Used to reduce false positives in person entity extraction.
+  private static readonly NON_PERSON_WORDS = new Set([
+    "about", "after", "again", "all", "also", "always", "another", "any",
+    "back", "been", "before", "being", "best", "better", "between", "both",
+    "building", "built", "called", "change", "code", "complete", "computer",
+    "content", "could", "crisis", "current", "data", "deep", "design",
+    "development", "digital", "early", "easy", "engineering", "error",
+    "every", "example", "final", "first", "framework", "from", "full",
+    "future", "general", "getting", "global", "going", "good", "great",
+    "growing", "have", "here", "high", "history", "human", "important",
+    "infinite", "into", "just", "large", "last", "late", "learning", "life",
+    "long", "machine", "made", "main", "major", "making", "many", "model",
+    "more", "most", "much", "need", "never", "next", "only", "open",
+    "original", "other", "over", "part", "parts", "past", "pattern",
+    "point", "problem", "process", "project", "quick", "real", "repeats",
+    "right", "same", "second", "should", "show", "simple", "since", "small",
+    "software", "some", "source", "start", "still", "story", "summary",
+    "system", "take", "text", "that", "their", "then", "there", "these",
+    "think", "thinking", "third", "this", "those", "three", "through",
+    "time", "today", "total", "under", "using", "very", "video", "want",
+    "well", "were", "what", "when", "where", "which", "while", "will",
+    "with", "work", "world", "would", "your",
+  ]);
+
   extractEntities(text: string): ExtractedEntity[] {
     const entities: ExtractedEntity[] = [];
 
     // Simple regex-based extraction for basic entities
-    const patterns = [
+    const patterns: Array<{
+      regex: RegExp;
+      type: string;
+      confidence: number;
+      validate?: (match: string) => boolean;
+    }> = [
       {
         regex: /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g,
         type: "person",
-        confidence: 0.8,
+        confidence: 0.6,
+        validate: (match: string) => {
+          // Reject if either word is a common non-person word (title/heading text)
+          const words = match.toLowerCase().split(" ");
+          return !words.some((w) => EntityExtractor.NON_PERSON_WORDS.has(w));
+        },
       },
       {
         regex: /\b[A-Z][a-zA-Z\s&.,]+(?:Inc|Corp|LLC|Company|Ltd)\b/g,
@@ -340,11 +375,14 @@ export class EntityExtractor {
       },
     ];
 
-    patterns.forEach(({ regex, type, confidence }) => {
+    patterns.forEach(({ regex, type, confidence, validate }) => {
       let match;
       while ((match = regex.exec(text)) !== null) {
         const entityText = match[0];
-        if (!this.stopWords.has(entityText.toLowerCase())) {
+        if (
+          !this.stopWords.has(entityText.toLowerCase()) &&
+          (!validate || validate(entityText))
+        ) {
           entities.push({
             text: entityText,
             type,

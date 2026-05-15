@@ -92,6 +92,7 @@ import { registerHealthRoutes } from "./routes/health.js";
 import { registerIngestionRoutes } from "./routes/ingestion.js";
 import { registerVaultRoutes } from "./routes/vault.js";
 import { registerDictionaryRoutes } from "./routes/dictionary.js";
+import { registerWorkspaceRoutes } from "./routes/workspace.js";
 
 /**
  * Initialize and start the complete server
@@ -113,11 +114,13 @@ export async function startMainServer(): Promise<void> {
     // Register dictionary routes
     registerDictionaryRoutes(server);
 
+    // Register workspace routes
+    registerWorkspaceRoutes(server);
+
     // TODO: Register additional route modules as they are extracted:
     // registerChatRoutes(server);
     // registerWebSearchRoutes(server);
     // registerGraphRoutes(server);
-    // registerWorkspaceRoutes(server);
     // registerFederatedSearchRoutes(server);
     // registerTemporalRoutes(server);
     // registerMLRoutes(server);

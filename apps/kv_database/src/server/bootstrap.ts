@@ -22,6 +22,7 @@ import { MLEntityAPI } from "../lib/ml-entity-api";
 import { TemporalReasoningAPI } from "../lib/temporal-reasoning-api";
 import { FederatedSearchAPI } from "../lib/federated-search-api";
 import { WorkspaceAPI } from "../lib/workspace-api";
+import { WorkspaceManager as WorkspaceManagerService } from "../lib/workspace-manager";
 import { GraphQueryAPI } from "../lib/graph-query-api";
 import { GraphRagClient } from "../lib/shared/graph-rag-client";
 import { ComprehensiveSearchService } from "../lib/comprehensive-search-service";
@@ -59,6 +60,7 @@ interface AppServices {
   temporalReasoningAPI?: TemporalReasoningAPI;
   federatedSearchAPI?: FederatedSearchAPI;
   workspaceAPI?: WorkspaceAPI;
+  workspaceManager?: WorkspaceManagerService;
   graphQueryAPI?: GraphQueryAPI;
   graphRagClient?: GraphRagClient;
 }
@@ -344,6 +346,19 @@ async function buildServices(): Promise<AppServices> {
     console.error("💡 Workspace management features will be limited");
   }
 
+  // Initialize workspace manager for Fastify routes
+  let workspaceManager: WorkspaceManagerService | undefined;
+  try {
+    workspaceManager = new WorkspaceManagerService(database);
+    console.log("✅ Workspace manager initialized");
+  } catch (e) {
+    const error = asError(e);
+    console.error(
+      "❌ Workspace manager initialization failed:",
+      error.message
+    );
+  }
+
   // Initialize graph query engine service
   try {
     graphQueryAPI = new GraphQueryAPI(database);
@@ -414,6 +429,7 @@ async function buildServices(): Promise<AppServices> {
     temporalReasoningAPI,
     federatedSearchAPI,
     workspaceAPI,
+    workspaceManager,
     graphQueryAPI,
     graphRagClient,
   };
@@ -429,7 +445,11 @@ export async function createServer(): Promise<FastifyInstance> {
 
   // Register CORS
   await server.register(cors, {
-    origin: ["http://localhost:3000", "http://localhost:3001"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3005",
+    ],
     credentials: true,
   });
 

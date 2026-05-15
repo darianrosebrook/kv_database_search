@@ -10,165 +10,44 @@
 - **Screenshots**: UI screenshots, diagrams with text
 - **Mixed Content**: Images containing both text and graphics
 
-#### OCR Processing Pipeline
-```typescript
-interface OCRProcessor {
-  detectText(imageBuffer: Buffer): Promise<OCRResult>;
-  extractLayout(imageBuffer: Buffer): Promise<LayoutResult>;
-  enhanceImage(imageBuffer: Buffer): Promise<Buffer>;
-}
+#### OCR Engine
 
-class TesseractOCRProcessor implements OCRProcessor {
-  async detectText(imageBuffer: Buffer): Promise<OCRResult> {
-    // 1. Preprocessing
-    const enhanced = await this.preprocessImage(imageBuffer);
+The system uses **Tesseract.js** (WASM-based) for OCR. No system-level Tesseract installation is required.
 
-    // 2. OCR processing
-    const result = await this.tesseract.process(enhanced);
+#### OCR Text Enhancement
 
-    // 3. Post-processing
-    const cleaned = this.cleanOCRText(result.text);
+Post-processing is intentionally minimal to avoid corrupting valid text:
+- Remove pipe characters (`|`) and null bytes — common OCR artifacts
+- Normalize excessive whitespace (collapse multiple spaces, limit consecutive newlines)
 
-    return {
-      text: cleaned,
-      confidence: result.confidence,
-      boundingBoxes: result.words.map(w => w.bbox),
-      language: result.language
-    };
-  }
+Notable: aggressive transformations like replacing `0` with `O` or joining single-spaced letters have been deliberately removed — they destroyed numeric data and corrupted acronyms.
 
-  private async preprocessImage(buffer: Buffer): Promise<Buffer> {
-    // Image enhancement for better OCR accuracy
-    return await sharp(buffer)
-      .resize(null, 2000, { withoutEnlargement: true })
-      .sharpen()
-      .normalise()
-      .toBuffer();
-  }
+#### PDF OCR Pipeline
 
-  private cleanOCRText(text: string): string {
-    return text
-      .replace(/\s+/g, ' ')  // Normalize whitespace
-      .replace(/[^\w\s.,!?-]/g, '')  // Remove unwanted characters
-      .trim();
-  }
-}
-```
+PDFs are processed through a strategy-based pipeline:
 
-#### OCR Quality Optimization
+1. **Strategy selection**: Analyze text density and file-size-to-text ratio
+2. **Text extraction**: Use `pdf-parse` and `pdf.js-extract`
+3. **OCR decision**: Based on strategy and text sufficiency (50+ words required)
+4. **Page rendering**: Render pages to PNG via `pdfjs-dist` + `canvas` (no system deps)
+5. **OCR**: Run Tesseract.js on rendered page images
+6. **Combine**: Merge extracted text with OCR results
 
-##### Image Preprocessing Techniques
-```typescript
-class ImagePreprocessor {
-  async optimizeForOCR(imageBuffer: Buffer): Promise<Buffer> {
-    const pipeline = sharp(imageBuffer);
+| Strategy | Text Extraction | Page OCR | When Used |
+|----------|----------------|----------|-----------|
+| `text-focused` | Yes | No | High text density, low file-size ratio |
+| `hybrid` | Yes | Yes | Moderate text with embedded images |
+| `image-heavy` | Yes | Yes | Low text density, large files |
+| `ocr-fallback` | Yes | Yes | Near-zero extractable text |
 
-    // 1. Resize for optimal OCR resolution
-    pipeline.resize(null, 2000, { withoutEnlargement: true });
-
-    // 2. Convert to grayscale
-    pipeline.greyscale();
-
-    // 3. Enhance contrast
-    pipeline.normalise();
-
-    // 4. Apply sharpening for crisp text
-    pipeline.sharpen({ sigma: 1, m1: 1.5, m2: 2 });
-
-    // 5. Reduce noise
-    pipeline.median(1);
-
-    return pipeline.toBuffer();
-  }
-
-  async detectAndCorrectSkew(imageBuffer: Buffer): Promise<Buffer> {
-    // Use image processing libraries to detect text orientation
-    // and rotate image for optimal OCR performance
-    const skewAngle = await this.detectSkewAngle(imageBuffer);
-
-    if (Math.abs(skewAngle) > 0.5) {
-      return sharp(imageBuffer)
-        .rotate(-skewAngle)
-        .toBuffer();
-    }
-
-    return imageBuffer;
-  }
-}
-```
-
-##### Multi-Engine OCR Strategy
-```typescript
-class MultiEngineOCR {
-  private engines = [
-    new TesseractOCRProcessor(),
-    new GoogleVisionOCRProcessor(),
-    new AzureOCRProcessor()
-  ];
-
-  async processWithBestResult(imageBuffer: Buffer): Promise<OCRResult> {
-    const results = await Promise.all(
-      this.engines.map(engine => engine.detectText(imageBuffer))
-    );
-
-    // Select best result based on confidence and text length
-    return results.reduce((best, current) => {
-      const bestScore = best.confidence * Math.log(best.text.length + 1);
-      const currentScore = current.confidence * Math.log(current.text.length + 1);
-
-      return currentScore > bestScore ? current : best;
-    });
-  }
-
-  async combineResults(results: OCRResult[]): Promise<OCRResult> {
-    // Combine overlapping text regions
-    // Use voting for conflicting detections
-    // Merge complementary results from different engines
-    return this.mergeOverlappingText(results);
-  }
-}
-```
+See `docs/PDF_OCR_IMPLEMENTATION.md` for full details.
 
 #### OCR Performance Considerations
 
 ##### Accuracy vs Speed Trade-offs
-- **Fast Mode**: Lower resolution, basic preprocessing (~2-3 seconds/image)
-- **Accurate Mode**: High resolution, advanced preprocessing (~5-10 seconds/image)
-- **Batch Mode**: Process multiple images simultaneously for efficiency
-
-##### Caching Strategy
-```typescript
-class OCRCache {
-  private cache = new Map<string, CachedOCRResult>();
-
-  async get(imageHash: string): Promise<OCRResult | null> {
-    const cached = this.cache.get(imageHash);
-
-    if (cached && this.isValid(cached)) {
-      return cached.result;
-    }
-
-    return null;
-  }
-
-  async set(imageHash: string, result: OCRResult): Promise<void> {
-    this.cache.set(imageHash, {
-      result,
-      timestamp: Date.now(),
-      imageHash
-    });
-
-    // Limit cache size
-    if (this.cache.size > 1000) {
-      this.evictOldEntries();
-    }
-  }
-
-  private generateImageHash(buffer: Buffer): string {
-    return crypto.createHash('md5').update(buffer).digest('hex');
-  }
-}
-```
+- **Fast Mode**: Lower DPI rendering (~100), fewer pages (~2-3 seconds/page)
+- **Accurate Mode**: Higher DPI rendering (~200), all pages (~3-5 seconds/page)
+- **Text-focused**: Skip OCR entirely for text-heavy documents
 
 ## Speech-to-Text Processing
 
@@ -512,34 +391,34 @@ class MultiModalMonitor {
 }
 ```
 
-## Implementation Roadmap
+## Implementation Status
 
-### Phase 1: Core OCR
-- [ ] Integrate Tesseract.js for basic OCR
-- [ ] Add image preprocessing pipeline
-- [ ] Implement OCR result caching
-- [ ] Add OCR quality validation
+### Phase 1: Core OCR — Complete
+- [x] Tesseract.js integration (WASM-based, no system deps)
+- [x] PDF page rendering via pdfjs-dist + canvas
+- [x] Strategy-based OCR decisions (text-focused, hybrid, image-heavy, ocr-fallback)
+- [x] OCR text enhancement with safe post-processing
 
-### Phase 2: Enhanced OCR
-- [ ] Add multi-engine OCR support
-- [ ] Implement advanced image preprocessing
-- [ ] Add layout analysis capabilities
-- [ ] Integrate cloud OCR services as fallback
+### Phase 2: Enhanced OCR — Partial
+- [x] PDF strategy engine with hybrid detection
+- [x] Eliminated system dependencies (GraphicsMagick, Ghostscript)
+- [ ] Multi-engine OCR support (cloud fallback)
+- [ ] Advanced image preprocessing (deskewing, contrast)
 
-### Phase 3: Speech-to-Text
-- [ ] Integrate Whisper or similar STT model
-- [ ] Add audio preprocessing pipeline
-- [ ] Implement speaker diarization
-- [ ] Add speech quality enhancement
+### Phase 3: Speech-to-Text — Complete
+- [x] Sherpa-ONNX integration for offline speech recognition
+- [x] Audio extraction from video via FFmpeg
+- [x] Whisper.cpp integration via nodejs-whisper
+- [ ] Speaker diarization
 
-### Phase 4: Multi-Modal Integration
-- [ ] Build content fusion pipeline
-- [ ] Implement cross-modal search
-- [ ] Add multi-modal result ranking
-- [ ] Create unified content indexing
+### Phase 4: Multi-Modal Integration — Complete
+- [x] Content fusion pipeline (OCR + transcription + text)
+- [x] Multi-modal search across text, images, audio, video
+- [x] Adaptive frame extraction for video (scene-based)
+- [x] `@obsidian-rag/media-processing` package for video processing
 
-### Phase 5: Optimization & Production
-- [ ] Performance benchmarking and optimization
-- [ ] Resource management and scaling
-- [ ] Comprehensive error handling
-- [ ] User interface for processing status
+### Phase 5: Optimization — In Progress
+- [x] Strategy-based processing (skip unnecessary OCR)
+- [x] Word-count-based text sufficiency checks
+- [ ] Performance benchmarking and budgets
+- [ ] Processing queue for large documents

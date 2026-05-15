@@ -1,245 +1,65 @@
-# PDF OCR Implementation - Final Summary
+# PDF OCR — Summary of Changes
 
-## 🎉 Complete Implementation
+## Current State
 
-Successfully implemented **full OCR support for PDFs** with automatic detection and processing of both embedded images and scanned documents!
+The PDF processing pipeline handles all PDF types automatically:
 
-## What We Built
+| PDF Type | Example | Strategy | What Happens |
+|----------|---------|----------|--------------|
+| Text-heavy document | Research papers, articles | `text-focused` | Text extraction only (fast) |
+| Mixed content | Technical docs with diagrams | `hybrid` | Text extraction + page OCR |
+| Image-heavy slides | Presentation decks, slide exports | `image-heavy` | Full page rendering + OCR |
+| Scanned documents | Scanned paper documents | `ocr-fallback` | Full page rendering + OCR |
 
-### 1. **Embedded Image OCR** ✅
-For PDFs with separate image objects (charts, diagrams, photos):
-- Extracts images using `pdf.js-extract`
-- Runs Tesseract OCR on each image
-- Combines OCR text with regular PDF text
+## Key Changes (Latest)
 
-### 2. **Scanned PDF OCR** ✅  
-For PDFs where pages are rasterized images:
-- Auto-detects scanned PDFs (< 100 chars extractable text)
-- Renders each page to PNG at 150 DPI using `pdf2pic`
-- Runs Tesseract OCR on rendered pages
-- Combines all text
+### 1. Replaced pdf2pic with pdfjs-dist + canvas
 
-## System Requirements
+**Before:** PDF page rendering used `pdf2pic`, which required GraphicsMagick and Ghostscript as system dependencies. These would silently fail when not installed.
 
-### Required Dependencies (Now Installed ✅)
+**After:** Pages are rendered using `pdfjs-dist` (Mozilla's PDF.js) and `canvas` (node-canvas). Both are npm packages — no system dependencies needed for PDF processing.
 
-1. **GraphicsMagick** ✅
-   ```bash
-   brew install graphicsmagick
-   ```
+### 2. Fixed text sufficiency check
 
-2. **Ghostscript** ✅
-   ```bash
-   brew install ghostscript
-   ```
+**Before:** `hasSufficientTextContent` used `text.length > 100`, which counts whitespace and newlines. A 68-page slide deck with 608 chars of pure newlines would pass this check, causing OCR to be skipped.
 
-Both are now installed on your system and working!
+**After:** Uses word count on trimmed text: `wordCount > 50`. Only actual words count toward sufficiency.
 
-## Your PDF: `ai-first-product-design.pdf`
+### 3. Fixed OCR text corruption
 
-**Type**: Scanned/Rasterized PDF
-- 44 pages
-- ~37 characters of extractable text per page
-- 24.74 MB file size
+**Before:** `enhanceOCRText()` applied two destructive transformations:
+- `replace(/0/g, "O")` — Turned all zeros into letter O, destroying dates, version numbers, IDs
+- Aggressive letter joining loop — Corrupted acronyms like "U S A" and single-letter words
 
-**Processing**:
-- ✅ Auto-detected as scanned PDF
-- ✅ All 44 pages rendered to images
-- ✅ OCR running on each page (takes 2-5 seconds per page)
-- ⏱️ Expected total time: 1.5-3.5 minutes
+**After:** Both removed. OCR output now uses only safe whitespace normalization.
 
-## How It Works
+### 4. Added hybrid strategy tier
 
-```
-ai-first-product-design.pdf
-         ↓
-   [Text Extraction]
-         ↓
-   < 100 chars found → Scanned PDF!
-         ↓
-   [Render pages to PNG @ 150 DPI]
-         ↓
-   [OCR each page with Tesseract]
-         ↓
-   [Combine all text]
-         ↓
-   Searchable text ready! 🎉
-```
+**Before:** PDFs were either `text-focused` (skip OCR) or `image-heavy`/`ocr-fallback` (full OCR). Mixed-content PDFs with good text AND embedded images were classified as `text-focused`, losing all image content.
 
-## Code Architecture
+**After:** A new `hybrid` tier catches PDFs with moderate file-size-to-text ratio (2-5 KB/char), indicating embedded images alongside text. These get both text extraction and page OCR.
 
-### New Components
+### 5. Removed dead embedded image extraction path
 
-1. **`PDFPageRenderer`** (`pdf-page-renderer.ts`)
-   - Renders PDF pages to images
-   - Uses pdf2pic → GraphicsMagick → Ghostscript
-   - Configurable DPI, format, page limits
+**Before:** The pipeline tried to find embedded images via `pdf.js-extract` using `item.type === "image"`. This check never matched in any test PDF — the entire code path was dead.
 
-2. **Enhanced `PDFProcessingPipeline`**
-   - Auto-detects PDF type
-   - Routes to appropriate OCR strategy
-   - Combines results
+**After:** Removed. The pipeline goes straight to page rendering for OCR, which reliably captures all visual content including embedded images.
 
-3. **Updated `PDFTextExtractor`**
-   - Returns pages data for OCR
-   - Always runs pdf.js-extract on 'auto' mode
+### 6. Restructured OCR decision logic
 
-### Separation of Concerns ✅
+**Before:** OCR was only attempted when `hasSufficientTextContent` was false, regardless of strategy.
 
-- **PDF Processing**: Detects type, extracts text, gets pages
-- **Image Rendering**: Converts PDF pages to images
-- **OCR Processing**: Extracts text from images
-- **Pipeline**: Orchestrates the flow
+**After:** OCR decision depends on strategy:
+- `text-focused` + sufficient text → skip OCR
+- Everything else → render pages and OCR them
 
-## Testing
+## System Dependencies
 
-### Test Your PDF
+PDF processing no longer requires any system-level dependencies. See `SYSTEM_DEPENDENCIES.md` for the full list of what's needed (only FFmpeg for video processing).
 
-The test is currently running (or you canceled it):
+## Files
 
-```bash
-npx tsx test-pdf-ocr.ts ~/Downloads/ai-first-product-design.pdf
-```
-
-### Expected Output
-
-```
-🧪 Testing PDF OCR Extraction
-📄 Testing PDF: ai-first-product-design.pdf
-📦 File size: 24.74 MB
-
-🔍 Starting PDF processing pipeline...
-📊 PDF Info: 44 pages, text-based: false
-🎯 Processing strategy: image-heavy
-📸 Detected scanned/rasterized PDF - rendering pages for OCR...
-📸 Rendering PDF pages at 150 DPI...
-  ✅ Page 1 rendered, buffer size: ~500000
-  ✅ Page 2 rendered, buffer size: ~500000
-  ... (44 pages total)
-✅ Rendered 44 pages in ~2000ms
-
-🖼️ Processing 44 images for OCR...
-🔍 Processing image 1/44...
-✅ Image 1 complete: XXX characters
-  ... (continues for all 44 pages)
-
-📊 === RESULTS ===
-✅ Success: true
-⏱️  Processing time: ~90000-180000ms (1.5-3 minutes)
-🖼️  Has images: true
-🖼️  Image count: 44
-📝 OCR text length: XXXX characters
-🔍 OCR confidence: XX%
-```
-
-## Performance
-
-### Current Settings
-- **DPI**: 150 (good balance)
-- **Format**: PNG (better for OCR)
-- **Page Limit**: 50 (processes first 50)
-
-### Timing
-- **Page Rendering**: ~50ms per page
-- **OCR per Page**: 2-5 seconds
-- **44 Pages Total**: 1.5-3.5 minutes
-
-### Optimization Options
-
-**Faster Processing** (lower quality):
-```typescript
-{
-  density: 100,  // Lower DPI
-  maxPages: 10,  // Process only first 10 pages
-}
-```
-
-**Better Quality** (slower):
-```typescript
-{
-  density: 200,  // Higher DPI
-  format: 'png', // PNG (default, better for text)
-}
-```
-
-## Integration
-
-The OCR is **automatically integrated** with your existing multi-modal ingestion pipeline:
-
-```typescript
-// In MultiModalIngestionPipeline
-const pdfResult = await this.pdfProcessor.process(buffer, {
-  enableOCR: true,  // Automatically handles both types
-});
-```
-
-## Files Modified/Created
-
-### Core Implementation
-- ✅ `pdf-text-extractor.ts` - Added pages data
-- ✅ `pdf-processing-pipeline.ts` - Scanned PDF detection & OCR
-- ✅ `pdf-page-renderer.ts` - NEW: Page rendering
-- ✅ `image-ocr-extractor.ts` - Existing, reused
-
-### Testing & Docs
-- ✅ `test-pdf-ocr.ts` - Test script
-- ✅ `PDF_OCR_IMPLEMENTATION.md` - Embedded images docs
-- ✅ `SCANNED_PDF_OCR.md` - Scanned PDF docs
-- ✅ `PDF_OCR_FINAL_SUMMARY.md` - This file
-
-## What's Next
-
-1. **Let the test complete** - It's processing your 44-page PDF
-2. **Review the results** - See how much text was extracted
-3. **Tune if needed** - Adjust DPI/settings based on results
-4. **Use in production** - Already integrated!
-
-## Success Metrics
-
-✅ **Architecture**: Clean separation of concerns  
-✅ **Auto-Detection**: Identifies PDF type automatically  
-✅ **Dual Strategy**: Handles both embedded & scanned PDFs  
-✅ **Integration**: Works with existing pipeline  
-✅ **Dependencies**: All installed and working  
-✅ **Testing**: Test script ready  
-
-## Troubleshooting
-
-If you encounter issues:
-
-1. **Check dependencies**:
-   ```bash
-   gm version  # GraphicsMagick
-   gs --version  # Ghostscript
-   ```
-
-2. **Test with fewer pages**:
-   ```typescript
-   maxPages: 1  // Test with just first page
-   ```
-
-3. **Check logs** for:
-   - Page rendering success
-   - OCR processing progress
-   - Error messages
-
-## Alternative Approaches
-
-If performance is an issue, consider:
-
-1. **Cloud OCR**: Google Vision API, AWS Textract
-2. **Pre-processing**: OCR offline, cache results
-3. **Docker**: Pre-configured environment
-4. **Parallel Processing**: Process pages in batches
-
----
-
-## 🎊 Congratulations!
-
-You now have a **complete PDF OCR system** that:
-- ✅ Automatically detects PDF types
-- ✅ Extracts text from embedded images
-- ✅ OCRs entire scanned documents
-- ✅ Makes all PDF content searchable
-
-Your `ai-first-product-design.pdf` (and all future scanned PDFs) will be fully searchable in your knowledge base! 🚀
+- `apps/kv_database/src/lib/processors/core/pdf-page-renderer.ts` — Page rendering (pdfjs-dist + canvas)
+- `apps/kv_database/src/lib/processors/pipelines/pdf-processing-pipeline.ts` — Pipeline orchestration
+- `apps/kv_database/src/lib/processors/strategies/pdf-processing-strategy.ts` — Strategy selection
+- `apps/kv_database/src/lib/processors/ocr-processor.ts` — OCR with text enhancement

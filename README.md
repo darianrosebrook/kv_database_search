@@ -148,11 +148,11 @@ npm run ingest \
 - **API Models**: OpenAI Vision, Google Cloud Vision (accurate, cloud-based)
 - **Hybrid**: Automatic fallback between local and API
 
-#### Video Processing Pipeline
-1. **Frame Extraction**: Pull frames at configurable intervals
+#### Video Processing Pipeline (`@obsidian-rag/media-processing`)
+1. **Adaptive Frame Extraction**: Scene-based extraction using perceptual hashing and scene detection (not fixed intervals)
 2. **Scene Analysis**: Classify each frame's content
-3. **Keyframe Selection**: Choose most representative frames
-4. **Content Indexing**: Make visual content searchable
+3. **Frame Deduplication**: Remove visually similar frames using perceptual hashing
+4. **Content Indexing**: Make visual content searchable via OCR and scene classification
 
 #### Quality Controls
 - **Confidence Scoring**: Rate description quality (0-1 scale)

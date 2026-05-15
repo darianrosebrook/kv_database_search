@@ -18,12 +18,12 @@ export class WorkspaceManager {
     const client = await this.pool.connect();
     try {
       await client.query(
-        `INSERT INTO workspaces (name, description, configuration, created_by, created_at, updated_at)
+        `INSERT INTO workspaces (name, description, config, created_by, created_at, updated_at)
          VALUES ($1, $2, $3, $4, NOW(), NOW())
          ON CONFLICT (name)
          DO UPDATE SET
            description = EXCLUDED.description,
-           configuration = EXCLUDED.configuration,
+           config = EXCLUDED.config,
            created_by = EXCLUDED.created_by,
            updated_at = NOW()`,
         [
@@ -45,7 +45,7 @@ export class WorkspaceManager {
         `SELECT
            name,
            description,
-           configuration,
+           config,
            created_by as "createdBy",
            created_at as "createdAt",
            updated_at as "updatedAt"
@@ -76,7 +76,7 @@ export class WorkspaceManager {
           uptime: Date.now() - row.createdAt.getTime(),
           errorCount: 0,
         },
-        configuration: row.configuration || {},
+        configuration: row.config || {},
         metadata: {
           createdAt: row.createdAt,
           updatedAt: row.updatedAt,
@@ -109,7 +109,7 @@ export class WorkspaceManager {
         `SELECT
            name,
            description,
-           configuration as config,
+           config,
            created_at as "createdAt",
            updated_at as "updatedAt"
          FROM workspaces
@@ -135,7 +135,7 @@ export class WorkspaceManager {
           uptime: Date.now() - row.createdAt.getTime(),
           errorCount: 0,
         },
-        configuration: row.configuration || {},
+        configuration: row.config || {},
         metadata: {
           createdAt: row.createdAt,
           updatedAt: row.updatedAt,

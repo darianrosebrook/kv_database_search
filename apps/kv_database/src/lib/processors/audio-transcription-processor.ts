@@ -264,31 +264,149 @@ export class AudioTranscriptionProcessor extends BaseContentProcessor {
     options?: AudioTranscriptionOptions
   ): Promise<ProcessorResult> {
     const tempVideoPath = path.join(this.tempDir, `video_${Date.now()}.mp4`);
+
+    try {
+      // Write video buffer to temp file
+      fs.writeFileSync(tempVideoPath, videoBuffer);
+
+      // Delegate to path-based method
+      return await this.extractAudioFromVideoPath(tempVideoPath, options);
+    } finally {
+      // Clean up temp video file
+      try {
+        if (fs.existsSync(tempVideoPath)) fs.unlinkSync(tempVideoPath);
+      } catch (cleanupError) {
+        console.warn("⚠️ Failed to clean up temp video file:", cleanupError);
+      }
+    }
+  }
+
+  /**
+   * Extract audio from video file path and transcribe (avoids loading video into memory)
+   */
+  async extractAudioFromVideoPath(
+    videoPath: string,
+    options?: AudioTranscriptionOptions
+  ): Promise<ProcessorResult> {
     const tempAudioPath = path.join(
       this.tempDir,
       `extracted_audio_${Date.now()}.wav`
     );
 
     try {
-      // Write video buffer to temp file
-      fs.writeFileSync(tempVideoPath, videoBuffer);
-
-      // Extract audio from video
+      // Extract audio from video directly using file path
       console.log("🎬 Extracting audio from video...");
-      await this.extractAudioFromVideoFile(tempVideoPath, tempAudioPath);
+      await this.extractAudioFromVideoFile(videoPath, tempAudioPath);
 
-      // Read the extracted audio and transcribe
-      const audioBuffer = fs.readFileSync(tempAudioPath);
-      return await this.extractFromBuffer(audioBuffer, options);
+      // Transcribe directly from the extracted audio file path
+      return await this.transcribeFromPath(tempAudioPath, options);
     } finally {
-      // Clean up temp files
+      // Clean up temp audio file
       try {
-        if (fs.existsSync(tempVideoPath)) fs.unlinkSync(tempVideoPath);
         if (fs.existsSync(tempAudioPath)) fs.unlinkSync(tempAudioPath);
       } catch (cleanupError) {
-        console.warn("⚠️ Failed to clean up temp files:", cleanupError);
+        console.warn("⚠️ Failed to clean up temp audio file:", cleanupError);
       }
     }
+  }
+
+  /**
+   * Transcribe directly from an audio file path (avoids buffer round-trip)
+   */
+  private async transcribeFromPath(
+    audioPath: string,
+    options?: AudioTranscriptionOptions
+  ): Promise<ProcessorResult> {
+    const { result, time } = await this.measureTime(async () => {
+      try {
+        console.log("🎤 Starting audio transcription from file...");
+
+        // Extract audio metadata
+        console.log("📊 Extracting audio metadata...");
+        const audioMetadata = await this.extractAudioMetadata(audioPath);
+
+        // Perform transcription
+        console.log("🔊 Performing audio transcription...");
+        const transcriptionResult = await this.transcribeAudio(
+          audioPath,
+          audioMetadata,
+          options
+        );
+
+        // Extract entities and relationships
+        console.log("🏷️ Extracting entities and relationships...");
+        const entities = this.entityExtractor.extractEntities(
+          transcriptionResult.text
+        );
+        const relationships = this.entityExtractor.extractRelationships(
+          transcriptionResult.text,
+          entities
+        );
+
+        // Analyze speech patterns and quality
+        const qualityMetrics = this.analyzeTranscriptionQuality(
+          transcriptionResult.segments || [],
+          audioMetadata
+        );
+
+        // Detect speakers if enabled
+        const speakers = options?.enableSpeakerDetection
+          ? this.detectSpeakers(transcriptionResult.segments || [])
+          : undefined;
+
+        const wordCount = countWords(transcriptionResult.text);
+        const characterCount = countCharacters(transcriptionResult.text);
+        const hasText = wordCount > 0;
+
+        const metadata: AudioTranscriptionMetadata = {
+          type: ContentType.AUDIO,
+          language:
+            options?.language || detectLanguage(transcriptionResult.text),
+          audioMetadata,
+          hasText,
+          wordCount,
+          characterCount,
+          transcriptionEngine: transcriptionResult.engine,
+          segments: transcriptionResult.segments,
+          entities,
+          relationships,
+          speakers,
+          qualityMetrics,
+        };
+
+        console.log(
+          `✅ Audio transcription complete: ${wordCount} words, ${
+            transcriptionResult.segments?.length || 0
+          } segments`
+        );
+
+        return {
+          success: true,
+          text: hasText
+            ? transcriptionResult.text
+            : `Audio: ${audioMetadata.duration.toFixed(
+                2
+              )}s duration, no speech detected`,
+          metadata,
+          processingTime: 0,
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        console.error("❌ Audio transcription failed:", errorMessage);
+
+        const errorResult = this.createErrorResult(
+          `Audio transcription error: ${errorMessage}`
+        );
+        return {
+          ...errorResult,
+          error: errorMessage,
+        };
+      }
+    });
+
+    result.processingTime = time;
+    return result;
   }
 
   /**
@@ -502,7 +620,7 @@ export class AudioTranscriptionProcessor extends BaseContentProcessor {
 
       const text = match[9].trim();
 
-      if (text && text !== "(upbeat music)" && text.length > 0) {
+      if (text && text.length > 0 && !this.isNonSpeechSegment(text)) {
         segments.push({
           start:
             startHours * 3600 +
@@ -517,6 +635,31 @@ export class AudioTranscriptionProcessor extends BaseContentProcessor {
     }
 
     return segments;
+  }
+
+  /**
+   * Check if a transcript segment is non-speech (music, applause, filler sounds).
+   * Whisper annotates non-speech with parentheses or brackets.
+   */
+  private isNonSpeechSegment(text: string): boolean {
+    const trimmed = text.trim();
+
+    // Parenthetical non-speech annotations: (upbeat music), (audience applauding), etc.
+    if (/^\(.*\)$/.test(trimmed)) {
+      return true;
+    }
+
+    // Bracket annotations: [music], [applause], etc.
+    if (/^\[.*\]$/.test(trimmed)) {
+      return true;
+    }
+
+    // Pure filler sounds
+    if (/^(um|uh|hmm|mm|ah|oh|huh|mhm)\.?$/i.test(trimmed)) {
+      return true;
+    }
+
+    return false;
   }
 
   /**

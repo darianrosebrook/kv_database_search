@@ -4,26 +4,12 @@ This project requires several system-level dependencies for full functionality, 
 
 ## Required System Packages
 
-### Image and Document Processing
-- **ImageMagick** - Image manipulation and format conversion
-  - Installation: `brew install imagemagick`
-  - Required for: Image format conversion, EXIF data extraction, color analysis
-
-- **Leptonica** - Image processing library
-  - Installation: `brew install leptonica`
-  - Required for: Low-level image processing operations used by Tesseract
-
-- **Tesseract OCR** - Optical Character Recognition
-  - Installation: `brew install tesseract`
-  - Required for: Text extraction from images
-  - Language data: `tesseract --list-langs` should show available languages
-
 ### Video Processing
 - **FFmpeg** - Video and audio processing
   - Installation: `brew install ffmpeg`
-  - Required for: Video keyframe extraction, format conversion, metadata extraction
+  - Required for: Video keyframe extraction, audio extraction, format conversion, metadata extraction
   - Components:
-    - `ffmpeg` - Main video processing tool
+    - `ffmpeg` - Main video/audio processing tool
     - `ffprobe` - Video metadata extraction
 
 ### URL-Based Video Ingestion (Optional)
@@ -35,44 +21,48 @@ This project requires several system-level dependencies for full functionality, 
 ### Additional Image Libraries (Recommended)
 - **WebP tools** - WebP image format support
   - Installation: `brew install webp`
-  - Required for: WebP image format support in ImageMagick
+  - Required for: WebP image format support
 
 - **libheif** - HEIF/HEIC image format support
   - Installation: `brew install libheif`
   - Required for: Modern image format support
 
+## No Longer Required
+
+The following system dependencies were previously required but have been replaced with pure JavaScript/Node.js alternatives:
+
+- **GraphicsMagick / Ghostscript** - Previously required by `pdf2pic` for PDF page rendering. Now replaced by `pdfjs-dist` + `canvas` (Node.js packages), which render PDF pages entirely in-process without system dependencies.
+- **ImageMagick** - No longer required for core functionality. The `canvas` npm package handles image rendering needs.
+- **Leptonica** - No longer required. `tesseract.js` is a pure WASM implementation that does not depend on the system Tesseract or Leptonica packages.
+- **Tesseract (system package)** - No longer required. `tesseract.js` bundles its own WASM-based OCR engine.
+
 ## Installation Verification
 
-After installing these dependencies, verify they are working:
+After installing the required dependencies, verify they are working:
 
 ```bash
-# Check Tesseract languages
-tesseract --list-langs
-
 # Check FFmpeg installation
 ffmpeg -version
 ffprobe -version
-
-# Check ImageMagick
-magick -version
 ```
 
 ## Runtime Dependencies
 
-The following Node.js packages require these system dependencies:
+The following Node.js packages handle processing without additional system dependencies:
 
-- `tesseract.js` - Requires Tesseract OCR system package
-- `fluent-ffmpeg` - Requires FFmpeg system package
-- `canvas` - May require additional image libraries for full functionality
-- Image processing operations in the multi-modal processors
+- `tesseract.js` - WASM-based OCR engine (no system Tesseract needed)
+- `pdfjs-dist` - PDF parsing and page rendering (no system PDF tools needed)
+- `canvas` - Node.js canvas implementation for PDF page rendering
+- `fluent-ffmpeg` - Requires FFmpeg system package for video/audio processing
+- `sherpa-onnx` - Speech-to-text processing (bundles its own models)
 
 ## Troubleshooting
 
-### Tesseract Issues
-If OCR fails with "Error attempting to read image":
-1. Ensure Tesseract language data is installed
+### OCR Issues
+If OCR produces poor results:
+1. Ensure image quality is sufficient (minimum ~150 DPI for scanned documents)
 2. Verify image format is supported (JPEG, PNG, BMP, TIFF)
-3. Check that Leptonica is properly installed
+3. Check `tesseract.js` worker initialization in logs
 
 ### FFmpeg Issues
 If video processing fails:
@@ -80,16 +70,19 @@ If video processing fails:
 2. Check that the video file format is supported
 3. Verify ffprobe can read the video metadata
 
-### ImageMagick Issues
-If image processing fails:
-1. Ensure ImageMagick is properly installed
-2. Check that required image formats are supported
-3. Verify that additional libraries (libheif, webp) are installed for modern formats
+### PDF Rendering Issues
+If PDF page rendering fails:
+1. Check that `pdfjs-dist` and `canvas` are installed (`pnpm install`)
+2. The `canvas` package may need build tools on some platforms (Python, C++ compiler)
+3. Check logs for pdfjs-dist errors during page rendering
 
 ## Development Setup
 
-For local development, ensure all system dependencies are installed before running tests or the application. The test suite includes integration tests that verify these system dependencies are available and functioning correctly.
+For local development, ensure FFmpeg is installed before running tests or the application. All other processing dependencies are handled by Node.js packages installed via `pnpm install`.
 
 ## Production Deployment
 
-When deploying to production environments, ensure these system packages are installed via the platform's package manager (apt, yum, etc.) rather than Homebrew if on Linux systems.
+When deploying to production:
+- Install FFmpeg via the platform's package manager (`apt install ffmpeg`, `yum install ffmpeg`, etc.)
+- The `canvas` npm package may require build dependencies on Linux (`build-essential`, `libcairo2-dev`, `libjpeg-dev`, `libpango1.0-dev`, `libgif-dev`)
+- All other dependencies are pure JavaScript/WASM and require no system packages
