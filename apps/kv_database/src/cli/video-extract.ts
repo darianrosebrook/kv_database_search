@@ -19,15 +19,19 @@
 import * as fs from "fs";
 import * as path from "path";
 import { VideoProcessor } from "../lib/processors/video-processor.ts";
+import { fetchVideo } from "./yt-dlp-fetch.ts";
 
 interface CLIOptions {
-  videoPath: string;
-  outputDir: string;
+  videoPath: string | null;
+  url: string | null;
+  outputDir: string | null;
+  outputDirExplicit: boolean;
   enableOCR: boolean;
   enableAudio: boolean;
   maxFrames: number;
   jsonOutput: boolean;
   quiet: boolean;
+  format: string;
 }
 
 function printHelp(): void {
@@ -36,8 +40,11 @@ video-extract — Extract text, transcription, and keyframes from video files
 
 Usage:
   video-extract <video-file> [options]
+  video-extract --from-url <url> [options]
 
 Options:
+  --from-url <url>       Download via yt-dlp, then extract (requires yt-dlp)
+  --format <selector>    yt-dlp format selector (default: "best"). Only with --from-url.
   -o, --output <dir>     Output directory (default: ./<basename>-extracted/)
   --no-ocr               Skip OCR on frames
   --no-audio             Skip audio transcription
@@ -52,6 +59,7 @@ Examples:
   video-extract talk.mp4 -o ./talk-notes
   video-extract demo.mp4 --no-audio --json
   video-extract presentation.mp4 --max-frames 50
+  video-extract --from-url https://youtu.be/dQw4w9WgXcQ -o ./music
 
 Output:
   Creates a directory with:
@@ -79,13 +87,16 @@ function printVersion(): void {
 
 function parseArgs(argv: string[]): CLIOptions | null {
   const args = argv.slice(2);
-  let videoPath: string | undefined;
-  let outputDir: string | undefined;
+  let videoPath: string | null = null;
+  let url: string | null = null;
+  let outputDir: string | null = null;
+  let outputDirExplicit = false;
   let enableOCR = true;
   let enableAudio = true;
   let maxFrames = 200;
   let jsonOutput = false;
   let quiet = false;
+  let format = "best";
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -101,9 +112,24 @@ function parseArgs(argv: string[]): CLIOptions | null {
         printVersion();
         process.exit(0);
         break;
+      case "--from-url":
+        url = args[++i];
+        if (!url) {
+          console.error("Error: --from-url requires a URL");
+          process.exit(1);
+        }
+        break;
+      case "--format":
+        format = args[++i];
+        if (!format) {
+          console.error("Error: --format requires a yt-dlp format selector");
+          process.exit(1);
+        }
+        break;
       case "-o":
       case "--output":
         outputDir = args[++i];
+        outputDirExplicit = true;
         if (!outputDir) {
           console.error("Error: --output requires a directory path");
           process.exit(1);
@@ -145,31 +171,40 @@ function parseArgs(argv: string[]): CLIOptions | null {
     }
   }
 
-  if (!videoPath) {
+  // Mutual exclusion: caller must provide exactly one of <video-file> or --from-url
+  if (videoPath && url) {
+    console.error("Error: provide either a local file or --from-url, not both");
+    process.exit(1);
+  }
+  if (!videoPath && !url) {
     return null;
   }
 
-  const resolvedVideo = path.resolve(videoPath);
-  if (!fs.existsSync(resolvedVideo)) {
-    console.error(`File not found: ${resolvedVideo}`);
-    process.exit(1);
+  // Resolve local file path early; URL-mode resolution happens after download
+  if (videoPath) {
+    const resolved = path.resolve(videoPath);
+    if (!fs.existsSync(resolved)) {
+      console.error(`File not found: ${resolved}`);
+      process.exit(1);
+    }
+    videoPath = resolved;
   }
 
-  if (!outputDir) {
-    const basename = path.basename(resolvedVideo, path.extname(resolvedVideo));
-    outputDir = path.resolve(`./${basename}-extracted`);
-  } else {
+  if (outputDir) {
     outputDir = path.resolve(outputDir);
   }
 
   return {
-    videoPath: resolvedVideo,
+    videoPath,
+    url,
     outputDir,
+    outputDirExplicit,
     enableOCR,
     enableAudio,
     maxFrames,
     jsonOutput,
     quiet,
+    format,
   };
 }
 
@@ -181,13 +216,14 @@ async function main(): Promise<void> {
   }
 
   const {
-    videoPath,
-    outputDir,
     enableOCR,
     enableAudio,
     maxFrames,
     jsonOutput,
     quiet,
+    url,
+    format,
+    outputDirExplicit,
   } = opts;
 
   const originalLog = console.log;
@@ -197,11 +233,65 @@ async function main(): Promise<void> {
     console.warn = () => {};
   }
 
-  const stats = fs.statSync(videoPath);
+  // If --from-url was given, download first; the rest of the pipeline runs
+  // against the resulting local file. The download temp dir is cleaned up
+  // unconditionally in `finally`.
+  let resolvedVideoPath: string;
+  let downloadTempDir: string | null = null;
+  if (url) {
+    console.log(`\nFetching ${url} via yt-dlp…`);
+    try {
+      const fetched = await fetchVideo(url, {
+        format,
+        onProgress: (line) => {
+          if (line.includes("[download]") || line.includes("[ExtractAudio]")) {
+            console.log(`  ${line}`);
+          }
+        },
+      });
+      resolvedVideoPath = fetched.filePath;
+      downloadTempDir = fetched.tempDir;
+      console.log(`  ✅ Downloaded: ${path.basename(resolvedVideoPath)}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (quiet) {
+        console.log = originalLog;
+        console.warn = originalWarn;
+      }
+      console.error(`\nDownload failed: ${msg}`);
+      process.exit(1);
+    }
+  } else {
+    resolvedVideoPath = opts.videoPath!;
+  }
+
+  // Default output: ./<basename>-extracted/, derived after we know the file
+  let outputDir = opts.outputDir;
+  if (!outputDir) {
+    const basename = path.basename(
+      resolvedVideoPath,
+      path.extname(resolvedVideoPath),
+    );
+    outputDir = path.resolve(`./${basename}-extracted`);
+  }
+
+  // If we downloaded into a temp dir and the user didn't specify --output,
+  // warn loudly: putting the artifacts inside the temp dir means they'll be
+  // deleted with the download. Force a sensible default.
+  if (downloadTempDir && !outputDirExplicit) {
+    const cwd = process.cwd();
+    const basename = path.basename(
+      resolvedVideoPath,
+      path.extname(resolvedVideoPath),
+    );
+    outputDir = path.resolve(cwd, `${basename}-extracted`);
+  }
+
+  const stats = fs.statSync(resolvedVideoPath);
   console.log(`\nvideo-extract`);
   console.log(`─────────────`);
   console.log(
-    `  Input:  ${path.basename(videoPath)} (${(stats.size / 1024 / 1024).toFixed(1)} MB)`,
+    `  Input:  ${path.basename(resolvedVideoPath)} (${(stats.size / 1024 / 1024).toFixed(1)} MB)`,
   );
   console.log(`  Output: ${outputDir}`);
   console.log(
@@ -212,12 +302,23 @@ async function main(): Promise<void> {
   fs.mkdirSync(outputDir, { recursive: true });
 
   const processor = new VideoProcessor();
-  const result = await processor.extractText(videoPath, {
-    outputDir,
-    enableOCR,
-    enableSpeechTranscription: enableAudio,
-    maxFramesToExtract: maxFrames,
-  });
+  let result;
+  try {
+    result = await processor.extractText(resolvedVideoPath, {
+      outputDir,
+      enableOCR,
+      enableSpeechTranscription: enableAudio,
+      maxFramesToExtract: maxFrames,
+    });
+  } finally {
+    if (downloadTempDir) {
+      try {
+        fs.rmSync(downloadTempDir, { recursive: true, force: true });
+      } catch {
+        // ignore — we did our best
+      }
+    }
+  }
 
   if (!result.success) {
     if (quiet) {
@@ -233,7 +334,8 @@ async function main(): Promise<void> {
 
   const summaryPath = path.join(outputDir, "summary.json");
   const summary = {
-    source: path.basename(videoPath),
+    source: path.basename(resolvedVideoPath),
+    sourceUrl: url ?? undefined,
     sourceSize: stats.size,
     processingTimeMs: result.processingTime,
     processingTimeSec:

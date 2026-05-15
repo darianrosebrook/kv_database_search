@@ -26,6 +26,12 @@ This project requires several system-level dependencies for full functionality, 
     - `ffmpeg` - Main video processing tool
     - `ffprobe` - Video metadata extraction
 
+### URL-Based Video Ingestion (Optional)
+- **yt-dlp** - Video downloader for YouTube and 1000+ other platforms
+  - Installation: `brew install yt-dlp`
+  - Required for: `video-extract --from-url <url>` mode (no impact on local-file extraction)
+  - Verify: `yt-dlp --version`
+
 ### Additional Image Libraries (Recommended)
 - **WebP tools** - WebP image format support
   - Installation: `brew install webp`
