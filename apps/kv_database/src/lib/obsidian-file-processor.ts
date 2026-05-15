@@ -1,7 +1,6 @@
 import { ContentType } from "../types/index";
 import { ObsidianDocument } from "../types/index";
 import { LoggerFactory } from "./shared/logger";
-import { determineContentTypeFromFrontmatter } from "./utils";
 
 /**
  * File processing utilities for Obsidian documents
@@ -112,9 +111,10 @@ export class ObsidianFileProcessor {
   ): ContentType {
     // Check frontmatter first
     if (frontmatter.contentType) {
-      return determineContentTypeFromFrontmatter(
-        frontmatter.contentType as string
-      );
+      const ct = String(frontmatter.contentType).toLowerCase();
+      if (ct in ContentType) {
+        return ContentType[ct as keyof typeof ContentType];
+      }
     }
 
     // Check file extension

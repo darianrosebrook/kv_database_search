@@ -7,7 +7,6 @@ import {
   EntityExtractor,
   ExtractionContext,
   ExtractionResult,
-  _EnhancedEntity,
 } from "../../entity-extractor";
 import { DictionaryService } from "../../dictionary-service";
 import { ExtractedEntity, EntityRelationship } from "../../utils";
@@ -37,11 +36,11 @@ export interface TopicSummary {
 
 export class EntityAnalyzer {
   private entityExtractor: EntityExtractor;
-  private dictionaryService: DictionaryService;
+  private dictionaryService?: DictionaryService;
 
   constructor(dictionaryService?: DictionaryService) {
     this.entityExtractor = new EntityExtractor(null); // Mock database for now
-    this.dictionaryService = dictionaryService || new DictionaryService();
+    this.dictionaryService = dictionaryService;
   }
 
   /**
@@ -82,7 +81,7 @@ export class EntityAnalyzer {
     try {
       // Use comprehensive entity extraction
       const result: ExtractionResult =
-        await this.entityExtractor.extractEntities(text, context);
+        await this.entityExtractor.extractEntitiesAsync(text, context);
 
       // Convert entities to legacy format for backward compatibility
       const entities: ExtractedEntity[] = result.entities.map((entity) => ({

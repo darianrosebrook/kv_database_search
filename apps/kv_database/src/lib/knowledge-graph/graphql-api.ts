@@ -15,7 +15,7 @@ import {
 import { ObsidianEmbeddingService } from "../embeddings.js";
 import { HybridSearchEngine } from "./hybrid-search-engine.js";
 import { MultiHopReasoningEngine } from "./multi-hop-reasoning.js";
-import { ResultRankingService } from "./result-ranking.js";
+import { ResultRankingEngine } from "./result-ranking.js";
 import { KnowledgeGraph } from "./knowledge-graph-manager.js";
 import { ProvenanceTracker } from "./provenance-tracker.js";
 import { QueryOptimizer } from "./query-optimizer.js";
@@ -759,7 +759,7 @@ export interface GraphQLContext {
   embeddings: ObsidianEmbeddingService;
   searchEngine: HybridSearchEngine;
   reasoningEngine: MultiHopReasoningEngine;
-  rankingService: ResultRankingService;
+  rankingService: ResultRankingEngine;
   graphManager: KnowledgeGraph;
   provenanceTracker: ProvenanceTracker;
   queryOptimizer: QueryOptimizer;
@@ -775,7 +775,7 @@ export const createGraphQLContext = (
   embeddings: ObsidianEmbeddingService,
   searchEngine: HybridSearchEngine,
   reasoningEngine: MultiHopReasoningEngine,
-  rankingService: ResultRankingService,
+  rankingService: ResultRankingEngine,
   graphManager: KnowledgeGraph,
   provenanceTracker: ProvenanceTracker,
   queryOptimizer: QueryOptimizer

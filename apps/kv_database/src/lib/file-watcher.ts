@@ -565,7 +565,7 @@ export class ObsidianFileWatcher extends EventEmitter {
   private async getFileHash(filePath: string): Promise<string> {
     try {
       const content = await fs.promises.readFile(filePath);
-      return createHash("md5").update(content.toString()).digest("hex");
+      return createHash("md5", content.toString());
     } catch {
       return "";
     }
@@ -760,7 +760,7 @@ export class ObsidianFileWatcher extends EventEmitter {
     try {
       // In a real implementation, this would query the database
       // For now, we'll use a simple file-based approach
-      const hash = createHash("md5").update(filePath.toString()).digest("hex");
+      const hash = createHash("md5", filePath.toString());
       const trackingFile = path.join(
         this.options.vaultPath,
         ".obsidian-rag",
@@ -794,16 +794,14 @@ export class ObsidianFileWatcher extends EventEmitter {
       );
       await fs.promises.mkdir(trackingDir, { recursive: true });
 
-      const hash = createHash("md5").update(filePath.toString()).digest("hex");
+      const hash = createHash("md5", filePath.toString());
       const trackingFile = path.join(trackingDir, `${hash}.json`);
 
       const data = {
         filePath,
         lastProcessed: processedTime.toISOString(),
         processedAt: new Date().toISOString(),
-        fileHash: createHash("md5")
-          .update(fs.readFileSync(filePath))
-          .digest("hex"),
+        fileHash: createHash("md5", fs.readFileSync(filePath)),
       };
 
       await fs.promises.writeFile(trackingFile, JSON.stringify(data, null, 2));
@@ -836,7 +834,7 @@ export class ObsidianFileWatcher extends EventEmitter {
    */
   private async removeFileTracking(filePath: string): Promise<void> {
     try {
-      const hash = createHash("md5").update(filePath.toString()).digest("hex");
+      const hash = createHash("md5", filePath.toString());
       const trackingFile = path.join(
         this.options.vaultPath,
         ".obsidian-rag",
@@ -1076,7 +1074,12 @@ export class ObsidianFileWatcher extends EventEmitter {
         chunks: 0, // Will be calculated when file is processed
       };
 
-      await this.db.createDocumentVersion(filePath, rollbackVersion);
+      await this.db.createDocumentVersion(
+        filePath,
+        versionData.content,
+        versions.length + 1,
+        rollbackVersion as Record<string, unknown>
+      );
 
       this.emit("rollbackComplete", {
         filePath,

@@ -171,7 +171,7 @@ export class SemanticSearchEngine {
   ) {
     this.db = database;
     this.embeddings = embeddingService;
-    this.entityExtractor = new EntityExtractor();
+    this.entityExtractor = new EntityExtractor(database);
     this.dictionaryService = dictionaryService;
   }
 
@@ -301,18 +301,15 @@ export class SemanticSearchEngine {
   private async vectorSearch(analyzedQuery): Promise<SemanticSearchResult[]> {
     const options = analyzedQuery.original.options || {};
 
-    return await this.db.search(
-      analyzedQuery.queryEmbedding.embedding,
-      options.limit || 50,
-      {
-        fileTypes: options.fileTypes,
-        tags: options.tags,
-        folders: options.folders,
-        hasWikilinks: options.hasWikilinks,
-        dateRange: options.dateRange,
-        minSimilarity: options.minSimilarity || 0.3,
-      }
-    );
+    return await this.db.search(analyzedQuery.queryEmbedding.embedding, {
+      limit: options.limit || 50,
+      fileTypes: options.fileTypes,
+      tags: options.tags,
+      folders: options.folders,
+      hasWikilinks: options.hasWikilinks,
+      dateRange: options.dateRange,
+      minSimilarity: options.minSimilarity || 0.3,
+    });
   }
 
   /**
@@ -324,7 +321,8 @@ export class SemanticSearchEngine {
     for (const entity of analyzedQuery.entities) {
       // Search for documents containing this entity
       const entityEmbedding = await this.embeddings.embed(entity.text);
-      const results = await this.db.search(entityEmbedding.embedding, 20, {
+      const results = await this.db.search(entityEmbedding.embedding, {
+        limit: 20,
         minSimilarity: 0.25,
       });
       entityResults.push(...results);
@@ -351,7 +349,8 @@ export class SemanticSearchEngine {
 
       for (const term of relatedTerms) {
         const termEmbedding = await this.embeddings.embed(term);
-        const results = await this.db.search(termEmbedding.embedding, 10, {
+        const results = await this.db.search(termEmbedding.embedding, {
+          limit: 10,
           minSimilarity: 0.2,
         });
         graphResults.push(...results);
@@ -382,8 +381,8 @@ export class SemanticSearchEngine {
     for (const contentType of contentTypes) {
       const typeResults = await this.db.search(
         analyzedQuery.queryEmbedding.embedding,
-        15,
         {
+          limit: 15,
           fileTypes: [contentType],
           minSimilarity: 0.1, // Lower threshold for multi-modal content
         }

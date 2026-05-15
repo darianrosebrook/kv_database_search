@@ -7,7 +7,7 @@
 
 import express, { Request, Response, NextFunction } from "express";
 import { DependencyContainer, SERVICE_TOKENS } from "../lib/shared";
-import type { GraphRagApiServer } from "../lib/knowledge-graph/graph-rag-api";
+import type { GraphRAGAPIRouter } from "../lib/knowledge-graph/graph-rag-api";
 import type { KnowledgeGraph } from "../lib/knowledge-graph/knowledge-graph-manager";
 import type { MultiHopReasoningEngine } from "../lib/knowledge-graph/multi-hop-reasoning";
 import type { ProvenanceTracker } from "../lib/knowledge-graph/provenance-tracker";
@@ -17,7 +17,7 @@ import type { ProvenanceTracker } from "../lib/knowledge-graph/provenance-tracke
  */
 function getServices(container: DependencyContainer) {
   return {
-    graphRagApiServer: container.get<GraphRagApiServer>(
+    graphRagApiServer: container.get<GraphRAGAPIRouter>(
       SERVICE_TOKENS.GRAPH_RAG_API_SERVER
     ),
     knowledgeGraph: container.get<KnowledgeGraph>(

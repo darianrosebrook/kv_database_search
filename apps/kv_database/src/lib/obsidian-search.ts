@@ -59,14 +59,11 @@ export class ObsidianSearchService {
       );
 
       // Perform vector search with Obsidian-specific filters
-      const searchResults = await this.db.search(
-        embeddingResult.embedding,
-        limit * 2, // Get more results for post-processing
-        {
-          ...filterOptions,
-          minSimilarity,
-        }
-      );
+      const searchResults = await this.db.search(embeddingResult.embedding, {
+        ...filterOptions,
+        limit: limit * 2, // Get more results for post-processing
+        minSimilarity,
+      });
 
       // Apply multi-modal specific filters
       let filteredResults = searchResults;
