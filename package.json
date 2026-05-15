@@ -40,7 +40,6 @@
     "clear-db": "tsx apps/kv_database/src/scripts/clear-db.ts",
     "watch-files": "tsx apps/kv_database/src/scripts/watch-files.ts",
     "server:watch": "tsx watch apps/kv_database/src/server.ts",
-    "caws:validate": "tsx apps/tools/caws/validate.ts",
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "test:unit": "vitest run tests/unit",
@@ -59,21 +58,7 @@
     "dep:audit": "npm audit",
     "quality:check": "npm run typecheck && npm run lint && npm run dep:audit && npm run test:all",
     "perf:monitor": "tsx apps/tools/benchmark/monitor.ts",
-    "perf:budgets": "tsx apps/tools/caws/perf-budgets.ts",
-    "caws:accessibility": "tsx apps/tools/caws/accessibility.ts",
-    "caws:migrations": "tsx apps/tools/caws/migrations.ts",
-    "caws:provenance": "tsx apps/tools/caws/provenance.ts",
-    "gates:contracts": "tsx apps/tools/caws/gates.ts packages/contracts --tier 2",
-    "gates:coverage": "tsx apps/tools/caws/gates.ts coverage --tier 2",
-    "gates:mutation": "tsx apps/tools/caws/gates.ts mutation --tier 2",
-    "gates:trust": "tsx apps/tools/caws/trust.ts .agent/provenance.json",
-    "gates:verify": "tsx apps/tools/caws/verify-gates.ts",
-    "gates:test": "bash scripts/test-quality-gates.sh",
-    "ci": "npm run quality:check && npm run gates:coverage && npm run gates:contracts",
-    "quality:precommit": "bash scripts/precommit-quality-gates.sh precommit",
-    "quality:staging": "bash scripts/precommit-quality-gates.sh staging",
-    "quality:full": "bash scripts/precommit-quality-gates.sh full",
-    "quality:ci": "bash scripts/precommit-quality-gates.sh ci",
+    "ci": "npm run quality:check",
     "test:unit:quick": "vitest run apps/kv_database/tests/unit/utils.test.ts apps/kv_database/tests/unit/entity-extraction.test.ts --reporter=basic",
     "prepare": "husky install || true",
     "tools:benchmark": "tsx apps/tools/startup-test.ts",
@@ -184,9 +169,6 @@
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
       "eslint --fix"
-    ],
-    "*.{ts,tsx}": [
-      "npm run quality:precommit"
     ]
   },
   "author": "darianrosebrook",

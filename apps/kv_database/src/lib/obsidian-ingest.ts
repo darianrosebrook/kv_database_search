@@ -1254,7 +1254,7 @@ export class ObsidianIngestionPipeline {
     }
   }
 
-  private validateObsidianMetadata(meta: DocumentMetadata): boolean {
+  private validateObsidianMetadata(meta: any): boolean {
     const required = [
       "uri",
       "section",

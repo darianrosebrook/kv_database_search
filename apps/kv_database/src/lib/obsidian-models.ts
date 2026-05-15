@@ -21,7 +21,15 @@ export interface ObsidianDocument {
   extension?: string;
   content: string;
   frontmatter: Record<string, unknown>;
-  sections?: unknown;
+  sections?: Array<{
+    title: string;
+    level: number;
+    content: string;
+    startLine: number;
+    endLine: number;
+    wikilinks: string[];
+    tags: string[];
+  }>;
   relationships: {
     wikilinks: Array<{ target: string; displayText?: string }>;
     tags: string[];

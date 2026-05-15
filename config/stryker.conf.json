@@ -21,8 +21,7 @@
     "**/test/**",
     "**/tests/**",
     "**/coverage/**",
-    "**/.caws/**",
-    "**/apps/tools/caws/**"
+    "**/.caws/**"
   ],
   "testRunnerOptions": {
     "vitest": {

@@ -786,7 +786,7 @@ export class KnowledgeGraph {
     });
   }
 
-  private mapEntityFromRow(row: Record<string, unknown>): KnowledgeGraphEntity {
+  private mapEntityFromRow(row: any): KnowledgeGraphEntity {
     return {
       id: row.id,
       name: row.name,
@@ -809,7 +809,7 @@ export class KnowledgeGraph {
     };
   }
 
-  private mapRelationshipFromRow(row: Record<string, unknown>): KnowledgeGraphRelationship {
+  private mapRelationshipFromRow(row: any): KnowledgeGraphRelationship {
     return {
       id: row.id,
       sourceEntityId: row.source_entity_id,

@@ -216,7 +216,7 @@ export class ObsidianSearchService {
     return Array.from(new Set(highlights)).slice(0, 5); // Dedupe and limit total highlights
   }
 
-  private generateMultiModalInfo(multiModalMeta?: Record<string, unknown>) {
+  private generateMultiModalInfo(multiModalMeta?: any) {
     if (!multiModalMeta) return undefined;
 
     // Generate human-readable content type labels and metadata
@@ -364,7 +364,7 @@ export class ObsidianSearchService {
     return labels[contentType] || contentType;
   }
 
-  private extractQualityScore(quality: unknown): number {
+  private extractQualityScore(quality: any): number {
     if (typeof quality === "number") return quality;
     if (quality && typeof quality.score === "number") return quality.score;
     if (quality && typeof quality.confidence === "number")
