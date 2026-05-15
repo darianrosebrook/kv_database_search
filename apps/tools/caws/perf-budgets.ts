@@ -25,7 +25,7 @@ interface PerformanceResult {
 
 class PerformanceBudgetValidator {
   private workingSpec;
-  private budgets: PerformanceBudget;
+  private budgets!: PerformanceBudget;
 
   constructor() {
     this.loadWorkingSpec();

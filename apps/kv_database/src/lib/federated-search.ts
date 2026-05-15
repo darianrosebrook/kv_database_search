@@ -921,7 +921,7 @@ export class FederatedSearchSystem {
       (result) => result.metadata.completeness
     );
     return (
-      completenesses.reduce((sum, completeness) => sum + completeness, 0) /
+      completenesses.reduce((sum, completeness) => sum + (completeness ?? 0), 0) /
       completenesses.length
     );
   }
@@ -1075,11 +1075,15 @@ class PerformanceMonitor {
  * Mock System Adapter - Placeholder for real system adapters
  */
 class MockSystemAdapter implements SystemAdapter {
-  constructor(private system: FederatedSystem) {}
+  id: string;
+  systemType: string;
+  systemVersion: string;
 
-  id = this.system.id;
-  systemType = this.system.type.category;
-  systemVersion = this.system.type.version;
+  constructor(private system: FederatedSystem) {
+    this.id = system.id;
+    this.systemType = system.type.category;
+    this.systemVersion = system.type.version;
+  }
 
   async connect(): Promise<void> {
     console.log(`🔌 Connecting to ${this.system.name}`);

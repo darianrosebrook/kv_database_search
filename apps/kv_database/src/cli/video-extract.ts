@@ -325,7 +325,9 @@ async function main(): Promise<void> {
       console.log = originalLog;
       console.warn = originalWarn;
     }
-    console.error(`\nExtraction failed: ${result.error || "unknown error"}`);
+    console.error(
+      `\nExtraction failed: ${result.errors?.join("; ") || "unknown error"}`
+    );
     process.exit(1);
   }
 

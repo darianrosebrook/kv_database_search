@@ -1107,7 +1107,7 @@ interface QueryResultMetadata {
   suggestions: string[];
 }
 
-interface PathFindingOptions {
+export interface PathFindingOptions {
   algorithm?: "breadth_first" | "depth_first" | "dijkstra" | "a_star";
   maxDepth?: number;
   maxPaths?: number;

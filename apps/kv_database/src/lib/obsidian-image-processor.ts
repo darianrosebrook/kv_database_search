@@ -116,13 +116,25 @@ export class ObsidianImageProcessor {
 
     const confidenceScores: number[] = [];
 
+    // Resolve all image paths once (resolver works in batch)
+    const resolution = this.imagePathResolver.resolvePaths(
+      imageLinks.slice(0, maxImagesPerFile).map((l) => l.path),
+      obsidianFile.filePath
+    );
+    const resolvedByOriginal = new Map(
+      resolution.resolved.map((r) => [r.originalPath, r.resolvedPath])
+    );
+
     // Process each image
     for (let i = 0; i < Math.min(imageLinks.length, maxImagesPerFile); i++) {
       try {
         const imageLink = imageLinks[i];
-        const imagePath = this.imagePathResolver.resolveImagePath(
-          imageLink.path
-        );
+        const imagePath = resolvedByOriginal.get(imageLink.path);
+        if (!imagePath) {
+          this.logger.warn(`Image path not resolved: ${imageLink.path}`);
+          results.failedImages++;
+          continue;
+        }
 
         // Check if image exists and is within size limits
         const fs = await import("fs");

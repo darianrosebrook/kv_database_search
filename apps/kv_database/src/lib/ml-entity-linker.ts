@@ -303,7 +303,7 @@ export class MLEntityLinker {
    */
   async extractEntities(
     text: string,
-    options: ExtractionOptions = {}
+    options: Partial<ExtractionOptions> = {}
   ): Promise<MLEntity[]> {
     const startTime = Date.now();
     console.log(

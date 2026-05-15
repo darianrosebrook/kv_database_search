@@ -233,11 +233,8 @@ export class SemanticSearchEngine {
    * Analyze and expand the query for better search
    */
   private async analyzeQuery(query: SearchQuery) {
-    const extractionResult = await this.entityExtractor.extractEntities(
-      query.text
-    );
-    const entities = extractionResult.entities;
-    const relationships = this.entityExtractor.extractRelationships(
+    const entities = this.entityExtractor.extractEntities(query.text);
+    const relationships = await this.entityExtractor.extractRelationships(
       query.text,
       entities
     );
@@ -375,7 +372,7 @@ export class SemanticSearchEngine {
       ContentType.AUDIO,
       ContentType.RASTER_IMAGE,
       ContentType.PDF,
-      ContentType.OFFICE_DOCUMENT,
+      ContentType.OFFICE_DOC,
     ];
 
     for (const contentType of contentTypes) {
@@ -436,11 +433,8 @@ export class SemanticSearchEngine {
 
     for (const result of results) {
       // Extract entities from result content
-      const resultExtraction = await this.entityExtractor.extractEntities(
-        result.text
-      );
-      const resultEntities = resultExtraction.entities;
-      const resultRelationships = this.entityExtractor.extractRelationships(
+      const resultEntities = this.entityExtractor.extractEntities(result.text);
+      const resultRelationships = await this.entityExtractor.extractRelationships(
         result.text,
         resultEntities
       );
@@ -691,10 +685,7 @@ export class SemanticSearchEngine {
     const vectorScore = result.cosineSimilarity || 0;
 
     // Entity overlap score
-    const resultExtraction = await this.entityExtractor.extractEntities(
-      result.text
-    );
-    const resultEntities = resultExtraction.entities;
+    const resultEntities = this.entityExtractor.extractEntities(result.text);
     const entityOverlap = this.calculateEntityOverlap(
       resultEntities,
       analyzedQuery.entities
@@ -776,9 +767,8 @@ export class SemanticSearchEngine {
     result: SemanticSearchResult
   ): Promise<number> {
     // Simplified graph scoring based on entity count and relationships
-    const extraction = await this.entityExtractor.extractEntities(result.text);
-    const entities = extraction.entities;
-    const relationships = this.entityExtractor.extractRelationships(
+    const entities = this.entityExtractor.extractEntities(result.text);
+    const relationships = await this.entityExtractor.extractRelationships(
       result.text,
       entities
     );
@@ -868,14 +858,8 @@ export class SemanticSearchEngine {
     result2: SemanticSearchResult
   ): { type: string; strength: number } | null {
     // Extract entities from both results
-    const extraction1 = await this.entityExtractor.extractEntities(
-      result1.text
-    );
-    const extraction2 = await this.entityExtractor.extractEntities(
-      result2.text
-    );
-    const entities1 = extraction1.entities;
-    const entities2 = extraction2.entities;
+    const entities1 = this.entityExtractor.extractEntities(result1.text);
+    const entities2 = this.entityExtractor.extractEntities(result2.text);
 
     // Find shared entities
     const sharedEntities = entities1.filter((e1) =>
@@ -908,8 +892,7 @@ export class SemanticSearchEngine {
   private async extractKeyConcepts(
     result: SemanticSearchResult
   ): Promise<string[]> {
-    const extraction = await this.entityExtractor.extractEntities(result.text);
-    const entities = extraction.entities;
+    const entities = this.entityExtractor.extractEntities(result.text);
     return entities
       .filter((e) => e.type === "concept" || e.type === "term")
       .map((e) => e.text)

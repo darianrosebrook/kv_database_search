@@ -176,10 +176,10 @@ export class ObsidianSearchService {
       enhanced.push({
         documentId: result.id,
         score: result.cosineSimilarity,
-        title: result.id,
         path: result.meta?.uri || "",
         matches: [],
         ...result,
+        title: result.id,
         obsidianMeta: obsidianMeta
           ? {
               tags: obsidianMeta.tags || [],

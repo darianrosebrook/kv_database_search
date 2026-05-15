@@ -188,7 +188,7 @@ export class KnowledgeGraphPipeline {
 
     const processingPromises = batch.map(async (chunk, _index) => {
       // Wait for available slot
-      await new Promise((resolve) => {
+      await new Promise<number>((resolve) => {
         const checkSlot = () => {
           const availableIndex = semaphore.findIndex((slot) => slot === null);
           if (availableIndex !== -1) {

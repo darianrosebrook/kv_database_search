@@ -92,20 +92,19 @@ export class ObsidianFileWatcher extends EventEmitter {
 
     // Set default options
     this.options = {
-      vaultPath: options.vaultPath,
-      ignored: options.ignored || [
+      ignored: [
         "**/node_modules/**",
         "**/.git/**",
         "**/.obsidian/**",
       ],
-      persistent: options.persistent ?? true,
-      ignoreInitial: options.ignoreInitial ?? true,
-      debounceMs: options.debounceMs ?? 500,
-      batchProcessing: options.batchProcessing ?? true,
-      batchSize: options.batchSize ?? 10,
-      batchDelayMs: options.batchDelayMs ?? 2000,
-      enableReindexing: options.enableReindexing ?? true,
-      reindexIntervalHours: options.reindexIntervalHours ?? 24,
+      persistent: true,
+      ignoreInitial: true,
+      debounceMs: 500,
+      batchProcessing: true,
+      batchSize: 10,
+      batchDelayMs: 2000,
+      enableReindexing: true,
+      reindexIntervalHours: 24,
       ...options,
     };
 
@@ -481,7 +480,7 @@ export class ObsidianFileWatcher extends EventEmitter {
   private async scanDirectoryForFiles(dirPath: string): Promise<string[]> {
     const files: string[] = [];
 
-    async function scanDir(currentPath: string): Promise<void> {
+    const scanDir = async (currentPath: string): Promise<void> => {
       const entries = await fs.promises.readdir(currentPath, {
         withFileTypes: true,
       });
@@ -495,7 +494,7 @@ export class ObsidianFileWatcher extends EventEmitter {
           files.push(fullPath);
         }
       }
-    }
+    };
 
     await scanDir(dirPath);
     return files;

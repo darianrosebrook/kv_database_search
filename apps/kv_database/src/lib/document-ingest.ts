@@ -375,7 +375,6 @@ export class DocumentIngestionPipeline {
     const contentTags = extractTags(body, this.config.tagFormats);
 
     // Combine frontmatter tags with content tags (defensive programming)
-    const allTags = [...frontmatterTags, ...contentTags];
     const frontmatterTags =
       frontmatter && frontmatter.tags
         ? Array.isArray(frontmatter.tags)
@@ -384,6 +383,7 @@ export class DocumentIngestionPipeline {
           ? [frontmatter.tags]
           : []
         : [];
+    const allTags = [...frontmatterTags, ...contentTags];
 
     // Get file stats
     let stats: fs.Stats;

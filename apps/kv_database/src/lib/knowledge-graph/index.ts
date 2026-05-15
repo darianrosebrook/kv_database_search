@@ -329,18 +329,6 @@ export const KnowledgeGraphUtils = {
   },
 };
 
-// Re-export types for convenience
-export type {
-  KnowledgeGraphPipelineConfig,
-  PipelineProcessingResult,
-  ChunkProcessingInput,
-} from "./knowledge-graph-pipeline.js";
-export type {
-  EntitySimilarity,
-  GraphStatistics,
-  EntityDeduplicationResult,
-} from "./knowledge-graph-manager.js";
-
 /**
  * Version information
  */

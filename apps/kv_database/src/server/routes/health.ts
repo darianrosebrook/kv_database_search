@@ -132,7 +132,7 @@ export function registerHealthRoutes(server: FastifyInstance): void {
         stats.storage.databaseSize = dbStats.databaseSize || 0;
         stats.storage.totalSize = dbStats.totalSize || 0;
         if (dbStats.lastUpdated) {
-          stats.lastUpdated = dbStats.lastUpdated;
+          stats.lastUpdate = dbStats.lastUpdated;
         }
       } catch (error) {
         console.warn("Could not get database stats:", error);
