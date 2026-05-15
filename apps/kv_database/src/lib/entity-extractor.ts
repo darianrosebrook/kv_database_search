@@ -167,7 +167,7 @@ export class EntityExtractor {
   private readonly maxEntitiesPerDocument = 500;
   private readonly minClusterSize = 3;
 
-  constructor(database) {
+  constructor(database: any) {
     this.database = database;
     this.nlpEngine = new NLPEngine();
     this.relationshipClassifier = new RelationshipClassifier();

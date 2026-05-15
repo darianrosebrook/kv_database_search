@@ -24,7 +24,7 @@ interface PerformanceResult {
 }
 
 class PerformanceBudgetValidator {
-  private workingSpec;
+  private workingSpec: Record<string, unknown>;
   private budgets!: PerformanceBudget;
 
   constructor() {

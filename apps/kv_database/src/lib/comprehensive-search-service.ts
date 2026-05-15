@@ -614,7 +614,7 @@ export class ComprehensiveSearchService {
     };
   }
 
-  private async generateBasicFacets(results) {
+  private async generateBasicFacets(results: any[]) {
     // Generate basic facets from results
     const contentTypes = new Map<string, number>();
     const tags = new Map<string, number>();
@@ -648,8 +648,8 @@ export class ComprehensiveSearchService {
     results.forEach((result) => {
       // Extract basic entities from content (simplified approach)
       const content = result.content || "";
-      const words = content.split(/\s+/).filter((word) => word.length > 3);
-      words.forEach((word) => {
+      const words = content.split(/\s+/).filter((word: string) => word.length > 3);
+      words.forEach((word: string) => {
         entities.set(
           word.toLowerCase(),
           (entities.get(word.toLowerCase()) || 0) + 1

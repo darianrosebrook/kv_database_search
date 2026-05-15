@@ -132,7 +132,7 @@ async function main() {
 
       if (batch.errors.length > 0) {
         console.log(`⚠️  ${batch.errors.length} errors encountered:`);
-        batch.errors.forEach((error) => console.log(`   - ${error}`));
+        batch.errors.forEach((error: string) => console.log(`   - ${error}`));
       }
     });
 

@@ -266,7 +266,7 @@ class GoogleSearchProvider implements WebSearchProvider {
       );
     }
 
-    return (data.items || []).map((item) => ({
+    return (data.items || []).map((item: Record<string, unknown>) => ({
       title: item.title,
       url: item.link,
       snippet: item.snippet || item.displayLink,
@@ -313,7 +313,7 @@ class SearXNGProvider implements WebSearchProvider {
 
     const data = await response.json();
 
-    return (data.results || []).map((result) => ({
+    return (data.results || []).map((result: Record<string, unknown>) => ({
       title: result.title,
       url: result.url,
       snippet: result.content,
@@ -363,7 +363,7 @@ class SerperSearchProvider implements WebSearchProvider {
 
     const data = await response.json();
 
-    return (data.organic || []).map((result, index: number) => ({
+    return (data.organic || []).map((result: Record<string, unknown>, index: number) => ({
       title: result.title,
       url: result.link,
       snippet: result.snippet,

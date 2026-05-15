@@ -334,7 +334,7 @@ export class WorkspaceManager {
   private readonly maxWorkspaces = 100;
   private readonly maxDataSourcesPerWorkspace = 50;
 
-  constructor(database) {
+  constructor(database: any) {
     this.database = database;
     this.dataSourceRegistry = new DataSourceRegistry(database);
     this.entityResolver = new EntityResolver(database);
@@ -912,7 +912,7 @@ export class WorkspaceManager {
 // ============================================================================
 
 class DataSourceRegistry {
-  constructor(private database) {}
+  constructor(private database: any) {}
 
   async registerDataSource(
     workspaceId: string,
@@ -935,7 +935,7 @@ class DataSourceRegistry {
 }
 
 class EntityResolver {
-  constructor(private database) {}
+  constructor(private database: any) {}
 
   async resolveEntity(
     entityText: string,
@@ -956,7 +956,7 @@ class EntityResolver {
 }
 
 class IngestionEngine {
-  constructor(private database) {}
+  constructor(private database: any) {}
 
   async syncDataSource(
     _workspace: Workspace,
@@ -975,7 +975,7 @@ class IngestionEngine {
 }
 
 class QueryFederator {
-  constructor(private database) {}
+  constructor(private database: any) {}
 
   async searchAcrossWorkspaces(
     query: string,
@@ -1032,9 +1032,9 @@ interface CrossWorkspaceSearchResult {
   results: Array<{
     workspace: string;
     resultCount: number;
-    topResults;
+    topResults: any[];
   }>;
-  facets;
+  facets: any[];
   suggestions: string[];
   performance: {
     totalTime: number;

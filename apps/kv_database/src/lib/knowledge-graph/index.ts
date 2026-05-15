@@ -94,8 +94,8 @@ import { KnowledgeGraphPipeline } from "./knowledge-graph-pipeline.js";
 import { KnowledgeGraph } from "./knowledge-graph-manager.js";
 
 export async function createKnowledgeGraphSystem(
-  database, // ObsidianDatabase
-  embeddings, // ObsidianEmbeddingService
+  database: any, // ObsidianDatabase
+  embeddings: any, // ObsidianEmbeddingService
   config: Partial<KnowledgeGraphPipelineConfig> = {}
 ) {
   try {

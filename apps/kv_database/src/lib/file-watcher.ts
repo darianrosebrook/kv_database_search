@@ -80,7 +80,7 @@ export class ObsidianFileWatcher extends EventEmitter {
     private embeddings: ObsidianEmbeddingService,
     private ingestionPipeline: MultiModalIngestionPipeline,
     options: FileWatcherOptions,
-    private wsManager? // WebSocket manager for real-time notifications
+    private wsManager?: { broadcast: (data: unknown) => void } // WebSocket manager for real-time notifications
   ) {
     super();
 
@@ -507,7 +507,7 @@ export class ObsidianFileWatcher extends EventEmitter {
     hasConflict: boolean;
     conflictType: "concurrent_edit" | "file_in_use" | "none";
     resolutionStrategy: "skip" | "queue" | "force" | "merge";
-    conflictData?;
+    conflictData?: unknown;
   }> {
     const filePath = change.path;
 
@@ -894,7 +894,7 @@ export class ObsidianFileWatcher extends EventEmitter {
   /**
    * Handle raw file system events
    */
-  private handleRawEvent(event: string, path: string, details): void {
+  private handleRawEvent(event: string, path: string, details: unknown): void {
     // Log raw events for debugging
     this.emit("rawEvent", { event, path, details });
   }

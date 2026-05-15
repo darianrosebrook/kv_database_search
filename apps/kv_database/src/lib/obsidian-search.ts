@@ -216,7 +216,7 @@ export class ObsidianSearchService {
     return Array.from(new Set(highlights)).slice(0, 5); // Dedupe and limit total highlights
   }
 
-  private generateMultiModalInfo(multiModalMeta?) {
+  private generateMultiModalInfo(multiModalMeta?: Record<string, unknown>) {
     if (!multiModalMeta) return undefined;
 
     // Generate human-readable content type labels and metadata
@@ -364,7 +364,7 @@ export class ObsidianSearchService {
     return labels[contentType] || contentType;
   }
 
-  private extractQualityScore(quality): number {
+  private extractQualityScore(quality: unknown): number {
     if (typeof quality === "number") return quality;
     if (quality && typeof quality.score === "number") return quality.score;
     if (quality && typeof quality.confidence === "number")
@@ -424,7 +424,7 @@ export class ObsidianSearchService {
       .filter((term) => term.length > 3);
 
     // Find connected concepts (tags that relate to query terms)
-    const connectedConcepts = tags.filter((tag) =>
+    const connectedConcepts = tags.filter((tag: string) =>
       queryTerms.some(
         (term) =>
           tag.toLowerCase().includes(term) || term.includes(tag.toLowerCase())

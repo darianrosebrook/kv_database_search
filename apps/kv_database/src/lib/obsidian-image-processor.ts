@@ -118,7 +118,7 @@ export class ObsidianImageProcessor {
 
     // Resolve all image paths once (resolver works in batch)
     const resolution = this.imagePathResolver.resolvePaths(
-      imageLinks.slice(0, maxImagesPerFile).map((l) => l.path),
+      imageLinks.slice(0, maxImagesPerFile).map((l: { path: string }) => l.path),
       obsidianFile.filePath
     );
     const resolvedByOriginal = new Map(

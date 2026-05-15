@@ -436,7 +436,7 @@ export class HybridSearchEngine {
    */
   private async performVectorSearch(
     query: SearchQuery,
-    _queryAnalysis
+    _queryAnalysis: unknown
   ): Promise<SearchResult[]> {
     console.log("🔍 Performing vector similarity search...");
 

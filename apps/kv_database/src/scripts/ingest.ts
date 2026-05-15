@@ -27,7 +27,7 @@ interface IngestionOptions {
   skipExisting?: boolean;
   includePatterns?: string[];
   excludePatterns?: string[];
-  chunkingOptions?;
+  chunkingOptions?: unknown;
   enableImageProcessing?: boolean;
   maxFileSize?: number;
   maxImagesPerFile?: number;

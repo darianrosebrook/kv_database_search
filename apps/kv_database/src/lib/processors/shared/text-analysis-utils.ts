@@ -137,7 +137,7 @@ export class TextAnalysisUtils {
   /**
    * Extract potential titles from text
    */
-  static extractTitle(text: string, metadata?): string | undefined {
+  static extractTitle(text: string, metadata?: Record<string, unknown>): string | undefined {
     if (metadata?.title) return metadata.title;
 
     if (!text) return undefined;

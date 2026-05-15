@@ -785,16 +785,26 @@ export interface GraphResponse {
 
 export interface StatsResponse {
   totalChunks: number;
-  byContentType: Record<string, number>;
-  byFolder: Record<string, number>;
+  totalDocuments?: number;
+  totalEmbeddings?: number;
+  indexSize?: number;
+  byContentType?: Record<string, number>;
+  byFolder?: Record<string, number>;
   lastUpdate: string | null;
+  storage?: {
+    totalSize: number;
+    databaseSize: number;
+    indexSize: number;
+  };
   performance?: {
-    totalQueries: number;
-    slowQueries: number;
-    p95Latency: number;
-    averageLatency: number;
-    minLatency: number;
-    maxLatency: number;
+    totalQueries?: number;
+    slowQueries?: number;
+    p95Latency?: number;
+    averageLatency?: number;
+    minLatency?: number;
+    maxLatency?: number;
+    avgQueryTime?: number;
+    cacheHitRate?: number;
   };
   error?: string;
 }
@@ -806,9 +816,9 @@ export interface LegacyChatMessage {
   timestamp: string;
   model?: string;
   metadata?: {
-    searchResults?;
-    context?;
-    suggestedActions?;
+    searchResults?: unknown;
+    context?: unknown;
+    suggestedActions?: unknown;
   };
 }
 
@@ -822,8 +832,8 @@ export interface ChatSession {
   userId?: string; // For multi-user support
   tags?: string[];
   topics?: string[];
-  webResults?;
-  contextDocuments?;
+  webResults?: unknown;
+  contextDocuments?: unknown;
   chatSessions?: ChatSession[];
   queryConcepts?: string[];
   relatedConcepts?: string[];

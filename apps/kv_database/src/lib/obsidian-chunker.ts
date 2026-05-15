@@ -34,8 +34,8 @@ export class ObsidianChunker {
     const {
       maxChunkSize = 1000,
       chunkOverlap = 100,
-      _preserveStructure = true,
-      _includeContext = true,
+      preserveStructure: _preserveStructure = true,
+      includeContext: _includeContext = true,
       cleanContent = true,
     } = options;
 

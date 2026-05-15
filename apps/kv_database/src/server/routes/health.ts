@@ -26,10 +26,14 @@ export function registerHealthRoutes(server: FastifyInstance): void {
       status: "unknown",
       timestamp: new Date().toISOString(),
       version: "1.0.0",
-      server: {
-        port: request.server.server.address()?.port || 3001,
-        host: request.server.server.address()?.address || "localhost",
-      },
+      server: (() => {
+        const addr = request.server.server.address();
+        const info = typeof addr === "object" && addr !== null ? addr : null;
+        return {
+          port: info?.port ?? 3001,
+          host: info?.address ?? "localhost",
+        };
+      })(),
       services: {
         database: "unknown",
         embeddings: "unknown",
@@ -109,7 +113,7 @@ export function registerHealthRoutes(server: FastifyInstance): void {
         totalChunks: 0,
         totalEmbeddings: 0,
         indexSize: 0,
-        lastUpdated: new Date().toISOString(),
+        lastUpdate: new Date().toISOString(),
         performance: {
           avgQueryTime: 0,
           totalQueries: 0,

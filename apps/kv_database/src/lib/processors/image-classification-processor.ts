@@ -417,7 +417,7 @@ export class ImageClassificationProcessor implements ContentProcessor {
    * Generate scene description based on image analysis
    */
   private generateSceneDescription(
-    analysis,
+    analysis: { hasText: boolean; dominantColors: string[]; brightness: number; contrast: number; aspectRatio: number; fileSize: number; estimatedComplexity: number },
     options: { maxObjects: number; includeVisualFeatures: boolean }
   ): SceneDescription {
     // Rule-based scene classification
@@ -591,7 +591,7 @@ export class ImageClassificationProcessor implements ContentProcessor {
    * Combine OCR and scene description results
    */
   private combineResults(
-    ocrResult,
+    ocrResult: { text: string; confidence: number },
     sceneDescription: SceneDescription | null
   ): ImageClassificationResult {
     const ocrText = ocrResult.text || "";

@@ -790,7 +790,7 @@ export class MLEntityLinker {
 class ModelRegistry {
   private models: Map<string, unknown> = new Map();
 
-  async registerModel(model, metadata): Promise<string> {
+  async registerModel(model: unknown, metadata: unknown): Promise<string> {
     const modelId = `model_${Date.now()}_${Math.random()
       .toString(36)
       .substr(2, 9)}`;

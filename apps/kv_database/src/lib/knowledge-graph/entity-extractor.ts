@@ -292,7 +292,7 @@ export class KnowledgeGraphEntityExtractor {
   private async enhanceEntities(
     baseEntities: ExtractedEntity[],
     text: string,
-    metadata
+    metadata: { contentType: ContentType; sourceFile: string; chunkId: string; extractionMethod: ExtractionMethod }
   ): Promise<KnowledgeGraphEntity[]> {
     const processedEntities: KnowledgeGraphEntity[] = [];
 
@@ -353,7 +353,7 @@ export class KnowledgeGraphEntityExtractor {
     baseRelationships: EntityRelationship[],
     entities: KnowledgeGraphEntity[],
     text: string,
-    metadata
+    metadata: { contentType: ContentType; sourceFile: string; chunkId: string; extractionMethod: ExtractionMethod }
   ): Promise<KnowledgeGraphRelationship[]> {
     const processedRelationships: KnowledgeGraphRelationship[] = [];
 
@@ -424,7 +424,7 @@ export class KnowledgeGraphEntityExtractor {
   private async inferCooccurrenceRelationships(
     entities: KnowledgeGraphEntity[],
     text: string,
-    metadata
+    metadata: { contentType: ContentType; sourceFile: string; chunkId: string; extractionMethod: ExtractionMethod }
   ): Promise<KnowledgeGraphRelationship[]> {
     const inferredRelationships: KnowledgeGraphRelationship[] = [];
     const sentences = this.splitIntoSentences(text);
@@ -597,7 +597,7 @@ export class KnowledgeGraphEntityExtractor {
   private findMentionContexts(
     entityName: string,
     text: string,
-    metadata
+    metadata: { chunkId: string; extractionMethod: ExtractionMethod }
   ): EntityMention[] {
     const mentions: EntityMention[] = [];
     const regex = new RegExp(this.escapeRegex(entityName), "gi");

@@ -376,7 +376,7 @@ export interface AnalysisMetadata {
  * evolution tracking using sophisticated statistical and ML algorithms.
  */
 export class TemporalReasoningSystem {
-  private database; // ObsidianDatabase
+  private database: any; // ObsidianDatabase
   private causalityEngine: CausalityDetectionEngine;
   private trendAnalyzer: TrendAnalysisEngine;
   private changeDetector: ChangePointDetector;
@@ -387,7 +387,7 @@ export class TemporalReasoningSystem {
   private readonly maxAnalysisWindow = 2 * 365 * 24 * 60 * 60 * 1000; // 2 years in ms
   private readonly minDataPointsForAnalysis = 10;
 
-  constructor(database) {
+  constructor(database: any) {
     this.database = database;
     this.causalityEngine = new CausalityDetectionEngine(database);
     this.trendAnalyzer = new TrendAnalysisEngine(database);
@@ -731,9 +731,9 @@ export class TemporalReasoningSystem {
   /**
    * Calculate overall confidence from analysis results
    */
-  private calculateOverallConfidence(results): number {
+  private calculateOverallConfidence(results: Array<{ confidence: number }>): number {
     if (results.length === 0) return 0;
-    return results.reduce((sum, r) => sum + r.confidence, 0) / results.length;
+    return results.reduce((sum: number, r: { confidence: number }) => sum + r.confidence, 0) / results.length;
   }
 
   /**
@@ -752,7 +752,7 @@ export class TemporalReasoningSystem {
   /**
    * Generate warnings for causality analysis
    */
-  private generateWarnings(results: CausalityResult[], _options): string[] {
+  private generateWarnings(results: CausalityResult[], _options: any): string[] {
     const warnings: string[] = [];
 
     if (results.length === 0) {
@@ -861,13 +861,13 @@ export class TemporalReasoningSystem {
  * Causality Detection Engine
  */
 class CausalityDetectionEngine {
-  constructor(private database) {}
+  constructor(private database: any) {}
 
   async analyzeCausality(
     sourceEntity: string,
     targetEntity: string,
     _timeWindow: TimeRange,
-    _options
+    _options: any
   ): Promise<CausalityResult> {
     // TODO: Implement causality analysis when temporal reasoning requirements are defined
     // In real implementation, this would use Granger causality, transfer entropy,
@@ -927,14 +927,14 @@ class CausalityDetectionEngine {
  * Trend Analysis Engine
  */
 class TrendAnalysisEngine {
-  constructor(private database) {}
+  constructor(private database: any) {}
 
   async analyzeTrend(
     entity1: string,
     entity2: string,
     relationshipType: string,
     timeRange: TimeRange,
-    forecastOptions
+    forecastOptions: TrendAnalysisRequest["forecastOptions"]
   ): Promise<TrendAnalysis> {
     // TODO: Implement trend analysis when temporal reasoning requirements are defined
     // In real implementation, this would use ARIMA, Prophet, or other time series models
@@ -1016,13 +1016,13 @@ class TrendAnalysisEngine {
  * Change Point Detector
  */
 class ChangePointDetector {
-  constructor(private database) {}
+  constructor(private database: any) {}
 
   async detectChanges(
     entityId: string,
     timeRange: TimeRange,
     _relationshipTypes: string[] = [],
-    _options
+    _options: any
   ): Promise<ChangePoint[]> {
     // TODO: Implement change point detection when temporal reasoning requirements are defined
     // In real implementation, this would use Bayesian online change detection,
@@ -1070,7 +1070,7 @@ class ChangePointDetector {
  * Temporal Query Engine
  */
 class TemporalQueryEngine {
-  constructor(private database) {}
+  constructor(private database: any) {}
 
   async executeQuery(query: TemporalQuery): Promise {
     // TODO: Implement temporal query execution when temporal reasoning requirements are defined

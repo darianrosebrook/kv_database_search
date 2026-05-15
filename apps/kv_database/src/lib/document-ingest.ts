@@ -507,7 +507,7 @@ export class DocumentIngestionPipeline {
     }
 
     // Deduplicate wikilinks and tags
-    sections.forEach((section) => {
+    sections.forEach((section: any) => {
       section.wikilinks = Array.from(new Set(section.wikilinks));
       section.tags = Array.from(new Set(section.tags));
     });
@@ -556,7 +556,7 @@ export class DocumentIngestionPipeline {
         fileName: document.fileName || document.name || "untitled",
         filePath: document.relativePath || document.path || "unknown",
         frontmatter: document.frontmatter,
-        links: document.relationships.links?.map((w) => w.target) || [],
+        links: document.relationships.links?.map((w: { target: string }) => w.target) || [],
         tags: document.relationships.tags || [],
         checksum: document.metadata.checksum,
         stats: {
@@ -574,7 +574,7 @@ export class DocumentIngestionPipeline {
         fileName: document.fileName || document.name || "untitled",
         content: document.content,
         frontmatter: document.frontmatter,
-        links: document.relationships.links?.map((w) => w.target) || [],
+        links: document.relationships.links?.map((w: { target: string }) => w.target) || [],
         tags: document.relationships.tags || [],
         createdAt: document.metadata.created,
         updatedAt: document.metadata.modified,
@@ -779,7 +779,7 @@ export class DocumentIngestionPipeline {
       textPreview: string;
       hasEmbedding: boolean;
       metadataValid: boolean;
-      obsidianMetadata?;
+      obsidianMetadata?: any;
     }>;
   }> {
     const issues: string[] = [];
@@ -788,7 +788,7 @@ export class DocumentIngestionPipeline {
       textPreview: string;
       hasEmbedding: boolean;
       metadataValid: boolean;
-      obsidianMetadata?;
+      obsidianMetadata?: any;
     }> = [];
 
     try {
@@ -844,7 +844,7 @@ export class DocumentIngestionPipeline {
     }
   }
 
-  private validateObsidianMetadata(meta): boolean {
+  private validateObsidianMetadata(meta: any): boolean {
     const required = [
       "uri",
       "section",
@@ -940,8 +940,8 @@ export interface ObsidianChunkingOptions extends ChunkingOptions {
  */
 export class ObsidianIngestionPipeline extends DocumentIngestionPipeline {
   constructor(
-    database, // Using any to avoid circular dependencies
-    embeddingService,
+    database: DocumentDatabase, // Using any to avoid circular dependencies
+    embeddingService: DocumentEmbeddingService,
     vaultPath: string
   ) {
     super(database, embeddingService, vaultPath, OBSIDIAN_CONFIG);

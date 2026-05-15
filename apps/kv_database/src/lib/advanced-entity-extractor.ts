@@ -288,7 +288,7 @@ export class EntityExtractor {
   private readonly maxEntitiesPerDocument = 500;
   private readonly minClusterSize = 3;
 
-  constructor(database) {
+  constructor(database: any) {
     this.database = database;
     this.nlpEngine = new NLPEngine();
     this.relationshipClassifier = new RelationshipClassifier();
@@ -596,7 +596,7 @@ export class EntityExtractor {
   /**
    * Classify noun phrase type based on linguistic features
    */
-  private classifyNounPhraseType(phrase): string {
+  private classifyNounPhraseType(phrase: any): string {
     // Simple heuristic-based classification
     const text = phrase.text.toLowerCase();
 
@@ -627,7 +627,7 @@ export class EntityExtractor {
    * Check if text is a valid entity candidate
    */
   private isValidEntityCandidate(
-    candidate,
+    candidate: any,
     context: ExtractionContext
   ): boolean {
     // Basic validation rules
@@ -1106,7 +1106,7 @@ class RelationshipClassifier {
 }
 
 class EntityDisambiguator {
-  constructor(private database) {}
+  constructor(private database: any) {}
 
   resolveAmbiguity(
     entities: ProcessedEntity[],

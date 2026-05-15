@@ -461,7 +461,7 @@ export class MLEntityAPI {
 
       // Transform feedback to UserFeedback format
       const userFeedback: UserFeedback[] = feedbackData.feedback.map(
-        (item) => ({
+        (item: Record<string, unknown>) => ({
           id: item.id || this.generateEntityId(),
           sessionId: item.sessionId || "unknown",
           userId: item.userId,

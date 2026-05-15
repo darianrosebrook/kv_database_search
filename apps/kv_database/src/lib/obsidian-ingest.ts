@@ -916,7 +916,7 @@ export class ObsidianIngestionPipeline {
     }
 
     // Deduplicate wikilinks and tags
-    sections.forEach((section) => {
+    sections.forEach((section: NonNullable<ObsidianDocument["sections"]>[0]) => {
       section.wikilinks = Array.from(new Set(section.wikilinks));
       section.tags = Array.from(new Set(section.tags));
     });
@@ -1189,7 +1189,7 @@ export class ObsidianIngestionPipeline {
       textPreview: string;
       hasEmbedding: boolean;
       metadataValid: boolean;
-      obsidianMetadata?;
+      obsidianMetadata?: unknown;
     }>;
   }> {
     const issues: string[] = [];
@@ -1198,7 +1198,7 @@ export class ObsidianIngestionPipeline {
       textPreview: string;
       hasEmbedding: boolean;
       metadataValid: boolean;
-      obsidianMetadata?;
+      obsidianMetadata?: unknown;
     }> = [];
 
     try {
@@ -1254,7 +1254,7 @@ export class ObsidianIngestionPipeline {
     }
   }
 
-  private validateObsidianMetadata(meta): boolean {
+  private validateObsidianMetadata(meta: DocumentMetadata): boolean {
     const required = [
       "uri",
       "section",

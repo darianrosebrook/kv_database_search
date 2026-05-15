@@ -14,9 +14,9 @@ import { ObsidianEmbeddingService } from "./embeddings";
 import {
   // detectLanguage, // Not used
   EntityExtractor,
-  EntityRelationship,
   // EntityCluster, // Not used
 } from "./entity-extractor";
+import { EntityRelationship } from "./utils";
 import {
   SearchResult,
   ObsidianSearchOptions,
@@ -234,10 +234,16 @@ export class SemanticSearchEngine {
    */
   private async analyzeQuery(query: SearchQuery) {
     const entities = this.entityExtractor.extractEntities(query.text);
-    const relationships = await this.entityExtractor.extractRelationships(
+    const rawRelationships = await this.entityExtractor.extractRelationships(
       query.text,
       entities
     );
+    const relationships: EntityRelationship[] = rawRelationships.map((r) => ({
+      subject: r.sourceEntity,
+      predicate: String(r.type),
+      object: r.targetEntity,
+      confidence: r.confidence,
+    }));
 
     let expandedTerms: string[] = [query.text];
 
@@ -264,7 +270,7 @@ export class SemanticSearchEngine {
   /**
    * Execute search using multiple strategies
    */
-  private async executeMultiStrategySearch(analyzedQuery) {
+  private async executeMultiStrategySearch(analyzedQuery: any) {
     const results: { [strategy: string]: SearchResult[] } = {};
 
     // Vector similarity search
@@ -295,30 +301,27 @@ export class SemanticSearchEngine {
   /**
    * Vector-based similarity search
    */
-  private async vectorSearch(analyzedQuery): Promise<SemanticSearchResult[]> {
+  private async vectorSearch(analyzedQuery: any): Promise<SemanticSearchResult[]> {
     const options = analyzedQuery.original.options || {};
 
-    return await this.db.search(analyzedQuery.queryEmbedding.embedding, {
+    return await this.db.search(analyzedQuery.queryEmbedding, {
       limit: options.limit || 50,
-      fileTypes: options.fileTypes,
+      contentType: options.fileTypes?.[0],
       tags: options.tags,
-      folders: options.folders,
-      hasWikilinks: options.hasWikilinks,
-      dateRange: options.dateRange,
       minSimilarity: options.minSimilarity || 0.3,
-    });
+    } as any);
   }
 
   /**
    * Entity-focused search
    */
-  private async entitySearch(analyzedQuery): Promise<SemanticSearchResult[]> {
+  private async entitySearch(analyzedQuery: any): Promise<SemanticSearchResult[]> {
     const entityResults: SemanticSearchResult[] = [];
 
     for (const entity of analyzedQuery.entities) {
       // Search for documents containing this entity
       const entityEmbedding = await this.embeddings.embed(entity.text);
-      const results = await this.db.search(entityEmbedding.embedding, {
+      const results = await this.db.search(entityEmbedding, {
         limit: 20,
         minSimilarity: 0.25,
       });
@@ -331,7 +334,7 @@ export class SemanticSearchEngine {
   /**
    * Graph traversal search using entity relationships
    */
-  private async graphSearch(analyzedQuery): Promise<SemanticSearchResult[]> {
+  private async graphSearch(analyzedQuery: any): Promise<SemanticSearchResult[]> {
     // This is a simplified implementation
     // In a full Graph RAG system, this would query a graph database
     const graphResults: SemanticSearchResult[] = [];
@@ -346,7 +349,7 @@ export class SemanticSearchEngine {
 
       for (const term of relatedTerms) {
         const termEmbedding = await this.embeddings.embed(term);
-        const results = await this.db.search(termEmbedding.embedding, {
+        const results = await this.db.search(termEmbedding, {
           limit: 10,
           minSimilarity: 0.2,
         });
@@ -361,7 +364,7 @@ export class SemanticSearchEngine {
    * Multi-modal content search
    */
   private async multiModalSearch(
-    analyzedQuery
+    analyzedQuery: any
   ): Promise<SemanticSearchResult[]> {
     const multiModalResults: SemanticSearchResult[] = [];
     const _options = analyzedQuery.original.options || {};
@@ -377,12 +380,12 @@ export class SemanticSearchEngine {
 
     for (const contentType of contentTypes) {
       const typeResults = await this.db.search(
-        analyzedQuery.queryEmbedding.embedding,
+        analyzedQuery.queryEmbedding,
         {
           limit: 15,
-          fileTypes: [contentType],
+          contentType,
           minSimilarity: 0.1, // Lower threshold for multi-modal content
-        }
+        } as any
       );
       multiModalResults.push(...typeResults);
     }
@@ -395,7 +398,7 @@ export class SemanticSearchEngine {
    */
   private async fuseResults(
     results: { [strategy: string]: SemanticSearchResult[] },
-    analyzedQuery
+    analyzedQuery: any
   ): Promise<SemanticSearchResult[]> {
     const fusionOptions = analyzedQuery.original.options?.fusion || {
       algorithm: "weighted",
@@ -426,7 +429,7 @@ export class SemanticSearchEngine {
    */
   private async augmentWithGraph(
     results: SemanticSearchResult[],
-    analyzedQuery
+    analyzedQuery: any
   ): Promise<SemanticSearchResult[]> {
     // Process results sequentially to handle async entity extraction
     const augmentedResults: SemanticSearchResult[] = [];
@@ -434,10 +437,16 @@ export class SemanticSearchEngine {
     for (const result of results) {
       // Extract entities from result content
       const resultEntities = this.entityExtractor.extractEntities(result.text);
-      const resultRelationships = await this.entityExtractor.extractRelationships(
+      const rawResultRelationships = await this.entityExtractor.extractRelationships(
         result.text,
         resultEntities
       );
+      const resultRelationships: EntityRelationship[] = rawResultRelationships.map((r) => ({
+        subject: r.sourceEntity,
+        predicate: String(r.type),
+        object: r.targetEntity,
+        confidence: r.confidence,
+      }));
 
       // Calculate graph context
       const graphContext = this.calculateGraphContext(
@@ -463,7 +472,7 @@ export class SemanticSearchEngine {
    */
   private async analyzeMultiModal(
     results: SemanticSearchResult[],
-    analyzedQuery
+    analyzedQuery: any
   ): Promise<SemanticSearchResult[]> {
     return results.map((result) => {
       const multiModalMeta = result.meta.multiModalFile;
@@ -496,7 +505,7 @@ export class SemanticSearchEngine {
    */
   private async rerankResults(
     results: SemanticSearchResult[],
-    _analyzedQuery
+    _analyzedQuery: any
   ): Promise<SemanticSearchResult[]> {
     // Sort by combined score
     return results.sort((a, b) => b.scoring.combined - a.scoring.combined);
@@ -507,7 +516,7 @@ export class SemanticSearchEngine {
    */
   private async constructKnowledgeGraph(
     results: SemanticSearchResult[],
-    _analyzedQuery
+    _analyzedQuery: any
   ): Promise<SemanticSearchResult[]> {
     // Build inter-result connections
     for (let i = 0; i < results.length; i++) {
@@ -681,7 +690,7 @@ export class SemanticSearchEngine {
     );
   }
 
-  private async calculateScoring(result: SemanticSearchResult, analyzedQuery) {
+  private async calculateScoring(result: SemanticSearchResult, analyzedQuery: any) {
     const vectorScore = result.cosineSimilarity || 0;
 
     // Entity overlap score
@@ -810,7 +819,7 @@ export class SemanticSearchEngine {
 
   private findCrossModalCorrelations(
     result: SemanticSearchResult,
-    _analyzedQuery
+    _analyzedQuery: any
   ) {
     const correlations: Array<{
       modality: string;

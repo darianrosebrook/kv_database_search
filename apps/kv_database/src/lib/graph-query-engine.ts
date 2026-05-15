@@ -105,7 +105,7 @@ export interface PropertyConstraint {
     | "range"
     | "exists"
     | "not_exists";
-  value;
+  value: unknown;
   weight: number;
 }
 
@@ -276,7 +276,7 @@ export interface TerminationCondition {
     | "goal_reached"
     | "pattern_matched"
     | "confidence_threshold";
-  value;
+  value: unknown;
   priority: number;
 }
 
@@ -435,7 +435,7 @@ export class GraphQueryEngine {
   private readonly defaultTimeout = 30000; // 30 seconds
   private readonly defaultMaxResults = 100;
 
-  constructor(database) {
+  constructor(database: any) {
     this.database = database;
     this.intentClassifier = new IntentClassifier();
     this.patternMatcher = new PatternMatcher();

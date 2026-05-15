@@ -17,7 +17,7 @@ interface MigrationStep {
 }
 
 class MigrationGenerator {
-  private workingSpec;
+  private workingSpec: Record<string, unknown>;
 
   constructor() {
     this.loadWorkingSpec();

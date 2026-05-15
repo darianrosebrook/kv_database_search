@@ -84,7 +84,7 @@ export interface FilterCondition {
     | "nin"
     | "like"
     | "exists";
-  value;
+  value: unknown;
   selectivity: number; // 0-1, estimated selectivity
   cost: number; // Estimated cost to apply
 }
@@ -116,7 +116,7 @@ export interface SubQuery {
   id: string;
   type: "exists" | "not_exists" | "in" | "scalar";
   query: string;
-  parameters;
+  parameters: unknown;
   cacheable: boolean;
   estimatedCost: number;
 }
@@ -431,9 +431,9 @@ export class QueryOptimizer {
    */
   async executeOptimizedPlan(
     plan: QueryPlan,
-    executor: (query) => Promise
+    executor: (query: OptimizedQuery) => Promise
   ): Promise<{
-    results;
+    results: unknown;
     actualMetrics: {
       executionTime: number;
       resultCount: number;
@@ -594,7 +594,7 @@ export class QueryOptimizer {
    * Generate search strategies
    */
   private generateSearchStrategies(
-    _analysis,
+    _analysis: any,
     context: OptimizationContext
   ): QueryStrategy[] {
     const strategies: QueryStrategy[] = [];
@@ -649,7 +649,7 @@ export class QueryOptimizer {
    * Generate reasoning strategies
    */
   private generateReasoningStrategies(
-    analysis,
+    analysis: any,
     _context: OptimizationContext
   ): QueryStrategy[] {
     const strategies: QueryStrategy[] = [];
@@ -903,7 +903,7 @@ export class QueryOptimizer {
   /**
    * Utility methods
    */
-  private generateQueryHash(query): string {
+  private generateQueryHash(query: SearchQuery | ReasoningQuery): string {
     return Buffer.from(JSON.stringify(query))
       .toString("base64")
       .substring(0, 16);
@@ -941,7 +941,7 @@ export class QueryOptimizer {
   }
 
   private optimizeFilters(
-    _filters,
+    _filters: SearchQuery["filters"],
     _context: OptimizationContext
   ): OptimizedFilters {
     return {
@@ -966,7 +966,7 @@ export class QueryOptimizer {
     ];
   }
 
-  private optimizeLimits(options, context: OptimizationContext): QueryLimits {
+  private optimizeLimits(options: SearchQuery["options"], context: OptimizationContext): QueryLimits {
     return {
       offset: 0,
       limit: options?.maxResults || 20,
@@ -1012,7 +1012,7 @@ export class QueryOptimizer {
   }
 
   private identifyOptimizations(
-    _analysis,
+    _analysis: any,
     _context: OptimizationContext
   ): QueryOptimization[] {
     const optimizations: QueryOptimization[] = [];
@@ -1030,7 +1030,7 @@ export class QueryOptimizer {
   }
 
   private identifyReasoningOptimizations(
-    analysis,
+    analysis: any,
     _context: OptimizationContext
   ): QueryOptimization[] {
     const optimizations: QueryOptimization[] = [];
@@ -1075,7 +1075,7 @@ export class QueryOptimizer {
   }
 
   private generateCacheStrategy(
-    _query,
+    _query: SearchQuery | ReasoningQuery,
     _statistics: QueryStatistics | undefined,
     _context: OptimizationContext
   ): CacheStrategy {
@@ -1096,7 +1096,7 @@ export class QueryOptimizer {
   }
 
   private async generateIndexRecommendations(
-    _analysis,
+    _analysis: any,
     _context: OptimizationContext
   ): Promise<IndexRecommendation[]> {
     const recommendations: IndexRecommendation[] = [];
@@ -1195,7 +1195,7 @@ export class QueryOptimizer {
     return this.queryCache.get(cacheKey);
   }
 
-  private async cacheResults(plan: QueryPlan, results): Promise<void> {
+  private async cacheResults(plan: QueryPlan, results: any): Promise<void> {
     const cacheKey = plan.metadata.queryHash;
     this.queryCache.set(cacheKey, results);
 
@@ -1208,7 +1208,7 @@ export class QueryOptimizer {
   private async updateQueryStatistics(
     plan: QueryPlan,
     executionTime: number,
-    results
+    results: any
   ): Promise<void> {
     const queryHash = plan.metadata.queryHash;
     const existing = this.statisticsCache.get(queryHash);

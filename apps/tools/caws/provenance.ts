@@ -224,10 +224,10 @@ async function collectTestResults(): Promise<ProvenanceManifest["results"]> {
         if (mutation.files) {
           for (const [, fileData] of Object.entries(mutation.files)) {
             if (fileData.mutants) {
-              const statusCounts = fileData.mutants.reduce((acc, mutant) => {
+              const statusCounts = fileData.mutants.reduce((acc: Record<string, number>, mutant: { status: string }) => {
                 acc[mutant.status] = (acc[mutant.status] || 0) + 1;
                 return acc;
-              }, {});
+              }, {} as Record<string, number>);
 
               totalKilled += statusCounts.Killed || 0;
               totalTimeout += statusCounts.Timeout || 0;

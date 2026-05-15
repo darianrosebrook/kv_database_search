@@ -22,8 +22,8 @@ export interface ObsidianSearchResult extends SearchResult {
     contentTypeLabel: string;
     mimeType: string;
     checksum: string;
-    quality?;
-    processing?;
+    quality?: unknown;
+    processing?: unknown;
     // Content-specific metadata
     duration?: number;
     sampleRate?: number;

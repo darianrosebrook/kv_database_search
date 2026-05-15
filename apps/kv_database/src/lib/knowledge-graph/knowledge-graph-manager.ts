@@ -525,7 +525,7 @@ export class KnowledgeGraph {
    */
   private async createEntityChunkMappings(
     entities: KnowledgeGraphEntity[],
-    extractionMetadata,
+    extractionMetadata: EntityExtractionResult["extractionMetadata"],
     client: PoolClient
   ): Promise<void> {
     for (const entity of entities) {
@@ -786,7 +786,7 @@ export class KnowledgeGraph {
     });
   }
 
-  private mapEntityFromRow(row): KnowledgeGraphEntity {
+  private mapEntityFromRow(row: Record<string, unknown>): KnowledgeGraphEntity {
     return {
       id: row.id,
       name: row.name,
@@ -809,7 +809,7 @@ export class KnowledgeGraph {
     };
   }
 
-  private mapRelationshipFromRow(row): KnowledgeGraphRelationship {
+  private mapRelationshipFromRow(row: Record<string, unknown>): KnowledgeGraphRelationship {
     return {
       id: row.id,
       sourceEntityId: row.source_entity_id,

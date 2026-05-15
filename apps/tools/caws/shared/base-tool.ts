@@ -13,7 +13,7 @@ import { CawsConfig } from "./types.ts";
 export interface ToolResult {
   success: boolean;
   message: string;
-  data?;
+  data?: unknown;
   errors?: string[];
   warnings?: string[];
 }
@@ -71,7 +71,7 @@ export abstract class CawsBaseTool {
    */
   protected writeJsonFile(
     filePath: string,
-    data,
+    data: unknown,
     options: FileOperationOptions = {}
   ): boolean {
     try {
@@ -208,7 +208,7 @@ export abstract class CawsBaseTool {
   protected createResult(
     success: boolean,
     message: string,
-    data?,
+    data?: unknown,
     errors?: string[],
     warnings?: string[]
   ): ToolResult {

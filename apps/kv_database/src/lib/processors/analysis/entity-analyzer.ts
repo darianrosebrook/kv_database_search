@@ -257,10 +257,10 @@ export class EntityAnalyzer {
    */
   private calculateTopicCoverage(
     entities: ExtractedEntity[],
-    clusters
+    clusters: Array<{ entities: unknown[] }>
   ): number {
     const clusteredEntities = clusters.reduce(
-      (sum, cluster) => sum + cluster.entities.length,
+      (sum: number, cluster: { entities: unknown[] }) => sum + cluster.entities.length,
       0
     );
     return entities.length > 0

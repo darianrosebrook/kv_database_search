@@ -213,7 +213,7 @@ export interface VisualizationSpec {
   id: string;
   type: "graph" | "timeline" | "heatmap" | "flowchart" | "tree";
   title: string;
-  data;
+  data: unknown;
   config: Record<string, unknown>;
   interactivity: boolean;
 }

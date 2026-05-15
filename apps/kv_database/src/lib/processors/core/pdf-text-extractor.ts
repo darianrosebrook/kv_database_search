@@ -170,7 +170,7 @@ export class PDFTextExtractor {
    */
   async getPDFInfo(buffer: Buffer): Promise<{
     pageCount: number;
-    metadata?;
+    metadata?: any;
     isTextBased: boolean;
     estimatedTextLength: number;
   }> {
@@ -197,13 +197,13 @@ export class PDFTextExtractor {
    * Select the best extraction result from multiple methods
    */
   private selectBestExtractionResult(
-    pdfParseResult,
-    pdfExtractResult
+    pdfParseResult: any,
+    pdfExtractResult: any
   ): {
     text: string;
     pageCount: number;
     method: "pdf-parse" | "pdf.js-extract" | "hybrid";
-    metadata?;
+    metadata?: any;
     pages?: any[];
   } {
     let text = "";
@@ -215,10 +215,10 @@ export class PDFTextExtractor {
     // Determine the best text extraction method
     const pdfParseTextLength = pdfParseResult?.text?.length || 0;
     const pdfExtractTextLength =
-      pdfExtractResult?.pages?.reduce((total: number, page) => {
+      pdfExtractResult?.pages?.reduce((total: number, page: any) => {
         return (
           total +
-          (page.content?.reduce((pageTotal: number, item) => {
+          (page.content?.reduce((pageTotal: number, item: any) => {
             return pageTotal + (item.str || "").length;
           }, 0) || 0)
         );
@@ -261,14 +261,14 @@ export class PDFTextExtractor {
   /**
    * Extract text from pdf.js-extract pages
    */
-  private extractTextFromPdfJsPages(pages): string {
+  private extractTextFromPdfJsPages(pages: any[]): string {
     const textParts: string[] = [];
 
     for (const page of pages) {
       if (page.content && page.content.length > 0) {
         const pageText = page.content
-          .filter((item) => item.str && item.str.trim().length > 0)
-          .map((item) => item.str)
+          .filter((item: any) => item.str && item.str.trim().length > 0)
+          .map((item: any) => item.str)
           .join(" ");
 
         if (pageText.trim().length > 0) {

@@ -207,7 +207,7 @@ export class ObsidianContractValidator {
       });
     } else {
       // Validate each result
-      response.results.forEach((result, index: number) => {
+      response.results.forEach((result: any, index: number) => {
         if (!result.id || typeof result.id !== "string") {
           errors.push({
             type: "response",

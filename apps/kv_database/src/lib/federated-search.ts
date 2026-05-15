@@ -145,7 +145,7 @@ export interface SchemaProperty {
 export interface SchemaConstraint {
   type: "unique" | "foreign_key" | "check" | "not_null";
   field: string;
-  value?;
+  value?: unknown;
   reference?: string;
 }
 
@@ -226,7 +226,7 @@ export interface QueryFilter {
     | "range"
     | "in"
     | "exists";
-  value;
+  value: unknown;
   systemSpecific?: boolean;
 }
 
@@ -491,7 +491,7 @@ export interface SystemQueryResult {
  * comprehensive provenance tracking.
  */
 export class FederatedSearchSystem {
-  private database; // ObsidianDatabase
+  private database: any; // ObsidianDatabase
   private systemRegistry: SystemRegistry;
   private queryRouter: QueryRouter;
   private resultAggregator: ResultAggregator;
@@ -503,7 +503,7 @@ export class FederatedSearchSystem {
   private readonly defaultTimeoutMs = 30000;
   private readonly maxRetries = 3;
 
-  constructor(database) {
+  constructor(database: any) {
     this.database = database;
     this.systemRegistry = new SystemRegistry(database);
     this.queryRouter = new QueryRouter(this.systemRegistry);
@@ -646,7 +646,7 @@ export class FederatedSearchSystem {
    */
   private async executeParallelQueries(
     query: FederatedQuery,
-    routingResult
+    routingResult: any
   ): Promise<SystemQueryResult[]> {
     const promises = routingResult.selectedSystems.map(
       async (systemId: string) => {
@@ -756,8 +756,8 @@ export class FederatedSearchSystem {
    */
   private calculatePerformanceMetrics(
     startTime: number,
-    systemResults,
-    _routingResult
+    systemResults: SystemQueryResult[],
+    _routingResult: any
   ): QueryPerformance {
     const totalTime = Date.now() - startTime;
     const systemTimes: Record<string, number> = {};
@@ -887,7 +887,7 @@ export class FederatedSearchSystem {
   /**
    * Calculate system coverage percentage
    */
-  private calculateSystemCoverage(routingResult): number {
+  private calculateSystemCoverage(routingResult: any): number {
     return (
       (routingResult.selectedSystems.length /
         routingResult.availableSystems.length) *
@@ -935,7 +935,7 @@ export class FederatedSearchSystem {
  * System Registry - Manages federated systems
  */
 class SystemRegistry {
-  constructor(private database) {}
+  constructor(private database: any) {}
 
   async registerSystem(system: FederatedSystem): Promise<void> {
     console.log(`📝 Registering federated system: ${system.name}`);
@@ -987,12 +987,12 @@ class QueryRouter {
  */
 class ResultAggregator {
   async aggregateResults(
-    systemResults,
+    systemResults: any[],
     strategy: AggregationStrategy
   ): Promise {
     const allResults: SearchResult[] = [];
 
-    systemResults.forEach((systemResult) => {
+    systemResults.forEach((systemResult: any) => {
       if (systemResult.success) {
         allResults.push(...systemResult.results);
       }

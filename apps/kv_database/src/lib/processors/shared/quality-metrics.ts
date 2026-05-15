@@ -197,7 +197,7 @@ export class QualityMetrics {
   /**
    * Assess content richness (how much useful information is present)
    */
-  private static assessContentRichness(text: string, metadata): number {
+  private static assessContentRichness(text: string, metadata: Record<string, unknown>): number {
     if (!text) return 0;
 
     let score = 0.5; // Base score
@@ -229,7 +229,7 @@ export class QualityMetrics {
   /**
    * Assess structural integrity of extracted content
    */
-  private static assessStructuralIntegrity(text: string, metadata): number {
+  private static assessStructuralIntegrity(text: string, metadata: Record<string, unknown>): number {
     if (!text) return 0;
 
     let score = 1.0;
@@ -269,7 +269,7 @@ export class QualityMetrics {
    */
   static generateQualityReport(
     text: string,
-    metadata,
+    metadata: Record<string, unknown>,
     processingMetrics?: ProcessingMetrics
   ): {
     quality: QualityScore;

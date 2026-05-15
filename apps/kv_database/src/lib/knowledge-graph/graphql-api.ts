@@ -361,7 +361,7 @@ const QueryType = new GraphQLObjectType({
           );
           const execution = await context.queryOptimizer.executeOptimizedPlan(
             queryPlan,
-            async (optimizedQuery) => {
+            async (optimizedQuery: unknown) => {
               return context.searchEngine.search(optimizedQuery);
             }
           );
@@ -801,7 +801,7 @@ export const setupGraphQLServer = (context: GraphQLContext) => {
 
   return {
     schema,
-    context: (req) => ({
+    context: (req: any) => ({
       ...context,
       sessionId: req.headers["x-session-id"] || req.sessionID,
       userId: req.headers["x-user-id"] || req.user?.id,
