@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Simple test to verify in-memory database functionality works
-import { InMemoryTestDatabase } from './tests/in-memory-db.ts';
+import { InMemoryTestDatabase } from '../../../tests/in-memory-db.ts';
 
 async function testInMemory() {
   console.log('🧪 Testing in-memory database implementation...');

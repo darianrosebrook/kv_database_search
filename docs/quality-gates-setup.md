@@ -246,7 +246,7 @@ npx vitest run tests/contract/**/*.test.ts
 
 - [CAWS Framework Documentation](./development-methodology/README.md)
 - [Testing Strategy](./evaluation/README.md)
-- [Contract Testing Guide](../apps/contracts/README.md)
+- [Contract Testing Guide](../packages/contracts/README.md)
 
 ## Files Created
 

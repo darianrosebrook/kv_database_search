@@ -86,3 +86,16 @@ apps/.agent/
 .env*
 external-resources/wikidata-20250924-lexemes.json.gz
 external-resources/
+
+# CAWS local runtime state (events log, per-spec state, registry)
+.caws/events.jsonl
+.caws/state/
+.caws/specs/
+
+# Local test fixtures and pipeline outputs
+output/
+output-llm-billion-dollar/
+test-data/
+
+# Large media test fixtures sitting at repo root
+*.mp4

@@ -63,9 +63,9 @@ non_functional:
     - "Data classification and handling across systems"
 contracts:
   - type: openapi
-    path: "apps/contracts/federated-search-api.yaml"
+    path: "packages/contracts/federated-search-api.yaml"
   - type: graphql
-    path: "apps/contracts/federated-knowledge-graph-schema.graphql"
+    path: "packages/contracts/federated-knowledge-graph-schema.graphql"
 observability:
   logs:
     - "federated.query.started with systems_count, query_complexity"

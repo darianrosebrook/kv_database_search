@@ -1345,7 +1345,7 @@ describe('Wikidata API Contracts', () => {
         .expect(200);
       
       // Validate against OpenAPI schema
-      const validator = new OpenAPIValidator('apps/contracts/wikidata-integration-api.yaml');
+      const validator = new OpenAPIValidator('packages/contracts/wikidata-integration-api.yaml');
       const validation = validator.validate('/wikidata/entities/{id}', 'get', response.body);
       
       expect(validation.errors).toHaveLength(0);
@@ -1363,7 +1363,7 @@ describe('Wikidata API Contracts', () => {
         .query({ q: 'Earth', limit: 10 })
         .expect(200);
       
-      const validator = new OpenAPIValidator('apps/contracts/wikidata-integration-api.yaml');
+      const validator = new OpenAPIValidator('packages/contracts/wikidata-integration-api.yaml');
       const validation = validator.validate('/wikidata/search', 'get', response.body);
       
       expect(validation.errors).toHaveLength(0);
@@ -1402,7 +1402,7 @@ describe('Wikidata API Contracts', () => {
         .send(linkingRequest)
         .expect(201);
       
-      const validator = new OpenAPIValidator('apps/contracts/wikidata-integration-api.yaml');
+      const validator = new OpenAPIValidator('packages/contracts/wikidata-integration-api.yaml');
       const validation = validator.validate('/wikidata/links', 'post', response.body);
       
       expect(validation.errors).toHaveLength(0);

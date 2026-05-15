@@ -64,9 +64,9 @@ non_functional:
     - "Content metadata sanitized to prevent data leakage"
 contracts:
   - type: openapi
-    path: "apps/contracts/api.yaml#/ingest"
+    path: "packages/contracts/api.yaml#/ingest"
   - type: openapi
-    path: "apps/contracts/multi-modal-processing-api.yaml"
+    path: "packages/contracts/multi-modal-processing-api.yaml"
 observability:
   logs:
     - "multi_modal.ingestion.started with content_type, file_size, source"

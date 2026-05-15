@@ -62,9 +62,9 @@ non_functional:
     - "Secure temporal query parameter validation"
 contracts:
   - type: graphql
-    path: "apps/contracts/temporal-knowledge-graph-schema.graphql"
+    path: "packages/contracts/temporal-knowledge-graph-schema.graphql"
   - type: openapi
-    path: "apps/contracts/temporal-reasoning-api.yaml"
+    path: "packages/contracts/temporal-reasoning-api.yaml"
 observability:
   logs:
     - "temporal.causality.detected with entities, confidence, temporal_lag"

@@ -56,9 +56,9 @@ non_functional:
     - "Access control for sensitive entity relationships"
 contracts:
   - type: openapi
-    path: "apps/contracts/graph-rag-search-api.yaml"
+    path: "packages/contracts/graph-rag-search-api.yaml"
   - type: graphql
-    path: "apps/contracts/knowledge-graph-schema.graphql"
+    path: "packages/contracts/knowledge-graph-schema.graphql"
 observability:
   logs: 
     - "search.query with entity_count, hop_depth, result_count"

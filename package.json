@@ -64,7 +64,7 @@
     "caws:accessibility": "tsx apps/tools/caws/accessibility.ts",
     "caws:migrations": "tsx apps/tools/caws/migrations.ts",
     "caws:provenance": "tsx apps/tools/caws/provenance.ts",
-    "gates:contracts": "tsx apps/tools/caws/gates.ts apps/contracts --tier 2",
+    "gates:contracts": "tsx apps/tools/caws/gates.ts packages/contracts --tier 2",
     "gates:coverage": "tsx apps/tools/caws/gates.ts coverage --tier 2",
     "gates:mutation": "tsx apps/tools/caws/gates.ts mutation --tier 2",
     "gates:trust": "tsx apps/tools/caws/trust.ts .agent/provenance.json",

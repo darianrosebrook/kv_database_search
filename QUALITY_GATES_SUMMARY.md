@@ -242,7 +242,7 @@ obsidian-rag/
 - [CAWS Framework](./docs/development-methodology/README.md)
 - [Quality Gates Setup](./docs/quality-gates-setup.md)
 - [Testing Strategy](./docs/evaluation/README.md)
-- [Contract API Specs](./apps/contracts/README.md)
+- [Contract API Specs](./packages/contracts/README.md)
 
 ---
 

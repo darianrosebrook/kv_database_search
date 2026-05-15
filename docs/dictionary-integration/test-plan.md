@@ -1298,7 +1298,7 @@ on:
   pull_request:
     paths:
       - 'apps/kv_database/src/lib/dictionary/**'
-      - 'apps/contracts/dictionary-service-api.yaml'
+      - 'packages/contracts/dictionary-service-api.yaml'
       - 'docs/dictionary-integration/**'
 
 jobs:

@@ -274,7 +274,7 @@ describe("Real-Time Knowledge Graph Updates", () => {
 ### 1. Search API Contract
 
 ```typescript
-// apps/contracts/graph-rag-search-api.yaml
+// packages/contracts/graph-rag-search-api.yaml
 describe("Graph RAG Search API Contract", () => {
   const server = setupServer(
     http.post("/api/search", () => 
@@ -323,7 +323,7 @@ describe("Graph RAG Search API Contract", () => {
 ### 2. Knowledge Graph Schema Contract
 
 ```typescript
-// apps/contracts/knowledge-graph-schema.graphql
+// packages/contracts/knowledge-graph-schema.graphql
 describe("Knowledge Graph GraphQL Schema", () => {
   it("should support entity queries with relationships", async () => {
     const query = `

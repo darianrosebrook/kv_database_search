@@ -3,7 +3,7 @@
  * Tests if images embedded in PDFs are extracted and OCR'd
  */
 
-import { PDFProcessingPipeline } from "./apps/kv_database/src/lib/processors/pipelines/pdf-processing-pipeline";
+import { PDFProcessingPipeline } from "../src/lib/processors/pipelines/pdf-processing-pipeline";
 import * as fs from "fs";
 import * as path from "path";
 

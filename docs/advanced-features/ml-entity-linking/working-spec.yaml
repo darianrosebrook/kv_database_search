@@ -63,9 +63,9 @@ non_functional:
     - "Secure model serving with authentication"
 contracts:
   - type: openapi
-    path: "apps/contracts/ml-entity-linking-api.yaml"
+    path: "packages/contracts/ml-entity-linking-api.yaml"
   - type: graphql
-    path: "apps/contracts/knowledge-graph-schema.graphql#/MLEntityExtraction"
+    path: "packages/contracts/knowledge-graph-schema.graphql#/MLEntityExtraction"
 observability:
   logs:
     - "ml.entity.extraction.started with model_version, content_type"

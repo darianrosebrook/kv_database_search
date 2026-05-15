@@ -46,7 +46,7 @@
     "coverage/",
     "reports/",
     ".caws/",
-    "apps/contracts/",
+    "packages/contracts/",
     "docs/",
     "*.js",
     "*.d.ts"

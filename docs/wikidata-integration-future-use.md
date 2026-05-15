@@ -84,7 +84,7 @@ The essential features can achieve 95% accuracy and comprehensive functionality 
 - **Integration Points**: Schema extensions for existing knowledge graph
 
 ### API Contracts
-- **File**: `apps/contracts/wikidata-integration-api.yaml`
+- **File**: `packages/contracts/wikidata-integration-api.yaml`
 - **Endpoints**: Entity lookup, multilingual search, relationship queries
 - **Schema**: Complete data model for Wikidata entities and claims
 
@@ -215,7 +215,7 @@ The essential features can achieve 95% accuracy and comprehensive functionality 
 ## 🔗 Related Documents
 
 - **Working Specification**: `.caws/wikidata-integration-working-spec.yaml`
-- **API Contract**: `apps/contracts/wikidata-integration-api.yaml`
+- **API Contract**: `packages/contracts/wikidata-integration-api.yaml`
 - **Integration Strategy**: `docs/unified-feature-integration-strategy.md`
 - **Implementation Roadmap**: `docs/unified-implementation-roadmap.md`
 

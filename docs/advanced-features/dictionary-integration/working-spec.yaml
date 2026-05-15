@@ -65,9 +65,9 @@ non_functional:
     - "Input validation prevents malicious dictionary queries"
 contracts:
   - type: openapi
-    path: "apps/contracts/dictionary-service-api.yaml"
+    path: "packages/contracts/dictionary-service-api.yaml"
   - type: graphql
-    path: "apps/contracts/knowledge-graph-schema.graphql#/DictionaryIntegration"
+    path: "packages/contracts/knowledge-graph-schema.graphql#/DictionaryIntegration"
 observability:
   logs:
     - "dictionary.lookup.started with terms, sources, language"

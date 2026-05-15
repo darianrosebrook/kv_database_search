@@ -332,6 +332,6 @@ git commit --no-verify
 
 - [CAWS Framework Documentation](./development-methodology/README.md)
 - [Testing Strategy](./evaluation/README.md)
-- [Contract Testing Guide](../apps/contracts/README.md)
+- [Contract Testing Guide](../packages/contracts/README.md)
 - [Husky Documentation](https://typicode.github.io/husky/)
 - [Lint-staged Documentation](https://github.com/okonet/lint-staged)

@@ -1,0 +1,12 @@
+{
+  "name": "@kv/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Canonical OpenAPI specs and GraphQL schemas describing the kv_database engine APIs",
+  "files": [
+    "*.yaml",
+    "*.json",
+    "*.graphql",
+    "README.md"
+  ]
+}
