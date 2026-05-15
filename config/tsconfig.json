@@ -10,8 +10,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "outDir": "./dist",
-    "rootDir": ".",
+    "outDir": "../dist",
+    "rootDir": "..",
     "resolveJsonModule": true,
     "lib": ["ES2022"],
     "types": ["node"],
@@ -21,6 +21,6 @@
     "sourceMap": true,
     "noEmit": true
   },
-  "include": ["apps/kv_database/src/**/*", "apps/tools/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "apps/rag_web_search_tool/**/*"]
+  "include": ["../apps/kv_database/src/**/*", "../apps/tools/**/*", "../packages/*/src/**/*"],
+  "exclude": ["../node_modules", "../dist", "**/*.test.ts", "../apps/rag_web_search_tool/**/*"]
 }
