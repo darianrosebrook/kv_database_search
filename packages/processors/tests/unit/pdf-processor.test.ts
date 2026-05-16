@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { PDFProcessor } from "../../src/lib/processors/pdf-processor.ts";
+import { PDFProcessor } from "@kv/processors";
 
 // Mock pdf-parse completely
 vi.mock("pdf-parse", () => ({

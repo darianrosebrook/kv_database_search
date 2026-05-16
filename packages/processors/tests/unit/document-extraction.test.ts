@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { PDFProcessor } from "../../src/lib/processors/pdf-processor";
-import { OfficeProcessor } from "../../src/lib/processors/office-processor";
-import { ContentType } from "../../src/types/index";
+import { PDFProcessor, OfficeProcessor } from "@kv/processors";
+import { ContentType } from "@kv/types";
 import * as fs from "fs";
 
 // Mock pdf-parse

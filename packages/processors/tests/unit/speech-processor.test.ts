@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { SpeechProcessor } from "../../src/lib/processors/speech-processor.ts";
-import { ContentType } from "../../src/lib/multi-modal.ts";
+import { SpeechProcessor } from "@kv/processors";
+import { ContentType } from "@kv/types";
 
 // Mock sherpa-onnx
 vi.mock("sherpa-onnx", () => ({

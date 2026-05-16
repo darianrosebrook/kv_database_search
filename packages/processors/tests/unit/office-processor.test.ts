@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { OfficeProcessor } from "../../src/lib/processors/office-processor.ts";
-import { ContentType } from "../../src/lib/multi-modal.ts";
+import { OfficeProcessor } from "@kv/processors";
+import { ContentType } from "@kv/types";
 
 // Mock mammoth and xlsx
 vi.mock("mammoth", () => ({

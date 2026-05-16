@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { OCRProcessor } from "../../src/lib/processors/ocr-processor";
+import { OCRProcessor } from "@kv/processors";
 
 describe("Enhanced OCR Processor", () => {
   const ocrProcessor = new OCRProcessor();

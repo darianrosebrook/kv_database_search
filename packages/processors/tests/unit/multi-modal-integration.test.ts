@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { readFileSync, existsSync, readdirSync } from "fs";
 import { join } from "path";
-import { OCRProcessor } from "../../src/lib/processors/ocr-processor";
-import { PDFProcessor } from "../../src/lib/processors/pdf-processor";
-import { ImageClassificationProcessor } from "../../src/lib/processors/image-classification-processor";
-import { OfficeProcessor } from "../../src/lib/processors/office-processor";
+import { OCRProcessor, PDFProcessor, ImageClassificationProcessor, OfficeProcessor } from "@kv/processors";
 import { ObsidianUtils } from "../../src/lib/obsidian-models";
 
 // Mock Tesseract.js for OCR tests - but allow real processing for integration tests

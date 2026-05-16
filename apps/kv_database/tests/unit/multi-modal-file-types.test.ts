@@ -35,10 +35,7 @@ const mockReadFileSync = (fs as any).__mockReadFileSync;
 
 vi.mock("../../src/lib/database");
 vi.mock("../../src/lib/embeddings");
-vi.mock("../../src/lib/processors/pdf-processor");
-vi.mock("../../src/lib/processors/ocr-processor");
-vi.mock("../../src/lib/processors/office-processor");
-vi.mock("../../src/lib/processors/speech-processor");
+vi.mock("@kv/processors");
 
 describe("Multi-Modal File Type Support", () => {
   let detector: MultiModalContentDetector;

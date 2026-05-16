@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { OCRProcessor } from "../../src/lib/processors/ocr-processor.ts";
+import { OCRProcessor } from "@kv/processors";
 
 // Mock Tesseract.js
 vi.mock("tesseract.js", () => ({

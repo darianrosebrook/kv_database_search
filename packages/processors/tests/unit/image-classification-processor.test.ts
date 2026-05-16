@@ -3,8 +3,8 @@ import {
   ImageClassificationProcessor,
   ImageClassificationOptions,
   SceneDescription,
-} from "../../src/lib/processors/image-classification-processor";
-import { ContentType } from "../../src/lib/multi-modal";
+} from "@kv/processors";
+import { ContentType } from "@kv/types";
 
 // Mock Tesseract.js for OCR processing
 vi.mock("tesseract.js", () => ({
