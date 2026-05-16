@@ -179,9 +179,6 @@ Examples:
   }
 }
 
-// Run if called directly
-if (require.main === module) {
-  main().catch(console.error);
-}
+main().catch(console.error);
 
 export { ingestDocuments, IngestionOptions };
