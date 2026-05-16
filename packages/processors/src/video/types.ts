@@ -1,8 +1,8 @@
-import { ContentMetadata } from "../../../types/index.ts";
+import { ContentMetadata } from "@kv/types";
 import {
   ExtractedEntity,
   EntityRelationship,
-} from "../../utils.ts";
+} from "@kv/utils";
 import { ProcessorOptions } from "../base-processor.ts";
 
 export interface VideoMetadata {

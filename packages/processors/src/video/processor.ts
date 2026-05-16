@@ -2,13 +2,13 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as crypto from "crypto";
-import { ContentType } from "../../../types/index.ts";
+import { ContentType } from "@kv/types";
 import {
   detectLanguage,
   EntityExtractor,
   countWords,
   countCharacters,
-} from "../../utils.ts";
+} from "@kv/utils";
 import {
   BaseContentProcessor,
   ProcessorOptions,

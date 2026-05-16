@@ -1,5 +1,5 @@
 import pdfParse from "pdf-parse";
-import { ContentType, ContentMetadata } from "../../types/index";
+import { ContentType, ContentMetadata } from "@kv/types";
 import {
   BaseContentProcessor,
   ProcessorOptions,
@@ -10,7 +10,7 @@ import {
   EntityExtractor,
   ExtractedEntity,
   EntityRelationship,
-} from "../utils";
+} from "@kv/utils";
 import * as fs from "fs";
 
 export interface PDFMetadata {

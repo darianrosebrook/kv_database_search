@@ -12,5 +12,4 @@ import { ContentProcessorRegistry } from "./processor-registry";
 /**
  * Singleton instance of the processor registry
  */
-console.log("hi mom");
 export const contentProcessorRegistry = new ContentProcessorRegistry();

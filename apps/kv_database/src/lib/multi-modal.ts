@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { createHash, detectLanguage } from "./utils";
-import { ContentProcessorRegistry } from "./processors/processor-registry";
+import { ContentProcessorRegistry } from "@kv/processors";
 import {
   ContentType,
   UniversalMetadata,

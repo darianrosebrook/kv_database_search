@@ -1,4 +1,4 @@
-import { ContentType, ContentMetadata } from "../../types/index";
+import { ContentType, ContentMetadata } from "@kv/types";
 import {
   ContentProcessor,
   ProcessorOptions,
@@ -7,7 +7,7 @@ import {
 import { PDFProcessorAdapter } from "./pdf-processor-adapter";
 import { OCRProcessor } from "./ocr-processor";
 import { OfficeProcessor } from "./office-processor";
-import { VideoProcessor } from "./video-processor";
+import { VideoProcessor } from "./video";
 import { AudioTranscriptionProcessor } from "./audio-transcription-processor";
 import { SpeechProcessor } from "./speech-processor";
 import { ImageClassificationProcessor } from "./image-classification-processor";

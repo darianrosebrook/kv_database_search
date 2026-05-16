@@ -1,12 +1,12 @@
 import * as mammoth from "mammoth";
 import * as XLSX from "xlsx";
-import { ContentType, ContentMetadata } from "../../types/index";
+import { ContentType, ContentMetadata } from "@kv/types";
 import {
   detectLanguage,
   EntityExtractor,
   ExtractedEntity,
   EntityRelationship,
-} from "../utils";
+} from "@kv/utils";
 import * as fs from "fs";
 import {
   ContentProcessor,

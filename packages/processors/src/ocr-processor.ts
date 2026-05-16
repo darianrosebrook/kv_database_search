@@ -1,12 +1,12 @@
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { ContentType, ContentMetadata } from "../../types/index";
+import { ContentType, ContentMetadata } from "@kv/types";
 import {
   detectLanguage,
   EntityExtractor,
   ExtractedEntity,
   EntityRelationship,
-} from "../utils";
+} from "@kv/utils";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";

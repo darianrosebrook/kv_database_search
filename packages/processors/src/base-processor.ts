@@ -1,5 +1,5 @@
-import { ContentType, ContentMetadata } from "../../types/index";
-import { createHash } from "../utils";
+import { ContentType, ContentMetadata } from "@kv/types";
+import { createHash } from "@kv/utils";
 
 /**
  * Base interface for all content processors

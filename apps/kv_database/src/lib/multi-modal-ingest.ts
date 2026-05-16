@@ -6,17 +6,19 @@ import {
   UniversalMetadata,
   ContentType,
 } from "./multi-modal";
-import { PDFProcessingPipeline } from "./processors/pipelines/pdf-processing-pipeline";
-import { OCRProcessor } from "./processors/ocr-processor";
-import { OfficeProcessor } from "./processors/office-processor";
-import { SpeechProcessor } from "./processors/speech-processor";
-import { ImageClassificationProcessor } from "./processors/image-classification-processor";
+import {
+  PDFProcessingPipeline,
+  OCRProcessor,
+  OfficeProcessor,
+  SpeechProcessor,
+  ImageClassificationProcessor,
+  contentProcessorRegistry,
+} from "@kv/processors";
 import { DocumentChunk, DocumentMetadata } from "../types/index";
 import { cleanMarkdown } from "./utils";
 import * as fs from "fs";
 import * as path from "path";
 import { createHash } from "crypto";
-import { contentProcessorRegistry } from "./processors/processor-registry-instance";
 
 /**
  * TODO: Content Type Prioritization - Research fast-path processing for common types

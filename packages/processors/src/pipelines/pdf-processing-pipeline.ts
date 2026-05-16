@@ -3,7 +3,7 @@
  * Replaces the monolithic EnhancedPDFProcessor
  */
 
-import { ContentType, ContentMetadata } from "../../../types/index";
+import { ContentType, ContentMetadata } from "@kv/types";
 import { ProcessorOptions, ProcessorResult } from "../base-processor";
 import {
   PDFTextExtractor,

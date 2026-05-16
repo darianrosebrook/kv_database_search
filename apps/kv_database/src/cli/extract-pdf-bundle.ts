@@ -2,7 +2,7 @@
  * Extract a PDF into a Sterling-compatible evidence bundle.
  * Usage: npx tsx apps/kv_database/src/cli/extract-pdf-bundle.ts --export <output-dir> <path-to-pdf>
  */
-import { PDFProcessingPipeline } from "../lib/processors/pipelines/pdf-processing-pipeline";
+import { PDFProcessingPipeline } from "@kv/processors";
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";

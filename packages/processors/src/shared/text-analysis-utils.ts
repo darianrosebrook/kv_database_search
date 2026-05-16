@@ -3,7 +3,7 @@
  * Extracted from duplicated code across processors
  */
 
-import { detectLanguage } from "../../utils";
+import { detectLanguage } from "@kv/utils";
 
 export interface DocumentStructure {
   headers: string[];

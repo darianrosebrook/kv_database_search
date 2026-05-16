@@ -1,4 +1,4 @@
-import { detectLanguage } from "../../utils.ts";
+import { detectLanguage } from "@kv/utils";
 import { ExtractedFrame, VideoContentMetadata } from "./types.ts";
 
 /**

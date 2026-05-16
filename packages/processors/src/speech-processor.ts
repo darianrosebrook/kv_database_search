@@ -62,8 +62,8 @@ import {
  * - Create audio quality assessment and optimization
  * - Add format conversion for unsupported audio types
  */
-import { ContentType, ContentMetadata } from "../../types/index";
-import { detectLanguage } from "../utils";
+import { ContentType, ContentMetadata } from "@kv/types";
+import { detectLanguage } from "@kv/utils";
 import * as fs from "fs";
 import {
   ContentProcessor,

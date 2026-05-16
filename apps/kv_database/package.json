@@ -15,6 +15,8 @@
     "@fastify/type-provider-typebox": "^6.0.0",
     "@kv/utils": "workspace:*",
     "@kv/media": "workspace:*",
+    "@kv/processors": "workspace:*",
+    "@kv/types": "workspace:*",
     "axios": "^1.12.2",
     "canvas": "^3.2.0",
     "chokidar": "^4.0.3",

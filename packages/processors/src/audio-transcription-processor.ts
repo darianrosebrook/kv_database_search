@@ -1,7 +1,7 @@
 import ffmpeg from "fluent-ffmpeg";
 import * as fs from "fs";
 import * as path from "path";
-import { ContentType, ContentMetadata } from "../../types/index.ts";
+import { ContentType, ContentMetadata } from "@kv/types";
 import {
   detectLanguage,
   EntityExtractor,
@@ -9,7 +9,7 @@ import {
   EntityRelationship,
   countWords,
   countCharacters,
-} from "../utils.ts";
+} from "@kv/utils";
 import {
   BaseContentProcessor,
   ProcessorOptions,

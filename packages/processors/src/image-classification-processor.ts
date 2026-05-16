@@ -23,15 +23,15 @@
  * - Implement table/chart data extraction and structuring
  */
 
-import { ContentType } from "../../types/index";
-import { ContentMetadata } from "../multi-modal";
+import { ContentType } from "@kv/types";
+import { ContentMetadata } from "@kv/types";
 import {
   ContentProcessor,
   ProcessorOptions,
   ProcessorResult,
 } from "./base-processor";
 import { OCRProcessor } from "./ocr-processor";
-import { LoggerFactory } from "../shared/logger";
+import { LoggerFactory } from "@kv/utils";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
 import path from "path";

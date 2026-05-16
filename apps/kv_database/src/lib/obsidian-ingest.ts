@@ -20,8 +20,10 @@ import {
 } from "./utils";
 import { ImageLinkExtractor, ImageLink } from "./markdown-image-extractor";
 import { ImagePathResolver } from "./path-resolver";
-import { OCRProcessor } from "./processors/ocr-processor";
-import { ImageClassificationProcessor } from "./processors/image-classification-processor";
+import {
+  OCRProcessor,
+  ImageClassificationProcessor,
+} from "@kv/processors";
 import { ObsidianUtils } from "./types/obsidian-utils";
 
 export interface ObsidianChunkingOptions {

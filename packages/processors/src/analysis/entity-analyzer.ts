@@ -7,9 +7,9 @@ import {
   EntityExtractor,
   ExtractionContext,
   ExtractionResult,
-} from "../../entity-extractor";
-import { DictionaryService } from "../../dictionary-service";
-import { ExtractedEntity, EntityRelationship } from "../../utils";
+} from "./external-types";
+import { DictionaryService } from "./external-types";
+import { ExtractedEntity, EntityRelationship } from "@kv/utils";
 
 export interface EntityAnalysisResult {
   entities: ExtractedEntity[];

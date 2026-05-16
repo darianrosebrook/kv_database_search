@@ -1,8 +1,10 @@
 import { DocumentChunk, DocumentMetadata } from "../types/index";
 import { ImageLinkExtractor } from "./markdown-image-extractor";
 import { ImagePathResolver } from "./path-resolver";
-import { OCRProcessor } from "./processors/ocr-processor";
-import { ImageClassificationProcessor } from "./processors/image-classification-processor";
+import {
+  OCRProcessor,
+  ImageClassificationProcessor,
+} from "@kv/processors";
 import { LoggerFactory } from "./shared/logger";
 import { generateDeterministicId } from "./utils";
 

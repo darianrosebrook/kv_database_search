@@ -18,7 +18,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { VideoProcessor } from "../lib/processors/video-processor.ts";
+import { VideoProcessor } from "@kv/processors";
 import { fetchVideo } from "./yt-dlp-fetch.ts";
 
 interface CLIOptions {
