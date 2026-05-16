@@ -18,7 +18,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { VideoProcessor } from "@kv/processors";
+import { VideoProcessor } from "@kv/processors/video";
 import { fetchVideo } from "./yt-dlp-fetch.ts";
 
 interface CLIOptions {
@@ -29,6 +29,9 @@ interface CLIOptions {
   enableOCR: boolean;
   enableAudio: boolean;
   maxFrames: number;
+  sceneThreshold: number;
+  minSceneLength: number;
+  enableDedup: boolean;
   jsonOutput: boolean;
   quiet: boolean;
   format: string;
@@ -49,6 +52,9 @@ Options:
   --no-ocr               Skip OCR on frames
   --no-audio             Skip audio transcription
   --max-frames <n>       Maximum frames to extract (default: 200)
+  --scene-threshold <x>  ffmpeg scene sensitivity 0..1 (default 0.1, lower = more scenes)
+  --min-scene-length <s> Minimum seconds between scenes (default 1.0)
+  --no-dedup             Disable perceptual-hash frame deduplication
   --json                 Output results as JSON to stdout
   -q, --quiet            Suppress progress output (implies --json)
   -h, --help             Show this help
@@ -94,6 +100,9 @@ function parseArgs(argv: string[]): CLIOptions | null {
   let enableOCR = true;
   let enableAudio = true;
   let maxFrames = 200;
+  let sceneThreshold = 0.1;
+  let minSceneLength = 1.0;
+  let enableDedup = true;
   let jsonOutput = false;
   let quiet = false;
   let format = "best";
@@ -147,6 +156,23 @@ function parseArgs(argv: string[]): CLIOptions | null {
           console.error("Error: --max-frames must be a positive integer");
           process.exit(1);
         }
+        break;
+      case "--scene-threshold":
+        sceneThreshold = parseFloat(args[++i]);
+        if (isNaN(sceneThreshold) || sceneThreshold <= 0 || sceneThreshold >= 1) {
+          console.error("Error: --scene-threshold must be in (0, 1)");
+          process.exit(1);
+        }
+        break;
+      case "--min-scene-length":
+        minSceneLength = parseFloat(args[++i]);
+        if (isNaN(minSceneLength) || minSceneLength < 0) {
+          console.error("Error: --min-scene-length must be >= 0");
+          process.exit(1);
+        }
+        break;
+      case "--no-dedup":
+        enableDedup = false;
         break;
       case "--json":
         jsonOutput = true;
@@ -202,6 +228,9 @@ function parseArgs(argv: string[]): CLIOptions | null {
     enableOCR,
     enableAudio,
     maxFrames,
+    sceneThreshold,
+    minSceneLength,
+    enableDedup,
     jsonOutput,
     quiet,
     format,
@@ -219,6 +248,9 @@ async function main(): Promise<void> {
     enableOCR,
     enableAudio,
     maxFrames,
+    sceneThreshold,
+    minSceneLength,
+    enableDedup,
     jsonOutput,
     quiet,
     url,
@@ -297,6 +329,9 @@ async function main(): Promise<void> {
   console.log(
     `  OCR: ${enableOCR ? "yes" : "skip"}  Audio: ${enableAudio ? "yes" : "skip"}  Max frames: ${maxFrames}`,
   );
+  console.log(
+    `  Scene threshold: ${sceneThreshold}  Min scene length: ${minSceneLength}s  Dedup: ${enableDedup ? "yes" : "skip"}`,
+  );
   console.log("");
 
   fs.mkdirSync(outputDir, { recursive: true });
@@ -309,6 +344,9 @@ async function main(): Promise<void> {
       enableOCR,
       enableSpeechTranscription: enableAudio,
       maxFramesToExtract: maxFrames,
+      sceneThreshold,
+      minSceneLength,
+      enableFrameDeduplication: enableDedup,
     });
   } finally {
     if (downloadTempDir) {

@@ -25,6 +25,12 @@ export interface VideoProcessorOptions extends ProcessorOptions {
   frameExtractionInterval?: number; // seconds between frame extractions
   maxFramesToExtract?: number;
   enableOCR?: boolean;
+  /** ffmpeg scene-change sensitivity (0..1). Lower = more scenes detected. Default 0.3. */
+  sceneThreshold?: number;
+  /** Minimum seconds between detected scene changes. Default 1.0. */
+  minSceneLength?: number;
+  /** Perceptual-hash deduplication of near-identical frames. Default true. */
+  enableFrameDeduplication?: boolean;
   /** If set, export artifacts (keyframes, transcript, manifest) to this directory. */
   outputDir?: string;
 }

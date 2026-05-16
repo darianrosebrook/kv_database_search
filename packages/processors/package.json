@@ -9,6 +9,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./video": {
+      "types": "./src/video/index.ts",
+      "import": "./src/video/index.ts",
+      "default": "./src/video/index.ts"
     }
   },
   "scripts": {

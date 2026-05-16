@@ -166,9 +166,9 @@ export class VideoProcessor extends BaseContentProcessor {
           const extractionResult = await this.adaptiveExtractor.extract(
             tempVideoPath,
             {
-              sceneThreshold: 0.3,
-              minSceneLength: 1.0,
-              enableDeduplication: true,
+              sceneThreshold: options?.sceneThreshold ?? 0.1,
+              minSceneLength: options?.minSceneLength ?? 1.0,
+              enableDeduplication: options?.enableFrameDeduplication ?? true,
               maxFrames: options?.maxFramesToExtract ?? 200,
               fallbackInterval: options?.frameExtractionInterval ?? 30,
               outputDir: jobDir,
