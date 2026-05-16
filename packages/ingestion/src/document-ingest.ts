@@ -1,17 +1,3 @@
-import { DocumentDatabase } from "./database";
-import { DocumentEmbeddingService } from "./embeddings";
-import {
-  DocumentChunk,
-  DocumentMetadata,
-  ObsidianFrontmatterSchema,
-} from "../types/index";
-import { ChunkingOptions } from "./types/document-models";
-import {
-  DocumentProcessingConfig,
-  MARKDOWN_CONFIG,
-  OBSIDIAN_CONFIG,
-} from "./types/document-config";
-import { ObsidianUtils } from "./types/obsidian-utils";
 import * as fs from "fs";
 import * as path from "path";
 import {
@@ -21,18 +7,188 @@ import {
   cleanMarkdown,
   generateDeterministicId,
   sleep,
-} from "./utils";
-import { ObsidianDocument, ObsidianFile } from "../types/index";
+} from "@kv/utils";
+
+import {
+  Document,
+  DocumentFile,
+  ChunkingOptions,
+  DocumentSection,
+} from "./types/document-models";
+import {
+  DocumentProcessingConfig,
+  MARKDOWN_CONFIG,
+  OBSIDIAN_CONFIG,
+} from "./types/document-config";
+
+/**
+ * Structural interface for chunk storage. Callers pass any database-like
+ * object that implements these methods (typically @kv/database's
+ * DocumentDatabase).
+ */
+export interface DocumentDatabaseLike {
+  getChunkById(id: string): Promise<unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  upsertChunk(chunk: any): Promise<unknown>;
+  getStats(): Promise<{ totalChunks: number; [key: string]: unknown }>;
+  search(
+    embedding: number[],
+    options?: { limit?: number; [key: string]: unknown }
+  ): Promise<
+    Array<{
+      id: string;
+      text: string;
+      meta: Record<string, unknown>;
+    }>
+  >;
+}
+
+/**
+ * Structural interface for an embedding service. Callers pass any service
+ * implementing these methods (typically @kv/database's DocumentEmbeddingService).
+ */
+export interface DocumentEmbeddingServiceLike {
+  embed(text: string): Promise<number[]>;
+  embedWithStrategy(
+    text: string,
+    contentType?: string,
+    domainHint?: string
+  ): Promise<{ embedding: number[]; [key: string]: unknown }>;
+}
+
+/**
+ * Minimal metadata block produced by the ingestion pipeline. Callers can
+ * extend this with their own concrete metadata type.
+ */
+export interface IngestionChunkMetadata {
+  uri: string;
+  section: string;
+  breadcrumbs: string[];
+  contentType: string;
+  sourceType: string;
+  sourceDocumentId: string;
+  lang: string;
+  acl: string;
+  updatedAt: Date;
+  createdAt?: Date;
+  chunkIndex?: number;
+  chunkCount?: number;
+  obsidianFile?: {
+    fileName: string;
+    filePath: string;
+    frontmatter: Record<string, unknown>;
+    wikilinks: string[];
+    tags: string[];
+    checksum: string;
+    stats: {
+      wordCount: number;
+      characterCount: number;
+      lineCount: number;
+    };
+  };
+  [key: string]: unknown;
+}
+
+export interface IngestionChunk {
+  id: string;
+  text: string;
+  meta: IngestionChunkMetadata;
+}
+
+export interface IngestionResult {
+  totalFiles: number;
+  processedFiles: number;
+  totalChunks: number;
+  processedChunks: number;
+  skippedChunks: number;
+  errors: string[];
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  issues: string[];
+  sampleResults: Array<{
+    id: string;
+    textPreview: string;
+    hasEmbedding: boolean;
+    metadataValid: boolean;
+    sourceMetadata?: unknown;
+  }>;
+}
+
+/**
+ * Parse YAML-like frontmatter from markdown content. Supports simple
+ * key-value pairs and string-array values. Returns an empty record when no
+ * frontmatter block is present or parsing fails.
+ */
+function parseFrontmatter(content: string): Record<string, unknown> {
+  const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
+  const match = content.match(frontmatterRegex);
+  if (!match) {
+    return {};
+  }
+
+  try {
+    const frontmatter: Record<string, unknown> = {};
+    const lines = match[1].split("\n");
+    let currentKey = "";
+    let currentValue: string | string[] | null = null;
+    let isArray = false;
+
+    const flush = () => {
+      if (!currentKey) return;
+      frontmatter[currentKey] = currentValue;
+    };
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (line.includes(":") && !line.startsWith("-")) {
+        flush();
+        const [key, ...valueParts] = line.split(":");
+        if (key && key.trim() && valueParts.length > 0) {
+          currentKey = key.trim();
+          const value = valueParts.join(":").trim();
+          if (value === "") {
+            isArray = true;
+            currentValue = [];
+          } else {
+            isArray = false;
+            currentValue = value.replace(/^["']|["']$/g, "");
+          }
+        }
+      } else if (line.startsWith("-")) {
+        if (isArray && Array.isArray(currentValue)) {
+          const item = line
+            .substring(1)
+            .trim()
+            .replace(/^["']|["']$/g, "");
+          if (item) {
+            currentValue.push(item);
+          }
+        }
+      } else if (rawLine.startsWith("  ")) {
+        if (typeof currentValue === "string") {
+          currentValue += " " + line;
+        }
+      }
+    }
+
+    flush();
+    return frontmatter;
+  } catch {
+    return {};
+  }
+}
 
 export class DocumentIngestionPipeline {
-  private db: DocumentDatabase;
-  private embeddings: DocumentEmbeddingService;
-  private rootPath: string;
-  private config: DocumentProcessingConfig;
+  protected db: DocumentDatabaseLike;
+  protected embeddings: DocumentEmbeddingServiceLike;
+  protected rootPath: string;
+  protected config: DocumentProcessingConfig;
 
   constructor(
-    database: DocumentDatabase,
-    embeddingService: DocumentEmbeddingService,
+    database: DocumentDatabaseLike,
+    embeddingService: DocumentEmbeddingServiceLike,
     rootPath: string,
     config: DocumentProcessingConfig = MARKDOWN_CONFIG
   ) {
@@ -51,24 +207,15 @@ export class DocumentIngestionPipeline {
       excludePatterns?: string[];
       chunkingOptions?: ChunkingOptions;
     } = {}
-  ): Promise<{
-    totalFiles: number;
-    processedFiles: number;
-    totalChunks: number;
-    processedChunks: number;
-    skippedChunks: number;
-    errors: string[];
-  }> {
+  ): Promise<IngestionResult> {
     const {
-      batchSize = 5, // Smaller batches for better processing
+      batchSize = 5,
       rateLimitMs = 200,
       skipExisting = true,
       includePatterns = ["**/*.md"],
       excludePatterns = [
         "**/.git/**",
         "**/node_modules/**",
-        "**/node_modules/**",
-        "**/.git/**",
         "**/Attachments/**",
         "**/assets/**",
       ],
@@ -78,7 +225,6 @@ export class DocumentIngestionPipeline {
     console.log(`🚀 Starting document ingestion: ${this.rootPath}`);
 
     try {
-      // Discover all markdown files
       const markdownFiles = await this.discoverMarkdownFiles(
         includePatterns,
         excludePatterns
@@ -91,7 +237,6 @@ export class DocumentIngestionPipeline {
       let skippedChunks = 0;
       const errors: string[] = [];
 
-      // Process files in batches
       for (let i = 0; i < markdownFiles.length; i += batchSize) {
         const batch = markdownFiles.slice(i, i + batchSize);
         console.log(
@@ -113,7 +258,6 @@ export class DocumentIngestionPipeline {
           skippedChunks += batchResults.skippedChunks;
           errors.push(...batchResults.errors);
 
-          // Rate limiting
           if (i + batchSize < markdownFiles.length) {
             await sleep(rateLimitMs);
           }
@@ -126,7 +270,7 @@ export class DocumentIngestionPipeline {
         }
       }
 
-      const result = {
+      const result: IngestionResult = {
         totalFiles: markdownFiles.length,
         processedFiles,
         totalChunks,
@@ -143,23 +287,13 @@ export class DocumentIngestionPipeline {
     }
   }
 
-  /**
-   * Ingest specific files
-   */
   async ingestFiles(
     filePaths: string[],
     options: {
       skipExisting?: boolean;
       batchSize?: number;
     } = {}
-  ): Promise<{
-    totalFiles: number;
-    processedFiles: number;
-    totalChunks: number;
-    processedChunks: number;
-    skippedChunks: number;
-    errors: string[];
-  }> {
+  ): Promise<IngestionResult> {
     const { skipExisting = false, batchSize = 10 } = options;
 
     console.log(`🚀 Starting file ingestion for ${filePaths.length} files`);
@@ -171,7 +305,6 @@ export class DocumentIngestionPipeline {
       let skippedChunks = 0;
       const errors: string[] = [];
 
-      // Process files in batches
       for (let i = 0; i < filePaths.length; i += batchSize) {
         const batch = filePaths.slice(i, i + batchSize);
 
@@ -192,7 +325,7 @@ export class DocumentIngestionPipeline {
         }
       }
 
-      const result = {
+      const result: IngestionResult = {
         totalFiles: filePaths.length,
         processedFiles,
         totalChunks,
@@ -220,9 +353,8 @@ export class DocumentIngestionPipeline {
 
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name);
-        const relativePath = path.relative(this.vaultPath, fullPath);
+        const relativePath = path.relative(this.rootPath, fullPath);
 
-        // Check exclude patterns
         if (
           excludePatterns.some((pattern) =>
             this.matchesPattern(relativePath, pattern)
@@ -234,7 +366,6 @@ export class DocumentIngestionPipeline {
         if (entry.isDirectory()) {
           walkDir(fullPath);
         } else if (entry.isFile() && entry.name.endsWith(".md")) {
-          // Check include patterns
           if (
             includePatterns.some((pattern) =>
               this.matchesPattern(relativePath, pattern)
@@ -246,16 +377,36 @@ export class DocumentIngestionPipeline {
       }
     };
 
-    walkDir(this.vaultPath);
+    walkDir(this.rootPath);
     return files;
   }
 
   private matchesPattern(filePath: string, pattern: string): boolean {
-    // Simple glob pattern matching
-    const regexPattern = pattern
-      .replace(/\*\*/g, ".*")
-      .replace(/\*/g, "[^/]*")
-      .replace(/\?/g, ".");
+    // Convert glob to regex by tokenizing into chars and emitting safe
+    // substitutions. We translate "**/" as zero or more dir segments,
+    // remaining "**" as ".*", "*" as "[^/]*", "?" as ".", and escape any
+    // regex metacharacters (notably ".") that would otherwise mismatch.
+    let regexPattern = "";
+    for (let i = 0; i < pattern.length; i++) {
+      const ch = pattern[i];
+      if (ch === "*" && pattern[i + 1] === "*") {
+        if (pattern[i + 2] === "/") {
+          regexPattern += "(?:[^/]+/)*";
+          i += 2;
+        } else {
+          regexPattern += ".*";
+          i += 1;
+        }
+      } else if (ch === "*") {
+        regexPattern += "[^/]*";
+      } else if (ch === "?") {
+        regexPattern += "[^/]";
+      } else if (/[.+^${}()|[\]\\]/.test(ch)) {
+        regexPattern += "\\" + ch;
+      } else {
+        regexPattern += ch;
+      }
+    }
     const regex = new RegExp(`^${regexPattern}$`);
     return regex.test(filePath);
   }
@@ -263,7 +414,7 @@ export class DocumentIngestionPipeline {
   private async processBatch(
     filePaths: string[],
     skipExisting: boolean,
-    chunkingOptions: ObsidianChunkingOptions
+    chunkingOptions: ChunkingOptions
   ): Promise<{
     processedFiles: number;
     totalChunks: number;
@@ -280,31 +431,23 @@ export class DocumentIngestionPipeline {
     for (const filePath of filePaths) {
       try {
         console.log(
-          `📖 Processing: ${path.relative(this.vaultPath, filePath)}`
+          `📖 Processing: ${path.relative(this.rootPath, filePath)}`
         );
 
-        // Parse the Obsidian file
-        const obsidianFile = await this.parseObsidianFile(filePath);
+        const document = await this.parseDocumentFile(filePath);
 
-        console.log(`✅ Successfully parsed file: ${obsidianFile.fileName}`);
+        console.log(`✅ Successfully parsed file: ${document.fileName}`);
 
-        // Skip empty files
-        if (!obsidianFile.content.trim()) {
-          console.log(`⏭️  Skipping empty file: ${obsidianFile.fileName}`);
+        if (!document.content.trim()) {
+          console.log(`⏭️  Skipping empty file: ${document.fileName}`);
           continue;
         }
 
-        // Create chunks from the file
-        const chunks = await this.chunkObsidianFile(
-          obsidianFile,
-          chunkingOptions
-        );
+        const chunks = await this.chunkDocument(document, chunkingOptions);
         totalChunks += chunks.length;
 
-        // Process each chunk
         for (const chunk of chunks) {
           try {
-            // Check if chunk already exists (if skipExisting is enabled)
             if (skipExisting) {
               const existing = await this.db.getChunkById(chunk.id);
               if (existing) {
@@ -316,7 +459,6 @@ export class DocumentIngestionPipeline {
               }
             }
 
-            // Generate embedding with strategy
             console.log(
               `🔮 Embedding chunk: ${chunk.id.slice(0, 8)}... (${
                 chunk.text.length
@@ -329,7 +471,6 @@ export class DocumentIngestionPipeline {
               "knowledge-base"
             );
 
-            // Store in database
             await this.db.upsertChunk({
               ...chunk,
               embedding: embeddingResult.embedding,
@@ -358,7 +499,7 @@ export class DocumentIngestionPipeline {
     };
   }
 
-  private async parseObsidianFile(filePath: string): Promise<ObsidianDocument> {
+  private async parseDocumentFile(filePath: string): Promise<Document> {
     let content: string;
     try {
       content = fs.readFileSync(filePath, "utf-8");
@@ -366,26 +507,22 @@ export class DocumentIngestionPipeline {
       throw new Error(`Failed to read file ${filePath}: ${error}`);
     }
 
-    // Parse frontmatter and content
-    const frontmatter = ObsidianUtils.parseFrontmatter(content);
+    const frontmatter = parseFrontmatter(content);
     const body = content.replace(/^---[\s\S]*?---\n?/, "").trim();
 
-    // Extract links and tags using configuration
     const links = extractLinks(body, this.config.linkFormats);
     const contentTags = extractTags(body, this.config.tagFormats);
 
-    // Combine frontmatter tags with content tags (defensive programming)
     const frontmatterTags =
       frontmatter && frontmatter.tags
         ? Array.isArray(frontmatter.tags)
-          ? frontmatter.tags
+          ? (frontmatter.tags as string[])
           : typeof frontmatter.tags === "string"
           ? [frontmatter.tags]
           : []
         : [];
     const allTags = [...frontmatterTags, ...contentTags];
 
-    // Get file stats
     let stats: fs.Stats;
     try {
       stats = fs.statSync(filePath);
@@ -393,32 +530,26 @@ export class DocumentIngestionPipeline {
       throw new Error(`Failed to get stats for file ${filePath}: ${error}`);
     }
 
-    // Calculate content statistics
     const wordCount = body
       .split(/\s+/)
       .filter((word: string) => word.length > 0).length;
     const characterCount = body.length;
     const lineCount = body.split("\n").length;
 
-    // Parse sections
     const sections = this.parseSections(body);
-
-    // Generate checksum
     const checksum = createHash("sha256", content);
 
-    const document: ObsidianDocument = {
-      id: path.relative(this.vaultPath, filePath),
-      path: path.relative(this.vaultPath, filePath),
+    return {
+      id: path.relative(this.rootPath, filePath),
+      path: path.relative(this.rootPath, filePath),
       filePath,
-      relativePath: path.relative(this.vaultPath, filePath),
+      relativePath: path.relative(this.rootPath, filePath),
       name: path.basename(filePath, ".md"),
       fileName: path.basename(filePath, ".md"),
       extension: ".md",
-
       content: body,
       frontmatter,
       sections,
-
       stats: {
         wordCount,
         characterCount,
@@ -430,53 +561,43 @@ export class DocumentIngestionPipeline {
         createdAt: stats.birthtime,
         updatedAt: stats.mtime,
       },
-
       relationships: {
         links:
           links?.map((link) => ({
             target: link,
             displayText: link,
-            type: "document" as const,
-            position: { line: 0, column: 0, offset: 0 },
-            context: "",
+            type: "document",
           })) || [],
         tags: allTags || [],
-        backlinks: [], // Will be populated later
+        backlinks: [],
       },
-
       metadata: {
         created: stats.birthtime,
         modified: stats.mtime,
         checksum,
-        size: stats.size,
         lastIndexed: new Date(),
         processingErrors: [],
       },
     };
-
-    return document;
   }
 
-  private parseSections(content: string): ObsidianDocument["sections"] {
-    const sections: NonNullable<ObsidianDocument["sections"]> = [];
+  private parseSections(content: string): DocumentSection[] {
+    const sections: DocumentSection[] = [];
     const lines = content.split("\n");
 
-    type SectionType = NonNullable<ObsidianDocument["sections"]>[0];
-    let currentSection: SectionType | null = null;
+    let currentSection: DocumentSection | null = null;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const headerMatch = line.match(/^(#{1,6})\s+(.+)$/);
 
       if (headerMatch) {
-        // Save previous section if exists
         if (currentSection) {
           currentSection.endLine = i - 1;
           sections.push(currentSection);
         }
 
-        // Start new section
-        const level = parseInt(headerMatch[1].length.toString());
+        const level = headerMatch[1].length;
         const title = headerMatch[2];
 
         currentSection = {
@@ -489,10 +610,7 @@ export class DocumentIngestionPipeline {
           tags: [],
         };
       } else if (currentSection) {
-        // Add content to current section
         currentSection.content += line + "\n";
-
-        // Extract links and tags from this line using configuration
         currentSection.links.push(
           ...extractLinks(line, this.config.linkFormats)
         );
@@ -500,50 +618,46 @@ export class DocumentIngestionPipeline {
       }
     }
 
-    // Add final section
     if (currentSection) {
       currentSection.endLine = lines.length - 1;
       sections.push(currentSection);
     }
 
-    // Deduplicate wikilinks and tags
-    sections.forEach((section: any) => {
-      section.wikilinks = Array.from(new Set(section.wikilinks));
+    sections.forEach((section) => {
+      section.links = Array.from(new Set(section.links));
       section.tags = Array.from(new Set(section.tags));
     });
 
     return sections;
   }
 
-  private async chunkObsidianFile(
-    document: ObsidianDocument,
-    options: ObsidianChunkingOptions
-  ): Promise<DocumentChunk[]> {
+  private async chunkDocument(
+    document: Document,
+    options: ChunkingOptions
+  ): Promise<IngestionChunk[]> {
     const {
-      maxChunkSize = 800, // Smaller chunks for better semantic search
+      maxChunkSize = 800,
       chunkOverlap = 100,
       preserveStructure = true,
       includeContext = true,
       cleanContent = true,
     } = options;
 
-    const chunks: DocumentChunk[] = [];
+    const chunks: IngestionChunk[] = [];
 
-    // Determine content type using configuration
     const contentType = this.determineContentType(
       document.filePath || document.path,
       document.frontmatter
     );
 
-    // Create base metadata
     const docPath = document.relativePath || document.path || "unknown";
     const docName = document.fileName || document.name || "untitled";
-    const baseMetadata: DocumentMetadata = {
-      uri: `obsidian://${docPath}`,
+    const baseMetadata: IngestionChunkMetadata = {
+      uri: `${this.config.uriScheme}://${docPath}`,
       section: docName,
       breadcrumbs: this.generateBreadcrumbs(docPath),
       contentType,
-      sourceType: "obsidian",
+      sourceType: this.config.systemName.toLowerCase(),
       sourceDocumentId: docName,
       lang: "en",
       acl: "public",
@@ -551,12 +665,11 @@ export class DocumentIngestionPipeline {
       createdAt: document.stats.createdAt || new Date(),
       chunkIndex: 0,
       chunkCount: 1,
-      // Enhanced Obsidian-specific metadata
       obsidianFile: {
-        fileName: document.fileName || document.name || "untitled",
-        filePath: document.relativePath || document.path || "unknown",
+        fileName: docName,
+        filePath: docPath,
         frontmatter: document.frontmatter,
-        links: document.relationships.links?.map((w: { target: string }) => w.target) || [],
+        wikilinks: document.relationships.links?.map((w) => w.target) || [],
         tags: document.relationships.tags || [],
         checksum: document.metadata.checksum,
         stats: {
@@ -568,28 +681,25 @@ export class DocumentIngestionPipeline {
     };
 
     if (preserveStructure) {
-      // Structure-aware chunking for Obsidian files
-      const obsidianFile: ObsidianFile = {
+      const file: DocumentFile = {
         filePath: document.filePath || document.path || "unknown",
-        fileName: document.fileName || document.name || "untitled",
+        fileName: docName,
         content: document.content,
         frontmatter: document.frontmatter,
-        links: document.relationships.links?.map((w: { target: string }) => w.target) || [],
-        tags: document.relationships.tags || [],
-        createdAt: document.metadata.created,
-        updatedAt: document.metadata.modified,
+        stats: document.stats,
       };
       chunks.push(
         ...this.chunkByStructure(
-          obsidianFile,
+          file,
           baseMetadata,
           maxChunkSize,
           includeContext,
-          cleanContent
+          cleanContent,
+          document.relationships.links?.map((w) => w.target) || [],
+          document.relationships.tags || []
         )
       );
     } else {
-      // Simple sliding window chunking
       chunks.push(
         ...this.chunkBySize(
           document.content,
@@ -605,13 +715,15 @@ export class DocumentIngestionPipeline {
   }
 
   private chunkByStructure(
-    file: ObsidianFile,
-    baseMetadata: DocumentMetadata,
+    file: DocumentFile,
+    baseMetadata: IngestionChunkMetadata,
     maxChunkSize: number,
     includeContext: boolean,
-    cleanContent: boolean
-  ): DocumentChunk[] {
-    const chunks: DocumentChunk[] = [];
+    cleanContent: boolean,
+    links: string[],
+    tags: string[]
+  ): IngestionChunk[] {
+    const chunks: IngestionChunk[] = [];
     const lines = file.content.split("\n");
 
     let currentChunk = "";
@@ -620,11 +732,9 @@ export class DocumentIngestionPipeline {
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-
-      // Check for headers
       const headerMatch = line.match(/^(#{1,6})\s+(.+)$/);
+
       if (headerMatch) {
-        // Save previous chunk if it exists
         if (currentChunk.trim()) {
           chunks.push(
             this.createChunk(
@@ -634,18 +744,18 @@ export class DocumentIngestionPipeline {
               baseMetadata,
               chunkIndex++,
               includeContext,
-              cleanContent
+              cleanContent,
+              links,
+              tags
             )
           );
         }
 
-        // Start new chunk
         currentSection = headerMatch[2];
         currentChunk = line + "\n";
       } else {
         currentChunk += line + "\n";
 
-        // Check if chunk is getting too large
         if (currentChunk.length > maxChunkSize) {
           chunks.push(
             this.createChunk(
@@ -655,7 +765,9 @@ export class DocumentIngestionPipeline {
               baseMetadata,
               chunkIndex++,
               includeContext,
-              cleanContent
+              cleanContent,
+              links,
+              tags
             )
           );
           currentChunk = "";
@@ -663,7 +775,6 @@ export class DocumentIngestionPipeline {
       }
     }
 
-    // Add final chunk
     if (currentChunk.trim()) {
       chunks.push(
         this.createChunk(
@@ -673,7 +784,9 @@ export class DocumentIngestionPipeline {
           baseMetadata,
           chunkIndex++,
           includeContext,
-          cleanContent
+          cleanContent,
+          links,
+          tags
         )
       );
     }
@@ -683,12 +796,12 @@ export class DocumentIngestionPipeline {
 
   private chunkBySize(
     content: string,
-    baseMetadata: DocumentMetadata,
+    baseMetadata: IngestionChunkMetadata,
     maxChunkSize: number,
     chunkOverlap: number,
     cleanContent: boolean
-  ): DocumentChunk[] {
-    const chunks: DocumentChunk[] = [];
+  ): IngestionChunk[] {
+    const chunks: IngestionChunk[] = [];
     const processedContent = cleanContent ? cleanMarkdown(content) : content;
     const words = processedContent.split(/\s+/);
 
@@ -699,7 +812,7 @@ export class DocumentIngestionPipeline {
 
       if (chunkText.trim()) {
         const chunkId = this.generateChunkId(
-          baseMetadata.sourceDocumentId!,
+          baseMetadata.sourceDocumentId,
           chunkIndex
         );
 
@@ -722,32 +835,34 @@ export class DocumentIngestionPipeline {
   }
 
   private createChunk(
-    file: ObsidianFile,
+    file: DocumentFile,
     text: string,
     section: string,
-    baseMetadata: DocumentMetadata,
+    baseMetadata: IngestionChunkMetadata,
     chunkIndex: number,
     includeContext: boolean,
-    cleanContent: boolean
-  ): DocumentChunk {
+    cleanContent: boolean,
+    links: string[],
+    tags: string[]
+  ): IngestionChunk {
     const chunkId = this.generateChunkId(file.fileName, chunkIndex);
 
     let processedText = cleanContent ? cleanMarkdown(text) : text;
 
     if (includeContext) {
-      // Add context from frontmatter and file structure
       const contextParts: string[] = [];
 
-      if (file.frontmatter.title && file.frontmatter.title !== file.fileName) {
-        contextParts.push(`Title: ${file.frontmatter.title}`);
+      const title = file.frontmatter.title;
+      if (typeof title === "string" && title !== file.fileName) {
+        contextParts.push(`Title: ${title}`);
       }
 
-      if (file.tags?.length > 0) {
-        contextParts.push(`Tags: ${file.tags.slice(0, 5).join(", ")}`);
+      if (tags.length > 0) {
+        contextParts.push(`Tags: ${tags.slice(0, 5).join(", ")}`);
       }
 
-      if (file.wikilinks?.length > 0) {
-        contextParts.push(`Related: ${file.wikilinks.slice(0, 3).join(", ")}`);
+      if (links.length > 0) {
+        contextParts.push(`Related: ${links.slice(0, 3).join(", ")}`);
       }
 
       if (contextParts.length > 0) {
@@ -768,31 +883,14 @@ export class DocumentIngestionPipeline {
 
   private generateChunkId(fileName: string, chunkIndex: number): string {
     const hash = generateDeterministicId(fileName, chunkIndex);
-    return `obsidian_${fileName}_${chunkIndex}_${hash}`;
+    return `${this.config.uriScheme}_${fileName}_${chunkIndex}_${hash}`;
   }
 
-  async validateIngestion(sampleSize = 5): Promise<{
-    isValid: boolean;
-    issues: string[];
-    sampleResults: Array<{
-      id: string;
-      textPreview: string;
-      hasEmbedding: boolean;
-      metadataValid: boolean;
-      obsidianMetadata?: any;
-    }>;
-  }> {
+  async validateIngestion(sampleSize = 5): Promise<ValidationResult> {
     const issues: string[] = [];
-    const sampleResults: Array<{
-      id: string;
-      textPreview: string;
-      hasEmbedding: boolean;
-      metadataValid: boolean;
-      obsidianMetadata?: any;
-    }> = [];
+    const sampleResults: ValidationResult["sampleResults"] = [];
 
     try {
-      // Get database stats
       const stats = await this.db.getStats();
       console.log(`📊 Database stats:`, stats);
 
@@ -801,7 +899,6 @@ export class DocumentIngestionPipeline {
         return { isValid: false, issues, sampleResults };
       }
 
-      // Test search functionality with Obsidian-specific queries
       const testQueries = [
         "design system",
         "MOC",
@@ -812,20 +909,23 @@ export class DocumentIngestionPipeline {
       for (const query of testQueries) {
         try {
           const testEmbedding = await this.embeddings.embed(query);
-          const searchResults = await this.db.search(testEmbedding, sampleSize);
+          const searchResults = await this.db.search(testEmbedding, {
+            limit: sampleSize,
+          });
 
           for (const result of searchResults.slice(0, 2)) {
-            const metadataValid = this.validateObsidianMetadata(result.meta);
+            const metadataValid = this.validateMetadata(result.meta);
             sampleResults.push({
               id: result.id,
               textPreview: result.text.slice(0, 150) + "...",
               hasEmbedding: true,
               metadataValid,
-              obsidianMetadata: result.meta.obsidianFile,
+              sourceMetadata: (result.meta as IngestionChunkMetadata)
+                .obsidianFile,
             });
 
             if (!metadataValid) {
-              issues.push(`Invalid Obsidian metadata for chunk ${result.id}`);
+              issues.push(`Invalid metadata for chunk ${result.id}`);
             }
           }
         } catch (error) {
@@ -844,24 +944,11 @@ export class DocumentIngestionPipeline {
     }
   }
 
-  private validateObsidianMetadata(meta: any): boolean {
-    const required = [
-      "uri",
-      "section",
-      "sourceType",
-      "sourceDocumentId",
-      "obsidianFile",
-    ];
-
-    const hasRequired = required.every((field) =>
+  private validateMetadata(meta: Record<string, unknown>): boolean {
+    const required = ["uri", "section", "sourceType", "sourceDocumentId"];
+    return required.every((field) =>
       Object.prototype.hasOwnProperty.call(meta, field)
     );
-    const hasObsidianFields =
-      meta.obsidianFile &&
-      meta.obsidianFile.fileName &&
-      meta.obsidianFile.filePath;
-
-    return hasRequired && hasObsidianFields;
   }
 
   private generateBreadcrumbs(relativePath: string): string[] {
@@ -871,7 +958,6 @@ export class DocumentIngestionPipeline {
     const breadcrumbs: string[] = [];
 
     for (let i = 0; i < parts.length - 1; i++) {
-      // Exclude filename
       const segment = parts.slice(0, i + 1).join("/");
       breadcrumbs.push(segment);
     }
@@ -879,25 +965,19 @@ export class DocumentIngestionPipeline {
     return breadcrumbs;
   }
 
-  /**
-   * Determine content type using configuration
-   */
   private determineContentType(
     filePath: string,
-    frontmatter: ObsidianFrontmatterSchema
+    frontmatter: Record<string, unknown>
   ): string {
-    // Check frontmatter first (highest priority)
     if (frontmatter.type && typeof frontmatter.type === "string") {
       return frontmatter.type;
     }
 
-    // Check configured content type patterns
     const relativePath = path.relative(this.rootPath, filePath).toLowerCase();
 
     for (const [contentType, pattern] of Object.entries(
       this.config.contentTypes
     )) {
-      // Check folder patterns
       if (
         pattern.folderPatterns.some((folderPattern) =>
           relativePath.includes(folderPattern.toLowerCase())
@@ -906,7 +986,6 @@ export class DocumentIngestionPipeline {
         return contentType;
       }
 
-      // Check file patterns if configured
       if (pattern.filePatterns) {
         const fileName = path.basename(filePath).toLowerCase();
         if (
@@ -919,14 +998,14 @@ export class DocumentIngestionPipeline {
       }
     }
 
-    // Fall back to default content type
     return this.config.defaultContentType;
   }
 }
 
-// Backward compatibility exports
+/**
+ * Backward compatibility chunking options for Obsidian-flavored callers.
+ */
 export interface ObsidianChunkingOptions extends ChunkingOptions {
-  // Obsidian-specific chunking options
   includeFrontmatter?: boolean;
   includeTags?: boolean;
   includeWikilinks?: boolean;
@@ -935,13 +1014,15 @@ export interface ObsidianChunkingOptions extends ChunkingOptions {
 }
 
 /**
- * Backward compatibility class for Obsidian-specific usage
- * @deprecated Use DocumentIngestionPipeline instead
+ * Backward compatibility class for Obsidian-specific usage. Uses
+ * OBSIDIAN_CONFIG by default.
+ *
+ * @deprecated Use DocumentIngestionPipeline with OBSIDIAN_CONFIG instead.
  */
 export class ObsidianIngestionPipeline extends DocumentIngestionPipeline {
   constructor(
-    database: DocumentDatabase, // Using any to avoid circular dependencies
-    embeddingService: DocumentEmbeddingService,
+    database: DocumentDatabaseLike,
+    embeddingService: DocumentEmbeddingServiceLike,
     vaultPath: string
   ) {
     super(database, embeddingService, vaultPath, OBSIDIAN_CONFIG);

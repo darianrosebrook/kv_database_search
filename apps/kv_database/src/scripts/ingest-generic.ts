@@ -7,13 +7,13 @@
 
 import { DocumentDatabase } from "../lib/database";
 import { DocumentEmbeddingService } from "../lib/embeddings";
-import { DocumentIngestionPipeline } from "../lib/document-ingest";
 import {
+  DocumentIngestionPipeline,
   OBSIDIAN_CONFIG,
   MARKDOWN_CONFIG,
   NOTION_CONFIG,
-  DocumentProcessingConfig,
-} from "../lib/types/document-config";
+  type DocumentProcessingConfig,
+} from "@kv/ingestion";
 
 interface IngestionOptions {
   connectionString: string;
@@ -71,19 +71,8 @@ async function ingestDocuments(options: IngestionOptions) {
   // Initialize services
   const database = new DocumentDatabase(connectionString);
   const embeddingService = new DocumentEmbeddingService({
-    provider: "ollama",
     model: "embeddinggemma",
-    apiUrl: "http://localhost:11434",
     dimension: 768,
-    maxTokens: 8192,
-    batchSize: 10,
-    rateLimitMs: 100,
-    retryAttempts: 3,
-    timeout: 30000,
-    search: {
-      minSimilarity: 0.0,
-      maxResults: 100,
-    },
   });
 
   const pipeline = new DocumentIngestionPipeline(
@@ -95,7 +84,7 @@ async function ingestDocuments(options: IngestionOptions) {
 
   try {
     // Ensure database is ready
-    await database.ensureTablesExist();
+    await database.initialize();
 
     // Run ingestion
     const result = await pipeline.ingestDocuments({
@@ -153,7 +142,7 @@ Examples:
   const [connectionString, rootPath, systemType] = args as [
     string,
     string,
-    unknown
+    "obsidian" | "markdown" | "notion" | "custom"
   ];
 
   // Parse additional options

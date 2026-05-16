@@ -146,34 +146,3 @@ export interface DocumentFile {
   stats: DocumentStats;
 }
 
-// Backward compatibility - alias the old interfaces to the new ones
-export interface ObsidianDocument extends Document {
-  // Obsidian-specific metadata
-  readonly vaultPath?: string;
-  readonly relativePath: string;
-}
-
-export interface ObsidianFile extends DocumentFile {
-  // Obsidian-specific file properties
-  readonly modifiedTime?: Date;
-  readonly createdTime?: Date;
-}
-
-export interface Wikilink extends DocumentLink {
-  // Obsidian-specific wikilink properties
-  readonly displayText?: string;
-  readonly context?: string;
-}
-
-export interface Backlink extends DocumentBacklink {
-  // Obsidian-specific backlink properties
-  readonly linkType?: "explicit" | "implicit";
-  readonly context?: string;
-}
-
-export interface ObsidianChunkingOptions extends ChunkingOptions {
-  // Obsidian-specific chunking options
-  readonly includeFrontmatter?: boolean;
-  readonly includeTags?: boolean;
-  readonly includeWikilinks?: boolean;
-}
