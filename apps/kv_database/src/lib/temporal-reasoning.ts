@@ -376,7 +376,7 @@ export interface AnalysisMetadata {
  * evolution tracking using sophisticated statistical and ML algorithms.
  */
 export class TemporalReasoningSystem {
-  private database: any; // ObsidianDatabase
+  private database: any;
   private causalityEngine: CausalityDetectionEngine;
   private trendAnalyzer: TrendAnalysisEngine;
   private changeDetector: ChangePointDetector;

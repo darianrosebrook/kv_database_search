@@ -19,13 +19,13 @@ import {
   ChangeDetectionRequest,
   TemporalQuery,
 } from "./temporal-reasoning";
-import { ObsidianDatabase } from "./database";
+import { DocumentDatabase } from "./database";
 
 export class TemporalReasoningAPI {
   private temporalSystem: TemporalReasoningSystem;
   private router: express.Router;
 
-  constructor(database: ObsidianDatabase) {
+  constructor(database: DocumentDatabase) {
     this.temporalSystem = new TemporalReasoningSystem(database);
     this.router = express.Router();
     this.setupRoutes();

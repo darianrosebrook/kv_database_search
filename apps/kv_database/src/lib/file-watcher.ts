@@ -1,9 +1,9 @@
 #!/usr/bin/env tsx
 
 /**
- * Obsidian RAG File System Watcher
+ * File System Watcher
  *
- * Real-time file system monitoring for Obsidian vault changes.
+ * Real-time file system monitoring for document directory changes.
  * Automatically detects and processes file modifications, additions,
  * deletions, and moves to keep the knowledge base synchronized.
  *
@@ -15,8 +15,8 @@ import type { FSWatcher } from "chokidar";
 import * as fs from "fs";
 import * as path from "path";
 import { EventEmitter } from "events";
-import { ObsidianDatabase } from "./database";
-import { ObsidianEmbeddingService } from "./embeddings";
+import { DocumentDatabase } from "./database";
+import { DocumentEmbeddingService } from "./embeddings";
 import { MultiModalIngestionPipeline } from "./multi-modal-ingest";
 import { createHash, generateDeterministicId } from "./utils";
 
@@ -62,9 +62,9 @@ export interface FileWatcherStats {
 }
 
 /**
- * File system watcher for Obsidian vault synchronization
+ * File system watcher for document directory synchronization
  */
-export class ObsidianFileWatcher extends EventEmitter {
+export class FileWatcher extends EventEmitter {
   private watcher: FSWatcher | null = null;
   private options: Required<FileWatcherOptions>;
   private isWatching = false;
@@ -76,8 +76,8 @@ export class ObsidianFileWatcher extends EventEmitter {
   private lastFileHashes: Map<string, string> = new Map(); // Store file content hashes
 
   constructor(
-    private db: ObsidianDatabase,
-    private embeddings: ObsidianEmbeddingService,
+    private db: DocumentDatabase,
+    private embeddings: DocumentEmbeddingService,
     private ingestionPipeline: MultiModalIngestionPipeline,
     options: FileWatcherOptions,
     private wsManager?: { broadcast: (data: unknown) => void } // WebSocket manager for real-time notifications
@@ -1171,10 +1171,10 @@ export class ObsidianFileWatcher extends EventEmitter {
  * Factory function to create a file watcher
  */
 export function createFileWatcher(
-  db: ObsidianDatabase,
-  embeddings: ObsidianEmbeddingService,
+  db: DocumentDatabase,
+  embeddings: DocumentEmbeddingService,
   ingestionPipeline: MultiModalIngestionPipeline,
   options: FileWatcherOptions
-): ObsidianFileWatcher {
-  return new ObsidianFileWatcher(db, embeddings, ingestionPipeline, options);
+): FileWatcher {
+  return new FileWatcher(db, embeddings, ingestionPipeline, options);
 }

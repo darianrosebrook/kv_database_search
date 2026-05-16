@@ -9,8 +9,8 @@
  * - Knowledge graph construction
  */
 
-import { ObsidianDatabase } from "./database";
-import { ObsidianEmbeddingService } from "./embeddings";
+import { DocumentDatabase } from "./database";
+import { DocumentEmbeddingService } from "./embeddings";
 import {
   // detectLanguage, // Not used
   EntityExtractor,
@@ -159,14 +159,14 @@ export interface SemanticSearchResult extends ObsidianSearchResult {
 }
 
 export class SemanticSearchEngine {
-  private db: ObsidianDatabase;
-  private embeddings: ObsidianEmbeddingService;
+  private db: DocumentDatabase;
+  private embeddings: DocumentEmbeddingService;
   private entityExtractor: EntityExtractor;
   private dictionaryService?: DictionaryService;
 
   constructor(
-    database: ObsidianDatabase,
-    embeddingService: ObsidianEmbeddingService,
+    database: DocumentDatabase,
+    embeddingService: DocumentEmbeddingService,
     dictionaryService?: DictionaryService
   ) {
     this.db = database;

@@ -10,10 +10,10 @@
  */
 
 import { config as dotenvConfig } from "dotenv";
-import { ObsidianDatabase } from "../lib/database";
-import { ObsidianEmbeddingService } from "../lib/embeddings";
+import { DocumentDatabase } from "../lib/database";
+import { DocumentEmbeddingService } from "../lib/embeddings";
 import { MultiModalIngestionPipeline } from "../lib/multi-modal-ingest";
-import { ObsidianFileWatcher, FileWatcherOptions } from "../lib/file-watcher";
+import { FileWatcher, FileWatcherOptions, FileChangeEvent, FileChangeBatch } from "../lib/file-watcher";
 
 // Load environment variables
 dotenvConfig();
@@ -42,13 +42,13 @@ async function main() {
   try {
     // Initialize database
     console.log("🔧 Initializing database connection...");
-    const database = new ObsidianDatabase(DATABASE_URL);
+    const database = new DocumentDatabase(DATABASE_URL, "obsidian_chunks");
     await database.initialize();
     console.log("✅ Database connected successfully");
 
     // Initialize embedding service
     console.log("🔧 Initializing embedding service...");
-    const embeddingService = new ObsidianEmbeddingService({
+    const embeddingService = new DocumentEmbeddingService({
       model: EMBEDDING_MODEL,
       dimension: EMBEDDING_DIMENSION,
     });
@@ -93,7 +93,7 @@ async function main() {
 
     // Create and start file watcher
     console.log("🔧 Initializing file system watcher...");
-    const fileWatcher = new ObsidianFileWatcher(
+    const fileWatcher = new FileWatcher(
       database,
       embeddingService,
       ingestionPipeline,
@@ -115,17 +115,17 @@ async function main() {
       console.log("   • Structured data (.json, .xml, .csv)");
     });
 
-    fileWatcher.on("fileChange", (event) => {
+    fileWatcher.on("fileChange", (event: FileChangeEvent) => {
       console.log(`📝 File ${event.type}: ${event.path}`);
     });
 
-    fileWatcher.on("batchStart", (batch) => {
+    fileWatcher.on("batchStart", (batch: FileChangeBatch) => {
       console.log(
         `🚀 Processing batch ${batch.batchId}: ${batch.changes.length} files`
       );
     });
 
-    fileWatcher.on("batchComplete", (batch) => {
+    fileWatcher.on("batchComplete", (batch: FileChangeBatch) => {
       console.log(
         `✅ Batch ${batch.batchId} completed: ${batch.processedFiles}/${batch.changes.length} files processed`
       );
@@ -136,25 +136,29 @@ async function main() {
       }
     });
 
-    fileWatcher.on("fileProcessed", (result) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fileWatcher.on("fileProcessed", (result: any) => {
       console.log(
         `✅ Processed: ${result.path} (${result.result.processedChunks} chunks)`
       );
     });
 
-    fileWatcher.on("fileSkipped", (info) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fileWatcher.on("fileSkipped", (info: any) => {
       console.log(`⏭️  Skipped: ${info.path} (${info.reason})`);
     });
 
-    fileWatcher.on("fileDeleted", (info) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fileWatcher.on("fileDeleted", (info: any) => {
       console.log(`🗑️  Deleted: ${info.path}`);
     });
 
-    fileWatcher.on("processingError", (error) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fileWatcher.on("processingError", (error: any) => {
       console.error(`❌ Processing error: ${error.error}`);
     });
 
-    fileWatcher.on("watcherError", (error) => {
+    fileWatcher.on("watcherError", (error: Error) => {
       console.error(`❌ Watcher error: ${error.message}`);
     });
 
@@ -204,4 +208,4 @@ if (require.main === module) {
   });
 }
 
-export { ObsidianFileWatcher };
+export { FileWatcher };

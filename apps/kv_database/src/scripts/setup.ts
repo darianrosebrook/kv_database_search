@@ -13,8 +13,8 @@ import { config as dotenvConfig } from "dotenv";
 import * as fs from "fs";
 // import * as path from "path";
 import * as readline from "readline";
-import { ObsidianDatabase } from "../lib/database";
-import { ObsidianEmbeddingService } from "../lib/embeddings";
+import { DocumentDatabase } from "../lib/database";
+import { DocumentEmbeddingService } from "../lib/embeddings";
 
 // Load environment variables
 dotenvConfig();
@@ -152,20 +152,16 @@ async function updateConfiguration() {
 
 async function testDatabase() {
   try {
-    const db = new ObsidianDatabase(DATABASE_URL!);
+    const db = new DocumentDatabase(DATABASE_URL!, "obsidian_chunks");
     await db.initialize();
     const stats = await db.getStats();
 
     logSuccess("Database connection successful!");
     console.log(`   📊 Total chunks: ${stats.totalChunks || 0}`);
-    console.log(
-      `   📅 Last update: ${
-        stats.lastUpdate ? new Date(stats.lastUpdate).toLocaleString() : "Never"
-      }`
-    );
 
     await db.close();
-  } catch (error) {
+  } catch (e) {
+    const error = e instanceof Error ? e : new Error(String(e));
     logError("Database connection failed", error.message);
 
     if (
@@ -248,7 +244,7 @@ async function setupDatabaseInstructions() {
 
 async function testEmbeddings() {
   try {
-    const embeddingService = new ObsidianEmbeddingService({
+    const embeddingService = new DocumentEmbeddingService({
       model: EMBEDDING_MODEL,
       dimension: EMBEDDING_DIMENSION,
     });
@@ -261,7 +257,8 @@ async function testEmbeddings() {
     } else {
       logError("Embedding service test failed");
     }
-  } catch (error) {
+  } catch (e) {
+    const error = e instanceof Error ? e : new Error(String(e));
     logError("Embedding service connection failed", error.message);
     logWarning("Make sure Ollama is running and the model is installed");
     console.log("   Install: ollama pull embeddinggemma");

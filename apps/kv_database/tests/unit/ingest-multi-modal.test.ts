@@ -8,7 +8,7 @@ vi.mock("../../src/lib/database.js", () => ({
 }));
 
 vi.mock("../../src/lib/embeddings.js", () => ({
-  ObsidianEmbeddingService: vi.fn(),
+  DocumentEmbeddingService: vi.fn(),
 }));
 
 vi.mock("../../src/lib/multi-modal-ingest.js", () => ({
@@ -16,7 +16,7 @@ vi.mock("../../src/lib/multi-modal-ingest.js", () => ({
 }));
 
 import { ObsidianDatabase } from "../../src/lib/database.ts";
-import { ObsidianEmbeddingService } from "../../src/lib/embeddings.ts";
+import { DocumentEmbeddingService } from "../../src/lib/embeddings.ts";
 import { MultiModalIngestionPipeline } from "../../src/lib/multi-modal-ingest.ts";
 
 describe("Multi-Modal Ingestion CLI", () => {
@@ -41,7 +41,7 @@ describe("Multi-Modal Ingestion CLI", () => {
 
     // Mock constructors
     ObsidianDatabase.mockReturnValue(mockDatabase);
-    ObsidianEmbeddingService.mockReturnValue(mockEmbeddings);
+    DocumentEmbeddingService.mockReturnValue(mockEmbeddings);
     MultiModalIngestionPipeline.mockReturnValue(mockPipeline);
 
     // Create test directory

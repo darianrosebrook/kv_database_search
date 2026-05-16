@@ -90,7 +90,7 @@ import { createServer, initializeServer, startServer } from "./bootstrap.js";
 import { registerSearchRoutes } from "./routes/search.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerIngestionRoutes } from "./routes/ingestion.js";
-import { registerVaultRoutes } from "./routes/vault.js";
+import { registerFileRoutes } from "./routes/files.js";
 import { registerDictionaryRoutes } from "./routes/dictionary.js";
 import { registerWorkspaceRoutes } from "./routes/workspace.js";
 
@@ -109,7 +109,7 @@ export async function startMainServer(): Promise<void> {
     registerHealthRoutes(server);
     registerSearchRoutes(server);
     registerIngestionRoutes(server);
-    registerVaultRoutes(server);
+    registerFileRoutes(server);
 
     // Register dictionary routes
     registerDictionaryRoutes(server);

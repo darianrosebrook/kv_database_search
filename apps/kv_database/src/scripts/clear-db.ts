@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 import * as dotenv from "dotenv";
-import { ObsidianDatabase } from "../lib/database";
+import { DocumentDatabase } from "../lib/database";
 import * as readline from "readline";
 
 // Load environment variables
@@ -53,7 +53,7 @@ async function main() {
 
   try {
     // Initialize database
-    const database = new ObsidianDatabase(DATABASE_URL);
+    const database = new DocumentDatabase(DATABASE_URL, "obsidian_chunks");
     await database.initialize();
 
     // Clear all data

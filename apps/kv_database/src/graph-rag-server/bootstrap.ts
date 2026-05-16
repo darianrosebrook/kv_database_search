@@ -39,11 +39,10 @@ export class GraphRagServerBootstrap {
       const { pool } = await databaseFactory.createDatabaseServices(dbConfig);
 
       // Initialize embedding service
-      const { ObsidianEmbeddingService } = await import("../lib/embeddings");
-      const embeddingService = new ObsidianEmbeddingService({
+      const { DocumentEmbeddingService } = await import("../lib/embeddings");
+      const embeddingService = new DocumentEmbeddingService({
         model: embeddingConfig.model,
         dimension: embeddingConfig.dimension,
-        baseUrl: embeddingConfig.baseUrl,
       });
 
       // Initialize Graph RAG services
@@ -60,7 +59,7 @@ export class GraphRagServerBootstrap {
 
       this.logger.info("✅ Graph RAG services initialized successfully");
     } catch (error) {
-      this.logger.error("❌ Failed to initialize Graph RAG services", error);
+      this.logger.error("❌ Failed to initialize Graph RAG services", error instanceof Error ? error : undefined);
       throw error;
     }
   }
@@ -105,7 +104,7 @@ export class GraphRagServerBootstrap {
         res: express.Response,
         _: express.NextFunction
       ) => {
-        this.logger.error("Unhandled error:", error);
+        this.logger.error("Unhandled error:", error instanceof Error ? error : undefined);
         res.status(500).json({
           error: "Internal server error",
           message: error instanceof Error ? error.message : "Unknown error",
@@ -151,7 +150,7 @@ export class GraphRagServerBootstrap {
       // Graceful shutdown
       this.setupGracefulShutdown(server);
     } catch (error) {
-      this.logger.error("❌ Failed to start Graph RAG server", error);
+      this.logger.error("❌ Failed to start Graph RAG server", error instanceof Error ? error : undefined);
       throw error;
     }
   }
@@ -171,7 +170,7 @@ export class GraphRagServerBootstrap {
         );
         await databaseFactory.closeConnections();
       } catch (error) {
-        this.logger.error("Error during database shutdown", error);
+        this.logger.error("Error during database shutdown", error instanceof Error ? error : undefined);
       }
 
       server.close(() => {

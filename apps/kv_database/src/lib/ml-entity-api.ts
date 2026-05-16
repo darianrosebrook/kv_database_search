@@ -17,13 +17,13 @@ import {
   ExtractionOptions,
   UserFeedback,
 } from "./ml-entity-linker";
-import { ObsidianDatabase } from "./database";
+import { DocumentDatabase } from "./database";
 
 export class MLEntityAPI {
   private entityLinker: MLEntityLinker;
   private router: express.Router;
 
-  constructor(_database: ObsidianDatabase) {
+  constructor(_database: DocumentDatabase) {
     this.entityLinker = new MLEntityLinker();
     this.router = express.Router();
     this.setupRoutes();

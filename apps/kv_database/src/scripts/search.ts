@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
 
 import { config as dotenvConfig } from "dotenv";
-import { ObsidianDatabase } from "../lib/database";
-import { ObsidianEmbeddingService } from "../lib/embeddings";
+import { DocumentDatabase } from "../lib/database";
+import { DocumentEmbeddingService } from "../lib/embeddings";
 import { ObsidianSearchService } from "../lib/obsidian-search";
 
 // Load environment variables
@@ -44,10 +44,10 @@ Examples:
 
   try {
     // Initialize services
-    const database = new ObsidianDatabase(DATABASE_URL);
+    const database = new DocumentDatabase(DATABASE_URL, "obsidian_chunks");
     await database.initialize();
 
-    const embeddingService = new ObsidianEmbeddingService({
+    const embeddingService = new DocumentEmbeddingService({
       model: EMBEDDING_MODEL,
       dimension: EMBEDDING_DIMENSION,
     });
@@ -91,10 +91,10 @@ Examples:
       // Display top results
       console.log("\n📋 Top Results:");
       searchResponse.results.slice(0, 5).forEach((result, i) => {
-        console.log(`\n${i + 1}. ${result.meta.section}`);
+        console.log(`\n${i + 1}. ${result.meta?.section}`);
         console.log(`   File: ${result.documentId || "unknown"}`);
-        console.log(`   Type: ${result.meta.contentType}`);
-        console.log(`   Score: ${(result.cosineSimilarity * 100).toFixed(1)}%`);
+        console.log(`   Type: ${result.meta?.contentType}`);
+        console.log(`   Score: ${((result.cosineSimilarity ?? 0) * 100).toFixed(1)}%`);
 
         if (result.obsidianMeta?.tags?.length) {
           console.log(
@@ -107,7 +107,7 @@ Examples:
             `   Highlights: ${result.highlights[0].slice(0, 100)}...`
           );
         } else {
-          console.log(`   Preview: ${result.text.slice(0, 150)}...`);
+          console.log(`   Preview: ${(result.text ?? "").slice(0, 150)}...`);
         }
 
         if (result.relatedChunks?.length) {

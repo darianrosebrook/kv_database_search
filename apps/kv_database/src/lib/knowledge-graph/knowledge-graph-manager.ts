@@ -6,7 +6,7 @@ import {
   EntityType,
   RelationshipType,
 } from "./entity-extractor.js";
-import { ObsidianEmbeddingService } from "../embeddings.js";
+import { DocumentEmbeddingService } from "../embeddings.js";
 
 export interface EntitySimilarity {
   entity: KnowledgeGraphEntity;
@@ -34,13 +34,13 @@ export interface EntityDeduplicationResult {
  */
 export class KnowledgeGraph {
   private pool: Pool;
-  private embeddings: ObsidianEmbeddingService;
+  private embeddings: DocumentEmbeddingService;
   private similarityThreshold: number;
   private enableAutoMerge: boolean;
 
   constructor(
     pool: Pool,
-    embeddings: ObsidianEmbeddingService,
+    embeddings: DocumentEmbeddingService,
     options: {
       similarityThreshold?: number;
       enableAutoMerge?: boolean;

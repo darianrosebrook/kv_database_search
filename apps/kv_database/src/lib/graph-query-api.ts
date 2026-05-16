@@ -16,13 +16,13 @@ import {
   QueryContext,
   PathFindingOptions,
 } from "./graph-query-engine";
-import { ObsidianDatabase } from "./database";
+import { DocumentDatabase } from "./database";
 
 export class GraphQueryAPI {
   private graphQueryEngine: GraphQueryEngine;
   private router: express.Router;
 
-  constructor(database: ObsidianDatabase) {
+  constructor(database: DocumentDatabase) {
     this.graphQueryEngine = new GraphQueryEngine(database);
     this.router = express.Router();
     this.setupRoutes();

@@ -323,7 +323,7 @@ export interface SchemaEntity {
 }
 
 export class WorkspaceManager {
-  private database; // ObsidianDatabase
+  private database;
   private workspaces: Map<string, Workspace> = new Map();
   private dataSourceRegistry: DataSourceRegistry;
   private entityResolver: EntityResolver;

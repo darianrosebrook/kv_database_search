@@ -1,19 +1,19 @@
 /**
- * Vault Routes
+ * File Routes
  *
- * Handles file system operations and vault management endpoints.
+ * Handles file system operations on the indexed document directory.
  */
 
 import { FastifyInstance } from "fastify";
 
 /**
- * Register vault routes
+ * Register file routes
  */
-export function registerVaultRoutes(server: FastifyInstance): void {
+export function registerFileRoutes(server: FastifyInstance): void {
   /**
-   * Vault files endpoint
+   * Files endpoint
    */
-  server.get("/api/vault/files", async (request, reply) => {
+  server.get("/api/files", async (request, reply) => {
     const { ingestionPipeline } = request.server.services;
     const {
       folder,
@@ -52,7 +52,7 @@ export function registerVaultRoutes(server: FastifyInstance): void {
       };
     } catch (e) {
       const error = e as Error;
-      console.error("Vault files listing failed:", error);
+      console.error("Files listing failed:", error);
       reply.code(500);
       return {
         files: [],
@@ -65,9 +65,9 @@ export function registerVaultRoutes(server: FastifyInstance): void {
   });
 
   /**
-   * Vault file read endpoint
+   * File read endpoint
    */
-  server.get("/api/vault/file/*", async (request, reply) => {
+  server.get("/api/files/file/*", async (request, reply) => {
     const { ingestionPipeline } = request.server.services;
     const filePath = (request.params as any)["*"];
 
@@ -91,7 +91,7 @@ export function registerVaultRoutes(server: FastifyInstance): void {
       };
     } catch (e) {
       const error = e as Error;
-      console.error("Vault file read failed:", error);
+      console.error("File read failed:", error);
       reply.code(404);
       return {
         path: filePath,
@@ -101,9 +101,9 @@ export function registerVaultRoutes(server: FastifyInstance): void {
   });
 
   /**
-   * Vault file write endpoint
+   * File write endpoint
    */
-  server.post("/api/vault/file/*", async (request, reply) => {
+  server.post("/api/files/file/*", async (request, reply) => {
     const { ingestionPipeline } = request.server.services;
     const filePath = (request.params as any)["*"];
     const { content } = request.body as { content: string };
@@ -129,7 +129,7 @@ export function registerVaultRoutes(server: FastifyInstance): void {
       };
     } catch (e) {
       const error = e as Error;
-      console.error("Vault file write failed:", error);
+      console.error("File write failed:", error);
       reply.code(500);
       return {
         success: false,
@@ -140,9 +140,9 @@ export function registerVaultRoutes(server: FastifyInstance): void {
   });
 
   /**
-   * Vault file delete endpoint
+   * File delete endpoint
    */
-  server.delete("/api/vault/file/*", async (request, reply) => {
+  server.delete("/api/files/file/*", async (request, reply) => {
     const { ingestionPipeline } = request.server.services;
     const filePath = (request.params as any)["*"];
 
@@ -167,7 +167,7 @@ export function registerVaultRoutes(server: FastifyInstance): void {
       };
     } catch (e) {
       const error = e as Error;
-      console.error("Vault file delete failed:", error);
+      console.error("File delete failed:", error);
       reply.code(500);
       return {
         success: false,
@@ -178,9 +178,9 @@ export function registerVaultRoutes(server: FastifyInstance): void {
   });
 
   /**
-   * Vault directory creation endpoint
+   * Directory creation endpoint
    */
-  server.post("/api/vault/directory/*", async (request, reply) => {
+  server.post("/api/files/directory/*", async (request, reply) => {
     const { ingestionPipeline } = request.server.services;
     const dirPath = (request.params as any)["*"];
 
@@ -205,7 +205,7 @@ export function registerVaultRoutes(server: FastifyInstance): void {
       };
     } catch (e) {
       const error = e as Error;
-      console.error("Vault directory creation failed:", error);
+      console.error("Directory creation failed:", error);
       reply.code(500);
       return {
         success: false,
@@ -216,9 +216,9 @@ export function registerVaultRoutes(server: FastifyInstance): void {
   });
 
   /**
-   * Vault search endpoint
+   * File search endpoint
    */
-  server.post("/api/vault/search", async (request, reply) => {
+  server.post("/api/files/search", async (request, reply) => {
     const { ingestionPipeline } = request.server.services;
     const {
       query,
@@ -262,7 +262,7 @@ export function registerVaultRoutes(server: FastifyInstance): void {
       };
     } catch (e) {
       const error = e as Error;
-      console.error("Vault search failed:", error);
+      console.error("File search failed:", error);
       reply.code(500);
       return {
         query,

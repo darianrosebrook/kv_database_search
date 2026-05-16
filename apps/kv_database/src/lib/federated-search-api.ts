@@ -18,13 +18,13 @@ import {
   SystemHealth,
   SystemStatistics,
 } from "./federated-search";
-import { ObsidianDatabase } from "./database";
+import { DocumentDatabase } from "./database";
 
 export class FederatedSearchAPI {
   private federatedSystem: FederatedSearchSystem;
   private router: express.Router;
 
-  constructor(database: ObsidianDatabase) {
+  constructor(database: DocumentDatabase) {
     this.federatedSystem = new FederatedSearchSystem(database);
     this.router = express.Router();
     this.setupRoutes();

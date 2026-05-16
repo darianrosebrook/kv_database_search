@@ -494,8 +494,3 @@ export class DocumentEmbeddingService {
   }
 }
 
-/**
- * Backward compatibility class for Obsidian-specific usage
- * @deprecated Use DocumentEmbeddingService instead
- */
-export class ObsidianEmbeddingService extends DocumentEmbeddingService {}

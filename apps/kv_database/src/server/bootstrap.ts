@@ -10,10 +10,9 @@ import cors from "@fastify/cors";
 import { config as dotenvConfig } from "dotenv";
 import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import { config, LoggerFactory } from "../lib/shared";
-import { ObsidianDatabase } from "../lib/database";
-import { ObsidianEmbeddingService } from "../lib/embeddings";
+import { DocumentDatabase } from "../lib/database";
+import { DocumentEmbeddingService } from "../lib/embeddings";
 import { ObsidianSearchService } from "../lib/obsidian-search";
-import { ObsidianIngestionPipeline } from "../lib/obsidian-ingest";
 import { WebSearchService } from "../lib/web-search";
 import { ContextManager } from "../lib/context-manager";
 import { DictionaryAPI } from "../lib/dictionary-api";
@@ -42,14 +41,14 @@ const {
 } = process.env;
 
 // Use PORT environment variable if provided, otherwise use DEFAULT_PORT
-const TARGET_PORT = process.env.PORT
+const TARGET_PORT: number = process.env.PORT
   ? parseInt(process.env.PORT)
-  : DEFAULT_PORT;
+  : parseInt(String(DEFAULT_PORT));
 
 // Service container interface
 interface AppServices {
-  database: ObsidianDatabase;
-  embeddingService: ObsidianEmbeddingService;
+  database: DocumentDatabase;
+  embeddingService: DocumentEmbeddingService;
   searchService: ObsidianSearchService;
   comprehensiveSearchService?: ComprehensiveSearchService;
   // ingestionPipeline: ObsidianIngestionPipeline;
@@ -107,13 +106,13 @@ async function buildServices(): Promise<AppServices> {
   console.log("🚀 Initializing Obsidian RAG services...");
 
   // Initialize database with better error handling
-  let database: ObsidianDatabase;
+  let database: DocumentDatabase;
   try {
     if (!DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is not set");
     }
 
-    database = new ObsidianDatabase(DATABASE_URL);
+    database = new DocumentDatabase(DATABASE_URL, "obsidian_chunks");
     await database.initialize();
     console.log("✅ Database initialized");
   } catch (e) {
@@ -174,9 +173,9 @@ async function buildServices(): Promise<AppServices> {
   }
 
   // Initialize embedding service with better error handling
-  let embeddingService: ObsidianEmbeddingService;
+  let embeddingService: DocumentEmbeddingService;
   try {
-    embeddingService = new ObsidianEmbeddingService({
+    embeddingService = new DocumentEmbeddingService({
       model: EMBEDDING_MODEL,
       dimension: parseInt(EMBEDDING_DIMENSION.toString()),
     });
@@ -206,52 +205,12 @@ async function buildServices(): Promise<AppServices> {
     throw error;
   }
 
-  // Initialize comprehensive search service (after dictionary service)
-  let comprehensiveSearchService: ComprehensiveSearchService | undefined;
-  try {
-    comprehensiveSearchService = new ComprehensiveSearchService(
-      database,
-      embeddingService,
-      dictionaryService
-    );
-    console.log("✅ Comprehensive search service initialized");
-  } catch (e) {
-    const error = asError(e);
-    console.error(
-      "❌ Comprehensive search service initialization failed:",
-      error.message
-    );
-    console.error("💡 Dictionary-enhanced search features will be limited");
-  }
-
-  // Initialize ingestion pipeline
-  let _ingestionPipeline: ObsidianIngestionPipeline;
-  try {
-    _ingestionPipeline = new ObsidianIngestionPipeline(
-      database,
-      embeddingService,
-      OBSIDIAN_VAULT_PATH
-    );
-    console.log("✅ Ingestion pipeline initialized");
-  } catch (e) {
-    const error = asError(e);
-    console.error(
-      "❌ Ingestion pipeline initialization failed:",
-      error.message
-    );
-    console.error(
-      "💡 Make sure OBSIDIAN_VAULT_PATH points to a valid Obsidian vault"
-    );
-    // Don't throw - allow server to start with limited functionality
-    ingestionPipeline = undefined;
-  }
-
   // Initialize optional services
   let webSearchService: WebSearchService | undefined;
   let contextManager: ContextManager | undefined;
   let dictionaryAPI: DictionaryAPI | undefined;
   let dictionaryService: DictionaryService | undefined;
-  let ingestionPipeline: ObsidianIngestionPipeline | undefined;
+  let comprehensiveSearchService: ComprehensiveSearchService | undefined;
   let mlEntityAPI: MLEntityAPI | undefined;
   let temporalReasoningAPI: TemporalReasoningAPI | undefined;
   let federatedSearchAPI: FederatedSearchAPI | undefined;
@@ -295,6 +254,23 @@ async function buildServices(): Promise<AppServices> {
       error.message
     );
     console.error("💡 Dictionary features will be limited");
+  }
+
+  // Initialize comprehensive search service (after dictionary service)
+  try {
+    comprehensiveSearchService = new ComprehensiveSearchService(
+      database,
+      embeddingService,
+      dictionaryService
+    );
+    console.log("✅ Comprehensive search service initialized");
+  } catch (e) {
+    const error = asError(e);
+    console.error(
+      "❌ Comprehensive search service initialization failed:",
+      error.message
+    );
+    console.error("💡 Dictionary-enhanced search features will be limited");
   }
 
   // Initialize ML entity service
@@ -421,7 +397,6 @@ async function buildServices(): Promise<AppServices> {
     embeddingService,
     searchService,
     comprehensiveSearchService,
-    ingestionPipeline,
     webSearchService,
     contextManager,
     dictionaryAPI,

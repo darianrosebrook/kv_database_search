@@ -1,5 +1,5 @@
 import { Pool, PoolClient } from "pg";
-import { ObsidianEmbeddingService } from "../embeddings.js";
+import { DocumentEmbeddingService } from "../embeddings.js";
 import { ContentType } from "../../types/index.js";
 import { EntityType, RelationshipType } from "./entity-extractor.js";
 
@@ -129,12 +129,12 @@ export interface SearchMetrics {
  */
 export class HybridSearchEngine {
   private pool: Pool;
-  private embeddings: ObsidianEmbeddingService;
+  private embeddings: DocumentEmbeddingService;
   private config: HybridSearchConfig;
 
   constructor(
     pool: Pool,
-    embeddings: ObsidianEmbeddingService,
+    embeddings: DocumentEmbeddingService,
     config: Partial<HybridSearchConfig> = {}
   ) {
     this.pool = pool;
@@ -863,6 +863,7 @@ export class HybridSearchEngine {
     query: SearchQuery,
     queryAnalysis: {
       entities: EntityReference[];
+      searchStrategy: string;
     },
     vectorResults: SearchResult[],
     graphResults: SearchResult[],

@@ -7,7 +7,7 @@
  * @author @darianrosebrook
  */
 
-import { ObsidianEmbeddingService } from "./embeddings";
+import { DocumentEmbeddingService } from "./embeddings";
 
 // Add fetch polyfill for Node.js
 import fetch from "node-fetch";
@@ -40,14 +40,14 @@ export interface WebSearchProvider {
 
 export class WebSearchService {
   private providers: Map<string, WebSearchProvider> = new Map();
-  private embeddingService: ObsidianEmbeddingService;
+  private embeddingService: DocumentEmbeddingService;
   private cache: Map<
     string,
     { results: WebSearchResult[]; timestamp: number }
   > = new Map();
   private readonly cacheExpiry = 24 * 60 * 60 * 1000; // 24 hours
 
-  constructor(embeddingService: ObsidianEmbeddingService) {
+  constructor(embeddingService: DocumentEmbeddingService) {
     this.embeddingService = embeddingService;
     this.initializeProviders();
   }

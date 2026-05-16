@@ -1,5 +1,5 @@
-import { ObsidianDatabase } from "./database";
-import { ObsidianEmbeddingService } from "./embeddings";
+import { DocumentDatabase } from "./database";
+import { DocumentEmbeddingService } from "./embeddings";
 import {
   DocumentChunk,
   DocumentMetadata,
@@ -56,8 +56,8 @@ export interface ImageProcessingResult {
 }
 
 export class ObsidianIngestionPipeline {
-  private db: ObsidianDatabase;
-  private embeddings: ObsidianEmbeddingService;
+  private db: DocumentDatabase;
+  private embeddings: DocumentEmbeddingService;
   private vaultPath: string;
   private imageLinkExtractor: ImageLinkExtractor;
   private imagePathResolver: ImagePathResolver;
@@ -65,8 +65,8 @@ export class ObsidianIngestionPipeline {
   private imageClassificationProcessor: ImageClassificationProcessor;
 
   constructor(
-    database: ObsidianDatabase,
-    embeddingService: ObsidianEmbeddingService,
+    database: DocumentDatabase,
+    embeddingService: DocumentEmbeddingService,
     vaultPath: string
   ) {
     this.db = database;

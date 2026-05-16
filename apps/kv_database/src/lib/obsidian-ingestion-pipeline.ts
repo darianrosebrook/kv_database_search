@@ -1,5 +1,5 @@
 import { DocumentDatabase } from "./database";
-import { ObsidianEmbeddingService } from "./embeddings";
+import { DocumentEmbeddingService } from "./embeddings";
 import { LoggerFactory } from "./shared/logger";
 import { ObsidianChunker } from "./obsidian-chunker";
 import { ObsidianFileProcessor } from "./obsidian-file-processor";
@@ -12,7 +12,7 @@ import { ObsidianImageProcessor } from "./obsidian-image-processor";
 export class ObsidianIngestionPipeline {
   private logger = LoggerFactory.create("ObsidianIngestionPipeline");
   private db: DocumentDatabase;
-  private embeddings: ObsidianEmbeddingService;
+  private embeddings: any; // DocumentEmbeddingService
   private vaultPath: string;
   private chunker: ObsidianChunker;
   private fileProcessor: ObsidianFileProcessor;
@@ -20,7 +20,7 @@ export class ObsidianIngestionPipeline {
 
   constructor(
     database: DocumentDatabase,
-    embeddingService: ObsidianEmbeddingService,
+    embeddingService: DocumentEmbeddingService,
     vaultPath: string
   ) {
     this.db = database;

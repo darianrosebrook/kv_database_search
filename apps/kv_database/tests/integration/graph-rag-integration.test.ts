@@ -5,7 +5,7 @@ import {
   StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
 import { ObsidianDatabase } from "../../src/lib/database.js";
-import { ObsidianEmbeddingService } from "../../src/lib/embeddings.js";
+import { DocumentEmbeddingService } from "../../src/lib/embeddings.js";
 import { MultiModalIngestionPipeline } from "../../src/lib/multi-modal-ingest.js";
 import {
   createKnowledgeGraphSystem,
@@ -28,7 +28,7 @@ describe("Graph RAG Integration Tests [INV: End-to-end functionality]", () => {
   let container: StartedPostgreSqlContainer;
   let pool: Pool;
   let database: ObsidianDatabase;
-  let embeddings: ObsidianEmbeddingService;
+  let embeddings: DocumentEmbeddingService;
   let ingestionPipeline: MultiModalIngestionPipeline;
   let knowledgeGraphSystem;
   let searchEngine: HybridSearchEngine;
@@ -56,7 +56,7 @@ describe("Graph RAG Integration Tests [INV: End-to-end functionality]", () => {
     await database.initialize();
 
     // Initialize embeddings with mock
-    embeddings = new ObsidianEmbeddingService({
+    embeddings = new DocumentEmbeddingService({
       apiKey: "test-key",
       model: "text-embedding-3-small",
     });

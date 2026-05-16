@@ -6,14 +6,14 @@
  */
 
 import { Pool } from "pg";
-import { ObsidianDatabase } from "../database.js";
+import { DocumentDatabase } from "../database.js";
 import { DependencyContainer, SERVICE_TOKENS } from "./dependency-container.js";
 import { Logger } from "./logger.js";
 import type { DatabaseConfig } from "./config.js";
 
 export interface DatabaseServices {
   pool: Pool;
-  database: ObsidianDatabase;
+  database: DocumentDatabase;
 }
 
 /**
@@ -52,8 +52,11 @@ export class DatabaseFactory {
       // Test connection
       await this.testConnection(pool);
 
-      // Create ObsidianDatabase wrapper
-      const database = new ObsidianDatabase(pool);
+      // Build connection string from config for DocumentDatabase
+      const connectionString = `postgresql://${config.user}:${config.password}@${config.host}:${config.port}/${config.database}`;
+
+      // Create DocumentDatabase wrapper
+      const database = new DocumentDatabase(connectionString, "obsidian_chunks");
       await database.initialize();
 
       // Register in container
@@ -63,7 +66,7 @@ export class DatabaseFactory {
       this.logger.info("✅ Database services created successfully");
       return { pool, database };
     } catch (error) {
-      this.logger.error("❌ Failed to create database services", error);
+      this.logger.error("❌ Failed to create database services", error instanceof Error ? error : new Error(String(error)));
       throw new Error(`Database services creation failed: ${error}`);
     }
   }
@@ -93,7 +96,7 @@ export class DatabaseFactory {
         this.logger.info("✅ Database connections closed");
       }
     } catch (error) {
-      this.logger.error("❌ Error closing database connections", error);
+      this.logger.error("❌ Error closing database connections", error instanceof Error ? error : new Error(String(error)));
     }
   }
 
@@ -145,8 +148,8 @@ export class DatabaseFactory {
   /**
    * Get database service from container
    */
-  getDatabase(): ObsidianDatabase {
-    return this.container.get<ObsidianDatabase>(SERVICE_TOKENS.DATABASE);
+  getDatabase(): DocumentDatabase {
+    return this.container.get<DocumentDatabase>(SERVICE_TOKENS.DATABASE);
   }
 
   /**

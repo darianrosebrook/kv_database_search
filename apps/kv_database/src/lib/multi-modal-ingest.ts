@@ -1,5 +1,5 @@
-import { ObsidianDatabase } from "./database";
-import { ObsidianEmbeddingService } from "./embeddings";
+import { DocumentDatabase } from "./database";
+import { DocumentEmbeddingService } from "./embeddings";
 import {
   MultiModalContentDetector,
   UniversalMetadataExtractor,
@@ -110,8 +110,8 @@ export interface MultiModalIngestionResult {
  * Extends the existing ingestion system to handle various file types
  */
 export class MultiModalIngestionPipeline {
-  private db: ObsidianDatabase;
-  private embeddings: ObsidianEmbeddingService;
+  private db: DocumentDatabase;
+  private embeddings: DocumentEmbeddingService;
   private contentDetector: MultiModalContentDetector;
   private metadataExtractor: UniversalMetadataExtractor;
   private pdfProcessor: PDFProcessingPipeline;
@@ -121,8 +121,8 @@ export class MultiModalIngestionPipeline {
   private imageClassificationProcessor: ImageClassificationProcessor;
 
   constructor(
-    database: ObsidianDatabase,
-    embeddingService: ObsidianEmbeddingService
+    database: DocumentDatabase,
+    embeddingService: DocumentEmbeddingService
   ) {
     console.log("hi mom 1");
     this.db = database;

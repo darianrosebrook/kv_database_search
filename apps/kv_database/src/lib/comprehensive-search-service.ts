@@ -11,8 +11,8 @@
 import { ObsidianSearchService } from "./obsidian-search";
 import { SemanticSearchEngine, SearchQuery } from "./semantic-search";
 import { SearchResult } from "../types/index";
-import { ObsidianDatabase } from "./database";
-import { ObsidianEmbeddingService } from "./embeddings";
+import { DocumentDatabase } from "./database";
+import { DocumentEmbeddingService } from "./embeddings";
 import { DictionaryService } from "./dictionary-service";
 import {
   ObsidianSearchOptions,
@@ -192,16 +192,16 @@ export interface ComprehensiveSearchResponse extends ObsidianSearchResponse {
 export class ComprehensiveSearchService {
   private obsidianSearch: ObsidianSearchService;
   private advancedSearch: SemanticSearchEngine;
-  private db: ObsidianDatabase;
-  private embeddings: ObsidianEmbeddingService;
+  private db: DocumentDatabase;
+  private embeddings: DocumentEmbeddingService;
   private dictionaryService?: DictionaryService;
 
   // Cache for repeated queries
   private queryCache = new Map<string, ComprehensiveSearchResponse>();
 
   constructor(
-    database: ObsidianDatabase,
-    embeddingService: ObsidianEmbeddingService,
+    database: DocumentDatabase,
+    embeddingService: DocumentEmbeddingService,
     dictionaryService?: DictionaryService
   ) {
     this.db = database;

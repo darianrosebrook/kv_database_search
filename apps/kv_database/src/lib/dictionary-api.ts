@@ -14,7 +14,7 @@
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { DictionaryService } from "./dictionary-service";
-import { ObsidianDatabase } from "./database";
+import { DocumentDatabase } from "./database";
 
 // Request body interfaces
 interface DictionaryLookupRequest {
@@ -70,7 +70,7 @@ interface ServiceHealth {
 export class DictionaryAPI {
   private dictionaryService: DictionaryService;
 
-  constructor(database: ObsidianDatabase) {
+  constructor(database: DocumentDatabase) {
     this.dictionaryService = new DictionaryService(database);
   }
 

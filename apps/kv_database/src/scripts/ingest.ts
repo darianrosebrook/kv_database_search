@@ -1,9 +1,9 @@
 #!/usr/bin/env tsx
 
 import { config as dotenvConfig } from "dotenv";
-import { ObsidianDatabase } from "../lib/database";
-import { ObsidianEmbeddingService } from "../lib/embeddings";
-import { ObsidianIngestionPipeline } from "../lib/obsidian-ingest";
+import { DocumentDatabase } from "../lib/database";
+import { DocumentEmbeddingService } from "../lib/embeddings";
+import { ObsidianIngestionPipeline, ObsidianChunkingOptions } from "../lib/obsidian-ingest";
 import { MultiModalIngestionPipeline } from "../lib/multi-modal-ingest";
 import { ImageLinkExtractor } from "../lib/image-link-extractor";
 import { ImagePathResolver } from "../lib/image-path-resolver";
@@ -27,10 +27,25 @@ interface IngestionOptions {
   skipExisting?: boolean;
   includePatterns?: string[];
   excludePatterns?: string[];
-  chunkingOptions?: unknown;
+  chunkingOptions?: ObsidianChunkingOptions;
   enableImageProcessing?: boolean;
   maxFileSize?: number;
   maxImagesPerFile?: number;
+}
+
+interface IngestResult {
+  totalFiles: number;
+  processedFiles: number;
+  totalChunks: number;
+  processedChunks: number;
+  skippedChunks: number;
+  errors: string[];
+  imageStats?: {
+    filesWithImages: number;
+    totalImages: number;
+    processedImages: number;
+    failedImages: number;
+  };
 }
 
 class IngestionPipeline {
@@ -41,8 +56,8 @@ class IngestionPipeline {
   private vaultPath: string;
 
   constructor(
-    database: ObsidianDatabase,
-    embeddingService: ObsidianEmbeddingService,
+    database: DocumentDatabase,
+    embeddingService: DocumentEmbeddingService,
     vaultPath: string
   ) {
     this.vaultPath = vaultPath;
@@ -148,10 +163,10 @@ class IngestionPipeline {
         skippedChunks += markdownResult.skippedChunks;
         errors.push(...markdownResult.errors);
 
-        filesWithImages += markdownResult.imageStats.filesWithImages;
-        totalImages += markdownResult.imageStats.totalImages;
-        processedImages += markdownResult.imageStats.processedImages;
-        failedImages += markdownResult.imageStats.failedImages;
+        filesWithImages += markdownResult.imageStats?.filesWithImages ?? 0;
+        totalImages += markdownResult.imageStats?.totalImages ?? 0;
+        processedImages += markdownResult.imageStats?.processedImages ?? 0;
+        failedImages += markdownResult.imageStats?.failedImages ?? 0;
       }
 
       // Process other files (images, PDFs, etc.)
@@ -273,18 +288,18 @@ class IngestionPipeline {
   private async processMarkdownFiles(
     files: string[],
     options: IngestionOptions
-  ): Promise {
+  ): Promise<IngestResult> {
     // Use the existing Obsidian pipeline for markdown files
     // This would need to be enhanced to include image processing
-    return await this.obsidianPipeline.ingestVault(options);
+    return await this.obsidianPipeline.ingestVault(options) as IngestResult;
   }
 
   private async processOtherFiles(
     files: string[],
     options: IngestionOptions
-  ): Promise {
+  ): Promise<IngestResult> {
     // Use the multi-modal pipeline for other files
-    return await this.multiModalPipeline.ingestFiles(files, options);
+    return await this.multiModalPipeline.ingestFiles(files, options) as unknown as IngestResult;
   }
 
   private matchesPattern(filePath: string, pattern: string): boolean {
@@ -324,7 +339,13 @@ class IngestionPipeline {
     };
   }
 
-  private async validateImageProcessing(): Promise {
+  private async validateImageProcessing(): Promise<{
+    isValid: boolean;
+    issues: string[];
+    imagesProcessed: number;
+    imagesWithText: number;
+    averageConfidence: number;
+  }> {
     // Placeholder for image validation logic
     return {
       isValid: true,
@@ -417,10 +438,10 @@ async function main() {
     // Initialize services
     console.log("🔧 Initializing services...");
 
-    const database = new ObsidianDatabase(DATABASE_URL);
+    const database = new DocumentDatabase(DATABASE_URL, "obsidian_chunks");
     await database.initialize();
 
-    const embeddingService = new ObsidianEmbeddingService({
+    const embeddingService = new DocumentEmbeddingService({
       model: EMBEDDING_MODEL,
       dimension: EMBEDDING_DIMENSION,
     });

@@ -7,8 +7,8 @@
  * @author @darianrosebrook
  */
 
-import { ObsidianDatabase } from "./database";
-import { ObsidianEmbeddingService } from "./embeddings";
+import { DocumentDatabase } from "./database";
+import { DocumentEmbeddingService } from "./embeddings";
 
 export interface DocumentRelationship {
   sourceId: string;
@@ -51,14 +51,14 @@ export interface ContextQuery {
 }
 
 export class ContextManager {
-  private database: ObsidianDatabase;
-  private embeddingService: ObsidianEmbeddingService;
+  private database: DocumentDatabase;
+  private embeddingService: DocumentEmbeddingService;
   private relationships: Map<string, DocumentRelationship[]> = new Map();
   private contexts: Map<string, DocumentContext> = new Map();
 
   constructor(
-    database: ObsidianDatabase,
-    embeddingService: ObsidianEmbeddingService
+    database: DocumentDatabase,
+    embeddingService: DocumentEmbeddingService
   ) {
     this.database = database;
     this.embeddingService = embeddingService;

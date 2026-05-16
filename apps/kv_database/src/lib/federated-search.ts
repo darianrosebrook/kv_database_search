@@ -491,7 +491,7 @@ export interface SystemQueryResult {
  * comprehensive provenance tracking.
  */
 export class FederatedSearchSystem {
-  private database: any; // ObsidianDatabase
+  private database: any;
   private systemRegistry: SystemRegistry;
   private queryRouter: QueryRouter;
   private resultAggregator: ResultAggregator;

@@ -423,7 +423,7 @@ export interface QueryMetadata {
  * and semantic understanding capabilities.
  */
 export class GraphQueryEngine {
-  private database; // ObsidianDatabase
+  private database;
   private intentClassifier: IntentClassifier;
   private patternMatcher: PatternMatcher;
   private traversalEngine: TraversalEngine;

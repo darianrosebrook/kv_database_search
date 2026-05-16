@@ -6,7 +6,7 @@
  */
 
 import { Pool } from "pg";
-import { ObsidianEmbeddingService } from "../embeddings.js";
+import { DocumentEmbeddingService } from "../embeddings.js";
 import {
   HybridSearchEngine,
   MultiHopReasoningEngine,
@@ -49,7 +49,7 @@ export class GraphRagServiceFactory {
    */
   async initializeServices(
     pool: Pool,
-    embeddingService: ObsidianEmbeddingService,
+    embeddingService: DocumentEmbeddingService,
     _dbConfig: DatabaseConfig,
     _embeddingConfig: EmbeddingConfig
   ): Promise<GraphRagServices> {
@@ -107,31 +107,30 @@ export class GraphRagServiceFactory {
         // graphRagApiServer, // Not implemented yet
       };
     } catch (error) {
-      this.logger.error("❌ Failed to initialize Graph RAG services", error);
+      this.logger.error("❌ Failed to initialize Graph RAG services", error instanceof Error ? error : undefined);
       throw new Error(`Graph RAG services initialization failed: ${error}`);
     }
   }
 
   private async createKnowledgeGraph(
     pool: Pool,
-    embeddingService: ObsidianEmbeddingService
+    embeddingService: DocumentEmbeddingService
   ): Promise<KnowledgeGraph> {
     try {
       this.logger.info("📊 Creating Knowledge Graph...");
       const knowledgeGraph = new KnowledgeGraph(pool, embeddingService);
-      await knowledgeGraph.initialize();
       this.logger.info("✅ Knowledge Graph created");
       return knowledgeGraph;
     } catch (error) {
-      this.logger.error("❌ Failed to create Knowledge Graph", error);
+      this.logger.error("❌ Failed to create Knowledge Graph", error instanceof Error ? error : undefined);
       throw error;
     }
   }
 
   private async createHybridSearchEngine(
     pool: Pool,
-    embeddingService: ObsidianEmbeddingService,
-    knowledgeGraph: KnowledgeGraph
+    embeddingService: DocumentEmbeddingService,
+    _knowledgeGraph: KnowledgeGraph
   ): Promise<HybridSearchEngine> {
     try {
       this.logger.info("🔍 Creating Hybrid Search Engine...");
@@ -139,16 +138,14 @@ export class GraphRagServiceFactory {
         pool,
         embeddingService,
         {
-          knowledgeGraph,
-          enableSemanticExpansion: true,
+          enableQueryExpansion: true,
           maxHops: 3,
         }
       );
-      await hybridSearchEngine.initialize();
       this.logger.info("✅ Hybrid Search Engine created");
       return hybridSearchEngine;
     } catch (error) {
-      this.logger.error("❌ Failed to create Hybrid Search Engine", error);
+      this.logger.error("❌ Failed to create Hybrid Search Engine", error instanceof Error ? error : undefined);
       throw error;
     }
   }
@@ -159,13 +156,12 @@ export class GraphRagServiceFactory {
     try {
       this.logger.info("🧠 Creating Multi-Hop Reasoning Engine...");
       const reasoningEngine = new MultiHopReasoningEngine(pool);
-      await reasoningEngine.initialize();
       this.logger.info("✅ Multi-Hop Reasoning Engine created");
       return reasoningEngine;
     } catch (error) {
       this.logger.error(
         "❌ Failed to create Multi-Hop Reasoning Engine",
-        error
+        error instanceof Error ? error : undefined
       );
       throw error;
     }
@@ -175,11 +171,10 @@ export class GraphRagServiceFactory {
     try {
       this.logger.info("📊 Creating Result Ranking Engine...");
       const rankingService = new ResultRankingEngine(pool);
-      await rankingService.initialize();
       this.logger.info("✅ Result Ranking Engine created");
       return rankingService;
     } catch (error) {
-      this.logger.error("❌ Failed to create Result Ranking Engine", error);
+      this.logger.error("❌ Failed to create Result Ranking Engine", error instanceof Error ? error : undefined);
       throw error;
     }
   }
@@ -190,11 +185,10 @@ export class GraphRagServiceFactory {
     try {
       this.logger.info("📋 Creating Provenance Tracker...");
       const provenanceTracker = new ProvenanceTracker(pool);
-      await provenanceTracker.initialize();
       this.logger.info("✅ Provenance Tracker created");
       return provenanceTracker;
     } catch (error) {
-      this.logger.error("❌ Failed to create Provenance Tracker", error);
+      this.logger.error("❌ Failed to create Provenance Tracker", error instanceof Error ? error : undefined);
       throw error;
     }
   }
@@ -203,11 +197,10 @@ export class GraphRagServiceFactory {
     try {
       this.logger.info("⚡ Creating Query Optimizer...");
       const queryOptimizer = new QueryOptimizer(pool);
-      await queryOptimizer.initialize();
       this.logger.info("✅ Query Optimizer created");
       return queryOptimizer;
     } catch (error) {
-      this.logger.error("❌ Failed to create Query Optimizer", error);
+      this.logger.error("❌ Failed to create Query Optimizer", error instanceof Error ? error : undefined);
       throw error;
     }
   }
@@ -216,11 +209,10 @@ export class GraphRagServiceFactory {
     try {
       this.logger.info("📈 Creating Monitoring System...");
       const monitoringSystem = new MonitoringSystem(pool);
-      await monitoringSystem.initialize();
       this.logger.info("✅ Monitoring System created");
       return monitoringSystem;
     } catch (error) {
-      this.logger.error("❌ Failed to create Monitoring System", error);
+      this.logger.error("❌ Failed to create Monitoring System", error instanceof Error ? error : undefined);
       throw error;
     }
   }
@@ -283,10 +275,10 @@ export class GraphRagServiceFactory {
       SERVICE_TOKENS.MONITORING_SYSTEM,
       services.monitoringSystem
     );
-    this.container.register(
-      SERVICE_TOKENS.GRAPH_RAG_API_SERVER,
-      services.graphRagApiServer
-    );
+    // this.container.register(
+    //   SERVICE_TOKENS.GRAPH_RAG_API_SERVER,
+    //   services.graphRagApiServer
+    // ); // Not implemented yet
   }
 
   /**

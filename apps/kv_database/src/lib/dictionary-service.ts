@@ -8,7 +8,6 @@
  * Date: 2025-01-25
  */
 
-import { ObsidianDatabase } from "./database";
 // import * as fs from "fs"; // Not used
 // import * as path from "path"; // Not used
 import { createHash } from "crypto";
@@ -215,12 +214,12 @@ export type ExpansionType =
  * - Caching and performance optimization
  */
 export class DictionaryService {
-  private db: ObsidianDatabase;
+  private db: any; // DocumentDatabase — typed as any to allow pool access
   private cache: Map<string, DictionaryLookupResult> = new Map();
   private cacheTTL: number = 3600 * 1000; // 1 hour default
   private maxCacheSize: number = 10000;
 
-  constructor(database: ObsidianDatabase) {
+  constructor(database: any) {
     this.db = database;
     // Don't initialize immediately - wait for explicit initialize() call
   }

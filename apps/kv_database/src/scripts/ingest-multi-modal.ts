@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
-import { ObsidianDatabase } from "../lib/database";
-import { ObsidianEmbeddingService } from "../lib/embeddings";
+import { DocumentDatabase } from "../lib/database";
+import { DocumentEmbeddingService } from "../lib/embeddings";
 import { MultiModalIngestionPipeline } from "../lib/multi-modal-ingest";
 import * as fs from "fs";
 import * as path from "path";
@@ -40,7 +40,16 @@ Examples:
 
   // Parse arguments
   const filePaths: string[] = [];
-  const options = {
+  const options: {
+    batchSize: number;
+    rateLimitMs: number;
+    skipExisting: boolean;
+    maxFileSize: number;
+    includePatterns: string[];
+    excludePatterns: string[];
+    databaseUrl?: string;
+    embeddingModel?: string;
+  } = {
     batchSize: 5,
     rateLimitMs: 200,
     skipExisting: true,
@@ -112,10 +121,10 @@ Examples:
   try {
     // Initialize services
     console.log("🔧 Initializing services...");
-    const database = new ObsidianDatabase(databaseUrl);
+    const database = new DocumentDatabase(databaseUrl, "obsidian_chunks");
     await database.initialize();
 
-    const embeddings = new ObsidianEmbeddingService({
+    const embeddings = new DocumentEmbeddingService({
       model: embeddingModel,
       dimension: embeddingDimension,
     });
@@ -360,7 +369,7 @@ function getContentTypeFromExtension(ext: string): string {
  * Validate ingestion results
  */
 async function validateIngestion(
-  database: ObsidianDatabase,
+  database: DocumentDatabase,
   expectedChunks: number
 ): Promise<{ isValid: boolean; errors: string[] }> {
   try {
@@ -372,9 +381,10 @@ async function validateIngestion(
     }
 
     // Check that we have some chunks with multi-modal metadata
-    const sampleChunks = await database.search(new Array(768).fill(0), 5);
+    const sampleChunks = await database.search(new Array(768).fill(0), { limit: 5 });
     const hasMultiModal = sampleChunks.some(
-      (chunk) => chunk.meta.multiModalFile !== undefined
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (chunk: any) => chunk.meta?.multiModalFile !== undefined
     );
 
     if (!hasMultiModal && expectedChunks > 0) {

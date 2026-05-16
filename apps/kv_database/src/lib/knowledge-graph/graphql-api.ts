@@ -12,7 +12,7 @@ import {
   GraphQLEnumType,
   GraphQLInputObjectType,
 } from "graphql";
-import { ObsidianEmbeddingService } from "../embeddings.js";
+import { DocumentEmbeddingService } from "../embeddings.js";
 import { HybridSearchEngine } from "./hybrid-search-engine.js";
 import { MultiHopReasoningEngine } from "./multi-hop-reasoning.js";
 import { ResultRankingEngine } from "./result-ranking.js";
@@ -29,12 +29,12 @@ const EntityTypeEnum = new GraphQLEnumType({
     ORGANIZATION: { value: EntityType.ORGANIZATION },
     LOCATION: { value: EntityType.LOCATION },
     CONCEPT: { value: EntityType.CONCEPT },
-    DOCUMENT: { value: EntityType.DOCUMENT },
     EVENT: { value: EntityType.EVENT },
     PRODUCT: { value: EntityType.PRODUCT },
     TECHNOLOGY: { value: EntityType.TECHNOLOGY },
-    PROCESS: { value: EntityType.PROCESS },
-    METRIC: { value: EntityType.METRIC },
+    DATE: { value: EntityType.DATE },
+    MONEY: { value: EntityType.MONEY },
+    OTHER: { value: EntityType.OTHER },
   },
 });
 
@@ -78,7 +78,7 @@ const SearchStrategyEnum = new GraphQLEnumType({
 });
 
 // GraphQL Types
-const NodeType = new GraphQLObjectType({
+const NodeType: GraphQLObjectType = new GraphQLObjectType({
   name: "Node",
   fields: () => ({
     id: { type: new GraphQLNonNull(GraphQLID) },
@@ -127,7 +127,7 @@ const NodeType = new GraphQLObjectType({
   }),
 });
 
-const RelationshipObjectType = new GraphQLObjectType({
+const RelationshipObjectType: GraphQLObjectType = new GraphQLObjectType({
   name: "Relationship",
   fields: () => ({
     id: { type: new GraphQLNonNull(GraphQLID) },
@@ -583,7 +583,7 @@ const MutationType = new GraphQLObjectType({
         aliases: { type: new GraphQLList(GraphQLString) },
       },
       resolve: async (parent, args, context) => {
-        const updates = {};
+        const updates: Record<string, unknown> = {};
         if (args.name) updates.name = args.name;
         if (args.description) updates.description = args.description;
         if (args.properties) updates.properties = JSON.parse(args.properties);
@@ -636,7 +636,7 @@ const MutationType = new GraphQLObjectType({
         strength: { type: GraphQLFloat },
       },
       resolve: async (parent, args, context) => {
-        const updates = {};
+        const updates: Record<string, unknown> = {};
         if (args.properties) updates.properties = JSON.parse(args.properties);
         if (args.confidence !== undefined) updates.confidence = args.confidence;
         if (args.strength !== undefined) updates.strength = args.strength;
@@ -759,7 +759,7 @@ export const createGraphQLSchema = (): GraphQLSchema => {
 // GraphQL Context Interface
 export interface GraphQLContext {
   pool: Pool;
-  embeddings: ObsidianEmbeddingService;
+  embeddings: DocumentEmbeddingService;
   searchEngine: HybridSearchEngine;
   reasoningEngine: MultiHopReasoningEngine;
   rankingService: ResultRankingEngine;
@@ -775,7 +775,7 @@ export interface GraphQLContext {
 // GraphQL Context Factory
 export const createGraphQLContext = (
   pool: Pool,
-  embeddings: ObsidianEmbeddingService,
+  embeddings: DocumentEmbeddingService,
   searchEngine: HybridSearchEngine,
   reasoningEngine: MultiHopReasoningEngine,
   rankingService: ResultRankingEngine,

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { ObsidianDatabase } from "../../src/lib/database.ts";
-import { ObsidianEmbeddingService } from "../../src/lib/embeddings.ts";
+import { DocumentDatabase } from "../../src/lib/database.ts";
+import { DocumentEmbeddingService } from "../../src/lib/embeddings.ts";
 import { MultiModalIngestionPipeline } from "../../src/lib/multi-modal-ingest.ts";
 import { ContentType } from "../../src/lib/multi-modal.ts";
 import * as fs from "fs";
@@ -14,8 +14,8 @@ import {
 
 describe("Real File Multi-Modal Evaluation", () => {
   let postgresContainer: StartedPostgreSqlContainer;
-  let database: ObsidianDatabase;
-  let embeddings: ObsidianEmbeddingService;
+  let database: DocumentDatabase;
+  let embeddings: DocumentEmbeddingService;
   let pipeline: MultiModalIngestionPipeline;
 
   const testFilesDir = path.join(process.cwd(), "test", "test-files");
@@ -31,11 +31,11 @@ describe("Real File Multi-Modal Evaluation", () => {
     const connectionString = postgresContainer.getConnectionUri();
 
     // Initialize database
-    database = new ObsidianDatabase(connectionString);
+    database = new DocumentDatabase(connectionString, "obsidian_chunks");
     await database.initialize();
 
     // Initialize embeddings (mock for integration tests)
-    embeddings = new ObsidianEmbeddingService({
+    embeddings = new DocumentEmbeddingService({
       model: "test-model",
       dimension: 768,
     });

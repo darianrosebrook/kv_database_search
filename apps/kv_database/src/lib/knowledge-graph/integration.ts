@@ -1,6 +1,6 @@
 import { Pool } from "pg";
-import { ObsidianDatabase } from "../database.js";
-import { ObsidianEmbeddingService } from "../embeddings.js";
+import { DocumentDatabase } from "../database.js";
+import { DocumentEmbeddingService } from "../embeddings.js";
 import { MultiModalIngestionPipeline } from "../multi-modal-ingest.js";
 import {
   KnowledgeGraphPipeline,
@@ -19,16 +19,16 @@ export interface KnowledgeGraphIntegrationConfig {
  * Integrates knowledge graph construction with existing multi-modal ingestion pipeline
  */
 export class KnowledgeGraphIntegration {
-  private database: ObsidianDatabase;
-  private embeddings: ObsidianEmbeddingService;
+  private database: DocumentDatabase;
+  private embeddings: DocumentEmbeddingService;
   private knowledgeGraphPipeline: KnowledgeGraphPipeline;
   private config: KnowledgeGraphIntegrationConfig;
   private processingQueue: Set<string> = new Set();
   private batchProcessingTimer?: NodeJS.Timeout;
 
   constructor(
-    database: ObsidianDatabase,
-    embeddings: ObsidianEmbeddingService,
+    database: DocumentDatabase,
+    embeddings: DocumentEmbeddingService,
     config: Partial<KnowledgeGraphIntegrationConfig> = {}
   ) {
     this.database = database;
@@ -43,7 +43,7 @@ export class KnowledgeGraphIntegration {
     };
 
     // Get the underlying pool from the database
-    const pool = this.database.pool as Pool;
+    const pool = (this.database as any).pool as Pool;
 
     this.knowledgeGraphPipeline = new KnowledgeGraphPipeline(
       pool,
@@ -326,8 +326,8 @@ export class KnowledgeGraphIntegration {
  * Factory function to create ingestion pipeline with knowledge graph integration
  */
 export function createIngestionPipeline(
-  database: ObsidianDatabase,
-  embeddings: ObsidianEmbeddingService,
+  database: DocumentDatabase,
+  embeddings: DocumentEmbeddingService,
   config: Partial<KnowledgeGraphIntegrationConfig> = {}
 ): {
   pipeline: MultiModalIngestionPipeline;
@@ -350,8 +350,8 @@ export function createIngestionPipeline(
  * Utility function to bootstrap knowledge graph from existing data
  */
 export async function bootstrapKnowledgeGraphFromExistingData(
-  database: ObsidianDatabase,
-  embeddings: ObsidianEmbeddingService,
+  database: DocumentDatabase,
+  embeddings: DocumentEmbeddingService,
   options: {
     contentTypes?: ContentType[];
     batchSize?: number;
@@ -365,7 +365,7 @@ export async function bootstrapKnowledgeGraphFromExistingData(
 }> {
   console.log("🚀 Bootstrapping knowledge graph from existing data");
 
-  const pool = database.pool as Pool;
+  const pool = (database as any).pool as Pool;
   const pipeline = new KnowledgeGraphPipeline(pool, embeddings, {
     processing: {
       batchSize: options.batchSize || 20,

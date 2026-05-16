@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { ObsidianEmbeddingService } from "../embeddings.js";
+import { DocumentEmbeddingService } from "../embeddings.js";
 import { ContentType } from "../../types/index.js";
 import {
   KnowledgeGraphEntityExtractor,
@@ -48,15 +48,15 @@ export interface ChunkProcessingInput {
  * Integrates entity extraction, deduplication, and graph management
  */
 export class KnowledgeGraphPipeline {
-  private entityExtractor: KnowledgeGraphEntityExtractor;
+  readonly entityExtractor: KnowledgeGraphEntityExtractor;
   private graphManager: KnowledgeGraph;
-  private config: KnowledgeGraphPipelineConfig;
+  readonly config: KnowledgeGraphPipelineConfig;
   private pool: Pool;
-  private embeddings: ObsidianEmbeddingService;
+  private embeddings: DocumentEmbeddingService;
 
   constructor(
     pool: Pool,
-    embeddings: ObsidianEmbeddingService,
+    embeddings: DocumentEmbeddingService,
     config: Partial<KnowledgeGraphPipelineConfig> = {}
   ) {
     this.pool = pool;
@@ -503,16 +503,19 @@ export class KnowledgeGraphPipeline {
       [ContentType.PDF]: ExtractionMethod.TEXT_EXTRACTION,
       [ContentType.VIDEO]: ExtractionMethod.SPEECH_TO_TEXT,
       [ContentType.AUDIO]: ExtractionMethod.SPEECH_TO_TEXT,
+      [ContentType.AUDIO_FILE]: ExtractionMethod.SPEECH_TO_TEXT,
       [ContentType.RASTER_IMAGE]: ExtractionMethod.OCR,
       [ContentType.VECTOR_IMAGE]: ExtractionMethod.OCR,
-      [ContentType.DOCUMENT_IMAGE]: ExtractionMethod.OCR,
       [ContentType.MARKDOWN]: ExtractionMethod.TEXT_EXTRACTION,
       [ContentType.PLAIN_TEXT]: ExtractionMethod.TEXT_EXTRACTION,
       [ContentType.RICH_TEXT]: ExtractionMethod.TEXT_EXTRACTION,
+      [ContentType.CODE]: ExtractionMethod.TEXT_EXTRACTION,
+      [ContentType.TEXT]: ExtractionMethod.TEXT_EXTRACTION,
+      [ContentType.WEB]: ExtractionMethod.TEXT_EXTRACTION,
+      [ContentType.CHAT_SESSION]: ExtractionMethod.TEXT_EXTRACTION,
       [ContentType.OFFICE_DOC]: ExtractionMethod.TEXT_EXTRACTION,
       [ContentType.OFFICE_SHEET]: ExtractionMethod.TEXT_EXTRACTION,
       [ContentType.OFFICE_PRESENTATION]: ExtractionMethod.TEXT_EXTRACTION,
-      [ContentType.HTML]: ExtractionMethod.TEXT_EXTRACTION,
       [ContentType.CSV]: ExtractionMethod.TEXT_EXTRACTION,
       [ContentType.JSON]: ExtractionMethod.TEXT_EXTRACTION,
       [ContentType.XML]: ExtractionMethod.TEXT_EXTRACTION,

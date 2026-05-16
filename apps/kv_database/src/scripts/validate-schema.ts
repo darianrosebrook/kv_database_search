@@ -9,7 +9,7 @@
 
 import { config as dotenvConfig } from "dotenv";
 import { Pool } from "pg";
-import { ObsidianDatabase } from "../lib/database";
+import { DocumentDatabase } from "../lib/database";
 
 // Load environment variables
 dotenvConfig();
@@ -37,14 +37,15 @@ async function validateSchema() {
   console.log("🔍 Validating database schema...");
   console.log(`📊 Database: ${DATABASE_URL.split("@")[1] || "localhost"}`);
 
-  const database = new ObsidianDatabase(DATABASE_URL);
+  const database = new DocumentDatabase(DATABASE_URL, "obsidian_chunks");
+  const validationPool = new Pool({ connectionString: DATABASE_URL });
 
   try {
     // Initialize database (this creates tables if they don't exist)
     await database.initialize();
     console.log("✅ Database initialization completed");
 
-    const client = await database.pool.connect();
+    const client = await validationPool.connect();
 
     try {
       // Check required tables
@@ -215,6 +216,7 @@ async function validateSchema() {
     console.error("❌ Schema validation failed:", error);
     process.exit(1);
   } finally {
+    await validationPool.end();
     await database.close();
   }
 }

@@ -1,7 +1,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import { Pool } from "pg";
-import { ObsidianEmbeddingService } from "../embeddings.js";
+import { DocumentEmbeddingService } from "../embeddings.js";
 import { ContentType } from "../../types/index.js";
+import { EntityType, RelationshipType } from "./entity-extractor.js";
 import {
   HybridSearchEngine,
   type SearchQuery,
@@ -327,7 +328,7 @@ export class GraphRAGAPIRouter {
 
   constructor(
     pool: Pool,
-    embeddings: ObsidianEmbeddingService,
+    embeddings: DocumentEmbeddingService,
     _options: {
       enableRateLimit?: boolean;
       enableCaching?: boolean;
@@ -468,9 +469,11 @@ export class GraphRAGAPIRouter {
               contentTypes: searchRequest.filters.contentTypes?.map(
                 (ct) => ct as ContentType
               ),
-              entityTypes: searchRequest.filters.entityTypes?.map((et) => et),
+              entityTypes: searchRequest.filters.entityTypes?.map(
+                (et) => et as EntityType
+              ),
               relationshipTypes: searchRequest.filters.relationshipTypes?.map(
-                (rt) => rt
+                (rt) => rt as RelationshipType
               ),
               sourceFiles: searchRequest.filters.sourceFiles,
               minConfidence: searchRequest.filters.minConfidence,
@@ -862,8 +865,8 @@ export class GraphRAGAPIRouter {
       })),
       explanation: result.rankingExplanation
         ? {
-            finalScore: result.rankingExplanation.finalScore,
-            featureScores: result.rankingExplanation.featureScores,
+            finalScore: result.rankingExplanation.computedScore,
+            featureScores: result.rankingExplanation.featureScores as unknown as Record<string, number>,
             appliedBoosts: result.rankingExplanation.appliedBoosts,
             appliedPenalties: result.rankingExplanation.appliedPenalties,
             rankingFactors: result.rankingExplanation.rankingFactors,

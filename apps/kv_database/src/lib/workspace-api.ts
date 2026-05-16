@@ -20,13 +20,13 @@ import {
   // EntityResolutionResult,
   // CrossWorkspaceSearchResult,
 } from "./workspace-manager";
-import { ObsidianDatabase } from "./database";
+import { DocumentDatabase } from "./database";
 
 export class WorkspaceAPI {
   private workspaceManager: WorkspaceManager;
   private router: express.Router;
 
-  constructor(database: ObsidianDatabase) {
+  constructor(database: DocumentDatabase) {
     this.workspaceManager = new WorkspaceManager(database);
     this.router = express.Router();
     this.setupRoutes();

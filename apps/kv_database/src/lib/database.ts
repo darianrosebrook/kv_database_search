@@ -319,19 +319,9 @@ export class DocumentDatabase {
 }
 
 /**
- * Backward compatibility class for Obsidian-specific usage
- * @deprecated Use DocumentDatabase instead
+ * Test version of DocumentDatabase that supports SQLite for faster testing
  */
-export class ObsidianDatabase extends DocumentDatabase {
-  constructor(connectionString: string) {
-    super(connectionString, "obsidian_chunks");
-  }
-}
-
-/**
- * Test version of ObsidianDatabase that supports SQLite for faster testing
- */
-export class TestObsidianDatabase {
+export class TestDocumentDatabase {
   private db: any;
   public tableName: string;
   public dimension: number;

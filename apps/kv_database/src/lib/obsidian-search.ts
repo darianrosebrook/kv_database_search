@@ -1,5 +1,5 @@
-import { ObsidianDatabase } from "./database";
-import { ObsidianEmbeddingService } from "./embeddings";
+import { DocumentDatabase } from "./database";
+import { DocumentEmbeddingService } from "./embeddings";
 import { detectLanguage, EntityExtractor } from "./utils";
 import {
   SearchResult,
@@ -10,13 +10,13 @@ import {
 } from "../types/index";
 
 export class ObsidianSearchService {
-  private db: ObsidianDatabase;
-  private embeddings: ObsidianEmbeddingService;
+  private db: DocumentDatabase;
+  private embeddings: DocumentEmbeddingService;
   private entityExtractor: EntityExtractor;
 
   constructor(
-    database: ObsidianDatabase,
-    embeddingService: ObsidianEmbeddingService
+    database: DocumentDatabase,
+    embeddingService: DocumentEmbeddingService
   ) {
     this.db = database;
     this.embeddings = embeddingService;

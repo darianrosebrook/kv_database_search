@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { ObsidianDatabase } from "../../src/lib/database.ts";
-import { ObsidianEmbeddingService } from "../../src/lib/embeddings.ts";
+import { DocumentDatabase } from "../../src/lib/database.ts";
+import { DocumentEmbeddingService } from "../../src/lib/embeddings.ts";
 import {
   ComprehensiveSearchService,
   ComprehensiveSearchQuery,
@@ -18,8 +18,8 @@ import {
 
 describe("Comprehensive Search Integration Tests", () => {
   let postgresContainer: StartedPostgreSqlContainer;
-  let database: ObsidianDatabase;
-  let embeddings: ObsidianEmbeddingService;
+  let database: DocumentDatabase;
+  let embeddings: DocumentEmbeddingService;
   let pipeline: MultiModalIngestionPipeline;
   let searchService: ComprehensiveSearchService;
 
@@ -36,11 +36,11 @@ describe("Comprehensive Search Integration Tests", () => {
     const connectionString = postgresContainer.getConnectionUri();
 
     // Initialize database
-    database = new ObsidianDatabase(connectionString);
+    database = new DocumentDatabase(connectionString, "obsidian_chunks");
     await database.initialize();
 
     // Initialize embeddings (mock for integration tests)
-    embeddings = new ObsidianEmbeddingService({
+    embeddings = new DocumentEmbeddingService({
       model: "test-model",
       dimension: 768,
     });
