@@ -16,7 +16,7 @@ import {
   ImagePathResolver,
   ResolvedImagePath,
   PathResolutionResult,
-} from "../../src/lib/image-path-resolver";
+} from "../../src/lib/path-resolver";
 import path from "path";
 
 describe("ImagePathResolver", () => {

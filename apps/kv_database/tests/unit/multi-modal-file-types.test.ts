@@ -4,7 +4,7 @@ import {
   MultiModalContentDetector,
   ContentType,
 } from "../../src/lib/multi-modal";
-import { ImagePathResolver } from "../../src/lib/image-path-resolver";
+import { ImagePathResolver } from "../../src/lib/path-resolver";
 import * as fs from "fs";
 import * as path from "path";
 

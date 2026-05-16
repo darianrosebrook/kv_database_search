@@ -5,8 +5,8 @@ import { DocumentDatabase } from "../lib/database";
 import { DocumentEmbeddingService } from "../lib/embeddings";
 import { ObsidianIngestionPipeline, ObsidianChunkingOptions } from "../lib/obsidian-ingest";
 import { MultiModalIngestionPipeline } from "../lib/multi-modal-ingest";
-import { ImageLinkExtractor } from "../lib/image-link-extractor";
-import { ImagePathResolver } from "../lib/image-path-resolver";
+import { ImageLinkExtractor } from "../lib/markdown-image-extractor";
+import { ImagePathResolver } from "../lib/path-resolver";
 import * as fs from "fs";
 import * as path from "path";
 

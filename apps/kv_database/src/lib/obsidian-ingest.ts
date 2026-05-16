@@ -18,8 +18,8 @@ import {
   sleep,
   determineContentTypeFromFrontmatter,
 } from "./utils";
-import { ImageLinkExtractor, ImageLink } from "./image-link-extractor";
-import { ImagePathResolver } from "./image-path-resolver";
+import { ImageLinkExtractor, ImageLink } from "./markdown-image-extractor";
+import { ImagePathResolver } from "./path-resolver";
 import { OCRProcessor } from "./processors/ocr-processor";
 import { ImageClassificationProcessor } from "./processors/image-classification-processor";
 import { ObsidianUtils } from "./types/obsidian-utils";

@@ -3,7 +3,7 @@ import {
   ImageLinkExtractor,
   ImageLink,
   ImageLinkExtractionResult,
-} from "../../src/lib/image-link-extractor";
+} from "../../src/lib/markdown-image-extractor";
 
 describe("ImageLinkExtractor", () => {
   let extractor: ImageLinkExtractor;

@@ -4,8 +4,8 @@
  * Demo script showing the unified ingestion with image processing capabilities
  */
 
-import { ImageLinkExtractor } from "../src/lib/image-link-extractor";
-import { ImagePathResolver } from "../src/lib/image-path-resolver";
+import { ImageLinkExtractor } from "../src/lib/markdown-image-extractor";
+import { ImagePathResolver } from "../src/lib/path-resolver";
 
 // Demo markdown content with various image link types
 const demoMarkdown = `
