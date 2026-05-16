@@ -1,5 +1,5 @@
 import { Pool, PoolClient } from "pg";
-import { EntityType, RelationshipType } from "./entity-extractor.js";
+import { EntityType, RelationshipType } from "./entity-extractor";
 
 export interface ReasoningQuery {
   startEntities: string[]; // Entity IDs to start reasoning from

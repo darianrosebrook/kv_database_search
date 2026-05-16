@@ -8,9 +8,11 @@
 import express, { Request, Response, NextFunction } from "express";
 import { DependencyContainer, SERVICE_TOKENS } from "../lib/shared";
 import type { GraphRAGAPIRouter } from "../lib/knowledge-graph/graph-rag-api";
-import type { KnowledgeGraph } from "../lib/knowledge-graph/knowledge-graph-manager";
-import type { MultiHopReasoningEngine } from "../lib/knowledge-graph/multi-hop-reasoning";
-import type { ProvenanceTracker } from "../lib/knowledge-graph/provenance-tracker";
+import type {
+  KnowledgeGraph,
+  MultiHopReasoningEngine,
+  ProvenanceTracker,
+} from "@kv/knowledge-graph";
 
 /**
  * Middleware to get services from container

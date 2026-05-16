@@ -1,11 +1,10 @@
 import { Pool, PoolClient } from "pg";
-// Removed unused imports
 import {
   type SearchResult,
   type SearchMetrics,
   type SearchExplanation,
-} from "./hybrid-search-engine.js";
-import { type ReasoningResult } from "./multi-hop-reasoning.js";
+} from "./search-types";
+import { type ReasoningResult } from "./multi-hop-reasoning";
 
 export interface ProvenanceRecord {
   id: string;
@@ -386,7 +385,7 @@ export class ProvenanceTracker {
             location: result.metadata.sourceFile,
             hash: "",
             timestamp: result.metadata.processingTime,
-            metadata: result.metadata,
+            metadata: result.metadata as unknown as Record<string, unknown>,
           },
         ],
         derivedFrom: [result.metadata.chunkId],

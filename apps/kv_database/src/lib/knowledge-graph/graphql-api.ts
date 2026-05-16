@@ -14,12 +14,15 @@ import {
 } from "graphql";
 import { DocumentEmbeddingService } from "../embeddings.js";
 import { HybridSearchEngine } from "./hybrid-search-engine.js";
-import { MultiHopReasoningEngine } from "./multi-hop-reasoning.js";
-import { ResultRankingEngine } from "./result-ranking.js";
-import { KnowledgeGraph } from "./knowledge-graph-manager.js";
-import { ProvenanceTracker } from "./provenance-tracker.js";
-import { QueryOptimizer } from "./query-optimizer.js";
-import { EntityType, RelationshipType } from "./entity-extractor.js";
+import {
+  MultiHopReasoningEngine,
+  ResultRankingEngine,
+  KnowledgeGraph,
+  ProvenanceTracker,
+  QueryOptimizer,
+  EntityType,
+  RelationshipType,
+} from "@kv/knowledge-graph";
 
 // GraphQL Enums
 const EntityTypeEnum = new GraphQLEnumType({

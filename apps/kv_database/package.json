@@ -16,6 +16,7 @@
     "@kv/utils": "workspace:*",
     "@kv/media": "workspace:*",
     "@kv/processors": "workspace:*",
+    "@kv/knowledge-graph": "workspace:*",
     "@kv/types": "workspace:*",
     "axios": "^1.12.2",
     "canvas": "^3.2.0",

@@ -1,6 +1,6 @@
 import { Pool, PoolClient } from "pg";
-import { type SearchQuery } from "./hybrid-search-engine.js";
-import { type ReasoningQuery } from "./multi-hop-reasoning.js";
+import { type SearchQuery } from "./search-types";
+import { type ReasoningQuery } from "./multi-hop-reasoning";
 
 /**
  * TODO: Index Compression - Research techniques to reduce storage while maintaining performance
@@ -431,7 +431,7 @@ export class QueryOptimizer {
    */
   async executeOptimizedPlan(
     plan: QueryPlan,
-    executor: (query: OptimizedQuery) => Promise
+    executor: (query: OptimizedQuery) => Promise<unknown>
   ): Promise<{
     results: unknown;
     actualMetrics: {
@@ -560,7 +560,7 @@ export class QueryOptimizer {
   private async analyzeSearchQuery(
     query: SearchQuery,
     context: OptimizationContext
-  ): Promise {
+  ): Promise<Record<string, unknown>> {
     return {
       queryType: "search",
       complexity: this.calculateQueryComplexity(query),
@@ -578,7 +578,7 @@ export class QueryOptimizer {
   private async analyzeReasoningQuery(
     query: ReasoningQuery,
     _context: OptimizationContext
-  ): Promise {
+  ): Promise<Record<string, unknown>> {
     return {
       queryType: "reasoning",
       complexity: query.maxDepth * query.startEntities.length,
@@ -1190,13 +1190,13 @@ export class QueryOptimizer {
     return this.statisticsCache.get(queryHash);
   }
 
-  private async checkCache(plan: QueryPlan): Promise {
-    const cacheKey = plan.metadata.queryHash;
+  private async checkCache(plan: QueryPlan): Promise<unknown> {
+    const cacheKey = plan.metadata.queryHash as string;
     return this.queryCache.get(cacheKey);
   }
 
   private async cacheResults(plan: QueryPlan, results: any): Promise<void> {
-    const cacheKey = plan.metadata.queryHash;
+    const cacheKey = plan.metadata.queryHash as string;
     this.queryCache.set(cacheKey, results);
 
     // Set TTL cleanup
@@ -1210,7 +1210,7 @@ export class QueryOptimizer {
     executionTime: number,
     results: any
   ): Promise<void> {
-    const queryHash = plan.metadata.queryHash;
+    const queryHash = plan.metadata.queryHash as string;
     const existing = this.statisticsCache.get(queryHash);
 
     const resultCount = Array.isArray(results) ? results.length : 1;

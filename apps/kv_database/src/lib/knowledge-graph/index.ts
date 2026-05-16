@@ -1,12 +1,13 @@
 /**
- * Knowledge Graph Module for Graph RAG-Enhanced Semantic Search
+ * Knowledge Graph Module — server-layer wiring
  *
- * This module provides comprehensive knowledge graph construction and management
- * capabilities for multi-modal content, enabling hybrid vector + graph search
- * with explainable results and relationship provenance.
+ * Re-exports the tool-neutral knowledge graph primitives from @kv/knowledge-graph
+ * and adds the server-layer integration (HybridSearchEngine, MonitoringSystem,
+ * GraphQL API, pipeline, integration) that depends on this app's database and
+ * embedding service.
  */
 
-// Core entity extraction and relationship inference
+// Re-export everything from the extracted package
 export {
   KnowledgeGraphEntityExtractor,
   EntityType,
@@ -17,44 +18,42 @@ export {
   type EntityExtractionResult,
   type EntityExtractionConfig,
   type EntityMention,
-} from "./entity-extractor.js";
-
-// Knowledge graph management and persistence
-export {
   KnowledgeGraph,
   type EntitySimilarity,
   type GraphStatistics,
   type EntityDeduplicationResult,
-} from "./knowledge-graph-manager.js";
+  MultiHopReasoningEngine,
+  type ReasoningQuery,
+  type ReasoningResult,
+  type ReasoningPath,
+  ProvenanceTracker,
+  type ProvenanceRecord,
+  QueryOptimizer,
+  ResultRankingEngine,
+  type RankedSearchResult,
+  type RankingConfig,
+  type SearchQuery,
+  type SearchResult,
+  type SearchResultMetadata,
+  type EntityReference,
+  type RelationshipReference,
+  type SearchExplanation,
+  type TraversalPath,
+  type ReasoningStep,
+  type HybridSearchConfig,
+  type SearchMetrics,
+} from "@kv/knowledge-graph";
 
-// Processing pipeline for batch and real-time processing
+// Server-layer pieces that depend on this app's embeddings/database/ingestion
+export { HybridSearchEngine } from "./hybrid-search-engine.js";
+export { MonitoringSystem } from "./monitoring-system.js";
 export {
   KnowledgeGraphPipeline,
   type KnowledgeGraphPipelineConfig,
   type PipelineProcessingResult,
   type ChunkProcessingInput,
 } from "./knowledge-graph-pipeline.js";
-
-// Integration with existing multi-modal ingestion
-export {
-  KnowledgeGraphIntegration,
-  // createIngestionPipeline,
-  // bootstrapKnowledgeGraphFromExistingData,
-  // type KnowledgeGraphIntegrationConfig,
-} from "./integration.js";
-
-// Phase 2: Search and Reasoning Components
-export { HybridSearchEngine } from "./hybrid-search-engine.js";
-export { MultiHopReasoningEngine } from "./multi-hop-reasoning.js";
-export { ResultRankingEngine } from "./result-ranking.js";
-
-// Phase 3: Advanced Features
-export { ProvenanceTracker } from "./provenance-tracker.js";
-export { QueryOptimizer } from "./query-optimizer.js";
-export { MonitoringSystem } from "./monitoring-system.js";
-
-// API Layers
-// export { GraphRagApiServer } from "./graph-rag-api.js"; // Not implemented yet
+export { KnowledgeGraphIntegration } from "./integration.js";
 export {
   createGraphQLSchema,
   createGraphQLContext,
@@ -62,36 +61,12 @@ export {
   type GraphQLContext,
 } from "./graphql-api.js";
 
-// Database schema and migrations
-// export { default as knowledgeGraphSchema } from "./schema.sql"; // Commented out to avoid SQL import issues
-// export { default as knowledgeGraphMigration } from "./migrations/001_create_knowledge_graph_schema.sql"; // Commented out to avoid SQL import issues
-// export { default as provenanceMigration } from "./migrations/002_create_provenance_schema.sql"; // Commented out to avoid SQL import issues
-
 /**
  * Quick start factory function for knowledge graph integration
- *
- * @example
- * ```typescript
- * import { createKnowledgeGraphSystem } from './knowledge-graph';
- *
- * const system = await createKnowledgeGraphSystem(database, embeddings, {
- *   enableRealTimeProcessing: true,
- *   entityExtraction: {
- *     minEntityConfidence: 0.8,
- *     enableCooccurrenceAnalysis: true
- *   }
- * });
- *
- * // Use enhanced pipeline for ingestion
- * const result = await system.pipeline.ingestFiles(['document.pdf']);
- *
- * // Get knowledge graph statistics
- * const stats = await system.knowledgeGraph.getKnowledgeGraphStatistics();
- * ```
  */
 import type { KnowledgeGraphPipelineConfig } from "./knowledge-graph-pipeline.js";
 import { KnowledgeGraphPipeline } from "./knowledge-graph-pipeline.js";
-import { KnowledgeGraph } from "./knowledge-graph-manager.js";
+import { KnowledgeGraph } from "@kv/knowledge-graph";
 
 export async function createKnowledgeGraphSystem(
   database: any, // DocumentDatabase
@@ -99,14 +74,12 @@ export async function createKnowledgeGraphSystem(
   config: Partial<KnowledgeGraphPipelineConfig> = {}
 ) {
   try {
-    // Initialize the knowledge graph pipeline with proper configuration
     const pipeline = new KnowledgeGraphPipeline(
-      database.pool || database, // Handle both database instances
+      database.pool || database,
       embeddings,
       config
     );
 
-    // Initialize the knowledge graph manager
     const knowledgeGraph = new KnowledgeGraph(
       database.pool || database,
       embeddings,
@@ -119,7 +92,6 @@ export async function createKnowledgeGraphSystem(
       pipeline,
       knowledgeGraph,
 
-      // Convenience methods
       async processAllUnprocessed() {
         return await pipeline.processExistingChunks();
       },
@@ -135,10 +107,7 @@ export async function createKnowledgeGraphSystem(
       async bootstrap(_options = {}) {
         try {
           console.log("🔄 Bootstrapping knowledge graph from existing data...");
-
-          // Use the pipeline's existing chunk processing
           const result = await pipeline.processExistingChunks();
-
           console.log(
             `✅ Bootstrap completed: ${result.processedChunks} chunks processed`
           );
@@ -159,7 +128,6 @@ export async function createKnowledgeGraphSystem(
         }
       },
 
-      // Additional utility methods
       async getEntityExtractor() {
         return pipeline.entityExtractor;
       },
@@ -182,9 +150,6 @@ export async function createKnowledgeGraphSystem(
  * Configuration presets for different use cases
  */
 export const KnowledgeGraphPresets = {
-  /**
-   * High accuracy preset - prioritizes precision over recall
-   */
   HIGH_ACCURACY: {
     entityExtraction: {
       minEntityConfidence: 0.85,
@@ -201,10 +166,6 @@ export const KnowledgeGraphPresets = {
       maxConcurrentExtractions: 2,
     },
   },
-
-  /**
-   * Balanced preset - good balance of accuracy and coverage
-   */
   BALANCED: {
     entityExtraction: {
       minEntityConfidence: 0.7,
@@ -221,10 +182,6 @@ export const KnowledgeGraphPresets = {
       maxConcurrentExtractions: 3,
     },
   },
-
-  /**
-   * High coverage preset - prioritizes recall over precision
-   */
   HIGH_COVERAGE: {
     entityExtraction: {
       minEntityConfidence: 0.6,
@@ -242,10 +199,6 @@ export const KnowledgeGraphPresets = {
       maxConcurrentExtractions: 5,
     },
   },
-
-  /**
-   * Performance preset - optimized for speed
-   */
   PERFORMANCE: {
     entityExtraction: {
       minEntityConfidence: 0.75,
@@ -265,15 +218,11 @@ export const KnowledgeGraphPresets = {
   },
 };
 
-/**
- * Utility functions for knowledge graph operations
- */
 export const KnowledgeGraphUtils = {
-  /**
-   * Validate entity extraction configuration
-   */
   validateEntityConfig(
-    config: Partial<import("./entity-extractor.js").EntityExtractionConfig>
+    config: Partial<
+      import("@kv/knowledge-graph").EntityExtractionConfig
+    >
   ): boolean {
     if (
       config.minEntityConfidence &&
@@ -291,14 +240,10 @@ export const KnowledgeGraphUtils = {
     return true;
   },
 
-  /**
-   * Calculate recommended batch size based on system resources
-   */
   calculateOptimalBatchSize(
     availableMemoryMB: number,
     _avgChunkSizeKB: number
   ): number {
-    // Conservative estimate: 10MB per chunk processing
     const memoryPerChunk = 10;
     const maxConcurrentChunks = Math.floor(
       (availableMemoryMB * 0.3) / memoryPerChunk
@@ -306,9 +251,6 @@ export const KnowledgeGraphUtils = {
     return Math.max(5, Math.min(50, maxConcurrentChunks));
   },
 
-  /**
-   * Estimate processing time for given number of chunks
-   */
   estimateProcessingTime(
     chunkCount: number,
     avgChunkSize: number
@@ -316,9 +258,8 @@ export const KnowledgeGraphUtils = {
     estimatedMinutes: number;
     confidence: "low" | "medium" | "high";
   } {
-    // Rough estimates based on chunk size and complexity
     const baseTimePerChunk =
-      avgChunkSize < 1000 ? 0.5 : avgChunkSize < 5000 ? 2 : 5; // seconds
+      avgChunkSize < 1000 ? 0.5 : avgChunkSize < 5000 ? 2 : 5;
     const totalSeconds = chunkCount * baseTimePerChunk;
 
     return {
@@ -329,15 +270,9 @@ export const KnowledgeGraphUtils = {
   },
 };
 
-/**
- * Version information
- */
 export const KNOWLEDGE_GRAPH_VERSION = "1.0.0";
 export const SCHEMA_VERSION = "001";
 
-/**
- * Feature flags for experimental features
- */
 export const EXPERIMENTAL_FEATURES = {
   ADVANCED_RELATIONSHIP_INFERENCE: false,
   GRAPH_NEURAL_NETWORKS: false,

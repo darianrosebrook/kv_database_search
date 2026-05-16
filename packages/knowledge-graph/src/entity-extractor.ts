@@ -1,11 +1,17 @@
-import { ObsidianContentType as ContentType } from "../types/obsidian-constants";
+import { ExtractedEntity } from "@kv/utils";
 import {
-  EntityExtractor,
-  ProcessedEntity,
-  EntityRelationship,
-  ExtractionContext,
-} from "../entity-extractor.js";
-import { ExtractedEntity } from "../utils.js";
+  EntityExtractorLike,
+  ExtractionContextLike,
+  ProcessedEntityLike,
+  EntityRelationshipLike,
+  StubEntityExtractor,
+} from "./external-types";
+
+// Re-aliased to match prior in-tree names so the rest of this file is unchanged
+type EntityExtractor = EntityExtractorLike;
+type ExtractionContext = ExtractionContextLike;
+type ProcessedEntity = ProcessedEntityLike;
+type EntityRelationship = EntityRelationshipLike;
 
 // Entity types aligned with database schema
 export enum EntityType {
@@ -126,7 +132,7 @@ export interface EntityExtractionResult {
   entities: KnowledgeGraphEntity[];
   relationships: KnowledgeGraphRelationship[];
   extractionMetadata: {
-    contentType: ContentType;
+    contentType: string;
     sourceFile: string;
     chunkId: string;
     extractionMethod: ExtractionMethod;
@@ -154,8 +160,11 @@ export class KnowledgeGraphEntityExtractor {
   private baseExtractor: EntityExtractor;
   private config: EntityExtractionConfig;
 
-  constructor(config: Partial<EntityExtractionConfig> = {}) {
-    this.baseExtractor = new EntityExtractor(null); // No database dependency for now
+  constructor(
+    config: Partial<EntityExtractionConfig> = {},
+    baseExtractor?: EntityExtractor
+  ) {
+    this.baseExtractor = baseExtractor ?? new StubEntityExtractor();
     this.config = {
       minEntityConfidence: 0.7,
       minRelationshipConfidence: 0.5,
@@ -174,7 +183,7 @@ export class KnowledgeGraphEntityExtractor {
   async extractFromText(
     text: string,
     metadata: {
-      contentType: ContentType;
+      contentType: string;
       sourceFile: string;
       chunkId: string;
       extractionMethod: ExtractionMethod;
@@ -292,7 +301,7 @@ export class KnowledgeGraphEntityExtractor {
   private async enhanceEntities(
     baseEntities: ExtractedEntity[],
     text: string,
-    metadata: { contentType: ContentType; sourceFile: string; chunkId: string; extractionMethod: ExtractionMethod }
+    metadata: { contentType: string; sourceFile: string; chunkId: string; extractionMethod: ExtractionMethod }
   ): Promise<KnowledgeGraphEntity[]> {
     const processedEntities: KnowledgeGraphEntity[] = [];
 
@@ -353,7 +362,7 @@ export class KnowledgeGraphEntityExtractor {
     baseRelationships: EntityRelationship[],
     entities: KnowledgeGraphEntity[],
     text: string,
-    metadata: { contentType: ContentType; sourceFile: string; chunkId: string; extractionMethod: ExtractionMethod }
+    metadata: { contentType: string; sourceFile: string; chunkId: string; extractionMethod: ExtractionMethod }
   ): Promise<KnowledgeGraphRelationship[]> {
     const processedRelationships: KnowledgeGraphRelationship[] = [];
 
@@ -424,7 +433,7 @@ export class KnowledgeGraphEntityExtractor {
   private async inferCooccurrenceRelationships(
     entities: KnowledgeGraphEntity[],
     text: string,
-    metadata: { contentType: ContentType; sourceFile: string; chunkId: string; extractionMethod: ExtractionMethod }
+    metadata: { contentType: string; sourceFile: string; chunkId: string; extractionMethod: ExtractionMethod }
   ): Promise<KnowledgeGraphRelationship[]> {
     const inferredRelationships: KnowledgeGraphRelationship[] = [];
     const sentences = this.splitIntoSentences(text);

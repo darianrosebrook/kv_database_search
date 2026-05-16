@@ -1,11 +1,10 @@
 import { Pool, PoolClient } from "pg";
-import { ContentType } from "../../types/index.js";
-// Removed unused imports
+import { ContentType } from "@kv/types";
 import {
   type SearchResult,
   type EntityReference,
   type RelationshipReference,
-} from "./hybrid-search-engine.js";
+} from "./search-types";
 
 export interface RankingConfig {
   weights: RankingWeights;
@@ -483,9 +482,12 @@ export class ResultRankingEngine {
     const bonuses: Record<ContentType, number> = {
       [ContentType.MARKDOWN]: 0.1,
       [ContentType.PDF]: 0.05,
-      [ContentType.HTML]: 0.05,
       [ContentType.PLAIN_TEXT]: 0.0,
       [ContentType.RICH_TEXT]: 0.05,
+      [ContentType.CODE]: 0.05,
+      [ContentType.TEXT]: 0.0,
+      [ContentType.WEB]: 0.05,
+      [ContentType.CHAT_SESSION]: 0.0,
       [ContentType.OFFICE_DOC]: 0.05,
       [ContentType.OFFICE_SHEET]: 0.0,
       [ContentType.OFFICE_PRESENTATION]: 0.05,
@@ -494,9 +496,9 @@ export class ResultRankingEngine {
       [ContentType.XML]: 0.0,
       [ContentType.RASTER_IMAGE]: -0.1,
       [ContentType.VECTOR_IMAGE]: -0.1,
-      [ContentType.DOCUMENT_IMAGE]: -0.05,
       [ContentType.VIDEO]: 0.05,
       [ContentType.AUDIO]: 0.0,
+      [ContentType.AUDIO_FILE]: 0.0,
       [ContentType.BINARY]: -0.2,
       [ContentType.UNKNOWN]: -0.1,
     };
@@ -596,16 +598,20 @@ export class ResultRankingEngine {
 
     let preferenceScore = 0.5;
 
+    const ctx = userContext as {
+      preferredContentTypes?: ContentType[];
+      preferredSources?: string[];
+      recentlyAccessed?: string[];
+    };
+
     // Preferred content types
-    if (
-      userContext.preferredContentTypes?.includes(result.metadata.contentType)
-    ) {
+    if (ctx.preferredContentTypes?.includes(result.metadata.contentType)) {
       preferenceScore += 0.2;
     }
 
     // Preferred sources
     if (
-      userContext.preferredSources?.some((source: string) =>
+      ctx.preferredSources?.some((source: string) =>
         result.metadata.sourceFile.includes(source)
       )
     ) {
@@ -613,7 +619,7 @@ export class ResultRankingEngine {
     }
 
     // Recently accessed content
-    if (userContext.recentlyAccessed?.includes(result.id)) {
+    if (ctx.recentlyAccessed?.includes(result.id)) {
       preferenceScore += 0.1;
     }
 

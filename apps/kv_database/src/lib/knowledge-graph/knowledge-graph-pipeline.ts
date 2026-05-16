@@ -1,12 +1,12 @@
 import { Pool } from "pg";
 import { DocumentEmbeddingService } from "../embeddings.js";
-import { ContentType } from "../../types/index.js";
+import { ContentType } from "@kv/types";
 import {
   KnowledgeGraphEntityExtractor,
-  EntityExtractionConfig,
+  type EntityExtractionConfig,
   ExtractionMethod,
-} from "./entity-extractor";
-import { KnowledgeGraph } from "./knowledge-graph-manager.js";
+  KnowledgeGraph,
+} from "@kv/knowledge-graph";
 
 export interface KnowledgeGraphPipelineConfig {
   entityExtraction: Partial<EntityExtractionConfig>;

@@ -5,8 +5,8 @@ import {
   EntityExtractionResult,
   EntityType,
   RelationshipType,
-} from "./entity-extractor.js";
-import { DocumentEmbeddingService } from "../embeddings.js";
+} from "./entity-extractor";
+import { DocumentEmbeddingServiceLike as DocumentEmbeddingService } from "./external-types";
 
 export interface EntitySimilarity {
   entity: KnowledgeGraphEntity;

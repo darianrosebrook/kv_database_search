@@ -14,11 +14,11 @@
 import express from "express";
 import {
   TemporalReasoningSystem,
-  CausalityAnalysisRequest,
-  TrendAnalysisRequest,
-  ChangeDetectionRequest,
-  TemporalQuery,
-} from "./temporal-reasoning";
+  type CausalityAnalysisRequest,
+  type TrendAnalysisRequest,
+  type ChangeDetectionRequest,
+  type TemporalQuery,
+} from "@kv/knowledge-graph";
 import { DocumentDatabase } from "./database";
 
 export class TemporalReasoningAPI {

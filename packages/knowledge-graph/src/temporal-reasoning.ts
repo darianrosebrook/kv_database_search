@@ -949,7 +949,7 @@ class TrendAnalysisEngine {
       "stable",
       "volatile",
       "cyclic",
-    ];
+    ] as const;
     const trendDirection =
       trendDirections[Math.floor(Math.random() * trendDirections.length)];
 
@@ -1042,9 +1042,9 @@ class ChangePointDetector {
       changePoints.push({
         id: `change_${i}`,
         timestamp,
-        changeType: ["abrupt", "gradual", "seasonal", "trend"][
+        changeType: (["abrupt", "gradual", "seasonal", "trend"] as const)[
           Math.floor(Math.random() * 4)
-        ],
+        ]!,
         significance: 0.7 + Math.random() * 0.25,
         confidence: 0.8 + Math.random() * 0.15,
         description: `Significant change in entity ${entityId} behavior`,
@@ -1072,7 +1072,7 @@ class ChangePointDetector {
 class TemporalQueryEngine {
   constructor(private database: any) {}
 
-  async executeQuery(query: TemporalQuery): Promise {
+  async executeQuery(query: TemporalQuery): Promise<Record<string, unknown>> {
     // TODO: Implement temporal query execution when temporal reasoning requirements are defined
     // In real implementation, this would parse and execute temporal GraphQL queries
 

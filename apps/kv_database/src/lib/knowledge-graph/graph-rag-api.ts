@@ -1,24 +1,21 @@
 import express, { Request, Response, NextFunction } from "express";
 import { Pool } from "pg";
 import { DocumentEmbeddingService } from "../embeddings.js";
-import { ContentType } from "../../types/index.js";
-import { EntityType, RelationshipType } from "./entity-extractor.js";
+import { ContentType } from "@kv/types";
 import {
-  HybridSearchEngine,
+  EntityType,
+  RelationshipType,
+  MultiHopReasoningEngine,
+  ResultRankingEngine,
+  KnowledgeGraph,
   type SearchQuery,
   type SearchMetrics,
   type SearchExplanation,
-} from "./hybrid-search-engine.js";
-import {
-  MultiHopReasoningEngine,
   type ReasoningQuery,
   type ReasoningResult,
-} from "./multi-hop-reasoning.js";
-import {
-  ResultRankingEngine,
-  type RankedSearchResult,
-} from "./result-ranking.js";
-import { KnowledgeGraph } from "./knowledge-graph-manager.js";
+} from "@kv/knowledge-graph";
+import { HybridSearchEngine } from "./hybrid-search-engine.js";
+import { type RankedSearchResult } from "@kv/knowledge-graph";
 
 // API Request/Response Types following OpenAPI contract
 export interface SearchRequest {

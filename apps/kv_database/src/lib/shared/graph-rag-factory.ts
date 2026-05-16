@@ -9,14 +9,16 @@ import { Pool } from "pg";
 import { DocumentEmbeddingService } from "../embeddings.js";
 import {
   HybridSearchEngine,
+  MonitoringSystem,
+  // GraphRagApiServer, // Not implemented yet
+} from "../knowledge-graph/index.js";
+import {
   MultiHopReasoningEngine,
   ResultRankingEngine,
   KnowledgeGraph,
   ProvenanceTracker,
   QueryOptimizer,
-  MonitoringSystem,
-  // GraphRagApiServer, // Not implemented yet
-} from "../knowledge-graph/index.js";
+} from "@kv/knowledge-graph";
 import { DependencyContainer, SERVICE_TOKENS } from "./dependency-container.js";
 import { Logger } from "./logger.js";
 import type { DatabaseConfig, EmbeddingConfig } from "./config.js";

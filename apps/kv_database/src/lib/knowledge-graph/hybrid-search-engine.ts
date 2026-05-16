@@ -1,127 +1,33 @@
 import { Pool, PoolClient } from "pg";
 import { DocumentEmbeddingService } from "../embeddings.js";
-import { ContentType } from "../../types/index.js";
-import { EntityType, RelationshipType } from "./entity-extractor.js";
+import { ContentType } from "@kv/types";
+import {
+  EntityType,
+  RelationshipType,
+  type SearchQuery,
+  type SearchResult,
+  type SearchResultMetadata,
+  type EntityReference,
+  type RelationshipReference,
+  type SearchExplanation,
+  type TraversalPath,
+  type ReasoningStep,
+  type HybridSearchConfig,
+  type SearchMetrics,
+} from "@kv/knowledge-graph";
 
-export interface SearchQuery {
-  text: string;
-  filters?: {
-    contentTypes?: ContentType[];
-    entityTypes?: EntityType[];
-    relationshipTypes?: RelationshipType[];
-    sourceFiles?: string[];
-    minConfidence?: number;
-    dateRange?: {
-      start: Date;
-      end: Date;
-    };
-  };
-  options?: {
-    maxResults?: number;
-    maxHops?: number;
-    minSimilarity?: number;
-    includeExplanation?: boolean;
-    searchType?: "vector" | "graph" | "hybrid";
-    enableSemanticExpansion?: boolean;
-    boostRecentContent?: boolean;
-  };
-}
-
-export interface SearchResult {
-  id: string;
-  text: string;
-  score: number;
-  similarity: number;
-  relevanceScore: number;
-  metadata: SearchResultMetadata;
-  entities: EntityReference[];
-  relationships: RelationshipReference[];
-  explanation?: SearchExplanation;
-}
-
-export interface SearchResultMetadata {
-  contentType: ContentType;
-  sourceFile: string;
-  chunkId: string;
-  extractionMethod: string;
-  processingTime: Date;
-  wordCount: number;
-  characterCount: number;
-}
-
-export interface EntityReference {
-  id: string;
-  name: string;
-  type: EntityType;
-  confidence: number;
-  mentionCount: number;
-  aliases: string[];
-}
-
-export interface RelationshipReference {
-  id: string;
-  sourceEntityId: string;
-  targetEntityId: string;
-  type: RelationshipType;
-  confidence: number;
-  strength: number;
-  isDirectional: boolean;
-}
-
-export interface SearchExplanation {
-  queryEntities: EntityReference[];
-  traversalPaths: TraversalPath[];
-  reasoningSteps: ReasoningStep[];
-  searchStrategy: string;
-  totalExecutionTime: number;
-  vectorSearchTime: number;
-  graphTraversalTime: number;
-  resultFusionTime: number;
-}
-
-export interface TraversalPath {
-  entities: EntityReference[];
-  relationships: RelationshipReference[];
-  confidence: number;
-  hopCount: number;
-  pathStrength: number;
-  explanation: string;
-}
-
-export interface ReasoningStep {
-  step: number;
-  description: string;
-  confidence: number;
-  evidence: string[];
-  entitiesInvolved: string[];
-}
-
-export interface HybridSearchConfig {
-  vectorWeight: number; // 0-1, weight for vector similarity
-  graphWeight: number; // 0-1, weight for graph traversal
-  maxHops: number; // Maximum hops for graph traversal
-  minEntityConfidence: number; // Minimum confidence for entity matching
-  minRelationshipConfidence: number; // Minimum confidence for relationship traversal
-  enableQueryExpansion: boolean; // Whether to expand queries using entity relationships
-  expansionDepth: number; // How many hops to use for query expansion
-  resultFusionStrategy: "weighted" | "rank" | "hybrid"; // How to combine vector and graph results
-  performanceMode: "accuracy" | "speed" | "balanced"; // Performance vs accuracy trade-off
-}
-
-export interface SearchMetrics {
-  totalResults: number;
-  vectorResults: number;
-  graphResults: number;
-  fusedResults: number;
-  executionTime: number;
-  vectorSearchTime: number;
-  graphTraversalTime: number;
-  resultFusionTime: number;
-  entitiesFound: number;
-  relationshipsTraversed: number;
-  maxHopsReached: number;
-  cacheHitRate?: number;
-}
+export type {
+  SearchQuery,
+  SearchResult,
+  SearchResultMetadata,
+  EntityReference,
+  RelationshipReference,
+  SearchExplanation,
+  TraversalPath,
+  ReasoningStep,
+  HybridSearchConfig,
+  SearchMetrics,
+};
 
 /**
  * Hybrid search engine that combines vector similarity with knowledge graph traversal

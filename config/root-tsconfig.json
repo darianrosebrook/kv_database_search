@@ -20,6 +20,7 @@
     "sourceMap": true,
     "baseUrl": "..",
     "paths": {
+      "@kv/knowledge-graph": ["packages/knowledge-graph/src/index.ts"],
       "@kv/media": ["packages/media/src/index.ts"],
       "@kv/processors": ["packages/processors/src/index.ts"],
       "@kv/types": ["packages/types/src/index.ts"],
