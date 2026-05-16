@@ -1,5 +1,5 @@
 {
-  "name": "@obsidian-rag/media-processing",
+  "name": "@kv/media",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",

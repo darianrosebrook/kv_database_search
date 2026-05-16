@@ -14,7 +14,7 @@
     "@fastify/cors": "^11.1.0",
     "@fastify/type-provider-typebox": "^6.0.0",
     "@kv/utils": "workspace:*",
-    "@obsidian-rag/media-processing": "workspace:*",
+    "@kv/media": "workspace:*",
     "axios": "^1.12.2",
     "canvas": "^3.2.0",
     "chokidar": "^4.0.3",

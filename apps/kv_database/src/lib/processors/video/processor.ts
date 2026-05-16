@@ -23,7 +23,7 @@ import {
   FrameDeduplicator,
   PerceptualHasher,
   VideoMetadataExtractor,
-} from "@obsidian-rag/media-processing";
+} from "@kv/media";
 import { configureFFmpegPaths } from "./ffmpeg-config.ts";
 import {
   classifyVideoContent,

@@ -415,7 +415,7 @@ class MultiModalMonitor {
 - [x] Content fusion pipeline (OCR + transcription + text)
 - [x] Multi-modal search across text, images, audio, video
 - [x] Adaptive frame extraction for video (scene-based)
-- [x] `@obsidian-rag/media-processing` package for video processing
+- [x] `@kv/media` package for video processing
 
 ### Phase 5: Optimization — In Progress
 - [x] Strategy-based processing (skip unnecessary OCR)

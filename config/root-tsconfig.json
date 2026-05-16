@@ -20,7 +20,7 @@
     "sourceMap": true,
     "baseUrl": "..",
     "paths": {
-      "@obsidian-rag/media-processing": ["packages/media-processing/src/index.ts"],
+      "@kv/media": ["packages/media/src/index.ts"],
       "@kv/utils": ["packages/utils/src/index.ts"]
     }
   },

@@ -14,7 +14,7 @@ import {
   PerceptualHasher,
   VideoMetadataExtractor,
   createTempDir,
-} from "@obsidian-rag/media-processing";
+} from "@kv/media";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const VIDEO_PATH = path.resolve(__dirname, "test-files/test-video.mp4");
