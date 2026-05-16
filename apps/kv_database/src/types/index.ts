@@ -379,28 +379,13 @@ export interface ContentFeatures {
   language: string;
 }
 
-// Enhanced entity extraction types
-export interface ExtractedEntity {
-  text: string;
-  type: "person" | "organization" | "location" | "concept" | "term" | "other";
-  confidence: number;
-  position: { start: number; end: number };
-}
-
-export interface EntityRelationship {
-  subject: string;
-  predicate: string;
-  object: string;
-  confidence: number;
-}
-
-export interface EntityCluster {
-  id: string;
-  name: string;
-  entities: ExtractedEntity[];
-  centrality: number;
-  relationships: EntityRelationship[];
-}
+// Entity extraction types — canonical definitions live in @kv/utils
+import type {
+  ExtractedEntity,
+  EntityRelationship,
+  EntityCluster,
+} from "@kv/utils";
+export type { ExtractedEntity, EntityRelationship, EntityCluster };
 
 // Ingestion types
 export interface MultiModalIngestionConfig {

@@ -1,5 +1,5 @@
 {
-  "name": "@kv/knowledge-graph",
+  "name": "@kv/entities",
   "version": "0.1.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -17,14 +17,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@kv/entities": "workspace:*",
-    "@kv/types": "workspace:*",
-    "@kv/utils": "workspace:*",
-    "pg": "^8.16.3"
+    "@kv/utils": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@types/pg": "^8.15.5",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }

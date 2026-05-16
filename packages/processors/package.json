@@ -20,6 +20,7 @@
     "@kv/types": "workspace:*",
     "@kv/utils": "workspace:*",
     "@kv/media": "workspace:*",
+    "@kv/entities": "workspace:*",
     "canvas": "^3.2.0",
     "fluent-ffmpeg": "^2.1.3",
     "mammoth": "^1.11.0",

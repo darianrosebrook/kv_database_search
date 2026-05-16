@@ -5,9 +5,9 @@
 
 import {
   EntityExtractor,
-  ExtractionContext,
-  ExtractionResult,
-} from "./external-types";
+  type ExtractionContext,
+  type ExtractionResult,
+} from "@kv/entities";
 import { DictionaryService } from "./external-types";
 import { ExtractedEntity, EntityRelationship } from "@kv/utils";
 
@@ -67,10 +67,10 @@ export class EntityAnalyzer {
         maxEntities: 500,
         minConfidence: 0.6,
         allowedTypes: [
-          { primary: "person", secondary: [], semantic: [], domain },
-          { primary: "organization", secondary: [], semantic: [], domain },
-          { primary: "location", secondary: [], semantic: [], domain },
-          { primary: "concept", secondary: [], semantic: [], domain },
+          { primary: "person", secondary: [], confidence: 1 },
+          { primary: "organization", secondary: [], confidence: 1 },
+          { primary: "location", secondary: [], confidence: 1 },
+          { primary: "concept", secondary: [], confidence: 1 },
         ],
         forbiddenTypes: [],
         contextWindow: 100,
@@ -104,14 +104,10 @@ export class EntityAnalyzer {
       // Convert enhanced relationships to legacy format
       const relationships: EntityRelationship[] = result.relationships.map(
         (rel) => ({
-          source: rel.sourceEntity,
-          target: rel.targetEntity,
-          type: rel.type.category,
+          subject: rel.sourceEntity,
+          predicate: rel.type.primary,
+          object: rel.targetEntity,
           confidence: rel.confidence,
-          context: rel.context,
-          strength: rel.strength || 0.5,
-          evidence: rel.evidence || [],
-          id: rel.id,
         })
       );
 

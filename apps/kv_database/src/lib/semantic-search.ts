@@ -11,11 +11,7 @@
 
 import { DocumentDatabase } from "./database";
 import { DocumentEmbeddingService } from "./embeddings";
-import {
-  // detectLanguage, // Not used
-  EntityExtractor,
-  // EntityCluster, // Not used
-} from "./entity-extractor";
+import { EntityExtractor } from "@kv/entities";
 import { EntityRelationship } from "./utils";
 import {
   SearchResult,

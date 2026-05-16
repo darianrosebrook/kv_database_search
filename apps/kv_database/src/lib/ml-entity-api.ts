@@ -13,10 +13,10 @@
 import express from "express";
 import {
   MLEntityLinker,
-  MLEntity,
-  ExtractionOptions,
-  UserFeedback,
-} from "./ml-entity-linker";
+  type MLEntity,
+  type ExtractionOptions,
+  type UserFeedback,
+} from "@kv/entities";
 import { DocumentDatabase } from "./database";
 
 export class MLEntityAPI {

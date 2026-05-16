@@ -21,7 +21,7 @@
 export interface MLEntity {
   id: string;
   text: string;
-  type: EntityType;
+  type: MLEntityType;
   subtype?: string;
   confidence: number;
   position: { start: number; end: number };
@@ -66,7 +66,7 @@ export interface MLEntityMetadata {
 
 export interface AlternativeEntity {
   text: string;
-  type: EntityType;
+  type: MLEntityType;
   confidence: number;
   reasoning: string;
 }
@@ -114,7 +114,7 @@ export interface UserFeedback {
   feedbackType: "correct" | "incorrect" | "partial" | "ambiguous";
   correctEntity?: {
     text: string;
-    type: EntityType;
+    type: MLEntityType;
     canonicalId?: string;
   };
   notes?: string;
@@ -158,7 +158,7 @@ export interface ValidationResults {
   crossValidationScore: number;
 }
 
-export interface EntityType {
+export interface MLEntityType {
   category:
     | "PERSON"
     | "ORGANIZATION"
@@ -210,9 +210,9 @@ export type LearningStatus =
  * relationship classification using deep learning models with continuous learning.
  */
 export class MLEntityLinker {
-  private nerModel = null; // Placeholder for NER model
-  private linkingModel = null; // Placeholder for entity linking model
-  private relationshipModel = null; // Placeholder for relationship classification
+  private nerModel: { type: string; name: string; status: string } | null = null;
+  private linkingModel: { type: string; name: string; status: string } | null = null;
+  private relationshipModel: { type: string; name: string; status: string } | null = null;
   private contextModel = null; // Placeholder for contextual analysis
 
   private modelRegistry: ModelRegistry;
@@ -310,18 +310,18 @@ export class MLEntityLinker {
       `🔍 ML entity extraction started for text length: ${text.length}`
     );
 
-    try {
-      // Merge with defaults
-      const opts: ExtractionOptions = {
-        confidenceThreshold: this.defaultConfidenceThreshold,
-        enableDisambiguation: true,
-        language: "en",
-        maxEntities: 100,
-        includeRelationships: false,
-        modelPreferences: {},
-        ...options,
-      };
+    // Merge with defaults
+    const opts: ExtractionOptions = {
+      confidenceThreshold: this.defaultConfidenceThreshold,
+      enableDisambiguation: true,
+      language: "en",
+      maxEntities: 100,
+      includeRelationships: false,
+      modelPreferences: {},
+      ...options,
+    };
 
+    try {
       // Step 1: Preprocessing
       const preprocessedText = await this.preprocessText(text, opts.language);
       console.log(`📝 Text preprocessed in ${Date.now() - startTime}ms`);
@@ -376,7 +376,7 @@ export class MLEntityLinker {
       return filteredEntities;
     } catch (error) {
       console.error("❌ ML entity extraction failed:", error);
-      return this.fallbackExtraction(text, options);
+      return this.fallbackExtraction(text, opts);
     }
   }
 
@@ -642,9 +642,9 @@ export class MLEntityLinker {
     // Simple rule-based extraction as fallback
     const entities: MLEntity[] = [];
     const patterns = [
-      { regex: /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g, type: "PERSON" },
-      { regex: /\b[A-Z][A-Za-z\s]+\b/g, type: "ORGANIZATION" },
-      { regex: /\b[A-Za-z\s]+, [A-Z]{2}\b/g, type: "LOCATION" },
+      { regex: /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g, type: "PERSON" as const },
+      { regex: /\b[A-Z][A-Za-z\s]+\b/g, type: "ORGANIZATION" as const },
+      { regex: /\b[A-Za-z\s]+, [A-Z]{2}\b/g, type: "LOCATION" as const },
     ];
 
     for (const pattern of patterns) {
@@ -653,7 +653,7 @@ export class MLEntityLinker {
         entities.push({
           id: this.generateEntityId(),
           text: match[0],
-          type: { category: pattern.type, confidence: 0.6 },
+          type: { category: pattern.type, confidence: 0.6 } as MLEntityType,
           confidence: 0.6,
           position: { start: match.index, end: match.index + match[0].length },
           metadata: {
@@ -754,7 +754,7 @@ export class MLEntityLinker {
   /**
    * Get system health status
    */
-  async getHealthStatus(): Promise {
+  async getHealthStatus(): Promise<Record<string, unknown>> {
     return {
       status: "healthy",
       timestamp: new Date(),
@@ -775,7 +775,7 @@ export class MLEntityLinker {
   /**
    * Get system performance metrics
    */
-  async getPerformanceMetrics(): Promise {
+  async getPerformanceMetrics(): Promise<Record<string, unknown>> {
     return await this.performanceMonitor.getMetrics();
   }
 }
@@ -798,16 +798,19 @@ class ModelRegistry {
     return modelId;
   }
 
-  async getModel(modelId: string): Promise {
+  async getModel(modelId: string): Promise<unknown> {
     return this.models.get(modelId);
   }
 
   async listModels(): Promise<unknown[]> {
-    return Array.from(this.models.entries()).map(([id, model]) => ({
-      id,
-      status: model.status,
-      metadata: model.metadata,
-    }));
+    return Array.from(this.models.entries()).map(([id, model]) => {
+      const m = model as { status: string; metadata: unknown };
+      return {
+        id,
+        status: m.status,
+        metadata: m.metadata,
+      };
+    });
   }
 }
 
@@ -879,8 +882,16 @@ class FeedbackProcessor {
 /**
  * Performance Monitor for tracking system metrics
  */
+interface ExtractionMetric {
+  timestamp: number;
+  type: string;
+  processingTime: number;
+  entityCount: number;
+  options: number;
+}
+
 class PerformanceMonitor {
-  private metrics = [];
+  private metrics: ExtractionMetric[] = [];
 
   recordExtraction(
     processingTime: number,
@@ -896,7 +907,7 @@ class PerformanceMonitor {
     });
   }
 
-  async getMetrics(): Promise {
+  async getMetrics(): Promise<Record<string, unknown>> {
     const recent = this.metrics.slice(-100); // Last 100 metrics
 
     return {

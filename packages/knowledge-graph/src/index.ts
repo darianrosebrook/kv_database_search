@@ -89,14 +89,5 @@ export type {
 // Temporal reasoning (causality detection, trend analysis, change-point detection)
 export * from "./temporal-reasoning";
 
-// Structural stubs for external collaborators (real impls live in
-// @kv/entities and @kv/database)
-export type {
-  DocumentEmbeddingServiceLike,
-  EntityExtractorLike,
-  ExtractionContextLike,
-  ProcessedEntityLike,
-  EntityRelationshipLike,
-  ExtractionResultLike,
-} from "./external-types";
-export { StubEntityExtractor } from "./external-types";
+// Structural stub for the embedding service (real impl lives in @kv/database)
+export type { DocumentEmbeddingServiceLike } from "./external-types";

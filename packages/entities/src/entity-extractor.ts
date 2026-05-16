@@ -13,6 +13,10 @@
  * Date: 2025-01-25
  */
 
+import { ExtractedEntity, EntityRelationship as LegacyEntityRelationship } from "@kv/utils";
+
+export type { ExtractedEntity, LegacyEntityRelationship };
+
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
@@ -341,10 +345,14 @@ export class EntityExtractor {
       let match;
       while ((match = pattern.regex.exec(text)) !== null) {
         relationships.push({
-          subject: match[1],
-          predicate: pattern.predicate,
-          object: match[2],
+          id: `rel_${relationships.length}_${Date.now()}`,
+          sourceEntity: match[1]!,
+          targetEntity: match[2]!,
+          type: { primary: pattern.predicate, confidence: 0.7 },
+          strength: 0.7,
           confidence: 0.7,
+          context: match[0]!,
+          evidence: [match[0]!],
         });
       }
     }
@@ -435,37 +443,6 @@ export class EntityExtractor {
       clusteringQuality: 0.6,
     };
   }
-}
-
-// ============================================================================
-// BACKWARD COMPATIBILITY TYPES
-// ============================================================================
-
-/**
- * Legacy entity type for backward compatibility
- */
-export interface ExtractedEntity {
-  text: string;
-  type: "person" | "organization" | "location" | "concept" | "term" | "other";
-  confidence: number;
-  position: { start: number; end: number };
-  label: string;
-  aliases?: string[];
-  canonicalForm?: string;
-  dictionaryDB?: boolean;
-  dictionarySource?: string;
-  dictionaryConfidence?: number;
-  dictionaryReasoning?: string;
-}
-
-/**
- * Legacy relationship type for backward compatibility
- */
-export interface LegacyEntityRelationship {
-  subject: string;
-  predicate: string;
-  object: string;
-  confidence: number;
 }
 
 // ============================================================================

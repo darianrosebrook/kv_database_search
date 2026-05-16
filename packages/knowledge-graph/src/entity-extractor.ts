@@ -1,17 +1,10 @@
 import { ExtractedEntity } from "@kv/utils";
 import {
-  EntityExtractorLike,
-  ExtractionContextLike,
-  ProcessedEntityLike,
-  EntityRelationshipLike,
-  StubEntityExtractor,
-} from "./external-types";
-
-// Re-aliased to match prior in-tree names so the rest of this file is unchanged
-type EntityExtractor = EntityExtractorLike;
-type ExtractionContext = ExtractionContextLike;
-type ProcessedEntity = ProcessedEntityLike;
-type EntityRelationship = EntityRelationshipLike;
+  EntityExtractor,
+  type ExtractionContext,
+  type ProcessedEntity,
+  type EntityRelationship,
+} from "@kv/entities";
 
 // Entity types aligned with database schema
 export enum EntityType {
@@ -164,7 +157,7 @@ export class KnowledgeGraphEntityExtractor {
     config: Partial<EntityExtractionConfig> = {},
     baseExtractor?: EntityExtractor
   ) {
-    this.baseExtractor = baseExtractor ?? new StubEntityExtractor();
+    this.baseExtractor = baseExtractor ?? new EntityExtractor(null);
     this.config = {
       minEntityConfidence: 0.7,
       minRelationshipConfidence: 0.5,
