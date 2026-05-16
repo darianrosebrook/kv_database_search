@@ -1,3 +1,61 @@
+# obsidian-rag
+
+Multi-modal retrieval-augmented generation (RAG) and knowledge-graph engine. Originally built to make an Obsidian vault searchable, the substance is tool-neutral — it ingests markdown, PDFs, Office docs, audio, images, and video; embeds them with Ollama; stores vectors and a knowledge graph in PostgreSQL; and serves hybrid semantic + graph search through HTTP and WebSocket APIs.
+
+The repository is a pnpm workspace. The application (`@kv/database`) sits in `apps/kv_database/`. The tool-neutral substance has been factored into reusable packages under `packages/`.
+
+## Prerequisites
+
+- **Node.js 22+** and **pnpm 10+** (the workspace uses `pnpm` exclusively; `npm install` will produce the wrong hoisting layout)
+- **PostgreSQL 14+** with the **pgvector** extension
+- **Ollama** running locally for embeddings + LLM (default models: `embeddinggemma` for embeddings, `llama3.1` for chat)
+- **FFmpeg** for video and audio processing (`brew install ffmpeg`)
+- **tesseract** (native binary) for OCR (`brew install tesseract`)
+- **yt-dlp** for URL-based video ingestion (`brew install yt-dlp`) — optional
+
+See [SYSTEM_DEPENDENCIES.md](./SYSTEM_DEPENDENCIES.md) for the full list and platform-specific notes.
+
+## Install
+
+```bash
+pnpm install
+cp .env.example .env  # then edit DATABASE_URL, OBSIDIAN_VAULT_PATH, etc.
+pnpm --filter @kv/database run setup   # creates DB schema, verifies pgvector
+```
+
+## Common commands
+
+| Command | What it does |
+|---|---|
+| `npm run server` | Start the HTTP + WebSocket server (port 3001 by default) |
+| `npm run graph-rag-server` | Start the dedicated graph-rag service (port 3002) |
+| `npm run ingest` | Ingest the configured Obsidian vault with image processing |
+| `pnpm --filter @kv/database exec tsx src/scripts/ingest-generic.ts <db-url> <root-path> <obsidian\|markdown\|notion>` | Ingest any folder with a chosen config preset |
+| `npm run search -- --query "your query"` | Semantic search against the indexed corpus |
+| `pnpm --filter @kv/database run video-extract -- <file-or-url>` | Extract keyframes, audio, transcript from a video |
+| `npm run typecheck` | Workspace-wide `tsc --noEmit` |
+| `npm run lint` | ESLint over `apps/` and `packages/*/src` |
+| `npm run test:unit` | Vitest unit suite (collects from all workspace packages) |
+| `pnpm --filter @kv/<package> test` | Run a single package's tests |
+
+## Workspace packages
+
+| Package | Purpose | Key exports |
+|---|---|---|
+| [`@kv/utils`](./packages/utils) | Tool-neutral utilities: hashing, vector math, text helpers, link/tag extractors, logger, config reader, lightweight DI container | `createHash`, `cosineSimilarity`, `extractLinks`, `extractTags`, `cleanMarkdown`, `LoggerFactory` |
+| [`@kv/types`](./packages/types) | Shared content-type vocabulary used across packages | `ContentType`, `MultiModalContentType`, `ContentMetadata` |
+| [`@kv/media`](./packages/media) | Video and image processing: adaptive frame extraction, scene detection, perceptual hashing, ffmpeg wrappers | `AdaptiveFrameExtractor`, `SceneDetector` |
+| [`@kv/processors`](./packages/processors) | Content processors for PDF, OCR, Office, speech/audio, image classification, video; pipelines and registries | `ContentProcessorRegistry`, `PDFProcessingPipeline`, `OCRProcessor`, `SpeechProcessor`, `ImageClassificationProcessor` |
+| [`@kv/entities`](./packages/entities) | Rule-based entity extraction + ML-based entity linking (BERT/RoBERTa) | `EntityExtractor`, `MLEntityLinker` |
+| [`@kv/knowledge-graph`](./packages/knowledge-graph) | Knowledge-graph manager, multi-hop reasoning, provenance tracking, query optimizer, result ranking, temporal reasoning | `KnowledgeGraph`, `MultiHopReasoningEngine`, `ProvenanceTracker`, `QueryOptimizer`, `TemporalReasoningSystem` |
+| [`@kv/ingestion`](./packages/ingestion) | Config-driven document ingestion pipeline. Storage and embeddings are passed as structural interfaces, so the package has no runtime dep on `@kv/database` | `DocumentIngestionPipeline`, `OBSIDIAN_CONFIG`, `MARKDOWN_CONFIG`, `NOTION_CONFIG` |
+| [`@kv/contracts`](./packages/contracts) | OpenAPI and GraphQL schemas — the canonical interface contracts | (schema files) |
+| `@kv/database` (app, `apps/kv_database/`) | The Fastify server, scripts, CLI tools, and the database/embedding layer that wires everything together | `DocumentDatabase`, `DocumentEmbeddingService`, `MultiModalIngestionPipeline` |
+
+For configuration-driven ingestion against an arbitrary folder structure, see [docs/USAGE.md](./docs/USAGE.md).
+
+---
+
 ## 🏗️ Architecture
 
 This project uses a **microservices architecture** with the following services:

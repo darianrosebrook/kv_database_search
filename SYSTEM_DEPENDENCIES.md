@@ -18,23 +18,29 @@ This project requires several system-level dependencies for full functionality, 
   - Required for: `video-extract --from-url <url>` mode (no impact on local-file extraction)
   - Verify: `yt-dlp --version`
 
+### OCR (Required for image text extraction)
+- **Tesseract** - Native OCR binary
+  - Installation: `brew install tesseract` (macOS), `apt install tesseract-ocr` (Debian/Ubuntu)
+  - Required for: `OCRProcessor` and `ImageClassificationProcessor` in `@kv/processors`. The processor discovers the binary at `/opt/homebrew/bin/tesseract`, `/usr/local/bin/tesseract`, `/usr/bin/tesseract`, or on `PATH`.
+  - Verify: `tesseract --version`
+
 ### Additional Image Libraries (Recommended)
 - **WebP tools** - WebP image format support
   - Installation: `brew install webp`
-  - Required for: WebP image format support
 
 - **libheif** - HEIF/HEIC image format support
   - Installation: `brew install libheif`
-  - Required for: Modern image format support
 
 ## No Longer Required
 
-The following system dependencies were previously required but have been replaced with pure JavaScript/Node.js alternatives:
+The following system dependencies were previously required but have been replaced:
 
 - **GraphicsMagick / Ghostscript** - Previously required by `pdf2pic` for PDF page rendering. Now replaced by `pdfjs-dist` + `canvas` (Node.js packages), which render PDF pages entirely in-process without system dependencies.
 - **ImageMagick** - No longer required for core functionality. The `canvas` npm package handles image rendering needs.
-- **Leptonica** - No longer required. `tesseract.js` is a pure WASM implementation that does not depend on the system Tesseract or Leptonica packages.
-- **Tesseract (system package)** - No longer required. `tesseract.js` bundles its own WASM-based OCR engine.
+
+## OCR engine note
+
+`tesseract.js` (the WASM port) appears in `package.json` for legacy reasons but the active OCR code path in `@kv/processors` spawns the native `tesseract` binary via `child_process` for performance and accuracy. The remaining `tesseract.js`-based tests in `packages/processors/tests/unit/ocr-*.test.ts` are stale and known to fail; they will be rewritten or removed in a future cleanup pass.
 
 ## Installation Verification
 
@@ -50,7 +56,6 @@ ffprobe -version
 
 The following Node.js packages handle processing without additional system dependencies:
 
-- `tesseract.js` - WASM-based OCR engine (no system Tesseract needed)
 - `pdfjs-dist` - PDF parsing and page rendering (no system PDF tools needed)
 - `canvas` - Node.js canvas implementation for PDF page rendering
 - `fluent-ffmpeg` - Requires FFmpeg system package for video/audio processing

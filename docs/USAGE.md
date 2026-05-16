@@ -1,170 +1,234 @@
-# Generic Document Processing System
+# Document ingestion usage guide
 
-This system has been generalized to work with any folder structure and knowledge management system, not just Obsidian.
+`@kv/ingestion` provides a config-driven pipeline that walks a directory of markdown files, chunks them, generates embeddings, and writes the results to a database. Storage and embeddings are injected as structural interfaces so the package has no runtime dependency on `@kv/database` — you can wire it to any backend that satisfies the contract.
 
-## Key Features
+## Key capabilities
 
-✅ **System Agnostic** - Works with Obsidian, generic Markdown, Notion, or custom formats  
-✅ **Configurable Link Formats** - Support for `[[wikilinks]]`, `[markdown](links)`, or custom patterns  
-✅ **Configurable Tag Formats** - Support for `#hashtags`, `@mentions`, or custom patterns  
-✅ **Flexible Content Types** - Configurable folder-based content classification  
-✅ **Multiple Frontmatter Formats** - YAML, TOML, JSON support  
-✅ **Backward Compatible** - Existing Obsidian code continues to work  
+- **System-agnostic** — Obsidian vaults, generic markdown, Notion exports, or your own format via custom config
+- **Configurable link parsing** — `[[wikilinks]]`, `[markdown](links)`, `{{custom}}`, or whatever regex you supply
+- **Configurable tag parsing** — `#hashtags`, `@mentions`, or custom patterns
+- **Folder-based content classification** — assign content types from path patterns or filename patterns
+- **YAML frontmatter** — parsed automatically; `type:` field overrides folder-based classification
+- **Glob include/exclude** — supports `**/`, `*`, `?`; root-level files match `**/*.md`
+- **Structure-aware chunking** — splits on markdown headers, with sliding-window fallback
+- **Skip-existing mode** — checks the database before re-embedding chunks (useful for incremental ingestion)
 
-## Quick Start
+## Quick start
 
-### Option 1: Generic Markdown Documents
+### Option 1 — ingest an Obsidian vault
+
 ```typescript
-import { DocumentDatabase, DocumentEmbeddingService, DocumentIngestionPipeline } from "./lib";
-import { MARKDOWN_CONFIG } from "./lib/types/document-config";
+import { DocumentDatabase } from "@kv/database/src/lib/database";
+import { DocumentEmbeddingService } from "@kv/database/src/lib/embeddings";
+import { DocumentIngestionPipeline, OBSIDIAN_CONFIG } from "@kv/ingestion";
 
-const database = new DocumentDatabase(connectionString);
-const embeddings = new DocumentEmbeddingService(embeddingConfig);
-const pipeline = new DocumentIngestionPipeline(database, embeddings, "/path/to/docs", MARKDOWN_CONFIG);
+const database = new DocumentDatabase(process.env.DATABASE_URL!);
+await database.initialize();
+
+const embeddings = new DocumentEmbeddingService({
+  model: "embeddinggemma",
+  dimension: 768,
+});
+
+const pipeline = new DocumentIngestionPipeline(
+  database,
+  embeddings,
+  "/path/to/vault",
+  OBSIDIAN_CONFIG
+);
+
+const result = await pipeline.ingestDocuments({
+  skipExisting: true,
+  batchSize: 5,
+  includePatterns: ["**/*.md"],
+  excludePatterns: ["**/.obsidian/**", "**/Attachments/**"],
+});
+
+console.log(result); // { totalFiles, processedFiles, totalChunks, ... }
+```
+
+### Option 2 — ingest a generic markdown documentation tree
+
+```typescript
+import { DocumentIngestionPipeline, MARKDOWN_CONFIG } from "@kv/ingestion";
+
+const pipeline = new DocumentIngestionPipeline(
+  database,
+  embeddings,
+  "/path/to/docs",
+  MARKDOWN_CONFIG
+);
 
 await pipeline.ingestDocuments({
   includePatterns: ["**/*.md", "**/*.mdx"],
-  excludePatterns: ["**/node_modules/**", "**/.git/**"]
+  excludePatterns: ["**/node_modules/**", "**/.git/**"],
 });
 ```
 
-### Option 2: Obsidian Vault (backward compatible)
+### Option 3 — Notion-style export
+
 ```typescript
-import { ObsidianDatabase, ObsidianEmbeddingService, ObsidianIngestionPipeline } from "./lib";
+import { DocumentIngestionPipeline, NOTION_CONFIG } from "@kv/ingestion";
 
-// This still works exactly as before
-const database = new ObsidianDatabase(connectionString);
-const embeddings = new ObsidianEmbeddingService(embeddingConfig);
-const pipeline = new ObsidianIngestionPipeline(database, embeddings, vaultPath);
+const pipeline = new DocumentIngestionPipeline(
+  database,
+  embeddings,
+  "/path/to/notion-export",
+  NOTION_CONFIG
+);
 
-await pipeline.ingestVault();
+await pipeline.ingestDocuments();
 ```
 
-### Option 3: Custom Configuration
-```typescript
-import { DocumentProcessingConfig } from "./lib/types/document-config";
+### Option 4 — custom configuration
 
-const myCustomConfig: DocumentProcessingConfig = {
-  systemName: "My Wiki",
+```typescript
+import {
+  DocumentIngestionPipeline,
+  type DocumentProcessingConfig,
+} from "@kv/ingestion";
+
+const wikiConfig: DocumentProcessingConfig = {
+  systemName: "MyWiki",
   uriScheme: "wiki",
   linkFormats: [
     {
-      pattern: /\{\{([^}]+)\}\}/g,  // {{link}} format
-      extractTarget: (match) => match[1],
-    }
+      pattern: /\{\{([^}]+)\}\}/g, // {{TargetPage}}
+      extractTarget: (m) => m[1],
+    },
   ],
   tagFormats: [
     {
-      pattern: /@([a-zA-Z0-9_-]+)/g,  // @tag format
-      extractTag: (match) => match[1],
-    }
+      pattern: /@([a-zA-Z0-9_-]+)/g, // @category
+      extractTag: (m) => m[1],
+    },
   ],
   contentTypes: {
-    "guide": { folderPatterns: ["guides", "tutorials"] },
-    "reference": { folderPatterns: ["ref", "reference"] },
+    guide: { folderPatterns: ["guides", "tutorials"] },
+    reference: { folderPatterns: ["reference", "api"] },
+    meeting: {
+      folderPatterns: ["meetings"],
+      filePatterns: ["meeting-", "standup-"],
+    },
   },
-  defaultContentType: "document",
-  // ... other config
+  defaultContentType: "page",
+  frontmatterFormats: { yaml: true, toml: false, json: false },
+  supportedExtensions: [".md"],
+  chunkingDefaults: {
+    maxChunkSize: 1000,
+    chunkOverlap: 150,
+    preserveStructure: true,
+    includeContext: true,
+    cleanContent: true,
+  },
 };
 
-const pipeline = new DocumentIngestionPipeline(database, embeddings, rootPath, myCustomConfig);
+const pipeline = new DocumentIngestionPipeline(
+  database,
+  embeddings,
+  "/path/to/wiki",
+  wikiConfig
+);
 ```
 
-## CLI Usage
+## CLI usage
+
+The repo ships a generic CLI driver at `apps/kv_database/src/scripts/ingest-generic.ts`:
 
 ```bash
-# Ingest Obsidian vault
-node ingest-generic.js "postgresql://..." "/path/to/vault" obsidian
+# Ingest an Obsidian vault
+pnpm --filter @kv/database exec tsx src/scripts/ingest-generic.ts \
+  "postgresql://user:pass@localhost:5432/obsidian_rag" \
+  "/path/to/vault" \
+  obsidian
 
-# Ingest markdown documentation
-node ingest-generic.js "postgresql://..." "/path/to/docs" markdown
-
-# Ingest with custom patterns
-node ingest-generic.js "postgresql://..." "/path/to/files" markdown \
+# Ingest a markdown documentation tree with custom patterns
+pnpm --filter @kv/database exec tsx src/scripts/ingest-generic.ts \
+  "postgresql://..." \
+  "/path/to/docs" \
+  markdown \
   --include "**/*.md" --include "**/*.mdx" \
-  --exclude "**/node_modules/**" --exclude "**/.git/**"
+  --exclude "**/node_modules/**" --exclude "**/.git/**" \
+  --batch-size 10
+
+# Print help and exit
+pnpm --filter @kv/database exec tsx src/scripts/ingest-generic.ts
 ```
 
-## Supported Configurations
+For the image-aware Obsidian pipeline (OCR + scene classification on embedded images), use `npm run ingest` instead — that drives `apps/kv_database/src/scripts/ingest.ts`, which composes the ingestion pipeline with `@kv/processors`.
 
-### Built-in Configurations
+## Built-in configurations
 
-| System | Link Format | Tag Format | Content Types |
-|--------|-------------|------------|---------------|
-| **Obsidian** | `[[wikilinks]]` | `#tags` | moc, article, conversation, book-note, template |
-| **Markdown** | `[text](url)`, `[[wikilinks]]` | `#tags` | documentation, tutorial, reference, blog |
-| **Notion** | `[text](url)` | `@tags` | database, template, project |
+| Preset | Link format | Tag format | Content types |
+|---|---|---|---|
+| `OBSIDIAN_CONFIG` | `[[wikilinks]]` | `#tag` | `moc`, `article`, `conversation`, `book-note`, `template` |
+| `MARKDOWN_CONFIG` | `[text](url)`, `[[wikilinks]]` | `#tag` | `documentation`, `tutorial`, `reference`, `blog` |
+| `NOTION_CONFIG` | `[text](url)` | `@tag` | `database`, `template`, `project` |
 
-### Custom Configuration
+The `uriScheme` field determines the URI prefix written to chunk metadata (`obsidian://`, `file://`, `notion://`), and `systemName` becomes the `sourceType` field.
 
-You can define your own link formats, tag formats, and content type detection:
+## Custom database + embedding backends
+
+`DocumentIngestionPipeline` accepts any object satisfying these structural interfaces:
 
 ```typescript
-const customConfig: DocumentProcessingConfig = {
-  systemName: "Custom System",
-  uriScheme: "custom",
-  linkFormats: [
-    // Multiple link formats supported
-    { pattern: /\[\[([^\]]+)\]\]/g, extractTarget: (m) => m[1] },
-    { pattern: /\[([^\]]+)\]\(([^)]+)\)/g, extractTarget: (m) => m[2] }
-  ],
-  tagFormats: [
-    // Multiple tag formats supported  
-    { pattern: /#([a-zA-Z0-9_/-]+)/g, extractTag: (m) => m[1] },
-    { pattern: /@([a-zA-Z0-9_-]+)/g, extractTag: (m) => m[1] }
-  ],
-  contentTypes: {
-    "meeting": { folderPatterns: ["meetings", "calls"] },
-    "project": { folderPatterns: ["projects"], filePatterns: ["project-"] },
-    "note": { folderPatterns: ["notes", "thoughts"] }
-  },
-  defaultContentType: "document"
-};
+interface DocumentDatabaseLike {
+  getChunkById(id: string): Promise<unknown>;
+  upsertChunk(chunk: any): Promise<unknown>;
+  getStats(): Promise<{ totalChunks: number; [key: string]: unknown }>;
+  search(
+    embedding: number[],
+    options?: { limit?: number; [key: string]: unknown }
+  ): Promise<Array<{ id: string; text: string; meta: Record<string, unknown> }>>;
+}
+
+interface DocumentEmbeddingServiceLike {
+  embed(text: string): Promise<number[]>;
+  embedWithStrategy(
+    text: string,
+    contentType?: string,
+    domainHint?: string
+  ): Promise<{ embedding: number[]; [key: string]: unknown }>;
+}
 ```
 
-## Migration Guide
+The bundled `DocumentDatabase` (PostgreSQL + pgvector) and `DocumentEmbeddingService` (Ollama) satisfy these. Swap in your own — e.g. an in-memory store for tests, or a different vector backend — without modifying `@kv/ingestion`.
 
-### From Obsidian-specific to Generic
+## Backward compatibility
 
-**Before (Obsidian-specific):**
+`ObsidianIngestionPipeline` is preserved as a thin subclass that defaults to `OBSIDIAN_CONFIG` and exposes `ingestVault(options)` as an alias for `ingestDocuments(options)`. New code should prefer `DocumentIngestionPipeline` with an explicit config; the subclass is kept so existing scripts continue to work.
+
 ```typescript
-import { ObsidianDatabase, ObsidianIngestionPipeline } from "./lib";
+import { ObsidianIngestionPipeline } from "@kv/ingestion";
+
+const pipeline = new ObsidianIngestionPipeline(database, embeddings, vaultPath);
+await pipeline.ingestVault(); // == ingestDocuments() with OBSIDIAN_CONFIG
 ```
-
-**After (Generic, but still works):**
-```typescript
-// Option 1: No changes needed (backward compatible)
-import { ObsidianDatabase, ObsidianIngestionPipeline } from "./lib";
-
-// Option 2: Use generic classes
-import { DocumentDatabase, DocumentIngestionPipeline } from "./lib";
-import { OBSIDIAN_CONFIG } from "./lib/types/document-config";
-```
-
-All existing Obsidian code continues to work unchanged.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                 Document Processing System                   │
-├─────────────────────────────────────────────────────────────┤
-│  DocumentDatabase          │  DocumentEmbeddingService      │
-│  DocumentIngestionPipeline │  DocumentSearchService         │
-├─────────────────────────────────────────────────────────────┤
-│                Configuration Layer                          │
-│  DocumentProcessingConfig  │  LinkFormats │ TagFormats     │
-├─────────────────────────────────────────────────────────────┤
-│              Backward Compatibility Layer                   │
-│  ObsidianDatabase         │  ObsidianIngestionPipeline     │
-│  (extends DocumentDatabase) │  (extends DocumentPipeline)   │
-└─────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│                       @kv/ingestion                            │
+├────────────────────────────────────────────────────────────────┤
+│  DocumentIngestionPipeline                                     │
+│  ├─ discoverMarkdownFiles (glob include/exclude)               │
+│  ├─ parseDocumentFile (frontmatter, links, tags, sections)     │
+│  ├─ chunkDocument (structure-aware or sliding window)          │
+│  └─ batched embed + upsert via injected interfaces             │
+├────────────────────────────────────────────────────────────────┤
+│  DocumentProcessingConfig                                      │
+│  └─ OBSIDIAN_CONFIG │ MARKDOWN_CONFIG │ NOTION_CONFIG │ custom │
+├────────────────────────────────────────────────────────────────┤
+│  Structural interfaces (injected by caller)                    │
+│  DocumentDatabaseLike  │  DocumentEmbeddingServiceLike         │
+├────────────────────────────────────────────────────────────────┤
+│  Depends only on @kv/utils                                     │
+└────────────────────────────────────────────────────────────────┘
+                              ↑
+              ┌───────────────┴───────────────┐
+              │       @kv/database (app)      │
+              │  DocumentDatabase (PG+pgvector)│
+              │  DocumentEmbeddingService (Ollama)│
+              └───────────────────────────────┘
 ```
-
-## Benefits
-
-1. **Flexible**: Works with any knowledge management system
-2. **Configurable**: Customize link formats, tag formats, content types
-3. **Backward Compatible**: Existing Obsidian code works unchanged
-4. **Extensible**: Easy to add new formats and systems
-5. **Type Safe**: Full TypeScript support with proper types
