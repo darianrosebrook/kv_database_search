@@ -6,20 +6,17 @@ import {
   ExtractionMethod,
   type KnowledgeGraphEntity,
   type KnowledgeGraphRelationship,
-} from "../../src/lib/knowledge-graph/entity-extractor.ts";
-import { ContentType } from "../../src/types/index.ts";
+} from "@kv/knowledge-graph";
+import { ContentType } from "@kv/types";
 
-// Mock the base entity extractor
+// Mock base entity extractor — passed into KnowledgeGraphEntityExtractor's
+// constructor (second parameter) so tests can drive its responses.
 const mockEntityExtractor = {
   extractEntities: vi.fn(),
   extractEntitiesAsync: vi.fn(),
   extractRelationships: vi.fn(),
   extractRelationshipsAsync: vi.fn(),
 };
-
-vi.mock("../../src/lib/entity-extractor.js", () => ({
-  EntityExtractor: vi.fn().mockImplementation(() => mockEntityExtractor),
-}));
 
 // Helper function to create mock ProcessedEntity objects
 function createMockProcessedEntity(
@@ -63,11 +60,14 @@ describe("KnowledgeGraphEntityExtractor", () => {
     });
     mockEntityExtractor.extractRelationshipsAsync.mockResolvedValue([]);
 
-    extractor = new KnowledgeGraphEntityExtractor({
-      minEntityConfidence: 0.7,
-      minRelationshipConfidence: 0.5,
-      enableCooccurrenceAnalysis: true,
-    });
+    extractor = new KnowledgeGraphEntityExtractor(
+      {
+        minEntityConfidence: 0.7,
+        minRelationshipConfidence: 0.5,
+        enableCooccurrenceAnalysis: true,
+      },
+      mockEntityExtractor
+    );
   });
 
   describe("Entity Extraction", () => {
@@ -527,10 +527,13 @@ describe("KnowledgeGraphEntityExtractor", () => {
   describe("Configuration Validation", () => {
     it("should respect minimum confidence thresholds", async () => {
       // Arrange
-      const strictExtractor = new KnowledgeGraphEntityExtractor({
-        minEntityConfidence: 0.9,
-        minRelationshipConfidence: 0.8,
-      });
+      const strictExtractor = new KnowledgeGraphEntityExtractor(
+        {
+          minEntityConfidence: 0.9,
+          minRelationshipConfidence: 0.8,
+        },
+        mockEntityExtractor
+      );
 
       const mockEntities = [
         createMockProcessedEntity(

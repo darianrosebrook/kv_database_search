@@ -4,16 +4,14 @@ import {
   KnowledgeGraph,
   type EntitySimilarity,
   type GraphStatistics,
-} from "../../src/lib/knowledge-graph/knowledge-graph-manager.js";
-import {
   EntityType,
   RelationshipType,
   ExtractionMethod,
   type KnowledgeGraphEntity,
   type KnowledgeGraphRelationship,
   type EntityExtractionResult,
-} from "../../src/lib/knowledge-graph/entity-extractor.ts";
-import { ContentType } from "../../src/types/index.ts";
+} from "@kv/knowledge-graph";
+import { ContentType } from "@kv/types";
 
 // Mock the embedding service
 const mockEmbeddingService = {
