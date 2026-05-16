@@ -53,7 +53,7 @@ Options:
   --no-audio             Skip audio transcription
   --max-frames <n>       Maximum frames to extract (default: 200)
   --scene-threshold <x>  ffmpeg scene sensitivity 0..1 (default 0.1, lower = more scenes)
-  --min-scene-length <s> Minimum seconds between scenes (default 1.0)
+  --min-scene-length <s> Minimum seconds between ffmpeg-detected scene cuts (default 1.0). Note: this is a frame-level filter, NOT a "semantic dwell" filter — scrolling presenters move scenes every 1-2s while remaining on the same document, and a higher value will drop those genuine-content scenes. Semantic dwell belongs in a later pipeline stage.
   --no-dedup             Disable perceptual-hash frame deduplication
   --json                 Output results as JSON to stdout
   -q, --quiet            Suppress progress output (implies --json)
