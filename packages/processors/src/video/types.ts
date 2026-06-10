@@ -77,6 +77,17 @@ export interface VideoContentMetadata extends ContentMetadata {
   audioTranscription?: {
     text: string;
     hasAudio: boolean;
+    /**
+     * Whether a real transcription engine produced the text. False when the
+     * cascade fell through to the structured-metadata fallback. Lets the
+     * summary and downstream consumers distinguish "we transcribed nothing"
+     * from "we transcribed and got zero words" without parsing the text.
+     */
+    transcribed: boolean;
+    /**
+     * Which engine produced this transcript. "fallback" means no engine ran.
+     */
+    engine: "whisper-cpp" | "openai-whisper" | "web-speech" | "fallback";
     segments?: Array<{
       start: number;
       end: number;

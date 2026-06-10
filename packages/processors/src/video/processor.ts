@@ -361,6 +361,8 @@ export class VideoProcessor extends BaseContentProcessor {
         return {
           text: "No speech detected in audio",
           hasAudio: true,
+          transcribed: false,
+          engine: "fallback",
           wordCount: 0,
           speechDuration: 0,
           qualityScore: 0,
@@ -368,12 +370,20 @@ export class VideoProcessor extends BaseContentProcessor {
       }
 
       const audioMeta = audioResult.metadata;
+      const engine = (audioMeta.transcriptionEngine ?? "fallback") as
+        | "whisper-cpp"
+        | "openai-whisper"
+        | "web-speech"
+        | "fallback";
+      const transcribed = engine !== "fallback";
       console.log(
-        `  ✅ Audio transcription in ${elapsed}s: ${audioMeta.wordCount || 0} words extracted`,
+        `  ${transcribed ? "✅" : "⚠️"} Audio transcription (${engine}) in ${elapsed}s: ${audioMeta.wordCount || 0} words extracted`,
       );
       return {
         text: audioResult.text,
         hasAudio: true,
+        transcribed,
+        engine,
         segments: audioMeta.segments?.map(
           (seg: {
             start: number;
@@ -400,6 +410,8 @@ export class VideoProcessor extends BaseContentProcessor {
       return {
         text: "Audio transcription failed",
         hasAudio: true,
+        transcribed: false,
+        engine: "fallback",
         wordCount: 0,
         speechDuration: 0,
         qualityScore: 0,

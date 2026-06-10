@@ -428,6 +428,8 @@ function extractSummaryFields(
   if (metadata.audioTranscription) {
     const at = metadata.audioTranscription as Record<string, unknown>;
     fields.audio = {
+      transcribed: at.transcribed ?? false,
+      engine: at.engine ?? "fallback",
       wordCount: at.wordCount,
       speechDuration: at.speechDuration,
       qualityScore: at.qualityScore,

@@ -540,37 +540,49 @@ export class AudioTranscriptionProcessor extends BaseContentProcessor {
     segments?: TranscriptionSegment[];
   }> {
     try {
-      // Dynamic import for nodejs-whisper
       const { nodewhisper } = await import("nodejs-whisper");
 
       console.log("🤖 Starting Whisper.cpp transcription...");
 
-      // Configure transcription options
+      // Pick the right ggml model. nodejs-whisper's MODELS_LIST uses
+      // "base.en", "small.en", "medium.en" for English-only variants —
+      // those are noticeably faster and more accurate when we know the
+      // language is English. Fall back to multilingual when caller
+      // specifies a non-English language.
+      const language = options?.language || "en";
+      const isEnglish = language === "en" || language === "auto";
+      const modelName =
+        options?.model === "whisper-large"
+          ? "large-v3-turbo"
+          : isEnglish
+          ? "base.en"
+          : "base";
+
+      // nodejs-whisper accepts only camelCase fields and a small subset of
+      // flags (output formats, wordTimestamps, translateToEnglish,
+      // timestamps_length, splitOnWord). Snake_case fields like
+      // word_timestamps / no_speech_threshold / temperature / beam_size are
+      // silently ignored by the wrapper. Pass autoDownloadModelName so the
+      // model is fetched on first use if missing; the wrapper also self-
+      // builds whisper.cpp via cmake when whisper-cli isn't present.
       const transcriptOptions = {
-        modelName: options?.model === "whisper-large" ? "medium" : "base",
+        modelName,
+        autoDownloadModelName: modelName,
         whisperOptions: {
-          language: options?.language || "en",
-          word_timestamps: options?.useTimestamps || true,
-          no_speech_threshold: 0.6,
-          logprob_threshold: -1.0,
-          temperature: options?.temperature || 0.0,
-          best_of: 5,
-          beam_size: 5,
+          outputInText: true,
+          wordTimestamps: options?.useTimestamps ?? true,
         },
       };
 
-      console.log(`   Model: ${transcriptOptions.modelName}`);
-      console.log(`   Language: ${transcriptOptions.whisperOptions.language}`);
-      console.log("   Processing...");
+      console.log(`   Model: ${modelName}`);
+      console.log(`   Language: ${language}`);
+      console.log("   Processing (first run may build whisper.cpp via cmake)...");
 
       const startTime = Date.now();
       const transcript = await nodewhisper(audioPath, transcriptOptions);
       const processingTime = Date.now() - startTime;
 
-      const transcriptText =
-        typeof transcript === "string"
-          ? transcript
-          : transcript.text || JSON.stringify(transcript);
+      const transcriptText = transcript ?? "";
 
       console.log(
         `✅ Whisper.cpp transcription complete in ${(
@@ -579,9 +591,8 @@ export class AudioTranscriptionProcessor extends BaseContentProcessor {
       );
       console.log(`   Extracted ${transcriptText.split(/\s+/).length} words`);
 
-      // Parse segments from transcript if timestamps are enabled
       let segments: TranscriptionSegment[] | undefined;
-      if (options?.useTimestamps && transcriptText.includes("[")) {
+      if (transcriptText.includes("[") && transcriptText.includes("-->")) {
         segments = this.parseWhisperTimestamps(transcriptText);
       }
 
@@ -663,75 +674,52 @@ export class AudioTranscriptionProcessor extends BaseContentProcessor {
   }
 
   /**
-   * Transcribe using OpenAI Whisper API
+   * Transcribe using OpenAI Whisper API.
+   *
+   * NOT IMPLEMENTED. The previous version of this method returned a hard-
+   * coded placeholder string while reporting engine "openai-whisper" with
+   * confidence 0.95, which silently propagated as a "successful"
+   * transcription through the summary pipeline. Throwing here lets the
+   * cascade fall through to the honest `fallback` engine until a real
+   * OpenAI SDK integration lands.
    */
   private async transcribeWithOpenAI(
-    audioPath: string,
-    audioMetadata: AudioMetadata,
-    options?: AudioTranscriptionOptions
+    _audioPath: string,
+    _audioMetadata: AudioMetadata,
+    _options?: AudioTranscriptionOptions
   ): Promise<{
     text: string;
     engine: "openai-whisper";
     segments?: TranscriptionSegment[];
   }> {
-    // This would require the OpenAI SDK
-    // For now, return a placeholder that indicates the structure
-    const mockText = `[OpenAI Whisper API Placeholder]\nAudio Duration: ${audioMetadata.duration.toFixed(
-      2
-    )}s\nFormat: ${
-      audioMetadata.format
-    }\nTo enable OpenAI Whisper API, install openai package and provide OPENAI_API_KEY.\nCurrently using local Whisper.cpp instead.`;
-
-    const segments: TranscriptionSegment[] = [
-      {
-        start: 0,
-        end: audioMetadata.duration,
-        text: mockText,
-        confidence: 0.95,
-      },
-    ];
-
-    return {
-      text: mockText,
-      engine: "openai-whisper",
-      segments: options?.useTimestamps ? segments : undefined,
-    };
+    throw new Error(
+      "OpenAI Whisper API integration is not implemented. Install the `openai` SDK and wire it in transcribeWithOpenAI to enable this engine."
+    );
   }
 
   /**
-   * Transcribe using Web Speech API (placeholder implementation)
+   * Transcribe using Web Speech API.
+   *
+   * NOT IMPLEMENTED. The Web Speech API requires a browser environment
+   * (window.SpeechRecognition); Node.js has no equivalent. The previous
+   * version of this method returned a hard-coded placeholder string while
+   * reporting engine "web-speech" with confidence 0.8, which silently
+   * propagated as a "successful" transcription through the summary
+   * pipeline. Throwing here lets the cascade fall through to the honest
+   * `fallback` engine.
    */
   private async transcribeWithWebSpeech(
-    audioPath: string,
-    audioMetadata: AudioMetadata,
-    options?: AudioTranscriptionOptions
+    _audioPath: string,
+    _audioMetadata: AudioMetadata,
+    _options?: AudioTranscriptionOptions
   ): Promise<{
     text: string;
     engine: "web-speech";
     segments?: TranscriptionSegment[];
   }> {
-    // Web Speech API requires browser environment
-    // This is a placeholder for potential Node.js implementation
-    const mockText = `[Web Speech API Transcription]\nAudio Duration: ${audioMetadata.duration.toFixed(
-      2
-    )}s\nCodec: ${
-      audioMetadata.codec
-    }\nThis is a placeholder for Web Speech API integration.`;
-
-    const segments: TranscriptionSegment[] = [
-      {
-        start: 0,
-        end: audioMetadata.duration,
-        text: mockText,
-        confidence: 0.8,
-      },
-    ];
-
-    return {
-      text: mockText,
-      engine: "web-speech",
-      segments: options?.useTimestamps ? segments : undefined,
-    };
+    throw new Error(
+      "Web Speech API is not available in Node.js. This engine is unimplemented."
+    );
   }
 
   /**
