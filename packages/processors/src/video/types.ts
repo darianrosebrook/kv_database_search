@@ -94,6 +94,23 @@ export interface VideoContentMetadata extends ContentMetadata {
       text: string;
       confidence?: number;
     }>;
+    /**
+     * Word-level segments aggregated into sentence-bounded utterances with
+     * a 12s soft cap. The raw `segments` array remains the lossless source
+     * of truth; `utterances` is the readable rendering surface. Each
+     * utterance carries an optional `keyframeRef` pointing to the keyframe
+     * filename that was on screen when the utterance began, so renderers
+     * can group the narrative slide-by-slide.
+     */
+    utterances?: Array<{
+      start: number;
+      end: number;
+      text: string;
+      wordCount: number;
+      confidence?: number;
+      /** Filename of the keyframe in scope when this utterance started. */
+      keyframeRef?: string;
+    }>;
     wordCount: number;
     speechDuration: number;
     qualityScore: number;

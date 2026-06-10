@@ -16,6 +16,7 @@ import {
 } from "../base-processor.ts";
 import { OCRProcessor } from "../ocr-processor.ts";
 import { AudioTranscriptionProcessor } from "../audio-transcription-processor.ts";
+import { aggregateUtterances } from "./utterance-aggregator.ts";
 import {
   AdaptiveFrameExtractor,
   SceneDetector,
@@ -376,27 +377,30 @@ export class VideoProcessor extends BaseContentProcessor {
         | "web-speech"
         | "fallback";
       const transcribed = engine !== "fallback";
+      const segments = audioMeta.segments?.map(
+        (seg: {
+          start: number;
+          end: number;
+          text: string;
+          confidence: number;
+        }) => ({
+          start: seg.start,
+          end: seg.end,
+          text: seg.text,
+          confidence: seg.confidence,
+        }),
+      );
+      const utterances = segments ? aggregateUtterances(segments) : undefined;
       console.log(
-        `  ${transcribed ? "✅" : "⚠️"} Audio transcription (${engine}) in ${elapsed}s: ${audioMeta.wordCount || 0} words extracted`,
+        `  ${transcribed ? "✅" : "⚠️"} Audio transcription (${engine}) in ${elapsed}s: ${audioMeta.wordCount || 0} words, ${utterances?.length ?? 0} utterances`,
       );
       return {
         text: audioResult.text,
         hasAudio: true,
         transcribed,
         engine,
-        segments: audioMeta.segments?.map(
-          (seg: {
-            start: number;
-            end: number;
-            text: string;
-            confidence: number;
-          }) => ({
-            start: seg.start,
-            end: seg.end,
-            text: seg.text,
-            confidence: seg.confidence,
-          }),
-        ),
+        segments,
+        utterances,
         wordCount: audioMeta.wordCount || 0,
         speechDuration: audioMeta.qualityMetrics?.speechDuration || 0,
         qualityScore: audioMeta.qualityMetrics?.averageConfidence || 0,

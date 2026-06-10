@@ -9,8 +9,11 @@ import { VideoContentMetadata } from "./types.ts";
  * Writes:
  *   - keyframes/<frame_NNN_<ts>.png>   — selected keyframe images
  *   - manifest.json                     — full metadata + frame index
- *   - transcript_segments.json          — raw audio transcription segments
- *   - transcript.md                     — canonical interleaved timeline
+ *   - transcript_segments.json          — raw word-level audio segments
+ *                                         (lossless source of truth)
+ *   - transcript_utterances.json        — sentence-bounded utterances
+ *                                         with keyframeRef for alignment
+ *   - transcript.md                     — slide-grouped narrative
  *
  * The exporter is pure with respect to the metadata it's given — it does
  * not run OCR or transcription itself. Frame image paths in metadata must
@@ -60,6 +63,48 @@ export function exportArtifacts(
     });
   }
 
+  // Sorted keyframe timestamps (ascending) for binary-searching utterance
+  // → containing keyframe.
+  const sortedKeyframes = [...keyframeFiles.entries()].sort(
+    (a, b) => a[0] - b[0],
+  );
+
+  /**
+   * Find the keyframe filename in scope at time `t`: the keyframe with
+   * the largest timestamp <= t. Returns undefined if no keyframe has been
+   * shown yet at time t.
+   */
+  const keyframeAt = (t: number): string | undefined => {
+    let lo = 0;
+    let hi = sortedKeyframes.length - 1;
+    let result: string | undefined = undefined;
+    while (lo <= hi) {
+      const mid = (lo + hi) >>> 1;
+      if (sortedKeyframes[mid][0] <= t) {
+        result = sortedKeyframes[mid][1];
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    return result;
+  };
+
+  // Enrich utterances with keyframeRef without mutating the source array.
+  const rawUtterances = metadata.audioTranscription?.utterances ?? [];
+  const utterances = rawUtterances.map((u) => ({
+    ...u,
+    keyframeRef: keyframeAt(u.start),
+  }));
+
+  const audioWordCount =
+    metadata.audioTranscription?.wordCount ??
+    utterances.reduce((sum, u) => sum + u.wordCount, 0);
+  const visualWordCount = metadata.extractedFrames.reduce(
+    (sum, f) => sum + countWords(f.ocrText ?? ""),
+    0,
+  );
+
   const manifest = {
     source: sourceFileName,
     exportedAt: new Date().toISOString(),
@@ -67,10 +112,15 @@ export function exportArtifacts(
     contentClassification: metadata.contentClassification,
     summary: {
       duration: metadata.duration,
-      wordCount: metadata.wordCount,
+      wordCount: {
+        total: audioWordCount + visualWordCount,
+        audio: audioWordCount,
+        visual: visualWordCount,
+      },
       frameCount: metadata.frameCount,
       keyframeCount: keyframeFiles.size,
       language: metadata.language,
+      utteranceCount: utterances.length,
       segmentCount: metadata.audioTranscription?.segments?.length ?? 0,
     },
     frames: frameIndex,
@@ -82,37 +132,59 @@ export function exportArtifacts(
     JSON.stringify(manifest, null, 2),
   );
 
+  // Lossless source of truth: raw word-level segments.
   const segments = metadata.audioTranscription?.segments ?? [];
   fs.writeFileSync(
     path.join(outputDir, "transcript_segments.json"),
     JSON.stringify(segments, null, 2),
   );
 
+  // Readable rendering surface: utterances + keyframe refs.
+  fs.writeFileSync(
+    path.join(outputDir, "transcript_utterances.json"),
+    JSON.stringify(utterances, null, 2),
+  );
+
   const transcript = generateCanonicalTranscript(
     metadata,
     keyframeFiles,
     sourceFileName,
+    utterances,
+    { audioWordCount, visualWordCount },
   );
   fs.writeFileSync(path.join(outputDir, "transcript.md"), transcript);
 
   console.log(
-    `  📄 Exported: manifest.json, transcript.md, transcript_segments.json, ${keyframeFiles.size} keyframes`,
+    `  📄 Exported: manifest.json, transcript.md, transcript_segments.json, transcript_utterances.json, ${keyframeFiles.size} keyframes`,
   );
 }
 
+function countWords(text: string): number {
+  if (!text) return 0;
+  return text.split(/\s+/).filter((w) => w.length > 0).length;
+}
+
+interface EnrichedUtterance {
+  start: number;
+  end: number;
+  text: string;
+  wordCount: number;
+  confidence?: number;
+  keyframeRef?: string;
+}
+
 /**
- * Generate a canonical markdown transcript that interleaves keyframe
- * references (with OCR text) and speech transcript segments on a unified
- * timeline. Pure function — does no I/O.
- *
- * Exported separately so it can be used by callers that want the markdown
- * without the on-disk artifact bundle (e.g. piping to stdout, or rendering
- * in a UI).
+ * Generate a slide-grouped markdown transcript. Each keyframe becomes a
+ * section that contains the slide image, OCR'd slide content, and the
+ * utterances spoken while that slide was on screen. Utterances that occur
+ * before any keyframe (intro) get a synthetic leading section.
  */
 export function generateCanonicalTranscript(
   metadata: VideoContentMetadata,
   keyframeFiles: Map<number, string>,
   sourceFileName: string,
+  utterances: EnrichedUtterance[],
+  counts: { audioWordCount: number; visualWordCount: number },
 ): string {
   const lines: string[] = [];
 
@@ -135,83 +207,80 @@ export function generateCanonicalTranscript(
     if (cc.hasUI) tags.push("UI");
     if (tags.length > 0) lines.push(`- **Content type:** ${tags.join(", ")}`);
   }
-  lines.push(`- **Words extracted:** ${metadata.wordCount}`);
+  const at = metadata.audioTranscription;
+  if (at) {
+    lines.push(
+      `- **Audio transcription:** ${at.engine}${at.transcribed ? "" : " (no engine ran)"}`,
+    );
+  }
+  lines.push(
+    `- **Words extracted:** ${counts.audioWordCount + counts.visualWordCount} (${counts.audioWordCount} audio, ${counts.visualWordCount} visual)`,
+  );
+  lines.push(`- **Utterances:** ${utterances.length}`);
   lines.push(`- **Frames extracted:** ${metadata.frameCount}`);
   lines.push(`- **Keyframes:** ${keyframeFiles.size}`);
   lines.push("");
 
-  type TimelineEvent =
-    | {
-        type: "keyframe";
-        timestamp: number;
-        filename: string;
-        ocrText: string | null;
-        frameNumber: number;
-      }
-    | {
-        type: "speech";
-        start: number;
-        end: number;
-        text: string;
-        confidence?: number;
-      };
-
-  const events: TimelineEvent[] = [];
-
-  for (const frame of metadata.extractedFrames) {
-    const filename = keyframeFiles.get(frame.timestamp);
-    if (filename) {
-      events.push({
-        type: "keyframe",
-        timestamp: frame.timestamp,
-        filename,
-        ocrText: frame.ocrText?.trim() || null,
-        frameNumber: frame.frameNumber,
-      });
-    }
+  // Group utterances by keyframeRef. The order follows the keyframe
+  // timeline; utterances before the first keyframe go into a synthetic
+  // "intro" group keyed by undefined.
+  const grouped = new Map<string | undefined, EnrichedUtterance[]>();
+  for (const u of utterances) {
+    const arr = grouped.get(u.keyframeRef) ?? [];
+    arr.push(u);
+    grouped.set(u.keyframeRef, arr);
   }
-
-  const segments = metadata.audioTranscription?.segments ?? [];
-  for (const seg of segments) {
-    events.push({
-      type: "speech",
-      start: seg.start,
-      end: seg.end,
-      text: seg.text,
-      confidence: seg.confidence,
-    });
-  }
-
-  events.sort((a, b) => {
-    const tA = a.type === "keyframe" ? a.timestamp : a.start;
-    const tB = b.type === "keyframe" ? b.timestamp : b.start;
-    if (tA !== tB) return tA - tB;
-    // Keyframes appear before speech at the same timestamp
-    return a.type === "keyframe" ? -1 : 1;
-  });
 
   lines.push("## Timeline");
   lines.push("");
 
-  for (const event of events) {
-    if (event.type === "keyframe") {
-      const ts = formatTimestamp(event.timestamp);
-      lines.push(`### [${ts}] Keyframe: ${event.filename}`);
+  // Intro: utterances spoken before any keyframe was on screen.
+  const intro = grouped.get(undefined);
+  if (intro && intro.length > 0) {
+    lines.push("### Intro (before first keyframe)");
+    lines.push("");
+    for (const u of intro) {
+      lines.push(`**[${formatTimestamp(u.start)}]** ${u.text}`);
       lines.push("");
-      lines.push(`![${event.filename}](keyframes/${event.filename})`);
+    }
+  }
+
+  // Walk keyframes in time order.
+  const sortedKeyframes = [...keyframeFiles.entries()].sort(
+    (a, b) => a[0] - b[0],
+  );
+
+  // Build a lookup from timestamp to ExtractedFrame for OCR text retrieval.
+  const frameByTimestamp = new Map(
+    metadata.extractedFrames.map((f) => [f.timestamp, f]),
+  );
+
+  for (const [ts, filename] of sortedKeyframes) {
+    const frame = frameByTimestamp.get(ts);
+    lines.push(`### [${formatTimestamp(ts)}] Keyframe: ${filename}`);
+    lines.push("");
+    lines.push(`![${filename}](keyframes/${filename})`);
+    lines.push("");
+
+    const ocrText = frame?.ocrText?.trim();
+    if (ocrText && !ocrText.startsWith("Image OCR:")) {
+      lines.push("**Slide content (OCR):**");
       lines.push("");
-      if (event.ocrText && !event.ocrText.startsWith("Image OCR:")) {
-        const ocrLines = event.ocrText.split("\n").filter((l) => l.trim());
-        for (const ocrLine of ocrLines) {
-          lines.push(`> ${ocrLine}`);
-        }
+      const ocrLines = ocrText.split("\n").filter((l) => l.trim());
+      for (const ocrLine of ocrLines) {
+        lines.push(`> ${ocrLine}`);
+      }
+      lines.push("");
+    }
+
+    const us = grouped.get(filename);
+    if (us && us.length > 0) {
+      lines.push("**Spoken:**");
+      lines.push("");
+      for (const u of us) {
+        lines.push(`**[${formatTimestamp(u.start)}]** ${u.text}`);
         lines.push("");
       }
-    } else {
-      const startTs = formatTimestamp(event.start);
-      const endTs = formatTimestamp(event.end);
-      lines.push(`**[${startTs} - ${endTs}]** ${event.text}`);
-      lines.push("");
     }
   }
 
