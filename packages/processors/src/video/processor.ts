@@ -214,12 +214,24 @@ export class VideoProcessor extends BaseContentProcessor {
             .join("\n\n");
           const hasText = allText.length > 0;
 
-          // Entities
+          // Entity extraction. Source from all available text (OCR +
+          // transcript). The OCR is the primary source of real proper
+          // nouns like author names from slide credits — Whisper with
+          // base.en mangles unusual surnames ("LeCun" -> "Lacoon",
+          // "Jitendra" -> "J it andra"), so excluding OCR loses them.
+          // Filter noise via minMentions: 2 (single-occurrence OCR
+          // fragments like logo glyphs are dropped) and dedupe by
+          // canonical form. The NON_PERSON_WORDS blocklist already
+          // rejects common false positives like "Seminar Robots" or
+          // "Term Vision".
           console.log(
             `[${stageTime()}s] 🏷️ Extracting entities and relationships...`,
           );
           const entityStart = Date.now();
-          const entities = this.entityExtractor.extractEntities(allText);
+          const entities = this.entityExtractor.extractEntities(allText, {
+            minMentions: 2,
+            dedupe: true,
+          });
           const relationships = this.entityExtractor.extractRelationships(
             allText,
             entities,
@@ -523,11 +535,16 @@ export class VideoProcessor extends BaseContentProcessor {
 function combineTextFromFrames(frames: ExtractedFrame[]): string {
   const segments: string[] = [];
   frames.forEach((frame, idx) => {
-    if (frame.ocrText && frame.ocrText.trim()) {
-      segments.push(
-        `[Frame ${idx + 1} @ ${frame.timestamp.toFixed(1)}s]: ${frame.ocrText.trim()}`,
-      );
-    }
+    const raw = frame.ocrText?.trim();
+    if (!raw) return;
+    // Skip frames where OCR didn't find anything — the OCR processor emits
+    // a literal "Image OCR: No text detected" sentinel rather than an empty
+    // string, and downstream consumers (entity extraction, etc.) should
+    // not see that sentinel as content.
+    if (raw.startsWith("Image OCR:")) return;
+    segments.push(
+      `[Frame ${idx + 1} @ ${frame.timestamp.toFixed(1)}s]: ${raw}`,
+    );
   });
   return segments.join("\n\n");
 }

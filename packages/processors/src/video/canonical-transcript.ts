@@ -124,8 +124,13 @@ export function exportArtifacts(
       segmentCount: metadata.audioTranscription?.segments?.length ?? 0,
     },
     frames: frameIndex,
-    entities: metadata.entities,
-    relationships: metadata.relationships,
+    entities: metadata.entities && metadata.entities.length > 0
+      ? metadata.entities
+      : undefined,
+    relationships:
+      metadata.relationships && metadata.relationships.length > 0
+        ? metadata.relationships
+        : undefined,
   };
   fs.writeFileSync(
     path.join(outputDir, "manifest.json"),
